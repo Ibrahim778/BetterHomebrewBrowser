@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<stringset>
+    <string src="Next" id="right_arrow_label"/>
+    <string src="Prev" id="left_arrow_label"/>
+</stringset>
