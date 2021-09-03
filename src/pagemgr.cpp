@@ -72,6 +72,10 @@ Page::Page(pageType page)
 
     DEFINE_PAGE(PAGE_TYPE_SELECTION_LIST_WITH_TITLE, SELECTION_LIST_TEMPLATE)
 
+    DEFINE_PAGE(PAGE_TYPE_TEXT_PAGE, TEXT_PAGE_NO_TITLE_ID)
+    
+    DEFINE_PAGE(PAGE_TYPE_TEXT_PAGE_WITH_TITLE, TEXT_PAGE_ID)
+
     default:
         break;
     }
@@ -95,6 +99,21 @@ Page::Page(pageType page)
         settingsButton->PlayAnimation(0, Widget::Animation_Reset);
     else settingsButton->PlayAnimationReverse(0, Widget::Animation_Reset);
 
+}
+
+TextPage::TextPage(const char *text, const char *title):Page(title != SCE_NULL ? PAGE_TYPE_TEXT_PAGE_WITH_TITLE : PAGE_TYPE_TEXT_PAGE)
+{
+    busy->Stop();
+
+    InfoText = (Text *)Utils::GetChildByHash(root, Utils::GetHashById(TEXT_PAGE_TEXT));
+
+    Utils::SetWidgetLabel(InfoText, text);
+
+    if(title != NULL)
+    {
+        TitleText = (Text *)Utils::GetChildByHash(root, Utils::GetHashById(TEXT_PAGE_TITLE_TEXT));
+        Utils::SetWidgetLabel(TitleText, title);
+    }
 }
 
 Page::~Page()
@@ -158,8 +177,7 @@ Page::~Page()
 
 }
 
-SelectionList::~SelectionList()
-{}
+SelectionList::~SelectionList(){}
 
 ImageButton *SelectionList::AddOption(const char *text, void(*onPress)(void *), void *userDat, SceBool isLong, SceBool needImage)
 {
@@ -199,6 +217,38 @@ ImageButton *SelectionList::AddOption(String *text, void(*onPress)(void *), void
     return this->AddOption(text->data, onPress, userDat, isLong, needImage);
 }
 
+SceVoid SelectionList::DisableAllButtons()
+{
+    if(disabled) return;
+    for (int i = 0; i < this->scrollViewBox->childNum; i++)
+    {
+        Widget *button = this->scrollViewBox->GetChildByNum(i);
+
+        if(button == SCE_NULL)
+            break;
+
+        button->Disable(0);
+    }
+
+    disabled = true;
+}
+
+SceVoid SelectionList::EnableAllButtons()
+{
+    if(!disabled) return;
+    for (int i = 0; i < this->scrollViewBox->childNum; i++)
+    {
+        Widget *button = this->scrollViewBox->GetChildByNum(i);
+
+        if(button == SCE_NULL)
+            break;
+
+        button->Enable(0);
+    }
+
+    disabled = false;
+}
+
 SelectionList::SelectionList(const char *title):Page(title != NULL ? PAGE_TYPE_SELECTION_LIST_WITH_TITLE : PAGE_TYPE_SELECTION_LIST)
 {
     if(title != NULL)
@@ -221,6 +271,8 @@ SelectionList::SelectionList(const char *title):Page(title != NULL ? PAGE_TYPE_S
     listRoot = (Plane *)root->GetChildByNum(root->childNum - 1);
 
     scrollViewBox = (Box *)Utils::GetChildByHash(listRoot, Utils::GetHashById(LIST_SCROLL_BOX));
+
+    disabled = false;
 }
 
 void Page::Init()
@@ -309,6 +361,11 @@ ProgressPage::~ProgressPage()
 void PopupMgr::showDialog()
 {
     if(showingDialog) return;
+
+    if(currPage != NULL)
+        if(currPage->type == PAGE_TYPE_SELECTION_LIST || currPage->type == PAGE_TYPE_SELECTION_LIST_WITH_TITLE)
+            ((SelectionList *)currPage)->DisableAllButtons();
+    
     mainBackButton->Disable(SCE_FALSE);
     diagBG->PlayAnimation(0, Widget::Animation_3D_SlideFromFront);
     showingDialog = true;
@@ -325,6 +382,9 @@ void PopupMgr::showDialog()
 void PopupMgr::hideDialog()
 {
     if(!showingDialog) return;
+    if(currPage != NULL)
+        if(currPage->type == PAGE_TYPE_SELECTION_LIST || currPage->type == PAGE_TYPE_SELECTION_LIST_WITH_TITLE)
+            ((SelectionList *)currPage)->EnableAllButtons();
     mainBackButton->Enable(SCE_FALSE);
     diagBG->PlayAnimationReverse(500, Widget::Animation_3D_SlideFromFront);
     common::Utils::WidgetStateTransition(0, diagBox, Widget::Animation_Reset, SCE_TRUE, SCE_TRUE);
@@ -381,4 +441,3 @@ void PopupMgr::addDialogOption(const char *text, void (*onPress)(void *), void *
     currbutton->RegisterEventCallback(ON_PRESS_EVENT_ID, eh, 1);
 
 }
-

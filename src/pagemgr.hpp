@@ -3,12 +3,12 @@
 
 #include <paf.h>
 #include "utils.hpp"
-using namespace paf;
-using namespace widget;
 
 typedef enum 
 {
     PAGE_TYPE_SELECTION_LIST,
+    PAGE_TYPE_TEXT_PAGE,
+    PAGE_TYPE_TEXT_PAGE_WITH_TITLE,
     PAGE_TYPE_SELECTION_LIST_WITH_TITLE,
     PAGE_TYPE_INFO,
     PAGE_TYPE_LOADING_SCREEN,
@@ -38,6 +38,8 @@ public:
 
 class SelectionList : public Page
 {
+private:
+    bool disabled;
 public:
 
     Plane *listRoot;
@@ -45,11 +47,14 @@ public:
     Text *TitleText;
 
     SelectionList(const char *title = SCE_NULL);
+    ~SelectionList();
 
     ImageButton *AddOption(const char *text, void(*onPress)(void *) = NULL, void *userDat = NULL, SceBool isLong = SCE_FALSE, SceBool needImage = SCE_FALSE);
     ImageButton *AddOption(String *text, void(*onPress)(void *) = NULL, void *userDat = NULL, SceBool isLong = SCE_FALSE, SceBool needImage = SCE_FALSE);
+    
+    SceVoid DisableAllButtons();
+    SceVoid EnableAllButtons();
 
-    ~SelectionList();
 };
 
 class LoadingPage : public Page
@@ -73,6 +78,15 @@ public:
 
     ProgressPage(const char *info, int barNum = 1);
     ~ProgressPage();
+};
+
+class TextPage : public Page
+{
+public:
+    Text *TitleText;
+    Text *InfoText;
+
+    TextPage(const char *text, const char *title = SCE_NULL);
 };
 
 class PopupMgr

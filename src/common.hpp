@@ -30,6 +30,11 @@
 #define LOADING_PAGE_ID "loading_template"
 #define LOADING_PAGE_TEXT "info_text"
 
+#define TEXT_PAGE_NO_TITLE_ID "text_page_no_title"
+#define TEXT_PAGE_ID "text_page"
+#define TEXT_PAGE_TEXT "info_text"
+#define TEXT_PAGE_TITLE_TEXT "main_titlebar_text"
+
 #define PROGRESS_PAGE_ID "progress_template"
 #define PROGRESS_PAGE_BAR "loading_bar"
 #define PROGRESS_BAR_PAGE_PLANE "progressbar_plane"

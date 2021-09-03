@@ -64,11 +64,23 @@ BUTTON_CB(DarkModeSelector)
     PopupMgr::addDialogOption("Disabled", updateDarkMode, (void *)false, !conf.darkMode);
 }
 
+BUTTON_CB(TextPageNoTitle)
+{
+    new TextPage("Hello World!");
+}
+
+BUTTON_CB(TextPageWithTitle)
+{
+    new TextPage("Hello World!", "Hello Title!");
+}
+
 void SettingsButtonEventHandler::onGet(SceInt32, Widget*s, SceInt32, ScePVoid)
 {
     SelectionList *settingsPage = new SelectionList("Settings");
     settingsPage->AddOption("Source", DBSelector);
     settingsPage->AddOption("Download Icons After", IconTimeSelector);
     settingsPage->AddOption("Dark Mode", DarkModeSelector);
+    settingsPage->AddOption("Go To Text Page", TextPageNoTitle);
+    settingsPage->AddOption("Go To Text Page With Title", TextPageWithTitle);
     settingsPage->busy->Stop();
 } 

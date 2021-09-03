@@ -136,6 +136,44 @@
 			</plane>
         </template>
 
+        <template fast_open="1" id="text_page_no_title">
+            <plane style="_common_style_plane_transparent" id="page_root_plane">
+                <layout_hint size="960, 544" pos="0,0"/>
+
+				<busyindicator style="base_style_busyindicator" texture="_common_texture_busy" id="busy_indicator" >
+					<layout_hint pos="0, 50" size="60, 60" />
+				</busyindicator>
+
+                <text style="text_normal_style" auto_scroll="1" id="info_text">
+                    <layout_hint size="960, 544" pos="0, 0" />
+                </text>
+            </plane>
+        </template>
+
+        <template fast_open="1" id="text_page">
+            <plane style="_common_style_plane_transparent" id="page_root_plane">
+                <layout_hint size="960, 544" pos="0,0"/>
+
+				<busyindicator style="base_style_busyindicator" texture="_common_texture_busy" id="busy_indicator" >
+					<layout_hint pos="0, 50" size="60, 60" />
+				</busyindicator>
+
+                <text style="text_normal_style" auto_scroll="1" id="info_text">
+                    <layout_hint size="960, 448" pos="0, 0" />
+                </text>
+
+				<plane style="_common_style_plane_transparent" id="plane_top">
+					<layout_hint align="0, 2" anchor="0, 2" size="960, 96" pos="0, 0" />
+					<text auto_scroll="1" style="text_normal_style" id="main_titlebar_text">
+						<layout_hint size="920, 0" anchor="1, 1" align="1, 1" adjust="0, 2" pos="20, 24" />
+					</text>
+					<plane style="plane_separator_style" id="plane_separator_top">
+						<layout_hint anchor="0, 1" align="0, 2" size="960, 2" pos="0, 0" />
+					</plane>
+				</plane>
+            </plane>
+        </template>
+
         <template fast_open="1" id="progress_template">
 			<plane style="_common_style_plane_transparent" id="page_root_plane">
 				<layout_hint size="960, 544" pos="0, 0" />
