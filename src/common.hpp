@@ -2,8 +2,8 @@
 #define VHH_COMMON_H
 
 #define SCENE_NAME "page_main"
-#define PLUGIN_NAME "vhbb_plugin"
-#define RESOURCE_PATH "app0:resource/vhbb_plugin.rco"
+#define PLUGIN_NAME "bhbb_plugin"
+#define RESOURCE_PATH "app0:resource/bhbb_plugin.rco"
 
 #define BUSY_INICATOR_ID "busy_indicator"
 #define BACK_BUTTON_ID "back_button"

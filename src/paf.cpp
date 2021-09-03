@@ -74,7 +74,7 @@ SceVoid onPluginReady(Plugin *plugin)
 {
     if(plugin == NULL)
     {
-        printf("[MAIN_VHBB] Error Plugin load failed!\n");
+        printf("[MAIN_BHBB] Error Plugin load failed!\n");
         return;
     }
 

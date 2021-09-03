@@ -91,6 +91,6 @@ VDSuitePackage(${PROJECT_NAME}.vpk
   FILES
     $<TARGET_FILE:${PROJECT_NAME}> eboot.bin
     ${PROJECT_NAME}.sfo sce_sys/param.sfo
-    resource/vhbb_plugin.rco resource/vhbb_plugin.rco
+    resource/bhbb_plugin.rco resource/bhbb_plugin.rco
     resource/src/texture/bg.png sce_sys/pic0.png
 )
