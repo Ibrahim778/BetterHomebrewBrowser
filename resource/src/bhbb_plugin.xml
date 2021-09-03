@@ -144,7 +144,7 @@
 					<layout_hint pos="0, 50" size="60, 60" />
 				</busyindicator>
 
-                <text style="text_normal_style" auto_scroll="1" id="info_text">
+                <text style="text_bigger_style" auto_scroll="1" id="info_text">
                     <layout_hint size="960, 544" pos="0, 0" />
                 </text>
             </plane>
@@ -158,7 +158,7 @@
 					<layout_hint pos="0, 50" size="60, 60" />
 				</busyindicator>
 
-                <text style="text_normal_style" auto_scroll="1" id="info_text">
+                <text style="text_bigger_style" auto_scroll="1" id="info_text">
                     <layout_hint size="960, 448" pos="0, 0" />
                 </text>
 
@@ -206,6 +206,10 @@
 
 		<style_text textobj="text_normal_obj" id="text_normal_style">
 			<textobj font_size="30" bold="0" color="1, 1, 1, 1" align_x="1" align_y="1" ellipsis="1" id="text_normal_obj" />
+		</style_text>
+
+		<style_text textobj="text_normal_obj" id="text_bigger_style">
+			<textobj font_size="35" bold="0" color="1, 1, 1, 1" align_x="1" align_y="1" ellipsis="1" id="text_normal_obj" />
 		</style_text>
 		
 		<style_busyindicator color="1, 1, 1, 1" ball_size="15" id="base_style_busyindicator" />
