@@ -3,6 +3,7 @@
 #include "pagemgr.hpp"
 #include "common.hpp"
 #include "network.hpp"
+#include "eventhandler.hpp"
 
 extern Page *currPage;
 
@@ -155,4 +156,17 @@ void Utils::NetInit()
         curl_easy_setopt(curl, CURLOPT_PROGRESSFUNCTION, curlProgressCallback);
         curl_easy_setopt(curl, CURLOPT_NOPROGRESS, 0);
     }
+}
+
+SceInt32 Utils::AssignButtonHandler(Widget *button, void (*onPress)(void *), void *userDat)
+{
+    EventHandler *eh = new EventHandler();
+    eventcb callback;
+    callback.onPress = onPress;
+    callback.dat = userDat;
+
+    eh->pUserData = sce_paf_malloc(sizeof(callback));
+    sce_paf_memcpy(eh->pUserData, &callback, sizeof(callback));
+
+    return button->RegisterEventCallback(ON_PRESS_EVENT_ID, eh, 1);
 }

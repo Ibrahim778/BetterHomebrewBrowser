@@ -10,8 +10,6 @@ extern CornerButton *mainBackButton;
 extern CornerButton *settingsButton;
 extern Widget *mainScene;
 
-extern void buttonAssignHandler(Widget *widget, void (*onPress)(void *), void *userDat);
-
 int pageDepth;
 Page *currPage = SCE_NULL;
 
@@ -191,7 +189,7 @@ ImageButton *SelectionList::AddOption(const char *text, void(*onPress)(void *), 
     ImageButton *button = (ImageButton *)scrollViewBox->GetChildByNum(scrollViewBox->childNum - 1);
     button->SetLabel(&wstr);
     
-    buttonAssignHandler((Widget *)button, onPress, userDat);
+    Utils::AssignButtonHandler(button, onPress, userDat);
 
     return button;
 }

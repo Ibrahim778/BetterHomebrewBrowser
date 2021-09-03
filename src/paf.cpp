@@ -120,15 +120,3 @@ void initPlugin()
     fw->EnterRenderingLoop();
 }
 
-void buttonAssignHandler(Widget *widget, void (*onPress)(void *), void *userDat)
-{
-    EventHandler *eh = new EventHandler();
-    eventcb callback;
-    callback.onPress = onPress;
-    callback.dat = userDat;
-
-    eh->pUserData = sce_paf_malloc(sizeof(callback));
-    sce_paf_memcpy(eh->pUserData, &callback, sizeof(callback));
-
-    widget->RegisterEventCallback(ON_PRESS_EVENT_ID, eh, 1);
-}

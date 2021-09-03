@@ -103,7 +103,7 @@ linked_list::linked_list()
 
 void linked_list::printall()
 {
-#ifdef DEBUG
+#ifdef _DEBUG
     node *current = head;
     while (current != NULL)
     {
