@@ -137,8 +137,8 @@ Page::~Page()
         {
             this->pageThread->EndThread = true;
             this->pageThread->Join();
-            if(this->pageThread != NULL) delete this->pageThread;
         }
+        if(this->pageThread != NULL) delete this->pageThread;
     }
 
     if(OnDelete != NULL)
