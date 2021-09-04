@@ -40,14 +40,26 @@ void updateDarkMode()
     mainRoot->SetFilterColor(&col);
 }
 
-#define NET_READ_CHUNK_SIZE 256
+BUTTON_CB(DisplayInfo)
+{
+    new InfoPage((homeBrewInfo *)userDat, SCE_TRUE);
+}
 
 void PageListThread(void)
 {
+    if(list.num == 0)
+    {
+        SelectionList *listp = (SelectionList *)currPage;
+        new TextPage("Why is there nothing here?\n>:0");
+        delete listp;
+
+        return;
+    }
+
     node *n = list.head;
     for (int i = 0; i < list.num && n != NULL && !currPage->pageThread->EndThread; i++, n = n->next)
     {
-        n->button = ((SelectionList *)currPage)->AddOption(&n->widget.title, NULL, NULL, SCE_TRUE, SCE_TRUE);
+        n->button = ((SelectionList *)currPage)->AddOption(&n->widget.title, DisplayInfo, &n->widget, SCE_TRUE, SCE_TRUE);
         sceKernelDelayThread(1000); // To make sure it doesn't crash, paf is slow sometimes
     }
     currPage->busy->Stop();
@@ -67,16 +79,16 @@ void PageListThread(void)
                 Misc::OpenFile(&res, n->widget.icon0Local.data, SCE_O_RDONLY, 0777, NULL);
 
                 graphics::Texture tex;
+
                 graphics::Texture::CreateFromFile(&tex, mainPlugin->memoryPool, &res);
                 n->button->SetTextureBase(&tex);
+
 
                 delete res.localFile;
                 sce_paf_free(res.unk_04);
             }
             else
-            {
                 n->button->SetTextureBase(BrokenTex);
-            }
         }
         break;
     }
@@ -84,6 +96,8 @@ void PageListThread(void)
     default:
         break;
     }
+
+    currPage->pageThread->Join();
 }
 
 void DownloadThread(void)
@@ -119,7 +133,6 @@ void DownloadThread(void)
     }    
     case CBPSDB:
     {
-        currPage->busy->Stop();
         SceInt32 res = Utils::DownloadFile(CBPSDB_URL, DATA_PATH "/cbpsdb.csv");
         if(res < 0) break;
 

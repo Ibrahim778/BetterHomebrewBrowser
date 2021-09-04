@@ -20,9 +20,8 @@ typedef struct
     String icon0;
     String download_url;
     String options;
-
     String icon0Local;
-
+    String description;
 } homeBrewInfo;
 
 struct node

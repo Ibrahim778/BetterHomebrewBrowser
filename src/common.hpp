@@ -30,6 +30,12 @@
 #define LOADING_PAGE_ID "loading_template"
 #define LOADING_PAGE_TEXT "info_text"
 
+#define INFO_PAGE_ID "info_page"
+#define INFO_PAGE_ICON_ID "hb_icon"
+#define INFO_PAGE_DESCRIPTION_TEXT_ID "hb_description"
+#define INFO_PAGE_CREDITS_TEXT_ID "hb_credits"
+#define INFO_PAGE_SCREENSHOT_ID "hb_screenshot"
+
 #define TEXT_PAGE_NO_TITLE_ID "text_page_no_title"
 #define TEXT_PAGE_ID "text_page"
 #define TEXT_PAGE_TEXT "info_text"
@@ -48,8 +54,6 @@
 #define VITADB_URL "https://rinnegatamante.it/vitadb/list_hbs_json.php"
 #define VITADB_DOWNLOAD_ICONS_URL "https://vitadb.rinnegatamante.it/icons_zip.php"
 #define DATA_PATH "ux0:data/betterHomebrewBrowser"
-
-#define APPS_PER_PAGE 80
 
 #define TEMP_PATH "ux0:/temp"
 

@@ -243,6 +243,7 @@ void parseJson(const char *path)
         info->download_url.Set(rootval[i]["url"].getString().c_str());
         info->credits.Set(rootval[i]["author"].getString().c_str());
         info->options.Set(rootval[i]["data"].getString().c_str());
+        info->description.Set(rootval[i]["long_description"].getString().c_str());
     }
 }
 

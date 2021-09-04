@@ -3,6 +3,7 @@
 
 #include <paf.h>
 #include "utils.hpp"
+#include "parser.hpp" //For homebrewInfo type
 
 typedef enum 
 {
@@ -10,9 +11,9 @@ typedef enum
     PAGE_TYPE_TEXT_PAGE,
     PAGE_TYPE_TEXT_PAGE_WITH_TITLE,
     PAGE_TYPE_SELECTION_LIST_WITH_TITLE,
-    PAGE_TYPE_INFO,
     PAGE_TYPE_LOADING_SCREEN,
-    PAGE_TYPE_PROGRESS_PAGE
+    PAGE_TYPE_PROGRESS_PAGE,
+    PAGE_TYPE_HOMBREW_INFO
 } pageType;
 
 class Page
@@ -32,8 +33,25 @@ public:
 
     UtilThread *pageThread;
 
-    Page(pageType Type);
+    Page(pageType Type, SceBool = SCE_FALSE);
     ~Page();
+};
+
+class InfoPage : public Page
+{
+private:
+    homeBrewInfo *Info;
+    graphics::Texture *IconTex;
+public:
+    CompositeButton *ScreenShot;
+    Text *TitleText;
+    Button *DownloadButton;
+    Text *Description;
+    Plane *Icon;
+
+    InfoPage(homeBrewInfo *info, SceBool wait = SCE_FALSE);
+    ~InfoPage();
+
 };
 
 class SelectionList : public Page
@@ -98,7 +116,7 @@ public:
     static Plane *diagBG;
     static Dialog *diag;
     static Box *diagBox;
-    static bool showingDialog;
+    static SceBool showingDialog;
     static void initDialog();
     static void showDialog();
     static void hideDialog();

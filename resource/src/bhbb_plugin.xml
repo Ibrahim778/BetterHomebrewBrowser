@@ -173,6 +173,38 @@
 				</plane>
             </plane>
         </template>
+    
+        <template fast_open="1" id="info_page">
+            <plane style="_common_style_plane_transparent" id="page_root_plane">
+                <layout_hint size="960, 544" pos="0,0"/>
+
+				<busyindicator style="base_style_busyindicator" texture="_common_texture_busy" id="busy_indicator" >
+					<layout_hint pos="0, 0" size="60, 60" />
+				</busyindicator>
+
+                <plane style="_common_default_style_plane" id="hb_icon">
+                    <layout_hint anchor="1,2" size="80,80" pos="50,-50" />
+                </plane>
+
+                <composite_button style="_common_default_style_composite_button" id="hb_screenshot">
+                    <layout_hint anchor="0,0" size="240, 136" pos="0,0"/>
+                </composite_button>
+
+                <text style="text_normal_style" id="hb_description">
+                    <layout_hint anchor="0,1" pos="0, 100" size="960, 188" />
+                </text>
+
+				<plane style="_common_style_plane_transparent" id="plane_top">
+					<layout_hint align="0, 2" anchor="0, 2" size="960, 96" pos="0, 0" />
+					<text auto_scroll="1" style="text_normal_style" id="main_titlebar_text">
+						<layout_hint size="920, 0" anchor="1, 1" align="1, 1" adjust="0, 2" pos="20, 24" />
+					</text>
+					<plane style="plane_separator_style" id="plane_separator_top">
+						<layout_hint anchor="0, 1" align="0, 2" size="960, 2" pos="0, 0" />
+					</plane>
+				</plane>
+            </plane>
+        </template>
 
         <template fast_open="1" id="progress_template">
 			<plane style="_common_style_plane_transparent" id="page_root_plane">
@@ -205,11 +237,11 @@
     	</style_plane>
 
 		<style_text textobj="text_normal_obj" id="text_normal_style">
-			<textobj font_size="30" bold="0" color="1, 1, 1, 1" align_x="1" align_y="1" ellipsis="1" id="text_normal_obj" />
+			<textobj font_size="30" bold="0" color="1, 1, 1, 1" word_wrap="1" align_x="1" align_y="1" ellipsis="1" id="text_normal_obj" />
 		</style_text>
 
 		<style_text textobj="text_normal_obj" id="text_bigger_style">
-			<textobj font_size="35" bold="0" color="1, 1, 1, 1" align_x="1" align_y="1" ellipsis="1" id="text_normal_obj" />
+			<textobj font_size="35" bold="0" color="1, 1, 1, 1" word_wrap="1" align_x="1" align_y="1" ellipsis="1" id="text_normal_obj" />
 		</style_text>
 		
 		<style_busyindicator color="1, 1, 1, 1" ball_size="15" id="base_style_busyindicator" />
@@ -225,6 +257,8 @@
 			<planeobj scale_mode_y="3" scale_mode_x="3" size="80, 80" id="list_button_image" pos="-320, 0" />
 			<planeobj texture0="_common_texture_list_glow_70px" blend="2" id="list_button_glow" />
 		</style_image_button>
+    
+
 
 		<style_image_button glow_obj="list_button_glow" color="1, 1, 1, 1" layout_type_y="0" label_obj="list_button_label" bg_obj="list_button_bg" image_obj="list_button_image" image_margin="10" id="list_button_style_no_img">
 			<planeobj texture0="_common_texture_list_70px" id="list_button_bg" />
@@ -234,9 +268,9 @@
 		</style_image_button>
 
         <style_image_button layout_type_x="1" glow_obj="settings_option_style_button_item_glow" color="1, 1, 1, 1" layout_type_y="0" label_obj="settings_option_style_button_item_label" image_obj="settings_option_style_button_item_image" image_margin="10" id="settings_option_style_button">
-        <textobj line_space="4" font_size="28" bold="1" align_y="1" ellipsis="1" id="settings_option_style_button_item_label" />
-        <planeobj scale_mode_y="3" scale_mode_x="3" size="80, 80" id="settings_option_style_button_item_image" pos="0, 0" />
-        <planeobj texture0="_common_texture_list_glow_70px" blend="2" id="settings_option_style_button_item_glow" />
+            <textobj line_space="4" font_size="28" bold="1" align_y="1" ellipsis="1" id="settings_option_style_button_item_label" />
+            <planeobj scale_mode_y="3" scale_mode_x="3" size="80, 80" id="settings_option_style_button_item_image" pos="0, 0" />
+            <planeobj texture0="_common_texture_list_glow_70px" blend="2" id="settings_option_style_button_item_glow" />
         </style_image_button>
 
 	</styletable>

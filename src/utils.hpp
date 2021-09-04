@@ -34,6 +34,8 @@ public:
     static Widget *GetChildByHash(Widget *parent, SceUInt32 hash);
     static SceInt32 DownloadFile(const char *url, const char *destination, ProgressBar *progressBar = NULL);
     static SceInt32 SetWidgetLabel(Widget *widget, const char *text);
+    static SceInt32 SetWidgetLabel(Widget *widget, String *text);
+
     static SceInt32 AssignButtonHandler(Widget *widget, void (*OnPress)(void *) = SCE_NULL, void *userDat = SCE_NULL);
 };
 

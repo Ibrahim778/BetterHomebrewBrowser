@@ -10,26 +10,35 @@ extern CornerButton *mainBackButton;
 extern CornerButton *settingsButton;
 extern Widget *mainScene;
 
-int pageDepth;
+extern graphics::Texture *BrokenTex;
+
+SceInt32 pageDepth;
 Page *currPage = SCE_NULL;
 
 Box * PopupMgr::diagBox = SCE_NULL;
 Plane *PopupMgr::diagBG = SCE_NULL;
 Dialog *PopupMgr::diag = SCE_NULL;
-bool PopupMgr::showingDialog = SCE_FALSE;
+SceBool PopupMgr::showingDialog = SCE_FALSE;
 
 graphics::Texture *PopupMgr::checkmark = SCE_NULL;
 graphics::Texture *PopupMgr::transparent = SCE_NULL;
 
-#define DEFINE_PAGE(pageType, pageID)\
-case pageType:\
-{\
-search = Utils::GetParamWithHashFromId(pageID);\
-break;\
-}
+#define DEFINE_PAGE(PageType, pageID) case PageType:{search = Utils::GetParamWithHashFromId(pageID);break;}
 
-Page::Page(pageType page)
+Page::Page(pageType page, SceBool wait)
 {
+    if(wait)
+    {
+        if(currPage->pageThread != NULL)
+        {
+            if(currPage->pageThread->IsStarted())
+            {
+                //currPage->pageThread->EndThread = SCE_TRUE;
+                currPage->pageThread->Join();
+            }
+        }
+    }
+
     PrintFreeMem();
     type = page;
 
@@ -75,6 +84,8 @@ Page::Page(pageType page)
     DEFINE_PAGE(PAGE_TYPE_TEXT_PAGE, TEXT_PAGE_NO_TITLE_ID)
     
     DEFINE_PAGE(PAGE_TYPE_TEXT_PAGE_WITH_TITLE, TEXT_PAGE_ID)
+
+    DEFINE_PAGE(PAGE_TYPE_HOMBREW_INFO, INFO_PAGE_ID)
 
     default:
         break;
@@ -183,6 +194,7 @@ ImageButton *SelectionList::AddOption(const char *text, void(*onPress)(void *), 
 {
     String str;
     str.Set(text);
+
     WString wstr;
     str.ToWString(&wstr);
 
@@ -205,8 +217,9 @@ ImageButton *SelectionList::AddOption(const char *text, void(*onPress)(void *), 
     
     mainPlugin->AddWidgetFromTemplate(scrollViewBox, &e, &tinit);
     ImageButton *button = (ImageButton *)scrollViewBox->GetChildByNum(scrollViewBox->childNum - 1);
+
+    //Utils::SetWidgetLabel(button, text);
     button->SetLabel(&wstr);
-    
     Utils::AssignButtonHandler(button, onPress, userDat);
 
     return button;
@@ -214,7 +227,30 @@ ImageButton *SelectionList::AddOption(const char *text, void(*onPress)(void *), 
 
 ImageButton *SelectionList::AddOption(String *text, void(*onPress)(void *), void *userDat, SceBool isLong, SceBool needImage)
 {
-    return this->AddOption(text->data, onPress, userDat, isLong, needImage);
+    Plugin::TemplateInitParam tinit;
+    Resource::Element e;
+    if(isLong)
+    {
+        if(needImage)
+            e = Utils::GetParamWithHashFromId(LIST_BUTTON_LONG_TEMPLATE_IMG);
+        else
+            e = Utils::GetParamWithHashFromId(LIST_BUTTON_LONG_TEMPLATE);
+    }
+    else
+    {
+        if(needImage)
+            e = Utils::GetParamWithHashFromId(LIST_BUTTON_TEMPLATE_IMG);
+        else
+            e = Utils::GetParamWithHashFromId(LIST_BUTTON_TEMPLATE);
+    }
+    
+    mainPlugin->AddWidgetFromTemplate(scrollViewBox, &e, &tinit);
+    ImageButton *button = (ImageButton *)scrollViewBox->GetChildByNum(scrollViewBox->childNum - 1);
+ 
+    Utils::SetWidgetLabel(button, text);   
+    Utils::AssignButtonHandler(button, onPress, userDat);
+
+    return button;
 }
 
 SceVoid SelectionList::DisableAllButtons()
@@ -285,6 +321,54 @@ void Page::Init()
     currPage = SCE_NULL;
 
     mainBackButton->PlayAnimationReverse(0, Widget::Animation_Reset);
+}
+
+BUTTON_CB(Test)
+{
+    printf("Hello Plane!\n");
+}
+
+InfoPage::InfoPage(homeBrewInfo *info, SceBool wait):Page(PAGE_TYPE_HOMBREW_INFO, wait)
+{
+    this->Info = info;
+
+    TitleText = (Text *)Utils::GetChildByHash(root, Utils::GetHashById(PAGE_TITLE_ID));
+    Icon = (Plane *)Utils::GetChildByHash(root, Utils::GetHashById(INFO_PAGE_ICON_ID));
+    Description = (Text *)Utils::GetChildByHash(root, Utils::GetHashById(INFO_PAGE_DESCRIPTION_TEXT_ID));
+    ScreenShot = (CompositeButton *)Utils::GetChildByHash(root, Utils::GetHashById(INFO_PAGE_SCREENSHOT_ID));
+
+    char Title[50] = {0};
+    sce_paf_snprintf(Title, 50, "%s By: %s", Info->title.data, Info->credits.data);
+
+    Utils::SetWidgetLabel(TitleText, Title);
+    Utils::SetWidgetLabel(Description, &Info->description);
+
+    if(checkFileExist(info->icon0Local.data))
+    {
+        Misc::OpenResult res;
+        Misc::OpenFile(&res, info->icon0Local.data, SCE_O_RDONLY, 0777, NULL);
+    
+        IconTex = new graphics::Texture();
+
+        graphics::Texture::CreateFromFile(IconTex, mainPlugin->memoryPool, &res);
+        Icon->SetTextureBase(IconTex);
+
+
+        delete res.localFile;
+        sce_paf_free(res.unk_04);
+    }
+    else
+    {
+        Icon->SetTextureBase(BrokenTex);
+        IconTex = SCE_NULL;
+    }
+    //Utils::AssignButtonHandler(ScreenShot, Test);
+    this->busy->Stop();
+}
+
+InfoPage::~InfoPage()
+{
+    if(IconTex != SCE_NULL) delete IconTex;
 }
 
 LoadingPage::LoadingPage(const char *info):Page(PAGE_TYPE_LOADING_SCREEN)

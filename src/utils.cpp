@@ -112,6 +112,15 @@ SceInt32 Utils::SetWidgetLabel(Widget *widget, const char *text)
     return widget->SetLabel(&wstr);
 }
 
+SceInt32 Utils::SetWidgetLabel(Widget *widget, String *text)
+{
+    WString wstr;
+    text->ToWString(&wstr);
+
+    return widget->SetLabel(&wstr);
+}
+
+
 void Utils::MakeDataDirs()
 {
     if(!checkFileExist(DATA_PATH))
