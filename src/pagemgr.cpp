@@ -49,7 +49,7 @@ Page::Page(pageType page, SceBool wait)
     pageDepth ++;
     skipAnimation = SCE_FALSE;
 
-    currPage->pageThread = new UtilThread(SCE_KERNEL_COMMON_QUEUE_LOWEST_PRIORITY, SCE_KERNEL_1MiB, "BHBB_PAGE_THREAD");
+    currPage->pageThread = new UtilThread(SCE_KERNEL_COMMON_QUEUE_LOWEST_PRIORITY, SCE_KERNEL_16KiB, "BHBB_PAGE_THREAD");
     currPage->pageThread->Entry = SCE_NULL;
     currPage->pageThread->EndThread = SCE_FALSE;
 
@@ -86,6 +86,8 @@ Page::Page(pageType page, SceBool wait)
     DEFINE_PAGE(PAGE_TYPE_TEXT_PAGE_WITH_TITLE, TEXT_PAGE_ID)
 
     DEFINE_PAGE(PAGE_TYPE_HOMBREW_INFO, INFO_PAGE_ID)
+    
+    DEFINE_PAGE(PAGE_TYPE_PICTURE_PAGE, PICTURE_PAGE_ID)
 
     default:
         break;
@@ -323,9 +325,106 @@ void Page::Init()
     mainBackButton->PlayAnimationReverse(0, Widget::Animation_Reset);
 }
 
-BUTTON_CB(Test)
+SceInt32 PicturePage::AddPicture(graphics::Texture *tex)
 {
-    printf("Hello Plane!\n");
+    Plugin::TemplateInitParam tinit;
+    Resource::Element search = Utils::GetParamWithHashFromId(PICTURE_PAGE_PICTURE_TEMPLATE);
+
+    mainPlugin->AddWidgetFromTemplate(listRoot, &search, &tinit);
+
+    Plane *p = (Plane *)listRoot->GetChildByNum(listRoot->childNum - 1);
+    return p->SetTextureBase(tex);
+}
+
+PicturePage::PicturePage():Page(PAGE_TYPE_PICTURE_PAGE)
+{
+    listRoot = (Box *)Utils::GetChildByHash(root, Utils::GetHashById(LIST_SCROLL_BOX));
+    busy->Stop();
+}
+
+PicturePage::~PicturePage(){}
+
+void DownloadRemainingScreenShotThread(void)
+{
+    InfoPage *info = (InfoPage *)currPage->prev;
+    for(int i = 1; i < info->ScreenshotNum - 1; i++)
+    {
+        Utils::DownloadFile(info->ScreenShotURLS[i], info->ScreenshotPaths[i]);
+
+        if(checkFileExist(info->ScreenshotPaths[i]))
+        {
+            Misc::OpenResult res;
+            Misc::OpenFile(&res, info->ScreenshotPaths[i], SCE_O_RDONLY, 0777, NULL);
+
+            graphics::Texture tex;
+            graphics::Texture::CreateFromFile(&tex, mainPlugin->memoryPool, &res);
+
+            delete res.localFile;
+            sce_paf_free(res.unk_04);
+
+            ((PicturePage *)currPage)->AddPicture(&tex);
+        }
+    }
+}
+
+BUTTON_CB(ShowScreenShotPage)
+{
+    graphics::Texture *screenshot1 = &((InfoPage *)currPage)->mainScreenshot;
+    PicturePage *pp = new PicturePage();
+    pp->AddPicture(screenshot1);
+    pp->pageThread->Entry = DownloadRemainingScreenShotThread;
+    pp->pageThread->Start();
+}
+
+void ScreenshotDownloadThread(void)
+{
+    InfoPage *page = (InfoPage *)currPage;
+    Utils::ResetStrtok();
+
+    page->ScreenshotNum = Utils::getStrtokNum(';', page->Info->screenshot_url.data);
+    page->ScreenShotURLS = (char **)sce_paf_malloc(page->ScreenshotNum * sizeof(char *));
+    page->ScreenshotPaths = (char **)sce_paf_malloc(page->ScreenshotNum * sizeof(char *));
+
+    //Download all textures and save the path in an array
+    for(int i = 0; !currPage->pageThread->EndThread; i++)
+    {
+        page->ScreenshotPaths[i] = (char *)sce_paf_malloc(SCE_IO_MAX_PATH_BUFFER_SIZE);
+        sce_paf_memset(page->ScreenshotPaths[i], 0, SCE_IO_MAX_PATH_BUFFER_SIZE);
+
+        page->ScreenShotURLS[i] = (char *)sce_paf_malloc(250);
+        sce_paf_memset(page->ScreenShotURLS[i], 0, 250);
+
+        char *str = Utils::strtok(';', page->Info->screenshot_url.data);
+        if(str == NULL) break;
+
+        sce_paf_snprintf(page->ScreenshotPaths[i], SCE_IO_MAX_PATH_BUFFER_SIZE, DATA_PATH "/%s", str);
+        sce_paf_snprintf(page->ScreenShotURLS[i], 250, "https://rinnegatamante.it/vitadb/%s", str);
+        sce_paf_free(str);
+
+    }
+    CURLcode res = (CURLcode)Utils::DownloadFile(page->ScreenShotURLS[0], page->ScreenshotPaths[0]);
+    if(res != CURLE_OK)
+    {
+        new TextPage(curl_easy_strerror(res), "Screenshot Download Error");
+        return;
+    }
+
+    if(checkFileExist(page->ScreenshotPaths[0]))
+    {
+        Misc::OpenResult res;
+        SceInt32 err = 0;
+        Misc::OpenFile(&res, page->ScreenshotPaths[0], SCE_O_RDONLY, 0777, &err);
+        printf("Err = 0x%X\n", err);
+
+        graphics::Texture::CreateFromFile(&page->mainScreenshot, mainPlugin->memoryPool, &res);
+
+        delete res.localFile;
+        sce_paf_free(res.unk_04);
+
+        page->ScreenShot->SetTextureBase(&page->mainScreenshot);
+    }
+
+    Utils::AssignButtonHandler(page->ScreenShot, ShowScreenShotPage);
 }
 
 InfoPage::InfoPage(homeBrewInfo *info, SceBool wait):Page(PAGE_TYPE_HOMBREW_INFO, wait)
@@ -336,11 +435,16 @@ InfoPage::InfoPage(homeBrewInfo *info, SceBool wait):Page(PAGE_TYPE_HOMBREW_INFO
     Icon = (Plane *)Utils::GetChildByHash(root, Utils::GetHashById(INFO_PAGE_ICON_ID));
     Description = (Text *)Utils::GetChildByHash(root, Utils::GetHashById(INFO_PAGE_DESCRIPTION_TEXT_ID));
     ScreenShot = (CompositeButton *)Utils::GetChildByHash(root, Utils::GetHashById(INFO_PAGE_SCREENSHOT_ID));
+    Credits = (Text *)Utils::GetChildByHash(root, Utils::GetHashById(INFO_PAGE_CREDITS_TEXT_ID));
 
-    char Title[50] = {0};
-    sce_paf_snprintf(Title, 50, "%s By: %s", Info->title.data, Info->credits.data);
+    Utils::SetWidgetLabel(TitleText, &Info->title);
 
-    Utils::SetWidgetLabel(TitleText, Title);
+    char credits[50] = {0};
+    sce_paf_snprintf(credits, 50, "By: %s", Info->credits.data);
+
+    Utils::SetWidgetLabel(Credits, credits);
+
+    Utils::SetWidgetSize(Description, 960, (Info->description.length / 55) * 60);
     Utils::SetWidgetLabel(Description, &Info->description);
 
     if(checkFileExist(info->icon0Local.data))
@@ -348,27 +452,48 @@ InfoPage::InfoPage(homeBrewInfo *info, SceBool wait):Page(PAGE_TYPE_HOMBREW_INFO
         Misc::OpenResult res;
         Misc::OpenFile(&res, info->icon0Local.data, SCE_O_RDONLY, 0777, NULL);
     
-        IconTex = new graphics::Texture();
+        graphics::Texture IconTex;
 
-        graphics::Texture::CreateFromFile(IconTex, mainPlugin->memoryPool, &res);
-        Icon->SetTextureBase(IconTex);
-
-
+        graphics::Texture::CreateFromFile(&IconTex, mainPlugin->memoryPool, &res);
+        Icon->SetTextureBase(&IconTex);        
         delete res.localFile;
         sce_paf_free(res.unk_04);
     }
     else
     {
         Icon->SetTextureBase(BrokenTex);
-        IconTex = SCE_NULL;
     }
-    //Utils::AssignButtonHandler(ScreenShot, Test);
+
+    ScreenShotURLS = NULL;
+    ScreenshotPaths = NULL;
+    if(Info->screenshot_url.length != 0)
+    {
+        currPage->pageThread->Entry = ScreenshotDownloadThread;
+        currPage->pageThread->Start();
+    }
+    else
+    {
+        Utils::SetWidgetSize(ScreenShot, 0, 0);
+        ScreenShot->Disable(0);
+    }
     this->busy->Stop();
 }
 
 InfoPage::~InfoPage()
 {
-    if(IconTex != SCE_NULL) delete IconTex;
+    if(ScreenshotPaths == NULL) return;
+    for(int i = 0; i < ScreenshotNum ; i++)
+    {
+        if(ScreenshotPaths[i] != NULL) sce_paf_free(ScreenshotPaths[i]);
+    }
+    sce_paf_free(ScreenshotPaths);
+
+    if(ScreenShotURLS == NULL) return;
+    for (int i = 0; i < ScreenshotNum; i++)
+    {
+        if(ScreenShotURLS[i] != NULL) sce_paf_free(ScreenShotURLS[i]);
+    }
+    sce_paf_free(ScreenShotURLS);    
 }
 
 LoadingPage::LoadingPage(const char *info):Page(PAGE_TYPE_LOADING_SCREEN)
