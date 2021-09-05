@@ -234,16 +234,14 @@ void parseJson(const char *path)
         info->id.Set(rootval[i]["id"].getString().c_str());
         info->icon0.Set(rootval[i]["icon"].getString().c_str());
 
-        char localIcon0[SCE_IO_MAX_PATH_BUFFER_SIZE] = {0};
-        sce_paf_snprintf(localIcon0, SCE_IO_MAX_PATH_BUFFER_SIZE, VITADB_ICON_SAVE_PATH "/%s", rootval[i]["icon"].getString().c_str());
-
-        info->icon0Local.Set(localIcon0);
+        info->icon0Local.Setf(VITADB_ICON_SAVE_PATH "/%s", rootval[i]["icon"].getString().c_str());
 
         info->title.Set(rootval[i]["name"].getString().c_str());
         info->download_url.Set(rootval[i]["url"].getString().c_str());
         info->credits.Set(rootval[i]["author"].getString().c_str());
         info->options.Set(rootval[i]["data"].getString().c_str());
         info->description.Set(rootval[i]["long_description"].getString().c_str());
+        info->screenshot_url.Set(rootval[i]["screenshots"].getString().c_str());
     }
 }
 
@@ -286,10 +284,8 @@ void parseCSV(const char *path)
 
                 info->titleID.Set(titleID);
 
-                char texPath[SCE_IO_MAX_PATH_BUFFER_SIZE] = {0};
-                sce_paf_snprintf(texPath, SCE_IO_MAX_PATH_BUFFER_SIZE, CBPSDB_ICON_SAVE_PATH "/%s.png", info->id.data);
+                info->icon0Local.Setf(VITADB_ICON_SAVE_PATH "/%s.png",  info->id.data);
 
-                info->icon0Local.Set(texPath);
             }
         }
 

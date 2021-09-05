@@ -1,5 +1,17 @@
 #include <stdlib.h>
 #include <string.h>
+#include "csv.h"
+
+char *paf_strdup(const char *s)
+{
+  size_t len = sce_paf_strlen (s) + 1;
+  void *new = sce_paf_malloc (len);
+
+  if (new == NULL)
+    return NULL;
+
+  return (char *)sce_paf_memcpy(new, s, len);
+}
 
 void free_csv_line( char **parsed ) {
     char **ptr;
@@ -12,6 +24,7 @@ void free_csv_line( char **parsed ) {
 }
 
 static int count_fields( const char *line ) {
+    
     const char *ptr;
     int cnt, fQuote;
 

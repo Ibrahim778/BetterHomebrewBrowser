@@ -57,10 +57,10 @@ void PageListThread(void)
     }
 
     node *n = list.head;
-    for (int i = 0; i < list.num && n != NULL && !currPage->pageThread->EndThread; i++, n = n->next)
+    for (int i = 0; i < list.num && !currPage->pageThread->EndThread; i++, n = n->next)
     {
         n->button = ((SelectionList *)currPage)->AddOption(&n->widget.title, DisplayInfo, &n->widget, SCE_TRUE, SCE_TRUE);
-        sceKernelDelayThread(1000); // To make sure it doesn't crash, paf is slow sometimes
+        sceKernelDelayThread(5000); // To make sure it doesn't crash, paf is slow sometimes
     }
     currPage->busy->Stop();
 
@@ -214,7 +214,7 @@ void onReady()
 
 void PrintFreeMem()
 {
-    /*
+    
     printf("Free Mem: %lu\n", fwAllocator->GetFreeSize());
-    */
+    
 }

@@ -13,15 +13,16 @@ typedef enum
 
 typedef struct
 {
-    String id;
-    String titleID;
-    String title;
-    String credits;
-    String icon0;
-    String download_url;
-    String options;
-    String icon0Local;
-    String description;
+    paf::String id;
+    paf::String titleID;
+    paf::String title;
+    paf::String credits;
+    paf::String icon0;
+    paf::String download_url;
+    paf::String options;
+    paf::String icon0Local;
+    paf::String description;
+    paf::String screenshot_url;
 } homeBrewInfo;
 
 struct node

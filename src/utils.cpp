@@ -8,6 +8,7 @@
 extern Page *currPage;
 
 CURL *Utils::curl = SCE_NULL;
+SceInt32 Utils::currStok = 0;
 
 SceUInt32 Utils::GetHashById(const char *id)
 {
@@ -85,7 +86,7 @@ size_t curlWriteCB(void *datPtr, size_t chunkSize, size_t chunkNum, void *userDa
 
 SceInt32 Utils::DownloadFile(const char *url, const char *dest, ProgressBar *progressBar)
 {
-
+    printf("Downloading from:\n%sto:\n%s\n", url, dest);
     if(curl == NULL) return -1;
 
     SceUID file = sceIoOpen(dest, SCE_O_WRONLY | SCE_O_CREAT | SCE_O_TRUNC, 0777);
@@ -120,6 +121,41 @@ SceInt32 Utils::SetWidgetLabel(Widget *widget, String *text)
     return widget->SetLabel(&wstr);
 }
 
+void Utils::ResetStrtok()
+{
+    currStok = 0;
+}
+
+int Utils::getStrtokNum(char splitter, char *str)
+{
+    int ret = 0; 
+    for (int i = 0; i < sce_paf_strlen(str); i++)
+    {
+        if(str[i] == splitter)
+            ret++;
+    }
+
+    return ret + 1;
+}
+
+char *Utils::strtok(char splitter, char *str)
+{
+    int len = sce_paf_strlen(str);
+    for (int i = currStok; i <= len; i++)
+    {
+        if(str[i] == splitter || str[i] == '\0')
+        {
+            char *s = (char *)sce_paf_malloc((i - currStok) + 1);
+            sce_paf_memset(s, 0, (i - currStok) + 1 );
+
+            sce_paf_memcpy(s, str + sizeof(char) * currStok, (i - currStok));
+            currStok = i + 1; 
+            return s;
+        }
+    }
+
+    return NULL;
+}
 
 void Utils::MakeDataDirs()
 {
@@ -127,6 +163,8 @@ void Utils::MakeDataDirs()
         sceIoMkdir(DATA_PATH, 0777);
     if(!checkFileExist(ICON_SAVE_PATH))
         sceIoMkdir(ICON_SAVE_PATH, 0777);
+    if(!checkFileExist(SCREENSHOT_SAVE_PATH))
+        sceIoMkdir(SCREENSHOT_SAVE_PATH, 0777);
 }
 
 void Utils::OverClock()
@@ -165,6 +203,17 @@ void Utils::NetInit()
         curl_easy_setopt(curl, CURLOPT_PROGRESSFUNCTION, curlProgressCallback);
         curl_easy_setopt(curl, CURLOPT_NOPROGRESS, 0);
     }
+}
+
+SceInt32 Utils::SetWidgetSize(Widget *widget, SceFloat x, SceFloat y, SceFloat z, SceFloat w)
+{
+    SceFVector4 v;
+    v.x = x;
+    v.y = y;
+    v.z = z;
+    v.w = w;
+
+    return widget->SetSize(&v);
 }
 
 SceInt32 Utils::AssignButtonHandler(Widget *button, void (*onPress)(void *), void *userDat)

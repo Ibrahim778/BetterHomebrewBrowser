@@ -66,7 +66,7 @@ BUTTON_CB(DarkModeSelector)
 
 BUTTON_CB(TextPageNoTitle)
 {
-    new TextPage("Hello World!");
+    new PicturePage();
 }
 
 BUTTON_CB(TextPageWithTitle)

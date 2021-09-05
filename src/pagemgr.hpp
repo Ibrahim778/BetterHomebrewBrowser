@@ -13,7 +13,8 @@ typedef enum
     PAGE_TYPE_SELECTION_LIST_WITH_TITLE,
     PAGE_TYPE_LOADING_SCREEN,
     PAGE_TYPE_PROGRESS_PAGE,
-    PAGE_TYPE_HOMBREW_INFO
+    PAGE_TYPE_HOMBREW_INFO,
+    PAGE_TYPE_PICTURE_PAGE
 } pageType;
 
 class Page
@@ -37,15 +38,30 @@ public:
     ~Page();
 };
 
+class PicturePage : public Page
+{
+public:
+    Box *listRoot;
+
+    SceInt32 AddPicture(graphics::Texture *tex);
+
+    PicturePage();
+    ~PicturePage();
+};
+
 class InfoPage : public Page
 {
-private:
-    homeBrewInfo *Info;
-    graphics::Texture *IconTex;
 public:
+    int ScreenshotNum;
+    char **ScreenShotURLS;
+    char **ScreenshotPaths;
+    graphics::Texture mainScreenshot;
+
+    homeBrewInfo *Info;
     CompositeButton *ScreenShot;
-    Text *TitleText;
     Button *DownloadButton;
+    Text *TitleText;
+    Text *Credits;
     Text *Description;
     Plane *Icon;
 

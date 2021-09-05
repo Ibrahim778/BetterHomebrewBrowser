@@ -46,6 +46,9 @@
 #define PROGRESS_BAR_PAGE_PLANE "progressbar_plane"
 #define PROGRESS_PAGE_BAR_TEMPLATE "progress_page_bar_template"
 
+#define PICTURE_PAGE_ID "picture_list_page_template"
+#define PICTURE_PAGE_PICTURE_TEMPLATE "picture_page_picture_template"
+
 #define NEXT_BUTTON_ID "button_top_right"
 #define PREV_BUTTON_ID "button_top_left"
 
@@ -54,6 +57,7 @@
 #define VITADB_URL "https://rinnegatamante.it/vitadb/list_hbs_json.php"
 #define VITADB_DOWNLOAD_ICONS_URL "https://vitadb.rinnegatamante.it/icons_zip.php"
 #define DATA_PATH "ux0:data/betterHomebrewBrowser"
+#define SCREENSHOT_SAVE_PATH DATA_PATH "/screenshots"
 
 #define TEMP_PATH "ux0:/temp"
 

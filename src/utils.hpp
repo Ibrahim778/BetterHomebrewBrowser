@@ -22,11 +22,15 @@ class Utils
 {
 private:
     static CURL *curl;
+    static SceInt32 currStok;
 public:
     static void OverClock();
     static void UnderClock();
     static void MakeDataDirs();
     static void NetInit();
+    static int getStrtokNum(char splitter, char *str);
+    static char *strtok(char splitter, char *str);
+    static void ResetStrtok();
     static SceUInt32 GetHashById(const char *id);    
     static Resource::Element GetParamWithHashFromId(const char *id);
     static Resource::Element GetParamWithHash(SceUInt32 hash);
@@ -35,6 +39,7 @@ public:
     static SceInt32 DownloadFile(const char *url, const char *destination, ProgressBar *progressBar = NULL);
     static SceInt32 SetWidgetLabel(Widget *widget, const char *text);
     static SceInt32 SetWidgetLabel(Widget *widget, String *text);
+    static SceInt32 SetWidgetSize(Widget *widget, SceFloat x, SceFloat y, SceFloat z = 0.0f, SceFloat w = 0.0f);
 
     static SceInt32 AssignButtonHandler(Widget *widget, void (*OnPress)(void *) = SCE_NULL, void *userDat = SCE_NULL);
 };

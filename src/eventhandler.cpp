@@ -36,6 +36,7 @@ void BackButtonEventHandler::onGet(SceInt32 , Widget *self, SceInt32, ScePVoid p
     DELETE_PAGE(PAGE_TYPE_LOADING_SCREEN, LoadingPage);
     DELETE_PAGE(PAGE_TYPE_PROGRESS_PAGE, ProgressPage);
     DELETE_PAGE(PAGE_TYPE_HOMBREW_INFO, InfoPage);
+    DELETE_PAGE(PAGE_TYPE_PICTURE_PAGE, PicturePage);
     
     default:
         break;

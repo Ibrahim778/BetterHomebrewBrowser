@@ -1,5 +1,6 @@
 #include <stdlib.h>
 #include <string.h>
+#include "csv.h"
 
 /*
  * Given a string which might contain unescaped newlines, split it up into
