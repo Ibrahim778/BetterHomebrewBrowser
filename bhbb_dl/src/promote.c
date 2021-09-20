@@ -46,7 +46,7 @@ typedef struct ScePafInit {
 	SceSize global_heap_size;
 	int a2;
 	int a3;
-	int use_gxm;
+	int cdlg_mode;
 	int heap_opt_param1;
 	int heap_opt_param2;
 } ScePafInit; // size is 0x18
@@ -186,7 +186,7 @@ static int loadScePaf() {
 	initParam.a2 = 0x0000EA60;
 	initParam.a3 = 0x00040000;
 
-    initParam.use_gxm = SCE_FALSE;
+    initParam.cdlg_mode = SCE_FALSE;
 
     initParam.heap_opt_param1 = 0;
     initParam.heap_opt_param2 = 0;

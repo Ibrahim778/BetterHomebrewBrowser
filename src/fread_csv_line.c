@@ -1,4 +1,5 @@
 #include <kernel.h>
+#include <paf.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -9,7 +10,7 @@
 do\
 {\
     if ( read_ptr == read_end ) {\
-        fread_len = fread( read_buf, sizeof(char), READ_BLOCK_SIZE, fp );\
+        fread_len = sce_paf_fread( read_buf, sizeof(char), READ_BLOCK_SIZE, fp );\
         if ( fread_len < READ_BLOCK_SIZE ) {\
             read_buf[fread_len] = '\0';\
         }\

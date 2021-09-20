@@ -32,7 +32,7 @@ void initPaf()
 	initParam.a2 = 0x0000EA60;
 	initParam.a3 = 0x00040000;
 
-    initParam.use_gxm = SCE_FALSE;
+    initParam.cdlg_mode = SCE_FALSE;
 
     initParam.heap_opt_param1 = 0;
     initParam.heap_opt_param2 = 0;
@@ -41,7 +41,7 @@ void initPaf()
     opt.flags = 0;
     opt.result = &load_res;
 
-    res = _sceSysmoduleLoadModuleInternalWithArg(SCE_SYSMODULE_INTERNAL_PAF, sizeof(initParam), &initParam, &opt);
+    res = sceSysmoduleLoadModuleInternalWithArg(SCE_SYSMODULE_INTERNAL_PAF, sizeof(initParam), &initParam, &opt);
 
     if(res < 0 || load_res < 0)
     {
@@ -96,7 +96,7 @@ void initPlugin()
 
     Framework * fw = new Framework(&fwParam);
 
-    fw->LoadCommonResourceAsync();
+    fw->LoadCommonResource();
     fwAllocator = fw->defaultAllocator;
 	SceAppUtilInitParam init;
 	SceAppUtilBootParam boot;

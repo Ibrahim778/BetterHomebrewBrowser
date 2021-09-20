@@ -8,22 +8,22 @@ void initMusic()
 {
     SceInt32 ret = -1;
 
-    ret = sceCustomMusicServiceInitialize(0);
+    ret = sceMusicInternalAppInitialize(0);
     if(ret < 0) LOG_ERROR("AUDIO_INIT", ret);
 
-    SceMusicCoreCustomOpt optParams;
+    SceMusicOpt optParams;
     sceClibMemset(&optParams, 0, 0x10);
 
     optParams.flag = -1;
 
-    ret = sceCustomMusicCoreBgmOpen((char *)MUSIC_PATH, &optParams);
+    ret = sceMusicInternalAppSetUri((char *)MUSIC_PATH, &optParams);
     if(ret < 0) LOG_ERROR("CORE_OPEN", ret);
 
-    ret = sceCustomMusicCoreBgmSetAudioVolume(MAX_VOL);
+    ret = sceMusicInternalAppSetVolume(SCE_AUDIO_VOLUME_0DB);
     if(ret < 0) LOG_ERROR("SET_VOL", ret);
 
-    ret = sceCustomMusicCoreBgmSetParam2(1);
-    if(ret < 0) LOG_ERROR("SET_PARAM_2", ret);
+    ret = sceMusicInternalAppSetRepeatMode(SCE_MUSIC_REPEAT_ONE);
+    if(ret < 0) LOG_ERROR("SET_REPEAT_MODE", ret);
 }
 
 void updateMusic()
@@ -31,12 +31,12 @@ void updateMusic()
     SceInt32 ret = -1;
     if(conf.enableMusic)
     {
-        ret = sceCustomMusicCoreSendEvent(SCE_MUSICCORE_EVENTID_DEFAULT, 0);
+        ret = sceMusicInternalAppSetPlaybackCommand(SCE_MUSIC_EVENTID_DEFAULT, 0);
         if(ret < 0) LOG_ERROR("SEND_EVENT_PLAY", ret);
     }
     else
     {
-        ret = sceCustomMusicCoreSendEvent(SCE_MUSICCORE_EVENTID_STOP, 0);
+        ret = sceMusicInternalAppSetPlaybackCommand(SCE_MUSIC_EVENTID_STOP, 0);
         if(ret < 0) LOG_ERROR("SEND_EVENT_STOP", ret);
     }
     

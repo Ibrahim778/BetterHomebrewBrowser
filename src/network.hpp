@@ -10,6 +10,7 @@
 
 #define MODULE_PATH "vs0:data/external/webcore/ScePsp2Compat.suprx"
 #define LIBC_PATH "vs0:sys/external/libc.suprx"
+#define FIOS2_PATH "vs0:sys/external/libfios2.suprx"
 #define URL_MAX_SIZE 0x400
 
 // Loads ScePsp2Compat.suprx if not loadeed

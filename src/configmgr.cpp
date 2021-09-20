@@ -38,7 +38,7 @@ void GetConfig(userConfig *confOut)
     }
     else
     {
-        SceUID file = sceIoOpen(CONFIG_SAVE_PATH, SCE_FIOS_O_RDONLY, 0777);
+        SceUID file = sceIoOpen(CONFIG_SAVE_PATH, SCE_O_RDONLY, 0);
         sceIoRead(file, confOut, sizeof(userConfig));
         sceIoClose(file);
     }

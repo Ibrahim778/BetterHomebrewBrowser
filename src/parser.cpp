@@ -2,6 +2,7 @@
 #include "main.hpp"
 #include "pagemgr.hpp"
 #include <stdio.h>
+#include <paf.h>
 #include "csv.h"
 #include "common.hpp"
 #include <json.h>
@@ -249,7 +250,7 @@ void parseCSV(const char *path)
 {
     list.clear();
 
-    FILE *file = fopen(path, "rb");
+    FILE *file = sce_paf_fopen(path, "rb");
     if(file == NULL) return;
 
     int done = 0;
@@ -294,5 +295,7 @@ void parseCSV(const char *path)
             free_csv_line(parsed);
 
     }
+
+	sce_paf_fclose(file);
 }
  
