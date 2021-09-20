@@ -10,6 +10,7 @@
 #include <curl/curl.h>
 #include "Archives.hpp"
 #include "notifmgr.hpp"
+#include <appmgr.h>
 #include <promoterutil.h>
 
 #define EXTRACT_PATH "ux0:temp/app"
@@ -169,5 +170,5 @@ int main()
     }
     
 
-    return 0;
+    return sceAppMgrDestroyAppByAppId(-2);
 }
