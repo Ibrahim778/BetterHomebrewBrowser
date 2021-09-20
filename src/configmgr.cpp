@@ -3,7 +3,7 @@
 #include "common.hpp"
 
 short userDownloadIconGapDefault = 6;
-DB_Type userDbDefault = CBPSDB;
+DB_Type userDbDefault = VITADB;
 
 void WriteConfig(userConfig *conf)
 {
@@ -15,7 +15,9 @@ void WriteConfig(userConfig *conf)
 void WriteDefaultConfig()
 {
     userConfig conf;
-    conf.darkMode = false;
+    conf.enableScreenshots = false;
+    conf.enableIcons = true;
+    conf.enableMusic = true;
     conf.db = userDbDefault;
     conf.iconDownloadHourGap = userDownloadIconGapDefault;
 
@@ -30,7 +32,7 @@ void GetConfig(userConfig *confOut)
     {
         confOut->db = userDbDefault;
         confOut->iconDownloadHourGap = userDownloadIconGapDefault;
-        confOut->darkMode = false;
+        confOut->enableMusic = false;
 
         WriteDefaultConfig();
     }

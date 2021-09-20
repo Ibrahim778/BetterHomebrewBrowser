@@ -6,6 +6,7 @@
 #include "parser.hpp"
 #include "configmgr.hpp"
 #include "network.hpp"
+#include "audiomgr.hpp"
 #include "Archives.hpp"
 #include "timemgr.hpp"
 
@@ -19,25 +20,20 @@ extern graphics::Texture *BrokenTex;
 
 extern Allocator *fwAllocator;
 
+graphics::Texture **listTexs;
+
 userConfig conf;
+
 
 int main()
 {
+    GetConfig(&conf);
     initMusic();
+    updateMusic();
     initPaf();
     initPlugin();
 
     return 0;
-}
-
-void updateDarkMode()
-{
-    Widget::Color col;
-    if(conf.darkMode)
-        col = Utils::makeSceColor(.5f, .5f, .5f, .5f);
-    else col = Utils::makeSceColor(1,1,1,1);  
-
-    mainRoot->SetFilterColor(&col);
 }
 
 BUTTON_CB(DisplayInfo)
@@ -45,24 +41,39 @@ BUTTON_CB(DisplayInfo)
     new InfoPage((homeBrewInfo *)userDat, SCE_TRUE);
 }
 
+void DeleteTexs(void)
+{
+    for (int i = 0; i < list.num - 1; i++)
+    {
+        if(listTexs[i] != NULL)
+        {
+            delete listTexs[i];
+        }    
+    }
+    delete[] listTexs;
+}
+
 void PageListThread(void)
 {
+    SelectionList *listp = (SelectionList *)currPage;
     if(list.num == 0)
     {
-        SelectionList *listp = (SelectionList *)currPage;
-        new TextPage("Why is there nothing here?\n>:0");
+        new TextPage("Why is there nothing here?");
         delete listp;
-
         return;
     }
 
     node *n = list.head;
     for (int i = 0; i < list.num && !currPage->pageThread->EndThread; i++, n = n->next)
     {
-        n->button = ((SelectionList *)currPage)->AddOption(&n->widget.title, DisplayInfo, &n->widget, SCE_TRUE, SCE_TRUE);
-        sceKernelDelayThread(5000); // To make sure it doesn't crash, paf is slow sometimes
+        n->button = ((SelectionList *)currPage)->AddOption(&n->widget.title, DisplayInfo, &n->widget, SCE_TRUE, conf.enableIcons);
+        sceKernelDelayThread(8000); // To make sure it doesn't crash, paf is slow sometimes
     }
     currPage->busy->Stop();
+    
+    if(!conf.enableIcons) goto END;
+
+    listTexs = new graphics::Texture *[list.num];
 
     //Texture Loading
     switch (conf.db)
@@ -73,22 +84,26 @@ void PageListThread(void)
         n = list.head;
         for (int i = 0; i < list.num && !currPage->pageThread->EndThread && n != NULL; i++, n = n->next)
         {
+            while(currPage != listp) listp->pageThread->Sleep(1000);
             if(checkFileExist(n->widget.icon0Local.data))
             {
                 Misc::OpenResult res;
                 Misc::OpenFile(&res, n->widget.icon0Local.data, SCE_O_RDONLY, 0777, NULL);
 
-                graphics::Texture tex;
+                listTexs[i] = new graphics::Texture();
 
-                graphics::Texture::CreateFromFile(&tex, mainPlugin->memoryPool, &res);
-                n->button->SetTextureBase(&tex);
-
-
+                graphics::Texture::CreateFromFile(listTexs[i], mainPlugin->memoryPool, &res);
+                if(listTexs[i]->texSurface == NULL) new TextPage("Unkown Error Occourred", "Texture Loading Error");
+                else n->button->SetTextureBase(listTexs[i]);
+                
                 delete res.localFile;
                 sce_paf_free(res.unk_04);
             }
             else
+            {
+                listTexs[i] = SCE_NULL;
                 n->button->SetTextureBase(BrokenTex);
+            }
         }
         break;
     }
@@ -96,7 +111,9 @@ void PageListThread(void)
     default:
         break;
     }
+    currPage->AfterDelete = DeleteTexs;
 
+END:
     currPage->pageThread->Join();
 }
 
@@ -111,7 +128,7 @@ void DownloadThread(void)
 
         parseJson(DATA_PATH "/vitadb.json");
 
-        if(checkDownloadIcons() || !checkFileExist(VITADB_ICON_SAVE_PATH))
+        if(conf.enableIcons && (checkDownloadIcons() || !checkFileExist(VITADB_ICON_SAVE_PATH)))
         {
             printf("Downloading Icons...\n");
             Utils::SetWidgetLabel(((LoadingPage *)currPage)->infoText, "Downloading Icons");
@@ -127,6 +144,8 @@ void DownloadThread(void)
             ZipExtract(zipFile, NULL, VITADB_ICON_SAVE_PATH, extractPage->progressBars[0]);
             ZipClose(zipFile);
 
+            sceIoRemove(VITADB_ICON_ZIP_SAVE_PATH);
+
             saveCurrentTime();
         }
         break;
@@ -138,7 +157,7 @@ void DownloadThread(void)
 
         parseCSV(DATA_PATH "/cbpsdb.csv");
 
-        if(checkDownloadIcons() || !checkFileExist(CBPSDB_ICON_SAVE_PATH))
+        if(conf.enableIcons && (checkDownloadIcons() || !checkFileExist(CBPSDB_ICON_SAVE_PATH)))
         {
             sceIoMkdir(CBPSDB_ICON_SAVE_PATH, 0777);
             LoadingPage *DownloadIndexPage = (LoadingPage *)currPage;
@@ -153,11 +172,10 @@ void DownloadThread(void)
             for (int i = 0; i < list.num && n != NULL && !currPage->pageThread->EndThread; i++, n = n->next)
             {
                 res = Utils::DownloadFile(n->widget.icon0.data, n->widget.icon0Local.data, ((ProgressPage *)currPage)->progressBars[1]);
-                if(res == 6) sceIoRemove(n->widget.icon0Local.data);
-                if(res != 6 && res != CURLE_OK)
+                if(res != CURLE_OK)
                 {
                     sceIoRemove(n->widget.icon0Local.data);
-                    break;
+                    if(res != 6) break;
                 }
 
                 //Sometimes the page is deleted and the download functiion ends this could cause a crash
@@ -168,6 +186,7 @@ void DownloadThread(void)
                     iconDownloadPage->progressBars[0]->SetProgress(progress, 0, 0);
                 }
             }
+            
             saveCurrentTime();
             mainBackButton->PlayAnimation(0, Widget::Animation_Reset);
         }
@@ -197,10 +216,8 @@ BUTTON_CB(DownloadIndex)
 
 void onReady()
 {
-    GetConfig(&conf);
-    updateDarkMode();
-
     Page::Init();
+    Utils::StartBGDL();
     Utils::NetInit();
     Utils::MakeDataDirs();
     Utils::OverClock();
@@ -208,13 +225,13 @@ void onReady()
     sceSysmoduleLoadModule(SCE_SYSMODULE_JSON);
 
     SelectionList *categoryPage = new SelectionList("Homebrew Type");
-    categoryPage->AddOption("Apps", DownloadIndex, (void *)true);
+    categoryPage->AddOption("Apps", DownloadIndex);
     categoryPage->busy->Stop();
 }
 
-void PrintFreeMem()
+#ifdef _DEBUG
+void PrintFreeMem(ScePVoid pUserData)
 {
-    
     printf("Free Mem: %lu\n", fwAllocator->GetFreeSize());
-    
 }
+#endif

@@ -4,6 +4,8 @@
 #include "common.hpp"
 #include "network.hpp"
 #include "eventhandler.hpp"
+#include <bgapputil.h>
+#include <taihen.h>
 
 extern Page *currPage;
 
@@ -86,7 +88,6 @@ size_t curlWriteCB(void *datPtr, size_t chunkSize, size_t chunkNum, void *userDa
 
 SceInt32 Utils::DownloadFile(const char *url, const char *dest, ProgressBar *progressBar)
 {
-    printf("Downloading from:\n%sto:\n%s\n", url, dest);
     if(curl == NULL) return -1;
 
     SceUID file = sceIoOpen(dest, SCE_O_WRONLY | SCE_O_CREAT | SCE_O_TRUNC, 0777);
@@ -183,18 +184,28 @@ void Utils::UnderClock()
     scePowerSetGpuXbarClockFrequency(111);
 }
 
+void Utils::StartBGDL()
+{
+    sceSysmoduleLoadModule(SCE_SYSMODULE_BG_APP_UTIL);
+    sceBgAppUtilStartBgApp(0);
+}
+
 void Utils::NetInit()
 {
     netInit();
     httpInit();
     loadPsp2CompatModule();
 
+    
     curl = curl_easy_init();
 
     printf("Curl = 0x%X\n", curl);
+    
     if(curl != NULL)
     {
         curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, 0L);
+        curl_easy_setopt(curl, CURLOPT_HTTPGET, 1L);
+        curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1L);
         curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 0L);
         curl_easy_setopt(curl, CURLOPT_USERAGENT, USER_AGENT);
         curl_easy_setopt(curl, CURLOPT_SSLVERSION, CURL_SSLVERSION_TLSv1_2);
@@ -216,15 +227,26 @@ SceInt32 Utils::SetWidgetSize(Widget *widget, SceFloat x, SceFloat y, SceFloat z
     return widget->SetSize(&v);
 }
 
-SceInt32 Utils::AssignButtonHandler(Widget *button, void (*onPress)(void *), void *userDat)
+SceInt32 Utils::SetWidgetColor(Widget *widget, SceFloat r, SceFloat g, SceFloat b, SceFloat a)
+{
+    Widget::Color col;
+    col.r = r;
+    col.g = g;
+    col.b = b;
+    col.a = a;
+
+    return widget->SetFilterColor(&col);
+}
+
+SceInt32 Utils::AssignButtonHandler(Widget *button, ECallback onPress, void *userDat, int id)
 {
     EventHandler *eh = new EventHandler();
     eventcb callback;
-    callback.onPress = onPress;
+    callback.Callback = onPress;
     callback.dat = userDat;
 
     eh->pUserData = sce_paf_malloc(sizeof(callback));
     sce_paf_memcpy(eh->pUserData, &callback, sizeof(callback));
 
-    return button->RegisterEventCallback(ON_PRESS_EVENT_ID, eh, 1);
+    return button->RegisterEventCallback(id, eh, 1);
 }

@@ -7,6 +7,7 @@ include(VitaDevelopmentSuite)
 set(CMAKE_C_STANDARD 99)
 set(CMAKE_CXX_STANDARD 11)
 
+add_subdirectory(bhbb_dl)
 
 include_directories(
   ${CMAKE_SOURCE_DIR}
@@ -32,6 +33,8 @@ add_executable(${PROJECT_NAME}
     src/utils.hpp
     src/audiomgr.cpp
     src/audiomgr.hpp
+    src/bgdl.c
+    src/bgdl.h
     src/pagemgr.cpp
     src/pagemgr.hpp
     src/common.hpp
@@ -81,16 +84,22 @@ target_link_libraries(${PROJECT_NAME}
     ScePafTopLevel_stub_weak
     ScePafWidget_stub_weak
     ShellAudio
+    SceBgAppUtil_stub
+    taihenUnsafe_stub
+    taihen_stub
     ScePsp2Compat_stub_weak
     SceRtcUser_stub
 )
 
-VDSuiteCreateSfo(${PROJECT_NAME}.sfo ${PROJECT_NAME}.yml)
+VDSuiteCreateSfo(${PROJECT_NAME}.sfo param.sfx)
+VDSuiteSignElf(${PROJECT_NAME}.self $<TARGET_FILE:${PROJECT_NAME}>)
 
 VDSuitePackage(${PROJECT_NAME}.vpk
   FILES
-    $<TARGET_FILE:${PROJECT_NAME}> eboot.bin
-    ${PROJECT_NAME}.sfo sce_sys/param.sfo
+    ${PROJECT_NAME}.self eboot.bin
+    ${CMAKE_BINARY_DIR}/${PROJECT_NAME}.sfo sce_sys/param.sfo
     resource/bhbb_plugin.rco resource/bhbb_plugin.rco
     resource/src/texture/bg.png sce_sys/pic0.png
+    ${CMAKE_BINARY_DIR}/bhbb_dl/bhbb_dl.sfo sce_sys/param2.sfo
+    ${CMAKE_BINARY_DIR}/bhbb_dl/bhbb_dl.self eboot2.bin
 )

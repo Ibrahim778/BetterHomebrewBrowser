@@ -6,9 +6,11 @@
 
 typedef struct
 {
-    short iconDownloadHourGap;
     DB_Type db;
-    bool darkMode;
+    short iconDownloadHourGap;
+    bool enableMusic;
+    bool enableScreenshots;
+    bool enableIcons;
 } userConfig;
 
 void WriteConfig(userConfig *conf);

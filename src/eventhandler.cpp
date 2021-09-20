@@ -10,10 +10,10 @@ EventHandler::EventHandler()
     eventHandler = onGet;
 }
 
-void EventHandler::onGet(SceInt32 , Widget *, SceInt32, ScePVoid puserData)
+void EventHandler::onGet(SceInt32 e, Widget *s, SceInt32, ScePVoid puserData)
 {
     eventcb *cb = (eventcb *)puserData;
-    if(cb->onPress != NULL) cb->onPress(cb->dat);
+    if(cb->Callback != NULL) cb->Callback(s, e, cb->dat);
 }
 
 BackButtonEventHandler::BackButtonEventHandler()
@@ -37,6 +37,7 @@ void BackButtonEventHandler::onGet(SceInt32 , Widget *self, SceInt32, ScePVoid p
     DELETE_PAGE(PAGE_TYPE_PROGRESS_PAGE, ProgressPage);
     DELETE_PAGE(PAGE_TYPE_HOMBREW_INFO, InfoPage);
     DELETE_PAGE(PAGE_TYPE_PICTURE_PAGE, PicturePage);
+    DELETE_PAGE(PAGE_TYPE_BLANK_PAGE, BlankPage);
     
     default:
         break;
@@ -53,11 +54,11 @@ DiagButtonEventHandler::DiagButtonEventHandler()
     eventHandler = onGet;
 }
 
-void DiagButtonEventHandler::onGet(SceInt32, Widget *, SceInt32, ScePVoid pUserData)
+void DiagButtonEventHandler::onGet(SceInt32 e, Widget *s, SceInt32, ScePVoid pUserData)
 {
     eventcb *dat = (eventcb *)pUserData;    
     
-    if(dat->onPress != NULL)
-        dat->onPress(dat->dat);
+    if(dat->Callback != NULL)
+        dat->Callback(s, e, dat->dat);
     PopupMgr::hideDialog();
 }

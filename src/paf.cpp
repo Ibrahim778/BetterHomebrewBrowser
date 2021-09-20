@@ -91,7 +91,7 @@ void initPlugin()
     fwParam.LoadDefaultParams();
     fwParam.applicationMode = Framework::Mode_ApplicationDefault;
     
-    fwParam.defaultSurfacePoolSize = 17 * 1024 * 1024;
+    fwParam.defaultSurfacePoolSize = 16 * 1024 * 1024;
     fwParam.textSurfaceCacheSize = 8 * 1024 * 1024;
 
     Framework * fw = new Framework(&fwParam);
@@ -119,4 +119,3 @@ void initPlugin()
 
     fw->EnterRenderingLoop();
 }
-

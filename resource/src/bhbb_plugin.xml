@@ -205,7 +205,7 @@
                             <layout_hint anchor="0,2" size="544, 80" pos="0, -100"/>
                         </text>
 
-                        <image_button style="list_button_style_no_img" id="hb_screenshot">
+                        <image_button sound="_common_sound_image_button" style="list_button_style_no_img" id="hb_screenshot">
                             <layout_hint anchor="0,0" size="480, 272" pos="0,40"/>
                         </image_button>
 
@@ -213,9 +213,21 @@
                             <layout_hint anchor="0,1" pos="0, 100" size="960, 180" />
                         </text>
 
+                        <button style="_common_default_style_button" id="download_button" sound="_common_sound_button_enter" label="download_button_text">
+                            <layout_hint anchor = "0,0" pos="0,0" size="250,80"/>
+                        </button>
                     </box>
 				</scroll_view>
             </plane>
+        </template>
+
+        <template fast_open="1" id="blank_page_template">
+			<plane style="_common_style_plane_transparent" id="page_root_plane">
+				<layout_hint size="960, 544" pos="0, 0" />
+				<busyindicator style="base_style_busyindicator" texture="_common_texture_busy" id="busy_indicator" >
+					<layout_hint pos="0, 0" size="60, 60" />
+				</busyindicator>
+			</plane>
         </template>
 
         <template fast_open="1" id="progress_template">

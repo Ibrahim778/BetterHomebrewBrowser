@@ -1,5 +1,8 @@
 #include "audiomgr.hpp"
 #include "main.hpp"
+#include "configmgr.hpp"
+
+extern userConfig conf;
 
 void initMusic()
 {
@@ -21,7 +24,20 @@ void initMusic()
 
     ret = sceCustomMusicCoreBgmSetParam2(1);
     if(ret < 0) LOG_ERROR("SET_PARAM_2", ret);
+}
 
-    ret = sceCustomMusicCoreSendEvent(SCE_MUSICCORE_EVENTID_DEFAULT, 0);
-    if(ret < 0) LOG_ERROR("SEND_EVENT_PLAY", ret);
+void updateMusic()
+{
+    SceInt32 ret = -1;
+    if(conf.enableMusic)
+    {
+        ret = sceCustomMusicCoreSendEvent(SCE_MUSICCORE_EVENTID_DEFAULT, 0);
+        if(ret < 0) LOG_ERROR("SEND_EVENT_PLAY", ret);
+    }
+    else
+    {
+        ret = sceCustomMusicCoreSendEvent(SCE_MUSICCORE_EVENTID_STOP, 0);
+        if(ret < 0) LOG_ERROR("SEND_EVENT_STOP", ret);
+    }
+    
 }

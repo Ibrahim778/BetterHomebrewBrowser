@@ -4,15 +4,15 @@
 #include <kernel.h>
 #include <appmgr.h>
 #include <curl/curl.h>
+#include <stdio.h>
 
-int sceClibPrintf(const char * fmt, ...);
 
 #ifdef _DEBUG
 #define printf sceClibPrintf
 #define LOG_ERROR(prefix, error_code) printf("[%s] Got Error: 0x%X\n", prefix, error_code);
 #else
 #define printf
-#define LOG_ERROR(prefix, error_code)
+#define LOG_ERROR(prefix, error_code) (void)NULL;
 #endif
 
 void onReady();
@@ -29,8 +29,8 @@ typedef enum
     VITADB
 } DB_Type;
 
-void PrintFreeMem();
+void PrintFreeMem(ScePVoid);
 
-#define BUTTON_CB(name) void name(void *userDat)
+#define BUTTON_CB(name) void name(Widget *self, SceInt32 eventID, void *userDat)
 
 #endif

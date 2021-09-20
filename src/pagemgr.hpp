@@ -14,7 +14,8 @@ typedef enum
     PAGE_TYPE_LOADING_SCREEN,
     PAGE_TYPE_PROGRESS_PAGE,
     PAGE_TYPE_HOMBREW_INFO,
-    PAGE_TYPE_PICTURE_PAGE
+    PAGE_TYPE_PICTURE_PAGE,
+    PAGE_TYPE_BLANK_PAGE
 } pageType;
 
 class Page
@@ -29,6 +30,7 @@ public:
     bool skipAnimation;
 
     void (*OnDelete)(void);
+    void (*AfterDelete)(void);
 
     static void Init();
 
@@ -38,12 +40,26 @@ public:
     ~Page();
 };
 
+class BlankPage : public Page
+{
+public:
+    BlankPage();
+    ~BlankPage();
+
+    Widget *AddFromStyle(const char *refId, const char *style, const char *type, Widget *parent);
+};
+
 class PicturePage : public Page
 {
+private:
+    SceInt32 pictureNum;
+    graphics::Texture **pictures;
 public:
     Box *listRoot;
 
-    SceInt32 AddPicture(graphics::Texture *tex);
+    SceInt32 AddPictureFromFile(const char *path);
+    SceInt32 AddPicture(graphics::Texture *src);
+
 
     PicturePage();
     ~PicturePage();
@@ -51,11 +67,13 @@ public:
 
 class InfoPage : public Page
 {
+private:
+    graphics::Texture *iconTex;
 public:
     int ScreenshotNum;
     char **ScreenShotURLS;
     char **ScreenshotPaths;
-    graphics::Texture mainScreenshot;
+    graphics::Texture *mainScreenshot;
 
     homeBrewInfo *Info;
     CompositeButton *ScreenShot;
@@ -83,8 +101,8 @@ public:
     SelectionList(const char *title = SCE_NULL);
     ~SelectionList();
 
-    ImageButton *AddOption(const char *text, void(*onPress)(void *) = NULL, void *userDat = NULL, SceBool isLong = SCE_FALSE, SceBool needImage = SCE_FALSE);
-    ImageButton *AddOption(String *text, void(*onPress)(void *) = NULL, void *userDat = NULL, SceBool isLong = SCE_FALSE, SceBool needImage = SCE_FALSE);
+    ImageButton *AddOption(const char *text, ECallback onPress = NULL, void *userDat = NULL, SceBool isLong = SCE_FALSE, SceBool needImage = SCE_FALSE);
+    ImageButton *AddOption(String *text, ECallback onPress = NULL, void *userDat = NULL, SceBool isLong = SCE_FALSE, SceBool needImage = SCE_FALSE);
     
     SceVoid DisableAllButtons();
     SceVoid EnableAllButtons();
@@ -137,7 +155,7 @@ public:
     static void showDialog();
     static void hideDialog();
 
-    static void addDialogOption(const char *text, void (*onPress)(void *) = NULL, void *userDat = NULL, bool selected = false);
+    static void addDialogOption(const char *text, ECallback onPress = NULL, void *userDat = NULL, bool selected = false);
     static void clearOptions();
 };
 

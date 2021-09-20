@@ -2,11 +2,13 @@
 #define VHH_UTILS_HPP
 #include <paf.h>
 #include <power.h>
+#include "eventhandler.hpp"
 using namespace paf;
 using namespace widget;
 
 #include <curl/curl.h>
 
+#define BHBB_DL_PATH "ux0:app/BHBB00001/sce_module/bhbb_dl.suprx"
 class UtilThread : public paf::thread::Thread
 {
 public:
@@ -28,6 +30,7 @@ public:
     static void UnderClock();
     static void MakeDataDirs();
     static void NetInit();
+    static void StartBGDL();
     static int getStrtokNum(char splitter, char *str);
     static char *strtok(char splitter, char *str);
     static void ResetStrtok();
@@ -40,8 +43,8 @@ public:
     static SceInt32 SetWidgetLabel(Widget *widget, const char *text);
     static SceInt32 SetWidgetLabel(Widget *widget, String *text);
     static SceInt32 SetWidgetSize(Widget *widget, SceFloat x, SceFloat y, SceFloat z = 0.0f, SceFloat w = 0.0f);
-
-    static SceInt32 AssignButtonHandler(Widget *widget, void (*OnPress)(void *) = SCE_NULL, void *userDat = SCE_NULL);
+    static SceInt32 SetWidgetColor(Widget *widget, SceFloat r, SceFloat g, SceFloat b, SceFloat a);
+    static SceInt32 AssignButtonHandler(Widget *widget, ECallback onPress = SCE_NULL, void *userDat = SCE_NULL, int id = ON_PRESS_EVENT_ID);
 };
 
 extern "C" bool checkFileExist(const char *);

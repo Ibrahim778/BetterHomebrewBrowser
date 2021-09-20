@@ -277,6 +277,7 @@ void parseCSV(const char *path)
                 info->icon0.Set(parsed[3]);
                 info->download_url.Set(parsed[5]);
                 info->options.Set(parsed[13]);
+                info->description.Set(parsed[0]);
                 
                 //In CBPS DB titleID is used for id, so if any contradict _n is added, this is done to get just the id
                 char titleID[10] = {0};

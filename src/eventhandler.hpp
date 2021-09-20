@@ -40,9 +40,11 @@ public:
 
 #define ON_PRESS_EVENT_ID 0x10000008
 
+typedef void (*ECallback)(Widget *, SceInt32, void*);;
+
 typedef struct 
 {
-    void(*onPress)(void *userDat);
+    ECallback Callback;
     void *dat;
 } eventcb;
 

@@ -2,10 +2,14 @@
 #include "common.hpp"
 #include "eventhandler.hpp"
 #include "configmgr.hpp"
+#include "audiomgr.hpp"
 #include "pagemgr.hpp"
+#include <bgapputil.h>
 #include "utils.hpp"
+#include "bgdl.h"
 
 extern userConfig conf;
+extern Plugin *mainPlugin;
 
 BUTTON_CB(updateDBType)
 {
@@ -19,14 +23,11 @@ BUTTON_CB(updateIconTime)
     WriteConfig(&conf);
 }
 
-//in main.cpp
-extern void updateDarkMode();
-
-BUTTON_CB(updateDarkMode)
+BUTTON_CB(updateMusicSelection)
 {
-    conf.darkMode = (bool)userDat;
+    conf.enableMusic = (bool)userDat;
     WriteConfig(&conf);
-    updateDarkMode();
+    updateMusic();
 }
 
 BUTTON_CB(DBSelector)
@@ -54,33 +55,98 @@ BUTTON_CB(IconTimeSelector)
     ADD_TIME_POPUP_OPTION(12);
 }
 
-BUTTON_CB(DarkModeSelector)
+BUTTON_CB(MusicSelector)
 {
     if(PopupMgr::showingDialog) return;
 
     PopupMgr::showDialog();
 
-    PopupMgr::addDialogOption("Enabled", updateDarkMode, (void *)true, conf.darkMode);
-    PopupMgr::addDialogOption("Disabled", updateDarkMode, (void *)false, !conf.darkMode);
+    PopupMgr::addDialogOption("Enabled", updateMusicSelection, (void *)true, conf.enableMusic);
+    PopupMgr::addDialogOption("Disabled", updateMusicSelection, (void *)false, !conf.enableMusic);
 }
 
-BUTTON_CB(TextPageNoTitle)
+BUTTON_CB(slidebarRet)
 {
-    new PicturePage();
 }
 
-BUTTON_CB(TextPageWithTitle)
+BUTTON_CB(SlideBarTest)
 {
-    new TextPage("Hello World!", "Hello Title!");
+    BlankPage *page = new BlankPage();
+
+    SlideBar *slidebar = (SlideBar *)page->AddFromStyle("slidebartest", "_common_default_style_slidebar", "slidebar", page->root);
+    Utils::SetWidgetSize(slidebar, 544, 80);
+    
+    SceFVector4 pos;
+    pos.x = 0;
+    pos.y = 0;
+    pos.w = 0;
+    pos.z = 0;
+    slidebar->SetPosition(&pos);
+
+    eventcb cb;
+    cb.Callback = slidebarRet;
+    cb.dat = slidebar;
+
+    EventHandler *eh = new EventHandler();
+    eh->pUserData = sce_paf_malloc(sizeof(cb));
+    sce_paf_memcpy(eh->pUserData, &cb, sizeof(cb));
+
+    slidebar->RegisterEventCallback(2, eh, 0);
+
 }
 
-void SettingsButtonEventHandler::onGet(SceInt32, Widget*s, SceInt32, ScePVoid)
+#ifdef _DEBUG
+
+BUTTON_CB(UpdateSelectedIcons)
+{
+    conf.enableIcons = (bool)userDat;
+    WriteConfig(&conf);
+}
+
+BUTTON_CB(EnableIconsSelector)
+{
+    if(PopupMgr::showingDialog) return;
+
+    PopupMgr::showDialog();
+    PopupMgr::addDialogOption("Enabled", UpdateSelectedIcons, (void *)true, conf.enableIcons);
+    PopupMgr::addDialogOption("Disabled", UpdateSelectedIcons, (void *)false, !conf.enableIcons);
+}
+
+BUTTON_CB(UpdateSelectedScreenshots)
+{
+    conf.enableScreenshots = (bool)userDat;
+    WriteConfig(&conf);
+}
+
+BUTTON_CB(EnableScreenshotsSelector)
+{
+    if(PopupMgr::showingDialog) return;
+
+    PopupMgr::showDialog();
+    PopupMgr::addDialogOption("Enabled", UpdateSelectedScreenshots, (void *)true, conf.enableScreenshots);
+    PopupMgr::addDialogOption("Disabled", UpdateSelectedScreenshots, (void *)false, !conf.enableScreenshots);
+}
+
+BUTTON_CB(DebugPage)
+{
+    SelectionList *p = new SelectionList("★DEBUG");
+    p->busy->Stop();
+
+    p->AddOption("Enable Icons", EnableIconsSelector);
+    p->AddOption("Enable Screenshots", EnableScreenshotsSelector);
+}
+
+#endif
+void SettingsButtonEventHandler::onGet(SceInt32, Widget*, SceInt32, ScePVoid)
 {
     SelectionList *settingsPage = new SelectionList("Settings");
     settingsPage->AddOption("Source", DBSelector);
     settingsPage->AddOption("Download Icons After", IconTimeSelector);
-    settingsPage->AddOption("Dark Mode", DarkModeSelector);
-    settingsPage->AddOption("Go To Text Page", TextPageNoTitle);
-    settingsPage->AddOption("Go To Text Page With Title", TextPageWithTitle);
+    settingsPage->AddOption("Enable Music", MusicSelector);
+
+    #ifdef _DEBUG
+    //settingsPage->AddOption("Slidebar Test", SlideBarTest);
+    settingsPage->AddOption("★DEBUG", DebugPage);
+    #endif
     settingsPage->busy->Stop();
 } 

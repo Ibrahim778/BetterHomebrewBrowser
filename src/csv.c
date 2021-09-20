@@ -9,7 +9,6 @@ char *paf_strdup(const char *s)
 
   if (new == NULL)
     return NULL;
-
   return (char *)sce_paf_memcpy(new, s, len);
 }
 

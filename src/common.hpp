@@ -35,6 +35,7 @@
 #define INFO_PAGE_DESCRIPTION_TEXT_ID "hb_description"
 #define INFO_PAGE_CREDITS_TEXT_ID "hb_credits"
 #define INFO_PAGE_SCREENSHOT_ID "hb_screenshot"
+#define INFO_PAGE_DOWNLOAD_BUTTON_ID "download_button"
 
 #define TEXT_PAGE_NO_TITLE_ID "text_page_no_title"
 #define TEXT_PAGE_ID "text_page"
@@ -73,6 +74,8 @@
 #define POPUP_DIALOG_ID "popup_dialog"
 #define POPUP_DIALOG_BUTTON "diag_button_template"
 #define POPUP_DIALOG_BOX "diag_box_template"
+
+#define BLANK_PAGE_ID "blank_page_template"
 
 #define ICON_MISSING_TEX_ID "tex_missing_icon"
 
