@@ -11,7 +11,7 @@
 using namespace sce;
 using namespace Json;
 
-unsigned int sceLibcHeapSize = 16 * 1024 * 1024;
+unsigned int sceLibcHeapSize = 6 * 1024 * 1024;
 
 linked_list list;
 extern Page *currPage;

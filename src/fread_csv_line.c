@@ -1,5 +1,5 @@
 #include <kernel.h>
-#include <paf.h>
+#include <paf/stdc.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>

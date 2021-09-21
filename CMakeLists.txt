@@ -83,7 +83,7 @@ target_link_libraries(${PROJECT_NAME}
     ScePafThread_stub_weak
     ScePafTopLevel_stub_weak
     ScePafWidget_stub_weak
-    ShellAudio
+    ShellAudio_stub
     SceBgAppUtil_stub
     taihenUnsafe_stub
     taihen_stub

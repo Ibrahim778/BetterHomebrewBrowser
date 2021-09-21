@@ -41,7 +41,7 @@ void initPaf()
     opt.flags = 0;
     opt.result = &load_res;
 
-    res = sceSysmoduleLoadModuleInternalWithArg(SCE_SYSMODULE_INTERNAL_PAF, sizeof(initParam), &initParam, &opt);
+    res = _sceSysmoduleLoadModuleInternalWithArg(SCE_SYSMODULE_INTERNAL_PAF, sizeof(initParam), &initParam, &opt);
 
     if(res < 0 || load_res < 0)
     {

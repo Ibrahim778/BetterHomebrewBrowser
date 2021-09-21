@@ -42,7 +42,6 @@ target_link_libraries(${PROJECT_NAME}
     SceKernel_stub
     SceThreadmgr_stub
     SceDbg_stub
-    SceAppMgrUser_stub
     SceDisplay_stub
     SceNotificationUtilProgress_stub_weak
     ScePromoterUtil_stub_weak
@@ -52,6 +51,7 @@ target_link_libraries(${PROJECT_NAME}
     SceHttp_stub
     SceNet_stub
     SceNetCtl_stub
+    SceAppMgr_stub
     ScePsp2Compat_stub_weak
     SceSysmodule_stub
     SceSsl_stub
