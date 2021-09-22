@@ -17,7 +17,7 @@ extern SceBool Running;
 CURL *curl = SCE_NULL;
 
 #define MODULE_PATH "vs0:data/external/webcore/ScePsp2Compat.suprx"
-#define NET_INIT_SIZE 1024 * 1024 * 2
+#define NET_INIT_SIZE 1024 * 1024 * 1
 
 SceUID moduleID;
 

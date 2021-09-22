@@ -501,7 +501,10 @@ InfoPage::InfoPage(homeBrewInfo *info, SceBool wait):Page(PAGE_TYPE_HOMBREW_INFO
 
     Utils::SetWidgetLabel(Credits, credits);
 
-    Utils::SetWidgetSize(Description, 960, (Info->description.length / 40) * 60 /*Really REALLY needs tweaking*/);
+    float y = ((float)Info->description.length / 75.0) * 70.0;
+    if(Info->description.length <= 10) y = 50;
+
+    Utils::SetWidgetSize(Description, 960, y);
     Utils::SetWidgetLabel(Description, &Info->description);
 
     if(checkFileExist(info->icon0Local.data) && conf.enableIcons)
