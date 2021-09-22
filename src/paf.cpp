@@ -27,7 +27,7 @@ void initPaf()
     ScePafInit initParam;
     SceSysmoduleOpt opt;
 
-    initParam.global_heap_size = 0x1600000;
+    initParam.global_heap_size = 12 * 1024 * 1024;
 
 	initParam.a2 = 0x0000EA60;
 	initParam.a3 = 0x00040000;
@@ -91,8 +91,8 @@ void initPlugin()
     fwParam.LoadDefaultParams();
     fwParam.applicationMode = Framework::Mode_ApplicationDefault;
     
-    fwParam.defaultSurfacePoolSize = 16 * 1024 * 1024;
-    fwParam.textSurfaceCacheSize = 8 * 1024 * 1024;
+    fwParam.defaultSurfacePoolSize = 8 * 1024 * 1024;
+    fwParam.textSurfaceCacheSize = 4 * 1024 * 1024;
 
     Framework * fw = new Framework(&fwParam);
 
