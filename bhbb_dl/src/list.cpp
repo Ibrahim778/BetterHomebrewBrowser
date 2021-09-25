@@ -27,7 +27,7 @@ LIST_TYPE *Queue::Find(const char *name)
     node *n = head;
     while(n != NULL)
     {
-        if(sceClibStrcmp(name, n->packet.name)) return &n->packet;
+        if(sceClibStrcmp(name, n->packet.name) == 0) return &n->packet;
         n = n->next;
     }
     return NULL;

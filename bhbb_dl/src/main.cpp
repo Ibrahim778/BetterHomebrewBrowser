@@ -25,52 +25,7 @@ unsigned int sceLibcHeapSize = 1024 * 1024 * 6;
 Queue queue;
 
 SceBool Running = SCE_TRUE;
-SceUID pipeThreadID = SCE_UID_INVALID_UID;
 SceUID dlThreadID = SCE_UID_INVALID_UID;
-
-SceInt32 PipeThread(SceSize args, void *argp)
-{
-    SceUID pipeID = sceKernelCreateMsgPipe(BHBB_DL_PIPE_NAME, SCE_KERNEL_MSG_PIPE_TYPE_USER_MAIN, SCE_KERNEL_ATTR_OPENABLE, SCE_KERNEL_4KiB, NULL);
-    if(pipeID < 0) return sceKernelExitDeleteThread(pipeID);
-
-    while (Running)
-    {
-        SceSize size = 0;
-        bhbbPacket pkt;
-
-        int receiveResult = sceKernelReceiveMsgPipe(pipeID, &pkt, sizeof(pkt), SCE_KERNEL_MSG_PIPE_MODE_WAIT | SCE_KERNEL_MSG_PIPE_MODE_FULL, &size, NULL);
-        if(receiveResult != SCE_OK)
-            printf("[Error] Recieve data function has returned error 0x%X\n", receiveResult);
-
-        if(size != sizeof(pkt))
-            printf("[Warning] Could not recieve all data!\n");
-        
-        if(size > 0)
-        {
-            switch (pkt.cmd)
-            {
-            case INSTALL:
-                if(queue.Find(pkt.name) == NULL) //Avoid duplicates
-                    queue.enqueue(&pkt, size);
-                break;
-            case CANCEL:
-                queue.remove(pkt.url);
-                break;
-            case SHUTDOWN:
-                Running = SCE_FALSE;
-                break;
-            default:
-                printf("[Error] Unkown Command!\n");
-                break;
-            }
-        }
-        sceKernelDelayThread(1000);
-    }
-
-    sceKernelDeleteMsgPipe(pipeID);
-    
-    return sceKernelExitDeleteThread(0);
-}
 
 int checkFileExist(const char *file)
 {
@@ -135,6 +90,7 @@ SceInt32 DownloadThread(SceSize args, void *argp)
             install(dest);
         }
         else sceIoRemove(dest);
+
         queue.dequeue();
     };
 
@@ -155,20 +111,56 @@ int main()
 
     Running = SCE_TRUE;
 
-    sceKernelStartThread(pipeThreadID = sceKernelCreateThread("bhbb_dl_pipe", PipeThread, SCE_KERNEL_COMMON_QUEUE_LOWEST_PRIORITY - 1, SCE_KERNEL_128KiB, 0, SCE_KERNEL_THREAD_CPU_AFFINITY_MASK_DEFAULT, NULL), 0, NULL);
     sceKernelStartThread(dlThreadID = sceKernelCreateThread("bhbb_dl_thread", DownloadThread, SCE_KERNEL_COMMON_QUEUE_LOWEST_PRIORITY, SCE_KERNEL_128KiB, 0, SCE_KERNEL_THREAD_CPU_AFFINITY_MASK_DEFAULT, NULL), 0, NULL);
 
-    if(pipeThreadID < 0 || dlThreadID < 0)
+    if(dlThreadID < 0)
     {
         Running = SCE_FALSE; //Just in case one of them succeeded it will shut down.
         return -1;
     }
 
+    SceUID pipeID = sceKernelCreateMsgPipe(BHBB_DL_PIPE_NAME, SCE_KERNEL_MSG_PIPE_TYPE_USER_MAIN, SCE_KERNEL_ATTR_OPENABLE, SCE_KERNEL_4KiB, NULL);
+    if(pipeID < 0)
+    {
+        Running = SCE_FALSE;
+        return sceAppMgrDestroyAppByAppId(-2);
+    }
+
     while (Running)
     {
+        SceSize size = 0;
+        bhbbPacket pkt;
+
+        int receiveResult = sceKernelReceiveMsgPipe(pipeID, &pkt, sizeof(pkt), SCE_KERNEL_MSG_PIPE_MODE_WAIT | SCE_KERNEL_MSG_PIPE_MODE_FULL, &size, NULL);
+        if(receiveResult != SCE_OK)
+            printf("[Error] Recieve data function has returned error 0x%X\n", receiveResult);
+
+        if(size != sizeof(pkt))
+            printf("[Warning] Could not recieve all data!\n");
+        
+        if(size > 0)
+        {
+            switch (pkt.cmd)
+            {
+            case INSTALL:
+                if(queue.Find(pkt.name) == NULL) //Avoid duplicates
+                    queue.enqueue(&pkt, size);
+                break;
+            case CANCEL:
+                queue.remove(pkt.url);
+                break;
+            case SHUTDOWN:
+                Running = SCE_FALSE;
+                break;
+            default:
+                printf("[Error] Unkown Command!\n");
+                break;
+            }
+        }
         sceKernelDelayThread(1000);
     }
-    
+
+    sceKernelDeleteMsgPipe(pipeID);    
 
     return sceAppMgrDestroyAppByAppId(-2);
 }
