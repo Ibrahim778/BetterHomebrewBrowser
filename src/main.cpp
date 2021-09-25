@@ -28,6 +28,8 @@ userConfig conf;
 int main()
 {
     GetConfig(&conf);
+    if(conf.enableIcons) if(sceAppMgrGrowMemory3(10 * 1024 * 1024, 1) < 0) conf.enableIcons = false;
+    if(conf.enableScreenshots) if(sceAppMgrGrowMemory3(10 * 1024 * 1024, 1) < 0) conf.enableScreenshots = false;
     initMusic();
     updateMusic();
     initPaf();
@@ -47,6 +49,7 @@ void DeleteTexs(void)
     {
         if(listTexs[i] != NULL)
         {
+            listTexs[i]->texSurface = SCE_NULL;
             delete listTexs[i];
         }    
     }
@@ -130,7 +133,6 @@ void DownloadThread(void)
 
         if(conf.enableIcons && (checkDownloadIcons() || !checkFileExist(VITADB_ICON_SAVE_PATH)))
         {
-            printf("Downloading Icons...\n");
             Utils::SetWidgetLabel(((LoadingPage *)currPage)->infoText, "Downloading Icons");
             Utils::DownloadFile(VITADB_DOWNLOAD_ICONS_URL, VITADB_ICON_ZIP_SAVE_PATH);
             
