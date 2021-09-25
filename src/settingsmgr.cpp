@@ -9,7 +9,6 @@
 #include "bgdl.h"
 
 extern userConfig conf;
-extern Plugin *mainPlugin;
 
 BUTTON_CB(updateDBType)
 {
@@ -67,13 +66,17 @@ BUTTON_CB(MusicSelector)
 
 BUTTON_CB(slidebarRet)
 {
+    SlideBar *slidebar = (SlideBar *)self;
+
+    int res =(int) slidebar->TypeSlideBar();
+    sceClibPrintf("Res = 0x%X\n", res);
 }
 
 BUTTON_CB(SlideBarTest)
 {
     BlankPage *page = new BlankPage();
 
-    SlideBar *slidebar = (SlideBar *)page->AddFromStyle("slidebartest", "_common_default_style_slidebar", "slidebar", page->root);
+    SlideBar *slidebar = (SlideBar *)page->AddFromStyle("slidebartest", "_common_default_style_slidebar", "slidebar");
     Utils::SetWidgetSize(slidebar, 544, 80);
     
     SceFVector4 pos;
@@ -92,15 +95,18 @@ BUTTON_CB(SlideBarTest)
     sce_paf_memcpy(eh->pUserData, &cb, sizeof(cb));
 
     slidebar->RegisterEventCallback(2, eh, 0);
-
+    sceClibPrintf("ret = 0x%X\n", slidebar->ScePafWidget_FDB59013(50, 0));
 }
 
 #ifdef _DEBUG
 
 BUTTON_CB(UpdateSelectedIcons)
 {
+    bool restart = conf.enableIcons != (bool)userDat;
+
     conf.enableIcons = (bool)userDat;
     WriteConfig(&conf);
+    if(restart) sceAppMgrLoadExec("app0:eboot.bin", NULL, NULL);
 }
 
 BUTTON_CB(EnableIconsSelector)
@@ -114,8 +120,10 @@ BUTTON_CB(EnableIconsSelector)
 
 BUTTON_CB(UpdateSelectedScreenshots)
 {
+    bool restart = conf.enableScreenshots != (bool)userDat;
     conf.enableScreenshots = (bool)userDat;
     WriteConfig(&conf);
+    if(restart) sceAppMgrLoadExec("app0:eboot.bin", NULL, NULL);
 }
 
 BUTTON_CB(EnableScreenshotsSelector)

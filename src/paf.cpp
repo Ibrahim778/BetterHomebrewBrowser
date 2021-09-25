@@ -6,6 +6,7 @@
 #include "eventhandler.hpp"
 #include "audiomgr.hpp"
 #include "pagemgr.hpp"
+#include "configmgr.hpp"
 
 SceUID main_thread = SCE_UID_INVALID_UID;
 
@@ -19,6 +20,8 @@ CornerButton *settingsButton = SCE_NULL;
 Allocator *fwAllocator = SCE_NULL;
 
 graphics::Texture *BrokenTex = SCE_NULL;
+
+extern userConfig conf;
 
 void initPaf()
 {
@@ -92,6 +95,10 @@ void initPlugin()
     fwParam.applicationMode = Framework::Mode_ApplicationDefault;
     
     fwParam.defaultSurfacePoolSize = 8 * 1024 * 1024;
+    
+    if(conf.enableIcons) fwParam.defaultSurfacePoolSize += 10 * 1024 * 1024;
+    if(conf.enableScreenshots) fwParam.defaultSurfacePoolSize += 10 * 1024 * 1024; 
+
     fwParam.textSurfaceCacheSize = 4 * 1024 * 1024;
 
     Framework * fw = new Framework(&fwParam);

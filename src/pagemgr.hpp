@@ -46,7 +46,7 @@ public:
     BlankPage();
     ~BlankPage();
 
-    Widget *AddFromStyle(const char *refId, const char *style, const char *type, Widget *parent);
+    Widget *AddFromStyle(const char *refId, const char *style, const char *type, Widget *parent = SCE_NULL);
 };
 
 class PicturePage : public Page
