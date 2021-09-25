@@ -168,26 +168,10 @@ void Utils::MakeDataDirs()
         sceIoMkdir(SCREENSHOT_SAVE_PATH, 0777);
 }
 
-void Utils::OverClock()
-{
-    scePowerSetArmClockFrequency(444);
-    scePowerSetBusClockFrequency(222);
-    scePowerSetGpuClockFrequency(222);
-    scePowerSetGpuXbarClockFrequency(166);
-}
-
-void Utils::UnderClock()
-{
-    scePowerSetArmClockFrequency(333);
-    scePowerSetBusClockFrequency(111);
-    scePowerSetGpuClockFrequency(111);
-    scePowerSetGpuXbarClockFrequency(111);
-}
-
 void Utils::StartBGDL()
 {
     sceSysmoduleLoadModule(SCE_SYSMODULE_BG_APP_UTIL);
-    sceBgAppUtilStartBgApp(0);
+    sceBgAppUtilStartBgApp(2);
 }
 
 void Utils::NetInit()
@@ -196,10 +180,7 @@ void Utils::NetInit()
     httpInit();
     loadPsp2CompatModule();
 
-    
     curl = curl_easy_init();
-
-    printf("Curl = 0x%X\n", curl);
     
     if(curl != NULL)
     {

@@ -30,7 +30,7 @@ void initPaf()
     ScePafInit initParam;
     SceSysmoduleOpt opt;
 
-    initParam.global_heap_size = 12 * 1024 * 1024;
+    initParam.global_heap_size = 5 * 1024 * 1024;
 
 	initParam.a2 = 0x0000EA60;
 	initParam.a3 = 0x00040000;
@@ -51,6 +51,7 @@ void initPaf()
         LOG_ERROR("INIT_PAF", res);
         LOG_ERROR("INIT_PAF", load_res);
     }
+
 
 }
 
@@ -92,12 +93,12 @@ void initPlugin()
 {
     Framework::InitParam fwParam;
     fwParam.LoadDefaultParams();
-    fwParam.applicationMode = Framework::Mode_ApplicationDefault;
+    fwParam.applicationMode = Framework::Mode_ApplicationA;
     
-    fwParam.defaultSurfacePoolSize = 8 * 1024 * 1024;
+    fwParam.defaultSurfacePoolSize = 4 * 1024 * 1024;
     
-    if(conf.enableIcons) fwParam.defaultSurfacePoolSize += 10 * 1024 * 1024;
-    if(conf.enableScreenshots) fwParam.defaultSurfacePoolSize += 10 * 1024 * 1024; 
+    if(conf.enableIcons) fwParam.defaultSurfacePoolSize += 12 * 1024 * 1024;
+    if(conf.enableScreenshots) fwParam.defaultSurfacePoolSize += 12 * 1024 * 1024; 
 
     fwParam.textSurfaceCacheSize = 4 * 1024 * 1024;
 

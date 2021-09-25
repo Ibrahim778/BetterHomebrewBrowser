@@ -5,7 +5,7 @@
   <param key="ATTRIBUTE2">0</param>
   <param key="ATTRIBUTE_MINOR">17</param>
   <param key="CATEGORY">gdc</param>
-  <param key="CONTENT_ID">HB0000-VDSS20004_00-0000000000000000</param>
+  <param key="CONTENT_ID">HB0000-BHBB00001_00-0000000000000000</param>
   <param key="GC_RO_SIZE">0</param>
   <param key="GC_RW_SIZE">0</param>
   <param key="PARENTAL_LEVEL">1</param>
@@ -14,6 +14,6 @@
   <param key="SAVEDATA_MAX_SIZE">1048576</param>
   <param key="STITLE">Homebrew Browser</param>
   <param key="TITLE">Homebrew Browser</param>
-  <param key="TITLE_ID">VDSS20004</param>
+  <param key="TITLE_ID">BHBB00001</param>
   <param key="VERSION">01.00</param>
 </paramsfo>

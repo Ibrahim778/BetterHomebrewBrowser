@@ -27,9 +27,20 @@ userConfig conf;
 
 int main()
 {
+    sceClibPrintf("Hello World!\n");
     GetConfig(&conf);
-    if(conf.enableIcons) if(sceAppMgrGrowMemory3(10 * 1024 * 1024, 1) < 0) conf.enableIcons = false;
-    if(conf.enableScreenshots) if(sceAppMgrGrowMemory3(10 * 1024 * 1024, 1) < 0) conf.enableScreenshots = false;
+    if(conf.enableIcons)
+    {
+        int r = sceAppMgrGrowMemory3(10 * 1024 * 1024, 1);
+        sceClibPrintf("r = 0x%X\n", r);
+        if(r < 0) conf.enableIcons = false;
+    } 
+    if(conf.enableScreenshots)
+    {
+        int r = sceAppMgrGrowMemory3(10 * 1024 * 1024, 1);
+        sceClibPrintf("r = 0x%X\n", r);
+        if(r < 0) conf.enableScreenshots = false;
+    } 
     initMusic();
     updateMusic();
     initPaf();
@@ -222,7 +233,6 @@ void onReady()
     Utils::StartBGDL();
     Utils::NetInit();
     Utils::MakeDataDirs();
-    Utils::OverClock();
 
     sceSysmoduleLoadModule(SCE_SYSMODULE_JSON);
 
