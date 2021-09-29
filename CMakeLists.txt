@@ -92,7 +92,7 @@ target_link_libraries(${PROJECT_NAME}
 )
 
 VDSuiteCreateSfo(${PROJECT_NAME}.sfo param.sfx)
-VDSuiteSignElf(${PROJECT_NAME}.self $<TARGET_FILE:${PROJECT_NAME}> bootparam.yml)
+VDSuiteSignElf(${PROJECT_NAME}.self $<TARGET_FILE:${PROJECT_NAME}> BOOT_PARAM bootparam.yml)
 
 VDSuitePackage(${PROJECT_NAME}.vpk
   FILES

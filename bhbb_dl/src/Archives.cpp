@@ -18,6 +18,7 @@ extern "C" {
 #include <kernel.h>
 #include "Archives.hpp"
 #include "notifmgr.hpp"
+#include "main.hpp"
 #include "list.hpp"
 
 extern Queue queue;
@@ -893,7 +894,7 @@ static int ZipReadCurrentFile(Zip* file, void* buf, unsigned int len)
 
 Zip* ZipOpen(const char *filename)
 {
-	//printf("Opening zip\n");
+	//print("Opening zip\n");
 	_zip us;
 	_zip *s;
 	unsigned long centralpos, ul;
@@ -1027,7 +1028,7 @@ int ZipExtractCurrentFile(Zip *zip, int *nopath, const char *password, const cha
 
 	if(err != 0)
 	{
-		printf("error %d with zipfile in ZitCurrentFileInfo\n", err);
+		print("error %d with zipfile in ZitCurrentFileInfo\n", err);
 		return -1;
 	}
 
@@ -1035,7 +1036,7 @@ int ZipExtractCurrentFile(Zip *zip, int *nopath, const char *password, const cha
 
 	if(!buffer)
 	{
-		printf("Error allocating buffer\n");
+		print("Error allocating buffer\n");
 
 		return 0;
 	}
@@ -1054,7 +1055,7 @@ int ZipExtractCurrentFile(Zip *zip, int *nopath, const char *password, const cha
 	{
 		if((*nopath) == 0)
 		{
-			printf("Creating directory: %s\n", filenameinzip);
+			print("Creating directory: %s\n", filenameinzip);
 			snprintf(extract_path, sizeof(extract_path), "%s/%s", path, filenameinzip);
 			sceIoMkdir(extract_path, 0777);
 		}
@@ -1071,7 +1072,7 @@ int ZipExtractCurrentFile(Zip *zip, int *nopath, const char *password, const cha
 		err = ZipOpenCurrentFile(zip, password);
 
 		if(err != _ZIP_OK)
-			printf("Error with zipfile in ZipOpenCurrentFile\n");
+			print("Error with zipfile in ZipOpenCurrentFile\n");
 		
 		snprintf(extract_path, sizeof(extract_path), "%s/%s", path, writeFilename);
 		*(filenameWithoutPath - 1) = '\0';
@@ -1083,7 +1084,7 @@ int ZipExtractCurrentFile(Zip *zip, int *nopath, const char *password, const cha
 		}
 
 		if(fout == NULL)
-			printf("Error opening file %s\n", writeFilename);
+			print("Error opening file %s\n", writeFilename);
 			
 		void* extractBuffer = buffer;
 		unsigned int remainingSize = buffersize;
@@ -1095,7 +1096,7 @@ int ZipExtractCurrentFile(Zip *zip, int *nopath, const char *password, const cha
 
 			if(err < 0)
 			{
-				printf("Error with zipfile in ZipReadCurrentFile\n");
+				print("Error with zipfile in ZipReadCurrentFile\n");
 				break;
 			}
 
@@ -1117,7 +1118,7 @@ int ZipExtractCurrentFile(Zip *zip, int *nopath, const char *password, const cha
 		err = ZipCloseCurrentFile(zip);
 
 		if(err != _ZIP_OK)
-			printf("Error with zipfile in ZipCloseCurrentFile, %d\n", err);
+			print("Error with zipfile in ZipCloseCurrentFile, %d\n", err);
 	}
 
 	if(buffer)
@@ -1139,7 +1140,7 @@ int ZipExtract(Zip* zip, const char *password, const char* path)
 	err = ZitGlobalInfo(zip, &gi);
 
 	if(err != _ZIP_OK)
-		printf("Error with zipfile in ZitGlobalInfo\n");
+		print("Error with zipfile in ZitGlobalInfo\n");
 
 	for(i = 0;i < gi.countentries && !NotifMgr::currDlCanceled; i++)
 	{
@@ -1151,7 +1152,7 @@ int ZipExtract(Zip* zip, const char *password, const char* path)
 			err = ZipGotoNextFile(zip);
 
 			if(err != _ZIP_OK)
-				printf("Error with zipfile in ZipGotoNextFile\n");
+				print("Error with zipfile in ZipGotoNextFile\n");
 		}
 
         double progress = i + 1.0;
@@ -1188,7 +1189,7 @@ ZipFile* ZipFileRead(Zip* zip, const char *filename, const char *password)
 
 	if(err != 0)
 	{
-		printf("error %d with zipfile in ZitCurrentFileInfo\n", err);
+		print("error %d with zipfile in ZitCurrentFileInfo\n", err);
 		FreePatch(zipfile);
 		return NULL;
 	}
@@ -1197,7 +1198,7 @@ ZipFile* ZipFileRead(Zip* zip, const char *filename, const char *password)
 
 	if(err != 0)
 	{
-		printf("error %d with zipfile in ZipOpenCurrentFile\n", err);
+		print("error %d with zipfile in ZipOpenCurrentFile\n", err);
 		FreePatch(zipfile);
 		return NULL;
 	}
@@ -1208,7 +1209,7 @@ ZipFile* ZipFileRead(Zip* zip, const char *filename, const char *password)
 
 	if(!zipfile->data)
 	{
-		printf("error allocating data for zipfile\n");
+		print("error allocating data for zipfile\n");
 		FreePatch(zipfile);
 		return NULL;
 	}
@@ -1222,7 +1223,7 @@ ZipFile* ZipFileRead(Zip* zip, const char *filename, const char *password)
 
 		if(err < 0)
 		{
-			printf("error %d with zipfile in ZipReadCurrentFile\n", err);
+			print("error %d with zipfile in ZipReadCurrentFile\n", err);
 			break;
 		}
 		else
@@ -1235,7 +1236,7 @@ ZipFile* ZipFileRead(Zip* zip, const char *filename, const char *password)
 
 		if(err != 0)
 		{
-			printf("error %d with zipfile in ZipCloseCurrentFile\n", err);
+			print("error %d with zipfile in ZipCloseCurrentFile\n", err);
 			FreePatch(zipfile->data);
 			FreePatch(zipfile);
 			return NULL;

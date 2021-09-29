@@ -39,10 +39,10 @@ public:
     {
         switch(error){
         case SCE_JSON_ERROR_NOMEM:
-            printf("allocate Fail. size = %ld\n", size);
+            print("allocate Fail. size = %ld\n", size);
             sceKernelExitProcess(0);
         default:
-            printf("unknown[%#x]\n", error);
+            print("unknown[%#x]\n", error);
             break;
         }
     }
@@ -71,7 +71,7 @@ public:
 	~NullAccess(){};
 	static const Json::Value& NullAccessCB(Json::ValueType accesstype, const Json::Value* parent, void* context)
 	{
-		printf("CB(%d)[parent:%d]\n", accesstype, parent->getType());
+		print("CB(%d)[parent:%d]\n", accesstype, parent->getType());
 
 		switch(accesstype){
 		case Json::kValueTypeBoolean:
@@ -108,7 +108,7 @@ void linked_list::printall()
     node *current = head;
     while (current != NULL)
     {
-        printf("%s, ", current->widget.title.data);
+        print("%s, ", current->widget.title.data);
         current = current->next;
     }
 #endif

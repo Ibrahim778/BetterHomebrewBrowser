@@ -718,7 +718,7 @@ Widget *BlankPage::AddFromStyle(const char *refId, const char *style, const char
     sinfo.hash = sinfo.GetHashById(&searchRequest);    
     
     Widget *newWidget = mainPlugin->CreateWidgetWithStyle(parent != NULL ? parent : root, type, &winfo, &sinfo);
-    if(newWidget == NULL) printf("Error can't make widget with refID %s, type %s, style = %s\n", refId, type, style);
+    if(newWidget == NULL) print("Error can't make widget with refID %s, type %s, style = %s\n", refId, type, style);
     if(newWidget == NULL || newWidget < 0) return NULL;
     return newWidget;
 }

@@ -78,7 +78,7 @@ SceVoid onPluginReady(Plugin *plugin)
 {
     if(plugin == NULL)
     {
-        printf("[MAIN_BHBB] Error Plugin load failed!\n");
+        print("[MAIN_BHBB] Error Plugin load failed!\n");
         return;
     }
 
@@ -97,8 +97,8 @@ void initPlugin()
     
     fwParam.defaultSurfacePoolSize = 4 * 1024 * 1024;
     
-    if(conf.enableIcons) fwParam.defaultSurfacePoolSize += 12 * 1024 * 1024;
-    if(conf.enableScreenshots) fwParam.defaultSurfacePoolSize += 12 * 1024 * 1024; 
+    //if(conf.enableIcons) fwParam.defaultSurfacePoolSize += 12 * 1024 * 1024;
+    //if(conf.enableScreenshots) fwParam.defaultSurfacePoolSize += 12 * 1024 * 1024; 
 
     fwParam.textSurfaceCacheSize = 4 * 1024 * 1024;
 

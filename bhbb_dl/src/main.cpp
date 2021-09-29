@@ -20,7 +20,7 @@ extern unsigned int	sce_process_preload_disabled = (SCE_PROCESS_PRELOAD_DISABLED
 	| SCE_PROCESS_PRELOAD_DISABLED_LIBCDLG | SCE_PROCESS_PRELOAD_DISABLED_LIBPERF \
 	| SCE_PROCESS_PRELOAD_DISABLED_APPUTIL | SCE_PROCESS_PRELOAD_DISABLED_LIBSCEFT2 | SCE_PROCESS_PRELOAD_DISABLED_LIBPVF);
 
-unsigned int sceLibcHeapSize = 1024 * 1024 * 6;
+unsigned int sceLibcHeapSize = 1024 * 1024 * 4;
 
 Queue queue;
 
@@ -100,6 +100,9 @@ SceInt32 DownloadThread(SceSize args, void *argp)
 
 int main()
 {
+    sceClibPrintf("Hello World!\n");
+    return sceAppMgrDestroyAppByAppId(-2);
+
     int r = sceKernelOpenMsgPipe(BHBB_DL_PIPE_NAME);
 
     if(r > 0) //Pipe already exists... a different instance in running!
@@ -133,10 +136,10 @@ int main()
 
         int receiveResult = sceKernelReceiveMsgPipe(pipeID, &pkt, sizeof(pkt), SCE_KERNEL_MSG_PIPE_MODE_WAIT | SCE_KERNEL_MSG_PIPE_MODE_FULL, &size, NULL);
         if(receiveResult != SCE_OK)
-            printf("[Error] Recieve data function has returned error 0x%X\n", receiveResult);
+            print("[Error] Recieve data function has returned error 0x%X\n", receiveResult);
 
         if(size != sizeof(pkt))
-            printf("[Warning] Could not recieve all data!\n");
+            print("[Warning] Could not recieve all data!\n");
         
         if(size > 0)
         {
@@ -153,7 +156,7 @@ int main()
                 Running = SCE_FALSE;
                 break;
             default:
-                printf("[Error] Unkown Command!\n");
+                print("[Error] Unkown Command!\n");
                 break;
             }
         }

@@ -171,7 +171,7 @@ void Utils::MakeDataDirs()
 void Utils::StartBGDL()
 {
     sceSysmoduleLoadModule(SCE_SYSMODULE_BG_APP_UTIL);
-    sceBgAppUtilStartBgApp(2);
+    sceBgAppUtilStartBgApp(0);
 }
 
 void Utils::NetInit()

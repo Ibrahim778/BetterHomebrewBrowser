@@ -28,19 +28,8 @@ userConfig conf;
 int main()
 {
     sceClibPrintf("Hello World!\n");
+    Utils::StartBGDL();
     GetConfig(&conf);
-    if(conf.enableIcons)
-    {
-        int r = sceAppMgrGrowMemory3(10 * 1024 * 1024, 1);
-        sceClibPrintf("r = 0x%X\n", r);
-        if(r < 0) conf.enableIcons = false;
-    } 
-    if(conf.enableScreenshots)
-    {
-        int r = sceAppMgrGrowMemory3(10 * 1024 * 1024, 1);
-        sceClibPrintf("r = 0x%X\n", r);
-        if(r < 0) conf.enableScreenshots = false;
-    } 
     initMusic();
     updateMusic();
     initPaf();
@@ -230,7 +219,6 @@ BUTTON_CB(DownloadIndex)
 void onReady()
 {
     Page::Init();
-    Utils::StartBGDL();
     Utils::NetInit();
     Utils::MakeDataDirs();
 
@@ -244,6 +232,6 @@ void onReady()
 #ifdef _DEBUG
 void PrintFreeMem(ScePVoid pUserData)
 {
-    printf("Free Mem: %lu\n", fwAllocator->GetFreeSize());
+    print("Free Mem: %lu\n", fwAllocator->GetFreeSize());
 }
 #endif

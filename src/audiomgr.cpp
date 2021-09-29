@@ -39,5 +39,4 @@ void updateMusic()
         ret = sceMusicInternalAppSetPlaybackCommand(SCE_MUSIC_EVENTID_STOP, 0);
         if(ret < 0) LOG_ERROR("SEND_EVENT_STOP", ret);
     }
-    
 }

@@ -16,7 +16,7 @@ void Queue::printall()
     node *current = head;
     while (current != NULL)
     {
-        printf("%s, ", current->packet.url);
+        print("%s, ", current->packet.url);
         current = current->next;
     }
 #endif
