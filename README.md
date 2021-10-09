@@ -17,3 +17,4 @@ The homebrew browser that's actually good. Massive thanks to GrapheneCt on his w
 ## Credits
 1. Thanks to GrapheneCt for ScePaf reversing and EMPVA (Reference) and his CXML Compiler (Not Released)
 2. Thanks to SomeonPC for Livearea™️ assets and beta testing
+3. Thanks to SparklingPheonix for beta testing
