@@ -7,7 +7,7 @@ The homebrew browser that's actually good. Massive thanks to GrapheneCt on his w
 1. It doesn't take 10 minutes to load (*cough*)
 1. It has background download
 1. It can download from both CBPSDB and VitaDB
-1. It looks and feels almost exactly like the official Play Station Store App
+1. It looks, feels and sounds almost exactly like the official Play Station Store App
 1. It can be opened alongside other apps
 1. It has tunes (Yes I ran out of things now)
 
