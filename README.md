@@ -13,7 +13,10 @@ The homebrew browser that's actually good. Massive thanks to GrapheneCt on his w
 
 ## Downsides
 1. Background downloads will be terminated without warning when you open an enlarged memory mode game. There is no way to avoid this, but it's not a problem in most cases.
-2. Sometimes it crashes. In this case reboot and next time you launch the app hold L
+2. Sometimes it crashes on boot. In this case reboot and next time you launch the app hold L
+
+# Note
+This *is* an open beta. So don't be suprised if it crashes
 
 ## Credits
 1. Thanks to GrapheneCt for ScePaf reversing and EMPVA (Reference) and his CXML Compiler (Not Released)
