@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8" standalone="yes"?>
 <paramsfo>
   <param key="APP_VER">01.00</param>
-  <param key="ATTRIBUTE">32768</param>
+  <param key="ATTRIBUTE">32832</param>
   <param key="ATTRIBUTE2">0</param>
   <param key="ATTRIBUTE_MINOR">17</param>
   <param key="CATEGORY">gdc</param>

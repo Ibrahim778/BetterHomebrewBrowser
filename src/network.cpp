@@ -1,9 +1,9 @@
 #include "network.hpp"
 #include "main.hpp"
 
-#define NET_HEAP_SIZE  1 * 1024 * 1024
-#define HTTP_HEAP_SIZE 1 * 1024 * 1024
-#define SSL_HEAP_SIZE  1 * 1024 * 1024
+#define NET_HEAP_SIZE  2 * 1024 * 1024
+#define HTTP_HEAP_SIZE 2 * 1024 * 1024
+#define SSL_HEAP_SIZE  2 * 1024 * 1024
 
 static SceUID moduleID = SCE_UID_INVALID_UID;
 static SceUID cLibID = SCE_UID_INVALID_UID;

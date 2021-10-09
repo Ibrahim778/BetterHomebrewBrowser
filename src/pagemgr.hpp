@@ -31,6 +31,7 @@ public:
 
     void (*OnDelete)(void);
     void (*AfterDelete)(void);
+    void (*OnRedisplay)(void);
 
     static void Init();
 
@@ -81,6 +82,7 @@ public:
     Text *TitleText;
     Text *Credits;
     Text *Description;
+    Text *Version;
     Plane *Icon;
 
     InfoPage(homeBrewInfo *info, SceBool wait = SCE_FALSE);
@@ -106,6 +108,8 @@ public:
     
     SceVoid DisableAllButtons();
     SceVoid EnableAllButtons();
+
+    SceVoid Clear();
 
 };
 

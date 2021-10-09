@@ -39,15 +39,12 @@ add_executable(${PROJECT_NAME}
 )
 
 target_link_libraries(${PROJECT_NAME}
-    SceKernel_stub
     SceThreadmgr_stub
-    SceDbg_stub
-    SceDisplay_stub
     SceNotificationUtilProgress_stub_weak
     ScePromoterUtil_stub_weak
     SceNotificationUtil_stub_weak
     SceNotificationUtilBgApp_stub_weak
-    c_stub
+    ScePafStdc_stub
     SceHttp_stub
     SceNet_stub
     SceNetCtl_stub

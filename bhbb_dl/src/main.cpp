@@ -20,7 +20,7 @@ extern unsigned int	sce_process_preload_disabled = (SCE_PROCESS_PRELOAD_DISABLED
 	| SCE_PROCESS_PRELOAD_DISABLED_LIBCDLG | SCE_PROCESS_PRELOAD_DISABLED_LIBPERF \
 	| SCE_PROCESS_PRELOAD_DISABLED_APPUTIL | SCE_PROCESS_PRELOAD_DISABLED_LIBSCEFT2 | SCE_PROCESS_PRELOAD_DISABLED_LIBPVF);
 
-unsigned int sceLibcHeapSize = 1024 * 1024 * 4;
+unsigned int sceLibcHeapSize = 1024 * 1024 * 1.5;
 
 Queue queue;
 
@@ -35,6 +35,7 @@ int checkFileExist(const char *file)
 
 int install(const char *file)
 {
+    sceIoRemove(EXTRACT_PATH);
     Zip *zfile;
     char txt[64] = {0};
     
@@ -82,15 +83,18 @@ SceInt32 DownloadThread(SceSize args, void *argp)
 
         char dest[SCE_IO_MAX_PATH_BUFFER_SIZE] = {0};
         snprintf(dest, SCE_IO_MAX_PATH_BUFFER_SIZE, "ux0:/temp/%s.vpk", queue.head->packet.name);
-        dlFile(queue.head->packet.url, dest);
+        CURLcode r = (CURLcode)dlFile(queue.head->packet.url, dest);
 
-        if(!NotifMgr::currDlCanceled)    
+        if(!NotifMgr::currDlCanceled && r == CURLE_OK)    
         {
             NotifMgr::UpdateProgressNotif(0, "Extracting", queue.head->packet.name);
             install(dest);
         }
-        else sceIoRemove(dest);
-
+        else
+        {
+            if(r != 6) NotifMgr::EndNotif("An error occoured while downloading",curl_easy_strerror(r));
+            sceIoRemove(dest);
+        }
         queue.dequeue();
     };
 
@@ -98,19 +102,56 @@ SceInt32 DownloadThread(SceSize args, void *argp)
     return sceKernelExitDeleteThread(0);
 }
 
+int initPaf()
+{
+    SceInt32 res = -1, load_res;
+
+    ScePafInit initParam;
+    SceSysmoduleOpt opt;
+
+    initParam.global_heap_size = 6 * 1024 * 1024;
+
+	initParam.a2 = 0x0000EA60;
+	initParam.a3 = 0x00040000;
+
+    initParam.cdlg_mode = SCE_FALSE;
+
+    initParam.heap_opt_param1 = 0;
+    initParam.heap_opt_param2 = 0;
+
+    //Specify that we will pass some arguments
+    opt.flags = 0;
+    opt.result = &load_res;
+
+    res = _sceSysmoduleLoadModuleInternalWithArg(SCE_SYSMODULE_INTERNAL_PAF, sizeof(initParam), &initParam, &opt);
+
+    if(res < 0 || load_res < 0)
+    {
+        LOG_ERROR("INIT_PAF", res);
+        LOG_ERROR("INIT_PAF", load_res);
+    }
+
+    return res;
+}
+
+void endPaf()
+{
+    uint32_t buf = 0;
+    _sceSysmoduleUnloadModuleInternalWithArg(SCE_SYSMODULE_INTERNAL_PAF, 0, NULL, &buf);
+}
+
 int main()
 {
-    sceClibPrintf("Hello World!\n");
-    return sceAppMgrDestroyAppByAppId(-2);
-
-    int r = sceKernelOpenMsgPipe(BHBB_DL_PIPE_NAME);
-
-    if(r > 0) //Pipe already exists... a different instance in running!
+    print("Loaded bhbb_dl\n");
+    if(sceKernelOpenMsgPipe(BHBB_DL_PIPE_NAME) > 0) //Pipe already exists... a different instance in running!
         return -1;
 
 	if(sceSysmoduleLoadModule(SCE_SYSMODULE_NOTIFICATION_UTIL) != SCE_OK)
         return -1;
+    
     sceNotificationUtilBgAppInitialize();
+    if(initPaf() < 0)
+        return -1;
 
     Running = SCE_TRUE;
 
@@ -119,7 +160,7 @@ int main()
     if(dlThreadID < 0)
     {
         Running = SCE_FALSE; //Just in case one of them succeeded it will shut down.
-        return -1;
+        return sceAppMgrDestroyAppByAppId(-2);
     }
 
     SceUID pipeID = sceKernelCreateMsgPipe(BHBB_DL_PIPE_NAME, SCE_KERNEL_MSG_PIPE_TYPE_USER_MAIN, SCE_KERNEL_ATTR_OPENABLE, SCE_KERNEL_4KiB, NULL);
@@ -156,13 +197,14 @@ int main()
                 Running = SCE_FALSE;
                 break;
             default:
-                print("[Error] Unkown Command!\n");
+                print("[Error] Unknown Command!\n");
                 break;
             }
         }
         sceKernelDelayThread(1000);
     }
 
+    endPaf();
     sceKernelDeleteMsgPipe(pipeID);    
 
     return sceAppMgrDestroyAppByAppId(-2);

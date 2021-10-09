@@ -36,20 +36,6 @@ typedef struct SfoEntry {
     uint32_t dataofs;
 } SfoEntry;
 
-typedef struct SceSysmoduleOpt {
-	int flags;
-	int *result;
-	int unused[2];
-} SceSysmoduleOpt;
-
-typedef struct ScePafInit {
-	SceSize global_heap_size;
-	int a2;
-	int a3;
-	int cdlg_mode;
-	int heap_opt_param1;
-	int heap_opt_param2;
-} ScePafInit; // size is 0x18
 
 int getSfoString(char* buffer, char* name, char* string, int length) {
     SfoHeader* header = (SfoHeader*)buffer;
@@ -175,49 +161,9 @@ int makeHead(const char *path) {
     return res;
 }
 
-static int loadScePaf() {
-    SceInt32 res = -1, load_res;
-
-    ScePafInit initParam;
-    SceSysmoduleOpt opt;
-
-    initParam.global_heap_size = 0x180000;
-
-	initParam.a2 = 0x0000EA60;
-	initParam.a3 = 0x00040000;
-
-    initParam.cdlg_mode = SCE_FALSE;
-
-    initParam.heap_opt_param1 = 0;
-    initParam.heap_opt_param2 = 0;
-
-    //Specify that we will pass some arguments
-    opt.flags = 0;
-    opt.result = &load_res;
-
-    res = _sceSysmoduleLoadModuleInternalWithArg(SCE_SYSMODULE_INTERNAL_PAF, sizeof(initParam), &initParam, &opt);
-
-    if(res < 0 || load_res < 0)
-    {
-        LOG_ERROR("INIT_PAF", res);
-        LOG_ERROR("INIT_PAF", load_res);
-    }
-
-    return res;
-}
-
-static int unloadScePaf() {
-  uint32_t buf = 0;
-  return _sceSysmoduleUnloadModuleInternalWithArg(SCE_SYSMODULE_INTERNAL_PAF, 0, NULL, &buf);
-}
-
 int promoteApp(const char* path) {
     int res = makeHead(path);
     if (res < 0)
-        return res;
-
-    res = loadScePaf();
-    if(res < 0)
         return res;
     
     sceSysmoduleLoadModuleInternal(SCE_SYSMODULE_INTERNAL_PROMOTER_UTIL);
@@ -234,7 +180,6 @@ int promoteApp(const char* path) {
         return res;
 
     sceSysmoduleUnloadModuleInternal(SCE_SYSMODULE_INTERNAL_PROMOTER_UTIL);
-    unloadScePaf();
 
     return 0;
 }

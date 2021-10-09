@@ -5,12 +5,15 @@
 #include "main.hpp"
 
 typedef struct
+{   
+    short iconDownloadHourGap;
+} DBSettings;
+
+typedef struct
 {
     DB_Type db;
-    short iconDownloadHourGap;
-    bool enableMusic;
-    bool enableScreenshots;
-    bool enableIcons;
+    DBSettings vitaDBSettings;
+    DBSettings CBPSDBSettings;
 } userConfig;
 
 void WriteConfig(userConfig *conf);

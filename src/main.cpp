@@ -13,6 +13,7 @@
 extern Page *currPage;
 extern CornerButton *mainBackButton;
 extern CornerButton *settingsButton;
+extern CornerButton *forwardButton;
 extern Plugin *mainPlugin;
 extern Plane *mainRoot;
 extern linked_list list;
@@ -23,60 +24,178 @@ extern Allocator *fwAllocator;
 graphics::Texture **listTexs;
 
 userConfig conf;
+int loadFlags = 0;
 
+int pageNum = 1;
+
+CB(PageListThread);
 
 int main()
 {
-    sceClibPrintf("Hello World!\n");
-    Utils::StartBGDL();
-    GetConfig(&conf);
-    initMusic();
-    updateMusic();
+    SceCtrlData dat;
+    if(sceCtrlReadBufferPositive(0, &dat, 1), !(dat.buttons && SCE_CTRL_L1))
+    {
+        Utils::StartBGDL();
+        if (sceAppMgrGrowMemory3(10 * 1024 * 1024, 1) >= 0)
+            loadFlags |= LOAD_FLAGS_SCREENSHOTS;
+
+        if (sceAppMgrGrowMemory3(5 * 1024 * 1024, 1) >= 0)
+            loadFlags |= LOAD_FLAGS_ICONS;
+
+        GetConfig(&conf);
+        initMusic();
+    }
+    else print("SKIPPED NON-ESSENTIALS\n");
+
     initPaf();
     initPlugin();
 
-    return 0;
+    return sceKernelExitProcess(0);
 }
 
 BUTTON_CB(DisplayInfo)
 {
-    new InfoPage((homeBrewInfo *)userDat, SCE_TRUE);
+    forwardButton->PlayAnimationReverse(0, Widget::Animation_Reset);
+    EventHandler::ResetBackButtonEvent();
+    new InfoPage((homeBrewInfo *)userDat);
 }
 
-void DeleteTexs(void)
+CB(DeleteTexs)
 {
-    for (int i = 0; i < list.num - 1; i++)
+    if (listTexs != NULL)
     {
-        if(listTexs[i] != NULL)
+        for (int i = 0; i < APPS_PER_PAGE - 1; i++)
         {
-            listTexs[i]->texSurface = SCE_NULL;
-            delete listTexs[i];
-        }    
+            if (listTexs[i] != NULL)
+            {
+                if (listTexs[i]->texSurface != NULL)
+                {
+                    delete listTexs[i]->texSurface;
+                    listTexs[i]->texSurface = SCE_NULL;
+                }
+                delete listTexs[i];
+                listTexs[i] = SCE_NULL;
+            }
+        }
+        delete[] listTexs;
+
+        listTexs = NULL;
     }
-    delete[] listTexs;
 }
 
-void PageListThread(void)
+CB(onListPageDelete)
+{
+    pageNum = 1;
+    forwardButton->PlayAnimationReverse(0, Widget::Animation_Reset);
+}
+
+BUTTON_CB(PageDecrease)
+{
+    if (pageNum > 1)
+        pageNum--;
+
+    if (pageNum == 1)
+        EventHandler::ResetBackButtonEvent();
+
+    if (currPage->pageThread->IsStarted())
+    {
+        currPage->pageThread->EndThread = SCE_TRUE;
+        currPage->pageThread->Join();
+    }
+    
+    delete currPage->pageThread;
+    currPage->pageThread = new UtilThread(SCE_KERNEL_COMMON_QUEUE_LOWEST_PRIORITY, SCE_KERNEL_16KiB, "BHBB_PAGE_THREAD");
+    currPage->pageThread->Entry = PageListThread;
+    currPage->pageThread->EndThread = SCE_FALSE;
+    currPage->pageThread->Start();
+
+}
+
+BUTTON_CB(PageIncrease)
+{
+    if ((pageNum * APPS_PER_PAGE) < list.num)
+    {
+        pageNum++;
+
+        EventHandler::SetBackButtonEvent(PageDecrease);
+        if (currPage->pageThread->IsStarted())
+        {
+            currPage->pageThread->EndThread = SCE_TRUE;
+            currPage->pageThread->Join();
+        }
+        delete currPage->pageThread;
+        currPage->pageThread = new UtilThread(SCE_KERNEL_COMMON_QUEUE_LOWEST_PRIORITY, SCE_KERNEL_16KiB, "BHBB_PAGE_THREAD");
+        currPage->pageThread->Entry = PageListThread;
+        currPage->pageThread->EndThread = SCE_FALSE;
+        currPage->pageThread->Start();
+    }
+}
+
+CB(RedisplayCB)
+{
+    forwardButton->PlayAnimation(0, Widget::Animation_Reset);
+    if (pageNum > 1)
+        EventHandler::SetBackButtonEvent(PageDecrease);
+}
+
+CB(PageListThread)
 {
     SelectionList *listp = (SelectionList *)currPage;
-    if(list.num == 0)
+    if (list.num == 0)
     {
         new TextPage("Why is there nothing here?");
         delete listp;
         return;
     }
 
-    node *n = list.head;
-    for (int i = 0; i < list.num && !currPage->pageThread->EndThread; i++, n = n->next)
+    currPage->busy->Start();
+
+    if ((pageNum * APPS_PER_PAGE) < list.num)
+        forwardButton->PlayAnimation(0, Widget::Animation_Reset);
+    else 
+        forwardButton->PlayAnimationReverse(0, Widget::Animation_Reset); 
+
+    EventHandler::SetForwardButtonEvent(PageIncrease);
+    currPage->root->SetAlpha(.39f);
+    listp->Clear();
+
+    bool enableIcons;
+    switch (conf.db)
     {
-        n->button = ((SelectionList *)currPage)->AddOption(&n->widget.title, DisplayInfo, &n->widget, SCE_TRUE, conf.enableIcons);
-        sceKernelDelayThread(8000); // To make sure it doesn't crash, paf is slow sometimes
+    case CBPSDB:
+        enableIcons = isDirEmpty(CBPSDB_ICON_SAVE_PATH);
+        break;
+
+    case VITADB:
+        enableIcons = isDirEmpty(VITADB_ICON_SAVE_PATH);
+        break;
+
+    default:
+        enableIcons = false;
+        break;
+    }
+
+    enableIcons = enableIcons && (loadFlags & LOAD_FLAGS_ICONS);
+
+    node *n = list.getByNum((pageNum - 1) * APPS_PER_PAGE);
+    for (int i = 0; i < APPS_PER_PAGE && !currPage->pageThread->EndThread && n != NULL; i++, n = n->next)
+    {
+        n->button = ((SelectionList *)currPage)->AddOption(&n->widget.title, DisplayInfo, &n->widget, SCE_TRUE, enableIcons);
+        sceKernelDelayThread(8500); // :(
     }
     currPage->busy->Stop();
-    
-    if(!conf.enableIcons) goto END;
+    currPage->root->SetAlpha(1.0f);
 
-    listTexs = new graphics::Texture *[list.num];
+    if (!(loadFlags & LOAD_FLAGS_ICONS))
+        goto END;
+    if (!enableIcons)
+        goto END;
+    if (currPage->pageThread->EndThread)
+        goto END;
+    DeleteTexs();
+
+    listTexs = new graphics::Texture *[APPS_PER_PAGE];
+    sce_paf_memset(listTexs, 0, sizeof(graphics::Texture *) * APPS_PER_PAGE);
 
     //Texture Loading
     switch (conf.db)
@@ -84,29 +203,29 @@ void PageListThread(void)
     case VITADB:
     case CBPSDB:
     {
-        n = list.head;
-        for (int i = 0; i < list.num && !currPage->pageThread->EndThread && n != NULL; i++, n = n->next)
+        n = list.getByNum((pageNum - 1) * APPS_PER_PAGE);
+        for (int i = 0; i < APPS_PER_PAGE && !currPage->pageThread->EndThread && n != NULL; i++, n = n->next)
         {
-            while(currPage != listp) listp->pageThread->Sleep(1000);
-            if(checkFileExist(n->widget.icon0Local.data))
-            {
-                Misc::OpenResult res;
-                Misc::OpenFile(&res, n->widget.icon0Local.data, SCE_O_RDONLY, 0777, NULL);
+            while ((currPage != listp) && !currPage->pageThread->EndThread)
+                listp->pageThread->Sleep(1000);
 
-                listTexs[i] = new graphics::Texture();
+            Misc::OpenResult res;
+            Misc::OpenFile(&res, n->widget.icon0Local.data, SCE_O_RDONLY, 0777, NULL);
 
-                graphics::Texture::CreateFromFile(listTexs[i], mainPlugin->memoryPool, &res);
-                if(listTexs[i]->texSurface == NULL) new TextPage("Unkown Error Occourred", "Texture Loading Error");
-                else n->button->SetTextureBase(listTexs[i]);
-                
-                delete res.localFile;
-                sce_paf_free(res.unk_04);
-            }
-            else
+            listTexs[i] = new graphics::Texture();
+
+            graphics::Texture::CreateFromFile(listTexs[i], mainPlugin->memoryPool, &res);
+            if (listTexs[i]->texSurface == NULL)
             {
-                listTexs[i] = SCE_NULL;
+                delete listTexs[i];
+                listTexs[i] = NULL;
                 n->button->SetTextureBase(BrokenTex);
             }
+            else
+                n->button->SetTextureBase(listTexs[i]);
+
+            delete res.localFile;
+            sce_paf_free(res.unk_04);
         }
         break;
     }
@@ -114,81 +233,84 @@ void PageListThread(void)
     default:
         break;
     }
-    currPage->AfterDelete = DeleteTexs;
 
+    currPage->AfterDelete = DeleteTexs;
 END:
+    currPage->OnRedisplay = RedisplayCB;
+    currPage->OnDelete = onListPageDelete;
     currPage->pageThread->Join();
 }
 
-void DownloadThread(void)
+CB(DownloadThread)
 {
+    SceInt32 res = 0;
     switch (conf.db)
     {
     case VITADB:
     {
-        SceInt32 res = Utils::DownloadFile(VITADB_URL, DATA_PATH "/vitadb.json");
-        if(res < 0) break;
+        res = Utils::DownloadFile(VITADB_URL, DATA_PATH "/vitadb.json");
+        if (res != CURLE_OK)
+            break;
 
         parseJson(DATA_PATH "/vitadb.json");
 
-        if(conf.enableIcons && (checkDownloadIcons() || !checkFileExist(VITADB_ICON_SAVE_PATH)))
+        if ((loadFlags & LOAD_FLAGS_ICONS) && checkDownloadIcons())
         {
             Utils::SetWidgetLabel(((LoadingPage *)currPage)->infoText, "Downloading Icons");
             Utils::DownloadFile(VITADB_DOWNLOAD_ICONS_URL, VITADB_ICON_ZIP_SAVE_PATH);
-            
-            LoadingPage *oldPage = (LoadingPage *)currPage;
-            ProgressPage *extractPage = new ProgressPage("Extracting");
-            delete oldPage;
+            if(!currPage->pageThread->EndThread)
+            {
+                LoadingPage *oldPage = (LoadingPage *)currPage;
+                ProgressPage *extractPage = new ProgressPage("Extracting");
+                delete oldPage;
 
-            extractPage->busy->Stop();
+                mainBackButton->PlayAnimationReverse(0, Widget::Animation_Reset);
+                extractPage->busy->Stop();
 
-            Zip *zipFile = ZipOpen(VITADB_ICON_ZIP_SAVE_PATH);
-            ZipExtract(zipFile, NULL, VITADB_ICON_SAVE_PATH, extractPage->progressBars[0]);
-            ZipClose(zipFile);
+                Zip *zipFile = ZipOpen(VITADB_ICON_ZIP_SAVE_PATH);
+                ZipExtract(zipFile, NULL, VITADB_ICON_SAVE_PATH, extractPage->progressBars[0]);
+                ZipClose(zipFile);
 
-            sceIoRemove(VITADB_ICON_ZIP_SAVE_PATH);
+                sceIoRemove(VITADB_ICON_ZIP_SAVE_PATH);
 
-            saveCurrentTime();
+                saveCurrentTime();
+            }
+            mainBackButton->PlayAnimation(0, Widget::Animation_Reset);
         }
         break;
-    }    
+    }
     case CBPSDB:
     {
         SceInt32 res = Utils::DownloadFile(CBPSDB_URL, DATA_PATH "/cbpsdb.csv");
-        if(res < 0) break;
+        if (res < 0)
+            break;
 
         parseCSV(DATA_PATH "/cbpsdb.csv");
 
-        if(conf.enableIcons && (checkDownloadIcons() || !checkFileExist(CBPSDB_ICON_SAVE_PATH)))
+        if ((loadFlags & LOAD_FLAGS_ICONS) && checkDownloadIcons())
         {
             sceIoMkdir(CBPSDB_ICON_SAVE_PATH, 0777);
-            LoadingPage *DownloadIndexPage = (LoadingPage *)currPage;
-            ProgressPage *iconDownloadPage = new ProgressPage("Downloading Icons", 2);
+            Utils::SetWidgetLabel(((LoadingPage *)currPage)->infoText, "Downloading Icons");
+            Utils::DownloadFile(CBPSDB_DOWNLOAD_ICONS_URL, CBPSDB_ICON_ZIP_SAVE_PATH);
 
-            delete DownloadIndexPage;
-
-            mainBackButton->PlayAnimationReverse(0, Widget::Animation_Reset);
-            currPage->busy->Stop();
-
-            node *n = list.head;
-            for (int i = 0; i < list.num && n != NULL && !currPage->pageThread->EndThread; i++, n = n->next)
+            if(!currPage->pageThread->EndThread)
             {
-                res = Utils::DownloadFile(n->widget.icon0.data, n->widget.icon0Local.data, ((ProgressPage *)currPage)->progressBars[1]);
-                if(res != CURLE_OK)
-                {
-                    sceIoRemove(n->widget.icon0Local.data);
-                    if(res != 6) break;
-                }
+                LoadingPage *oldPage = (LoadingPage *)currPage;
+                ProgressPage *extractPage = new ProgressPage("Extracting");
+                delete oldPage;
 
-                //Sometimes the page is deleted and the download functiion ends this could cause a crash
-                if(!currPage->pageThread->EndThread)
-                {
-                    double pos = i + 1;
-                    double progress = (double)pos/list.num * 100.0;
-                    iconDownloadPage->progressBars[0]->SetProgress(progress, 0, 0);
-                }
+                mainBackButton->PlayAnimationReverse(0, Widget::Animation_Reset);
+                extractPage->busy->Stop();
+
+                Zip *zipFile = ZipOpen(CBPSDB_ICON_ZIP_SAVE_PATH);
+                ZipExtract(zipFile, NULL, CBPSDB_ICON_SAVE_PATH, extractPage->progressBars[0]);
+                ZipClose(zipFile);
+
+                sceIoRemove(CBPSDB_ICON_ZIP_SAVE_PATH);
+
+                saveCurrentTime();
             }
-            
+
             saveCurrentTime();
             mainBackButton->PlayAnimation(0, Widget::Animation_Reset);
         }
@@ -198,10 +320,17 @@ void DownloadThread(void)
         break;
     }
 
-    if(currPage->pageThread->EndThread == SCE_TRUE) return;
+    if (currPage->pageThread->EndThread == SCE_TRUE)
+        return;
 
     currPage->skipAnimation = SCE_FALSE;
     delete currPage;
+
+    if(res != 0)
+    {
+        new TextPage("Download DB Error");
+        return;
+    }
 
     SelectionList *currlist = new SelectionList();
     currlist->pageThread->Entry = PageListThread;
@@ -218,15 +347,18 @@ BUTTON_CB(DownloadIndex)
 
 void onReady()
 {
+    print("Reached Ready!\n");
     Page::Init();
     Utils::NetInit();
+    print("Net Init done!\n");
     Utils::MakeDataDirs();
 
     sceSysmoduleLoadModule(SCE_SYSMODULE_JSON);
-
+    print("loaded JSON\n");
     SelectionList *categoryPage = new SelectionList("Homebrew Type");
     categoryPage->AddOption("Apps", DownloadIndex);
     categoryPage->busy->Stop();
+    print("Loaded Page\n");
 }
 
 #ifdef _DEBUG

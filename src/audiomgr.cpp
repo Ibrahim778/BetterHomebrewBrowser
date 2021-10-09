@@ -24,19 +24,7 @@ void initMusic()
 
     ret = sceMusicInternalAppSetRepeatMode(SCE_MUSIC_REPEAT_ONE);
     if(ret < 0) LOG_ERROR("SET_REPEAT_MODE", ret);
-}
 
-void updateMusic()
-{
-    SceInt32 ret = -1;
-    if(conf.enableMusic)
-    {
-        ret = sceMusicInternalAppSetPlaybackCommand(SCE_MUSIC_EVENTID_DEFAULT, 0);
-        if(ret < 0) LOG_ERROR("SEND_EVENT_PLAY", ret);
-    }
-    else
-    {
-        ret = sceMusicInternalAppSetPlaybackCommand(SCE_MUSIC_EVENTID_STOP, 0);
-        if(ret < 0) LOG_ERROR("SEND_EVENT_STOP", ret);
-    }
+    ret = sceMusicInternalAppSetPlaybackCommand(SCE_MUSIC_EVENTID_DEFAULT, 0);
+    if(ret < 0) LOG_ERROR("SEND_EVENT_PLAY", ret);
 }

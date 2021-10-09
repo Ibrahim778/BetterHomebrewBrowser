@@ -17,20 +17,29 @@ Widget *mainScene = SCE_NULL;
 
 CornerButton *mainBackButton = SCE_NULL;
 CornerButton *settingsButton = SCE_NULL;
+
+CornerButton *forwardButton = SCE_NULL;
+
 Allocator *fwAllocator = SCE_NULL;
 
 graphics::Texture *BrokenTex = SCE_NULL;
 
 extern userConfig conf;
+extern int loadFlags;
 
 void initPaf()
 {
+    print("Init paf\n");
     SceInt32 res = -1, load_res;
 
     ScePafInit initParam;
     SceSysmoduleOpt opt;
 
     initParam.global_heap_size = 5 * 1024 * 1024;
+    if(loadFlags & LOAD_FLAGS_ICONS)
+        initParam.global_heap_size += 5 * 1024 * 1024;
+    if(loadFlags & LOAD_FLAGS_SCREENSHOTS)
+        initParam.global_heap_size += 2 * 1024 * 1024;
 
 	initParam.a2 = 0x0000EA60;
 	initParam.a3 = 0x00040000;
@@ -51,19 +60,21 @@ void initPaf()
         LOG_ERROR("INIT_PAF", res);
         LOG_ERROR("INIT_PAF", load_res);
     }
-
-
 }
 
 void getDefaultWidgets()
 {
+    print("Getting defaults..\n");
     Plugin::SceneInitParam sinit;
     Resource::Element search = Utils::GetParamWithHashFromId(SELECTION_PAGE_ID);
     mainScene = mainPlugin->CreateScene(&search, &sinit);
 
+    if(mainScene == NULL) sceKernelExitProcess(0);
+    print("mainScene = 0x%X\n");
     mainRoot = (Plane *)Utils::GetChildByHash(mainScene, Utils::GetHashById(MAIN_PLANE_ID));
     mainBackButton = (CornerButton *)Utils::GetChildByHash(mainScene, Utils::GetHashById(BACK_BUTTON_ID));
 
+    forwardButton = (CornerButton *)Utils::GetChildByHash(mainScene, Utils::GetHashById(FORWARD_BUTTON_ID));
     settingsButton = (CornerButton *)Utils::GetChildByHash(mainScene, Utils::GetHashById(SETTINGS_BUTTON_ID));
 
     PopupMgr::initDialog();
@@ -95,12 +106,10 @@ void initPlugin()
     fwParam.LoadDefaultParams();
     fwParam.applicationMode = Framework::Mode_ApplicationA;
     
-    fwParam.defaultSurfacePoolSize = 4 * 1024 * 1024;
-    
-    //if(conf.enableIcons) fwParam.defaultSurfacePoolSize += 12 * 1024 * 1024;
-    //if(conf.enableScreenshots) fwParam.defaultSurfacePoolSize += 12 * 1024 * 1024; 
-
-    fwParam.textSurfaceCacheSize = 4 * 1024 * 1024;
+    fwParam.defaultSurfacePoolSize = 5 * 1024 * 1024;
+    if(loadFlags & LOAD_FLAGS_ICONS) fwParam.defaultSurfacePoolSize += 6 * 1024 * 1024;
+    if(loadFlags & LOAD_FLAGS_SCREENSHOTS) fwParam.defaultSurfacePoolSize += 5 * 1024 * 1024;
+    fwParam.textSurfaceCacheSize = 2621440; //2.5MB
 
     Framework * fw = new Framework(&fwParam);
 
@@ -108,6 +117,7 @@ void initPlugin()
     fwAllocator = fw->defaultAllocator;
 	SceAppUtilInitParam init;
 	SceAppUtilBootParam boot;
+    
     //Can use sce_paf_... because paf is now loaded
 	sce_paf_memset(&init, 0, sizeof(SceAppUtilInitParam));
 	sce_paf_memset(&boot, 0, sizeof(SceAppUtilBootParam));

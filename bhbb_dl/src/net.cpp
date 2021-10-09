@@ -2,10 +2,8 @@
 #include <libsysmodule.h>
 #include <net.h>
 #include <libnetctl.h>
-#include <stdio.h>
 #include <libhttp.h>
 #include <libssl.h>
-#include <stdlib.h>
 #include <curl/curl.h>
 #include "main.hpp"
 #include "notifmgr.hpp"
@@ -17,7 +15,7 @@ extern SceBool Running;
 CURL *curl = SCE_NULL;
 
 #define MODULE_PATH "vs0:data/external/webcore/ScePsp2Compat.suprx"
-#define NET_INIT_SIZE 1024 * 1024 * 1
+#define NET_INIT_SIZE 1024 * 512
 
 SceUID moduleID;
 
@@ -32,7 +30,7 @@ void netInit()
 {
 	int ret = sceSysmoduleLoadModule(SCE_SYSMODULE_NET);
 	SceNetInitParam netInitParam;
-	netInitParam.memory = malloc(NET_INIT_SIZE);
+	netInitParam.memory = sce_paf_malloc(NET_INIT_SIZE);
 	netInitParam.size = NET_INIT_SIZE;
 	netInitParam.flags = 0;
 	ret = sceNetInit(&netInitParam);
@@ -90,8 +88,9 @@ size_t curlWriteCB(void *datPtr, size_t chunkSize, size_t chunkNum, void *userDa
     return sceIoWrite(*(int *)userDat, datPtr, chunkSize * chunkNum);
 }
 
-void dlFile(const char *url, const char *dest)
+int dlFile(const char *url, const char *dest)
 {
+    sceIoRemove(dest);
     SceUID file = sceIoOpen(dest, SCE_O_WRONLY | SCE_O_CREAT | SCE_O_TRUNC, 0777);
     curl_easy_setopt(curl, CURLOPT_URL, url);
     curl_easy_setopt(curl, CURLOPT_WRITEDATA, &file);
@@ -102,6 +101,7 @@ void dlFile(const char *url, const char *dest)
     }
 
     sceIoClose(file);
+    return (int)ret;
 }
 
 void curlInit()

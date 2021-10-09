@@ -13,7 +13,7 @@ void saveCurrentTime()
     SceDateTime time;
     sceRtcGetCurrentClockUtc(&time);
 
-    SceUID file = sceIoOpen(TIME_SAVE_PATH, SCE_O_WRONLY | SCE_O_CREAT | SCE_O_TRUNC, 0777);
+    SceUID file = sceIoOpen(conf.db == CBPSDB ? CBPSDB_TIME_SAVE_PATH : VITADB_TIME_SAVE_PATH, SCE_O_WRONLY | SCE_O_CREAT | SCE_O_TRUNC, 0777);
     sceIoWrite(file, &time, sizeof(time));
 
     sceIoClose(file);
@@ -21,15 +21,15 @@ void saveCurrentTime()
 
 bool checkDownloadIcons()
 {
-    if(conf.iconDownloadHourGap == -1)
+    if((conf.db == CBPSDB ? conf.CBPSDBSettings.iconDownloadHourGap : conf.vitaDBSettings.iconDownloadHourGap) == -1)
         return 0;
     
-    if(!checkFileExist(TIME_SAVE_PATH))
+    if(!checkFileExist(conf.db == CBPSDB ? CBPSDB_TIME_SAVE_PATH : VITADB_TIME_SAVE_PATH))
         return 1;
     
     SceDateTime prevTime;
 
-    SceUID file = sceIoOpen(TIME_SAVE_PATH, SCE_O_RDONLY, 0777);
+    SceUID file = sceIoOpen(conf.db == CBPSDB ? CBPSDB_TIME_SAVE_PATH : VITADB_TIME_SAVE_PATH, SCE_O_RDONLY, 0777);
     sceIoRead(file, &prevTime, sizeof(prevTime));
 
     sceIoClose(file);
@@ -40,5 +40,5 @@ bool checkDownloadIcons()
 
     //Get time difference in hours between 2 SceDateTime
     short hourGap =  ( ABS(currTime.year - prevTime.year) * 8760) + ( ABS(currTime.month - prevTime.month) * 730 ) + ABS(currTime.hour - prevTime.hour);
-    return hourGap >= conf.iconDownloadHourGap;
+    return hourGap >= (conf.db == CBPSDB ? conf.CBPSDBSettings.iconDownloadHourGap : conf.vitaDBSettings.iconDownloadHourGap);
 }

@@ -7,8 +7,6 @@
 				<layout_hint size="960, 544" pos="0, 0" />
 				<!--All other widgets will be added via templates-->
 			</plane>
-			<corner_button style="_common_style_corner_bottom_left" id="back_button" />
-			<corner_button style="_common_style_corner_bottom_right" id="settings_button" />
 
             <plane style="_common_style_plane_transparent" id="popup_diag_bg">
                 <layout_hint size="960, 544" pos="0, 0" />
@@ -25,6 +23,10 @@
 
                 </dialog>
             </plane>
+
+			<corner_button style="_common_style_corner_bottom_left" id="back_button" />
+			<corner_button style="_common_style_corner_bottom_right" id="settings_button" />
+            <corner_button style="style_button_forward" id="forward_button" />
 		</page>
 	
 	</pagetable>
@@ -202,7 +204,11 @@
                 		<layout_box anchor="0, 2" layout_type="1" bottom_margin="-200" top_margin="182" right_margin="0" left_margin="0" />
 
                         <text style="text_normal_style" id="hb_credits">
-                            <layout_hint anchor="0,2" size="544, 80" pos="0, -100"/>
+                            <layout_hint anchor="0,2" size="544, 60" pos="0, -100"/>
+                        </text>
+
+                        <text style="text_normal_style" id="hb_version">
+                            <layout_hint anchor="0,2" size="544, 60" pos="0, -200"/>
                         </text>
 
                         <image_button sound="_common_sound_image_button" style="list_button_style_no_img" id="hb_screenshot">
@@ -278,6 +284,14 @@
 	</templatetable>
 
 	<styletable>
+        <!-- Based on style from official common resource -->
+        <style_corner_button sound="_common_sound_corner_button_menu" key_focus="1" highlight_obj="plane_obj3" glow_obj="plane_obj4" color="1, 1, 1, 1" corner_obj="plane_obj2" focus_in_group="0" direct_key="2" bg_obj="plane_obj1" layout_type="3" id="style_button_forward">
+        <planeobj color="0.159999996423721, 0.150000005960464, 0.219999998807907, 0.800000011920929" texture0="_common_texture_corner_button_base" id="plane_obj1" />
+        <planeobj size="64, 64, 0" texture0="tex_forward_arrow" id="plane_obj2" pos="13, -11, 0" />
+        <planeobj texture0="_common_texture_corner_button_highlight" id="plane_obj3" />
+        <planeobj texture0="_common_texture_corner_button_glow" blend="2" id="plane_obj4" />
+        </style_corner_button>
+
 		<style_plane id="plane_separator_style" planeobj="planeobj_separator">
       		<planeobj texture0="_common_texture_ruled_line" id="planeobj_separator" />
     	</style_plane>
@@ -327,5 +341,6 @@
 	<texturetable>
 		<texture src="texture\bg.png" type="texture/png" id="tex_main_bg" />
         <texture src="texture\missing_image.png" type="texture/png" id="tex_missing_icon" />
+        <texture src="texture\arrow_forward.png" type="texture/png" id="tex_forward_arrow" />
 	</texturetable>
 </resource>  

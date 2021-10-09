@@ -10,9 +10,8 @@
 *********************************************************************/
 
 /*************************** HEADER FILES ***************************/
-#include <stdlib.h>
-#include <string.h>
 #include "sha1.h"
+#include <paf/stdc.h>
 
 /****************************** MACROS ******************************/
 #define ROTLEFT(a, b) ((a << b) | (a >> (32 - b)))
@@ -117,7 +116,7 @@ void sha1_final(SHA1_CTX* ctx, BYTE hash[]) {
         while (i < 64)
             ctx->data[i++] = 0x00;
         sha1_transform(ctx, ctx->data);
-        memset(ctx->data, 0, 56);
+        sce_paf_memset(ctx->data, 0, 56);
     }
 
     // Append to the padding the total message's length in bits and transform.

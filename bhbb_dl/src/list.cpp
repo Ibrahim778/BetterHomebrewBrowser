@@ -1,7 +1,10 @@
 #include "list.hpp"
 #include "main.hpp"
-#include <stdio.h>
-#include <stdlib.h>
+#include "notifmgr.hpp"
+#include <paf/stdc.h>
+
+#define free sce_paf_free
+#define malloc sce_paf_malloc
 
 Queue::Queue()
 {
@@ -27,7 +30,7 @@ LIST_TYPE *Queue::Find(const char *name)
     node *n = head;
     while(n != NULL)
     {
-        if(sceClibStrcmp(name, n->packet.name) == 0) return &n->packet;
+        if(sce_paf_strcmp(name, n->packet.name) == 0) return &n->packet;
         n = n->next;
     }
     return NULL;
@@ -40,7 +43,7 @@ void Queue::remove(const char *url)
         return;
 
     //First, handle the case where we free the head
-    if (sceClibStrcmp(head->packet.url, url) == 0)
+    if (sce_paf_strcmp(head->packet.url, url) == 0)
     {
         node *nodeToDelete = head;
         head = head->next;
@@ -56,7 +59,7 @@ void Queue::remove(const char *url)
     node **pCurrentNodeNext = &head; //This points to the current node's `next` field (or to pHead)
     while (1)
     {
-        if (sceClibStrcmp((*pCurrentNodeNext)->packet.url, url) == 0) //pCurrentNodeNext points to the pointer that points to the node we need to delete
+        if (sce_paf_strcmp((*pCurrentNodeNext)->packet.url, url) == 0) //pCurrentNodeNext points to the pointer that points to the node we need to delete
             break;
 
         //If the next node's next is NULL, we reached the end of the list. Bail out.
@@ -74,9 +77,16 @@ void Queue::remove(const char *url)
 
 void Queue::enqueue(LIST_TYPE *data, int dataSize)
 {
+    if(num > 1)
+    {
+        char txt[64];
+        sce_paf_memset(txt, 0, sizeof(txt));
+        sce_paf_snprintf(txt, sizeof(txt), "Added %s to queue", data->name);
+        NotifMgr::SendNotif(txt);
+    }
     node *tmp = new node;
-    sceClibMemset(&tmp->packet, 0, sizeof(tmp->packet));
-    sceClibMemcpy(&tmp->packet, data, dataSize);
+    sce_paf_memset(&tmp->packet, 0, sizeof(tmp->packet));
+    sce_paf_memcpy(&tmp->packet, data, dataSize);
     tmp->next = NULL;
 
     if (head == NULL)

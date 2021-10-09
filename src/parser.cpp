@@ -11,7 +11,7 @@
 using namespace sce;
 using namespace Json;
 
-unsigned int sceLibcHeapSize = 6 * 1024 * 1024;
+unsigned int sceLibcHeapSize = 5 * 1024 * 1024;
 
 linked_list list;
 extern Page *currPage;
@@ -243,6 +243,7 @@ void parseJson(const char *path)
         info->options.Set(rootval[i]["data"].getString().c_str());
         info->description.Set(rootval[i]["long_description"].getString().c_str());
         info->screenshot_url.Set(rootval[i]["screenshots"].getString().c_str());
+        info->version.Set(rootval[i]["version"].getString().c_str());
     }
 }
 
@@ -285,9 +286,8 @@ void parseCSV(const char *path)
                 sceClibStrncat(titleID, parsed[0], 10);
 
                 info->titleID.Set(titleID);
-
                 info->icon0Local.Setf(VITADB_ICON_SAVE_PATH "/%s.png",  info->id.data);
-
+                info->version.SetEmpty();
             }
         }
 

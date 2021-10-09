@@ -6,10 +6,17 @@
 using namespace paf;
 using namespace widget;
 
+typedef void (*ECallback)(Widget *, SceInt32, void*);;
+
 class EventHandler : public Widget::EventCallback
 {
 public:
     EventHandler();
+    static void SetBackButtonEvent(ECallback callback);
+    static void ResetBackButtonEvent();
+
+    static void SetForwardButtonEvent(ECallback callback);
+    static void ResetForwardButtonEvent();
 
     static void onGet(SceInt32 , Widget *self, SceInt32, ScePVoid puserData);
 };
@@ -18,6 +25,14 @@ class BackButtonEventHandler : public Widget::EventCallback
 {
 public:
     BackButtonEventHandler();
+
+    static void onGet(SceInt32 , Widget *self, SceInt32, ScePVoid puserData);
+};
+
+class ForwardButtonEventHandler : public Widget::EventCallback
+{
+public:
+    ForwardButtonEventHandler();
 
     static void onGet(SceInt32 , Widget *self, SceInt32, ScePVoid puserData);
 };
@@ -40,7 +55,6 @@ public:
 
 #define ON_PRESS_EVENT_ID 0x10000008
 
-typedef void (*ECallback)(Widget *, SceInt32, void*);;
 
 typedef struct 
 {

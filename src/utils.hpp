@@ -42,12 +42,14 @@ public:
     static SceInt32 DownloadFile(const char *url, const char *destination, ProgressBar *progressBar = NULL);
     static SceInt32 SetWidgetLabel(Widget *widget, const char *text);
     static SceInt32 SetWidgetLabel(Widget *widget, String *text);
+    static SceInt32 SetWidgetPosition(Widget *widget, SceFloat x, SceFloat y, SceFloat z = 0, SceFloat w = 0);
     static SceInt32 SetWidgetSize(Widget *widget, SceFloat x, SceFloat y, SceFloat z = 0.0f, SceFloat w = 0.0f);
     static SceInt32 SetWidgetColor(Widget *widget, SceFloat r, SceFloat g, SceFloat b, SceFloat a);
     static SceInt32 AssignButtonHandler(Widget *widget, ECallback onPress = SCE_NULL, void *userDat = SCE_NULL, int id = ON_PRESS_EVENT_ID);
 };
 
-extern "C" bool checkFileExist(const char *);
+extern "C" bool checkFileExist(const char *file);
+extern "C" bool isDirEmpty(const char *path);
 
 #define makeSceColorInt(r,g,b,a) Utils::makeSceColor(r##.0f, g##.0f, b##.0f, a##.0f)
 

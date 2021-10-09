@@ -9,18 +9,23 @@
 
 #ifdef _DEBUG
 #define print sceClibPrintf
-#define LOG_ERROR(prefix, error_code) sceClibPrintf("[%s] Got Error: 0x%X\n", prefix, error_code);
+#define LOG_ERROR(prefix, error_code) print("[%s] Got Error: 0x%X\n", prefix, error_code);
 #else
 #define print (void)NULL;
 #define LOG_ERROR(prefix, error_code) (void)NULL;
 #endif
+
+#define LOAD_FLAGS_ALL 0xFFFFFFFF
+#define LOAD_FLAGS_ICONS 1
+#define LOAD_FLAGS_SCREENSHOTS 2
 
 void onReady();
 
 typedef enum
 {
     PLUGIN,
-    APP
+    APP,
+    THEME
 } AppType;
 
 typedef enum
@@ -32,5 +37,8 @@ typedef enum
 void PrintFreeMem(ScePVoid);
 
 #define BUTTON_CB(name) void name(Widget *self, SceInt32 eventID, void *userDat)
+#define CB(name) void name(void)
+
+#define APPS_PER_PAGE 80
 
 #endif

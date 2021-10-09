@@ -2,7 +2,6 @@
 #include <notification_util.h>
 #include "main.hpp"
 #include "list.hpp"
-#include <string.h>
 
 extern Queue queue;
 
@@ -86,7 +85,7 @@ void NotifMgr::SendNotif(const char *text)
 
 void charToWchar(const wchar_t *dest, const char *src)
 {
-    int len = strlen(src) + 1;
+    int len = sce_paf_strlen(src) + 1;
     for(int i = 0; i < len; i++)
     {
        ((wchar_t *)dest)[i] = src[i];

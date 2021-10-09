@@ -89,7 +89,9 @@ target_link_libraries(${PROJECT_NAME}
     taihen_stub
     ScePsp2Compat_stub_weak
     SceRtcUser_stub
+    SceCtrl_stub
 )
+
 
 VDSuiteCreateSfo(${PROJECT_NAME}.sfo param.sfx)
 VDSuiteSignElf(${PROJECT_NAME}.self $<TARGET_FILE:${PROJECT_NAME}> BOOT_PARAM bootparam.yml)
@@ -102,4 +104,5 @@ VDSuitePackage(${PROJECT_NAME}.vpk
     resource/src/texture/bg.png sce_sys/pic0.png
     ${CMAKE_BINARY_DIR}/bhbb_dl/bhbb_dl.sfo sce_sys/param2.sfo
     ${CMAKE_BINARY_DIR}/bhbb_dl/bhbb_dl.self eboot2.bin
+    sce_sys sce_sys
 )

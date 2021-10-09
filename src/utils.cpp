@@ -3,6 +3,7 @@
 #include "pagemgr.hpp"
 #include "common.hpp"
 #include "network.hpp"
+#include "..\bhbb_dl\src\bhbb_dl.h"
 #include "eventhandler.hpp"
 #include <bgapputil.h>
 #include <taihen.h>
@@ -58,8 +59,25 @@ Widget * Utils::GetChildByHash(Widget *parent, SceUInt32 hash)
 
 bool checkFileExist(const char *path)
 {
-    SceIoStat s;
-    return sceIoGetstat(path, &s) >= 0;
+    /*
+    SceUID f = sceIoOpen(path, SCE_O_RDONLY, 0);
+    if(f < 0) return false;
+    sceIoClose(f);
+    return true;
+    */
+
+   SceIoStat s;
+   return sceIoGetstat(path, &s) >= 0;
+}
+
+bool isDirEmpty(const char *path)
+{
+    SceUID f = sceIoDopen(path);
+    if(f < 0) return false;
+    SceIoDirent d;
+    bool r = sceIoDread(f, &d) > 0;
+    sceIoDclose(f);
+    return r;
 }
 
 SceVoid UtilThread::EntryFunction()
@@ -69,6 +87,7 @@ SceVoid UtilThread::EntryFunction()
 
 int curlProgressCallback(void *userDat, double dltotal, double dlnow, double ultotal, double ulnow)
 {
+    sceKernelPowerTick(SCE_KERNEL_POWER_TICK_DEFAULT);
     if(currPage->pageThread->EndThread)
         return 1; //End
 
@@ -100,7 +119,8 @@ SceInt32 Utils::DownloadFile(const char *url, const char *dest, ProgressBar *pro
     CURLcode ret = curl_easy_perform(curl);
 
     sceIoClose(file);
-    return (int)ret;
+    if(ret == 6 || ret == 42) sceIoRemove(dest);
+    return (int)(ret == 6 ? 0 : ret);
 }
 
 SceInt32 Utils::SetWidgetLabel(Widget *widget, const char *text)
@@ -170,6 +190,9 @@ void Utils::MakeDataDirs()
 
 void Utils::StartBGDL()
 {
+    SceUID pipe = sceKernelOpenMsgPipe(BHBB_DL_PIPE_NAME);
+    if(pipe > 0) return;
+
     sceSysmoduleLoadModule(SCE_SYSMODULE_BG_APP_UTIL);
     sceBgAppUtilStartBgApp(0);
 }
@@ -206,6 +229,17 @@ SceInt32 Utils::SetWidgetSize(Widget *widget, SceFloat x, SceFloat y, SceFloat z
     v.w = w;
 
     return widget->SetSize(&v);
+}
+
+SceInt32 Utils::SetWidgetPosition(Widget *widget, SceFloat x, SceFloat y, SceFloat z, SceFloat w)
+{
+    SceFVector4 v;
+    v.x = x;
+    v.y = y;
+    v.z = z;
+    v.w = w;
+
+    return widget->SetPosition(&v);
 }
 
 SceInt32 Utils::SetWidgetColor(Widget *widget, SceFloat r, SceFloat g, SceFloat b, SceFloat a)

@@ -6,7 +6,6 @@
 #include <ShellAudio.h>
 
 void initMusic();
-void updateMusic();
 
 #define MUSIC_PATH "pd0:data/systembgm/store.at9"
 

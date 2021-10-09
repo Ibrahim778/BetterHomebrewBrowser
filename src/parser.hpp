@@ -23,6 +23,7 @@ typedef struct
     paf::String icon0Local;
     paf::String description;
     paf::String screenshot_url;
+    paf::String version;
 } homeBrewInfo;
 
 struct node

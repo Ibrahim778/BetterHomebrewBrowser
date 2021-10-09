@@ -1139,6 +1139,7 @@ int ZipExtract(Zip* zip, const char *password, const char* path, ProgressBar *pr
 
     for(i = 0;i < gi.countentries && !currPage->pageThread->EndThread;i++)
     {
+        sceKernelPowerTick(SCE_KERNEL_POWER_TICK_DEFAULT);
         if(ZipExtractCurrentFile(zip, &nopath, password, path) != _ZIP_OK)
             break;
 

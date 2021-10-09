@@ -9,6 +9,7 @@
 #include "bgdl.h"
 
 extern userConfig conf;
+extern int loadFlags;
 
 BUTTON_CB(updateDBType)
 {
@@ -16,17 +17,16 @@ BUTTON_CB(updateDBType)
     WriteConfig(&conf);
 }
 
-BUTTON_CB(updateIconTime)
+BUTTON_CB(updateIconTimeCBPSDB)
 {
-    conf.iconDownloadHourGap = (short)(int)userDat;
+    conf.CBPSDBSettings.iconDownloadHourGap = (short)(int)userDat;
     WriteConfig(&conf);
 }
 
-BUTTON_CB(updateMusicSelection)
+BUTTON_CB(updateIconTimeVitaDB)
 {
-    conf.enableMusic = (bool)userDat;
+    conf.vitaDBSettings.iconDownloadHourGap = (short)(int)userDat;
     WriteConfig(&conf);
-    updateMusic();
 }
 
 BUTTON_CB(DBSelector)
@@ -37,39 +37,61 @@ BUTTON_CB(DBSelector)
     PopupMgr::addDialogOption("Vita DB", updateDBType, (void *)VITADB, conf.db == VITADB);
 }
 
-#define ADD_TIME_POPUP_OPTION(hours) PopupMgr::addDialogOption(hours > 1 ? #hours " Hours" : #hours " Hour", updateIconTime, (void *)hours, conf.iconDownloadHourGap == hours)
+#define ADD_TIME_POPUP_OPTION_CBPSDB(hours) PopupMgr::addDialogOption(hours > 1 ? #hours " Hours" : #hours " Hour", updateIconTimeCBPSDB, (void *)hours, conf.CBPSDBSettings.iconDownloadHourGap == hours)
 
-BUTTON_CB(IconTimeSelector)
+BUTTON_CB(IconTimeSelectorCBPSDB)
 {
     if(PopupMgr::showingDialog) return;
 
     PopupMgr::showDialog();
+    
+    PopupMgr::addDialogOption("Never", updateIconTimeCBPSDB, (void *)-1, conf.CBPSDBSettings.iconDownloadHourGap == -1);
+    PopupMgr::addDialogOption("Every Time", updateIconTimeCBPSDB, (void *)0, conf.CBPSDBSettings.iconDownloadHourGap == 0);
 
-    PopupMgr::addDialogOption("Never", updateIconTime, (void *)-1, conf.iconDownloadHourGap == -1);
-    PopupMgr::addDialogOption("Every Time", updateIconTime, (void *)0, conf.iconDownloadHourGap == 0);
-
-    ADD_TIME_POPUP_OPTION(1);
-    ADD_TIME_POPUP_OPTION(3);
-    ADD_TIME_POPUP_OPTION(6);
-    ADD_TIME_POPUP_OPTION(12);
+    ADD_TIME_POPUP_OPTION_CBPSDB(1);
+    ADD_TIME_POPUP_OPTION_CBPSDB(3);
+    ADD_TIME_POPUP_OPTION_CBPSDB(6);
+    ADD_TIME_POPUP_OPTION_CBPSDB(12);
 }
 
-BUTTON_CB(MusicSelector)
+#define ADD_TIME_POPUP_OPTION_VITADB(hours) PopupMgr::addDialogOption(hours > 1 ? #hours " Hours" : #hours " Hour", updateIconTimeVitaDB, (void *)hours, conf.vitaDBSettings.iconDownloadHourGap == hours)
+
+BUTTON_CB(IconTimeSelectorVITADB)
 {
     if(PopupMgr::showingDialog) return;
 
     PopupMgr::showDialog();
+    
+    PopupMgr::addDialogOption("Never", updateIconTimeVitaDB, (void *)-1, conf.vitaDBSettings.iconDownloadHourGap == -1);
+    PopupMgr::addDialogOption("Every Time", updateIconTimeVitaDB, (void *)0, conf.vitaDBSettings.iconDownloadHourGap == 0);
 
-    PopupMgr::addDialogOption("Enabled", updateMusicSelection, (void *)true, conf.enableMusic);
-    PopupMgr::addDialogOption("Disabled", updateMusicSelection, (void *)false, !conf.enableMusic);
+    ADD_TIME_POPUP_OPTION_VITADB(1);
+    ADD_TIME_POPUP_OPTION_VITADB(3);
+    ADD_TIME_POPUP_OPTION_VITADB(6);
+    ADD_TIME_POPUP_OPTION_VITADB(12);
 }
 
+BUTTON_CB(CBPSDBSettings)
+{
+    SelectionList *page = new SelectionList("CBPS DB Settings");
+    page->busy->Stop();
+    page->AddOption("Download Icons After", IconTimeSelectorCBPSDB);
+}
+
+BUTTON_CB(VitaDBSettings)
+{
+    SelectionList *page = new SelectionList("Vita DB Settings");
+    page->busy->Stop();
+    page->AddOption("Download Icons After", IconTimeSelectorVITADB);
+}
+
+#ifdef _DEBUG
 BUTTON_CB(slidebarRet)
 {
     SlideBar *slidebar = (SlideBar *)self;
 
     int res =(int) slidebar->TypeSlideBar();
-    sceClibPrintf("Res = 0x%X\n", res);
+    print("Res = 0x%X\n", res);
 }
 
 BUTTON_CB(SlideBarTest)
@@ -78,13 +100,7 @@ BUTTON_CB(SlideBarTest)
 
     SlideBar *slidebar = (SlideBar *)page->AddFromStyle("slidebartest", "_common_default_style_slidebar", "slidebar");
     Utils::SetWidgetSize(slidebar, 544, 80);
-    
-    SceFVector4 pos;
-    pos.x = 0;
-    pos.y = 0;
-    pos.w = 0;
-    pos.z = 0;
-    slidebar->SetPosition(&pos);
+    Utils::SetWidgetPosition(slidebar, 0, 0);
 
     eventcb cb;
     cb.Callback = slidebarRet;
@@ -95,62 +111,43 @@ BUTTON_CB(SlideBarTest)
     sce_paf_memcpy(eh->pUserData, &cb, sizeof(cb));
 
     slidebar->RegisterEventCallback(2, eh, 0);
-    sceClibPrintf("ret = 0x%X\n", slidebar->ScePafWidget_FDB59013(50, 0));
-}
-
-#ifdef _DEBUG
-
-BUTTON_CB(UpdateSelectedIcons)
-{
-    bool restart = conf.enableIcons != (bool)userDat;
-
-    conf.enableIcons = (bool)userDat;
-    WriteConfig(&conf);
-    if(restart) sceAppMgrLoadExec("app0:eboot.bin", NULL, NULL);
-}
-
-BUTTON_CB(EnableIconsSelector)
-{
-    if(PopupMgr::showingDialog) return;
-
-    PopupMgr::showDialog();
-    PopupMgr::addDialogOption("Enabled", UpdateSelectedIcons, (void *)true, conf.enableIcons);
-    PopupMgr::addDialogOption("Disabled", UpdateSelectedIcons, (void *)false, !conf.enableIcons);
-}
-
-BUTTON_CB(UpdateSelectedScreenshots)
-{
-    bool restart = conf.enableScreenshots != (bool)userDat;
-    conf.enableScreenshots = (bool)userDat;
-    WriteConfig(&conf);
-    if(restart) sceAppMgrLoadExec("app0:eboot.bin", NULL, NULL);
-}
-
-BUTTON_CB(EnableScreenshotsSelector)
-{
-    if(PopupMgr::showingDialog) return;
-
-    PopupMgr::showDialog();
-    PopupMgr::addDialogOption("Enabled", UpdateSelectedScreenshots, (void *)true, conf.enableScreenshots);
-    PopupMgr::addDialogOption("Disabled", UpdateSelectedScreenshots, (void *)false, !conf.enableScreenshots);
+    print("ret = 0x%X\n", slidebar->ScePafWidget_FDB59013(50, 0));
 }
 
 BUTTON_CB(DebugPage)
 {
-    SelectionList *p = new SelectionList("★DEBUG");
-    p->busy->Stop();
+    BlankPage *page = new BlankPage();
+    page->busy->Stop();
 
-    p->AddOption("Enable Icons", EnableIconsSelector);
-    p->AddOption("Enable Screenshots", EnableScreenshotsSelector);
+    Text *IconInfo = (Text *)page->AddFromStyle("BHBBIconInfo", "_common_default_style_text", "text");
+    
+    Utils::SetWidgetColor(IconInfo, 1,1,1,1);
+    Utils::SetWidgetSize(IconInfo, 544, 80);
+    Utils::SetWidgetPosition(IconInfo, 0, 40);
+
+    char IconText[15] = {0};
+    sce_paf_snprintf(IconText, 15, "Icons: %s", loadFlags & LOAD_FLAGS_ICONS ? "Enabled" : "Disabled");
+    Utils::SetWidgetLabel(IconInfo, IconText);
+
+    Text *ScreenShotInfo = (Text *)page->AddFromStyle("BHBBScreenShotInfo", "_common_default_style_text", "text");
+
+    Utils::SetWidgetColor(ScreenShotInfo, 1,1,1,1);
+    Utils::SetWidgetSize(ScreenShotInfo, 544, 80);
+    Utils::SetWidgetPosition(ScreenShotInfo, 0, -40);
+
+    char ScreenshotText[21] = {0};
+    sce_paf_snprintf(ScreenshotText, 21, "Screenshots: %s\n", (loadFlags & LOAD_FLAGS_SCREENSHOTS) ? "Enabled" : "Disabled");
+    Utils::SetWidgetLabel(ScreenShotInfo, ScreenshotText);
 }
 
 #endif
+
 void SettingsButtonEventHandler::onGet(SceInt32, Widget*, SceInt32, ScePVoid)
 {
     SelectionList *settingsPage = new SelectionList("Settings");
     settingsPage->AddOption("Source", DBSelector);
-    settingsPage->AddOption("Download Icons After", IconTimeSelector);
-    settingsPage->AddOption("Enable Music", MusicSelector);
+    settingsPage->AddOption("Vita DB", VitaDBSettings);
+    settingsPage->AddOption("CBPS DB", CBPSDBSettings);
 
     #ifdef _DEBUG
     //settingsPage->AddOption("Slidebar Test", SlideBarTest);

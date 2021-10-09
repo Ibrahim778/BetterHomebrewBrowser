@@ -1,7 +1,11 @@
 #include "eventhandler.hpp"
 #include "pagemgr.hpp"
+#include "main.hpp"
 
 extern Page *currPage;
+
+static ECallback backButtonCB = NULL;
+static ECallback forwardButtonCB = NULL;
 
 #define DELETE_PAGE(Type, Class) case Type: { delete (Class *)currPage; break; }
 
@@ -21,7 +25,22 @@ BackButtonEventHandler::BackButtonEventHandler()
     eventHandler = onGet;
 }
 
-void BackButtonEventHandler::onGet(SceInt32 , Widget *self, SceInt32, ScePVoid puserData)
+void EventHandler::SetBackButtonEvent(ECallback callback)
+{
+    backButtonCB = callback;
+}
+
+void EventHandler::SetForwardButtonEvent(ECallback callback)
+{
+    forwardButtonCB = callback;
+}
+
+void EventHandler::ResetForwardButtonEvent()
+{
+    forwardButtonCB = NULL;
+}
+
+BUTTON_CB(DefaultCB)
 {
     currPage->skipAnimation = SCE_FALSE;
 
@@ -42,6 +61,26 @@ void BackButtonEventHandler::onGet(SceInt32 , Widget *self, SceInt32, ScePVoid p
     default:
         break;
     }
+}
+
+void EventHandler::ResetBackButtonEvent()
+{
+    backButtonCB = DefaultCB;
+}
+
+void BackButtonEventHandler::onGet(SceInt32 e, Widget *self, SceInt32, ScePVoid puserData)
+{
+    if(backButtonCB != NULL) backButtonCB(self, e, puserData);
+}
+
+ForwardButtonEventHandler::ForwardButtonEventHandler()
+{
+    eventHandler = onGet;
+}
+
+void ForwardButtonEventHandler::onGet(SceInt32 e, Widget *self, SceInt32, ScePVoid puserData)
+{
+    if(forwardButtonCB != NULL) forwardButtonCB(self, e, puserData);
 }
 
 SettingsButtonEventHandler::SettingsButtonEventHandler()
