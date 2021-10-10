@@ -14,7 +14,6 @@ extern "C" {
 #include <stddef.h>
 #include <string.h>
 #include <stdlib.h>
-#include <sys/stat.h>
 #include <kernel.h>
 #include "Archives.hpp"
 #include "pagemgr.hpp"

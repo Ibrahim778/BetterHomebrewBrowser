@@ -23,7 +23,7 @@ void WriteDefaultConfig()
 
 void GetConfig(userConfig *confOut)
 {
-    if(!checkFileExist(CONFIG_SAVE_PATH))
+    if(!paf::io::Misc::Exists(CONFIG_SAVE_PATH))
     {
         WriteDefaultConfig();
         GetConfig(confOut);

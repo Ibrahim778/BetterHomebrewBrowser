@@ -1,4 +1,5 @@
 /.vscode
+/.vs
 /build
 /build.bat
 /resource/cxml

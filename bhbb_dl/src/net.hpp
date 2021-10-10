@@ -4,4 +4,5 @@
 void curlInit();
 void curlEnd();
 int dlFile(const char *url, const char *dest);
+
 #endif

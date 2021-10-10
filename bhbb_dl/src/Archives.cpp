@@ -4,13 +4,12 @@
 */
 
 #include <paf.h>
+#include <kernel.h>
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-#include <sys/stat.h>
-#include <kernel.h>
 #include "Archives.hpp"
 #include "list.hpp"
 #include "notifmgr.hpp"
@@ -1148,8 +1147,9 @@ int ZipExtract(Zip* zip, const char *password, const char* path)
         double progress = i + 1.0;
         double percent = (double)progress / gi.countentries * 100.0;
 
-        char subtxt[64] = {0};
-        snprintf(subtxt, 64, "%d%% Done", (int)percent);
+        char subtxt[64];
+		sce_paf_memset(subtxt, 0, sizeof(subtxt));
+        sce_paf_snprintf(subtxt, 64, "%d%% Done", (int)percent);
 
         NotifMgr::UpdateProgressNotif(percent, subtxt, queue.head->packet.name);
     }

@@ -57,19 +57,6 @@ Widget * Utils::GetChildByHash(Widget *parent, SceUInt32 hash)
     return parent->GetChildByHash(&search, 0);
 }
 
-bool checkFileExist(const char *path)
-{
-    /*
-    SceUID f = sceIoOpen(path, SCE_O_RDONLY, 0);
-    if(f < 0) return false;
-    sceIoClose(f);
-    return true;
-    */
-
-   SceIoStat s;
-   return sceIoGetstat(path, &s) >= 0;
-}
-
 bool isDirEmpty(const char *path)
 {
     SceUID f = sceIoDopen(path);
@@ -180,12 +167,12 @@ char *Utils::strtok(char splitter, char *str)
 
 void Utils::MakeDataDirs()
 {
-    if(!checkFileExist(DATA_PATH))
-        sceIoMkdir(DATA_PATH, 0777);
-    if(!checkFileExist(ICON_SAVE_PATH))
-        sceIoMkdir(ICON_SAVE_PATH, 0777);
-    if(!checkFileExist(SCREENSHOT_SAVE_PATH))
-        sceIoMkdir(SCREENSHOT_SAVE_PATH, 0777);
+    if(!paf::io::Misc::Exists(DATA_PATH))
+		paf::io::Misc::Mkdir(DATA_PATH, 0777);
+    if(!paf::io::Misc::Exists(ICON_SAVE_PATH))
+		paf::io::Misc::Mkdir(ICON_SAVE_PATH, 0777);
+    if(!paf::io::Misc::Exists(SCREENSHOT_SAVE_PATH))
+		paf::io::Misc::Mkdir(SCREENSHOT_SAVE_PATH, 0777);
 }
 
 void Utils::StartBGDL()

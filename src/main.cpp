@@ -10,6 +10,33 @@
 #include "Archives.hpp"
 #include "timemgr.hpp"
 
+extern "C" {
+
+    extern const char			sceUserMainThreadName[] = "BHBB_MAIN";
+    extern const int			sceUserMainThreadPriority = SCE_KERNEL_DEFAULT_PRIORITY_USER;
+    extern const unsigned int	sceUserMainThreadStackSize = SCE_KERNEL_THREAD_STACK_SIZE_DEFAULT_USER_MAIN;
+
+    void __cxa_set_dso_handle_main(void *dso)
+    {
+
+    }
+
+    int _sceLdTlsRegisterModuleInfo()
+    {
+        return 0;
+    }
+
+    int __aeabi_unwind_cpp_pr0()
+    {
+        return 9;
+    }
+
+    int __aeabi_unwind_cpp_pr1()
+    {
+        return 9;
+    }
+}
+
 extern Page *currPage;
 extern CornerButton *mainBackButton;
 extern CornerButton *settingsButton;
@@ -42,13 +69,18 @@ int main()
         if (sceAppMgrGrowMemory3(5 * 1024 * 1024, 1) >= 0)
             loadFlags |= LOAD_FLAGS_ICONS;
 
+		initPaf();
+		initPlugin();
+
         GetConfig(&conf);
         initMusic();
     }
-    else print("SKIPPED NON-ESSENTIALS\n");
+	else {
+		print("SKIPPED NON-ESSENTIALS\n");
 
-    initPaf();
-    initPlugin();
+		initPaf();
+		initPlugin();
+	}
 
     return sceKernelExitProcess(0);
 }

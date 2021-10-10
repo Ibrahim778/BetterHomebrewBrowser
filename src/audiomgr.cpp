@@ -1,3 +1,5 @@
+#include <paf.h>
+
 #include "audiomgr.hpp"
 #include "main.hpp"
 #include "configmgr.hpp"
@@ -12,7 +14,7 @@ void initMusic()
     if(ret < 0) LOG_ERROR("AUDIO_INIT", ret);
 
     SceMusicOpt optParams;
-    sceClibMemset(&optParams, 0, 0x10);
+    sce_paf_memset(&optParams, 0, 0x10);
 
     optParams.flag = -1;
 

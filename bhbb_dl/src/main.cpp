@@ -1,43 +1,65 @@
-#include "main.hpp"
 #include <kernel.h>
 #include <paf.h>
 #include <notification_util.h>
 #include <libsysmodule.h>
-#include "bhbb_dl.h"
-#include "net.hpp"
 #include <stdio.h>
-#include "list.hpp"
 #include <curl/curl.h>
-#include "Archives.hpp"
-#include "notifmgr.hpp"
 #include <appmgr.h>
 #include <promoterutil.h>
 
+#include "main.hpp"
+#include "Archives.hpp"
+#include "notifmgr.hpp"
+#include "list.hpp"
+#include "bhbb_dl.h"
+#include "net.hpp"
+#include "promote.hpp"
+
+extern "C" {
+
+	extern unsigned int	sce_process_preload_disabled = (SCE_PROCESS_PRELOAD_DISABLED_LIBDBG \
+		| SCE_PROCESS_PRELOAD_DISABLED_LIBCDLG | SCE_PROCESS_PRELOAD_DISABLED_LIBPERF);
+
+	unsigned int sceLibcHeapSize = 2 * 1024 * 1024;
+
+    extern const char			sceUserMainThreadName[] = "BHBB_MAIN_BG";
+    extern const int			sceUserMainThreadPriority = SCE_KERNEL_DEFAULT_PRIORITY_USER;
+    extern const unsigned int	sceUserMainThreadStackSize = SCE_KERNEL_THREAD_STACK_SIZE_DEFAULT_USER_MAIN;
+
+    void __cxa_set_dso_handle_main(void *dso)
+    {
+
+    }
+
+    int _sceLdTlsRegisterModuleInfo()
+    {
+        return 0;
+    }
+
+    int __aeabi_unwind_cpp_pr0()
+    {
+        return 9;
+    }
+
+    int __aeabi_unwind_cpp_pr1()
+    {
+        return 9;
+    }
+}
+
 #define EXTRACT_PATH "ux0:temp/app"
-extern "C" int promoteApp(const char* path);
-
-extern unsigned int	sce_process_preload_disabled = (SCE_PROCESS_PRELOAD_DISABLED_LIBDBG \
-	| SCE_PROCESS_PRELOAD_DISABLED_LIBCDLG | SCE_PROCESS_PRELOAD_DISABLED_LIBPERF \
-	| SCE_PROCESS_PRELOAD_DISABLED_APPUTIL | SCE_PROCESS_PRELOAD_DISABLED_LIBSCEFT2 | SCE_PROCESS_PRELOAD_DISABLED_LIBPVF);
-
-unsigned int sceLibcHeapSize = 1024 * 1024 * 1.5;
 
 Queue queue;
 
 SceBool Running = SCE_TRUE;
 SceUID dlThreadID = SCE_UID_INVALID_UID;
 
-int checkFileExist(const char *file)
-{
-    SceIoStat s;
-    return sceIoGetstat(file, &s) >= 0;
-}
-
 int install(const char *file)
 {
     sceIoRemove(EXTRACT_PATH);
     Zip *zfile;
-    char txt[64] = {0};
+    char txt[64];
+	sce_paf_memset(txt, 0, sizeof(txt));
     
     if(NotifMgr::currDlCanceled)
         goto END;
@@ -53,9 +75,9 @@ int install(const char *file)
     {
         int res = promoteApp(EXTRACT_PATH);
         if(res == SCE_OK)
-            snprintf(txt, 64, "Installed %s Successfully!", queue.head->packet.name);
+			sce_paf_snprintf(txt, 64, "Installed %s Successfully!", queue.head->packet.name);
         else
-            snprintf(txt, 64, "Error 0x%X", res);
+			sce_paf_snprintf(txt, 64, "Error 0x%X", res);
 
         NotifMgr::SendNotif(txt);
     }
@@ -81,8 +103,9 @@ SceInt32 DownloadThread(SceSize args, void *argp)
         NotifMgr::MakeProgressNotif(queue.head->packet.name, "Installing", "Are you sure you want to cancel the install?");
 
 
-        char dest[SCE_IO_MAX_PATH_BUFFER_SIZE] = {0};
-        snprintf(dest, SCE_IO_MAX_PATH_BUFFER_SIZE, "ux0:/temp/%s.vpk", queue.head->packet.name);
+        char dest[SCE_IO_MAX_PATH_BUFFER_SIZE];
+		sce_paf_memset(dest, 0, sizeof(dest));
+		sce_paf_snprintf(dest, SCE_IO_MAX_PATH_BUFFER_SIZE, "ux0:/temp/%s.vpk", queue.head->packet.name);
         CURLcode r = (CURLcode)dlFile(queue.head->packet.url, dest);
 
         if(!NotifMgr::currDlCanceled && r == CURLE_OK)    
@@ -111,8 +134,8 @@ int initPaf()
 
     initParam.global_heap_size = 6 * 1024 * 1024;
 
-	initParam.a2 = 0x0000EA60;
-	initParam.a3 = 0x00040000;
+    initParam.a2 = 0x0000EA60;
+    initParam.a3 = 0x00040000;
 
     initParam.cdlg_mode = SCE_FALSE;
 
@@ -146,7 +169,7 @@ int main()
     if(sceKernelOpenMsgPipe(BHBB_DL_PIPE_NAME) > 0) //Pipe already exists... a different instance in running!
         return -1;
 
-	if(sceSysmoduleLoadModule(SCE_SYSMODULE_NOTIFICATION_UTIL) != SCE_OK)
+    if(sceSysmoduleLoadModule(SCE_SYSMODULE_NOTIFICATION_UTIL) != SCE_OK)
         return -1;
     
     sceNotificationUtilBgAppInitialize();

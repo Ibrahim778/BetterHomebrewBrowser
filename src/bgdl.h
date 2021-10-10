@@ -6,6 +6,7 @@ extern "C" {
 
 void SendDlRequest(const char *title, const char *url);
 void termBhbbDl();
+
 #ifdef __cplusplus
 }
 #endif

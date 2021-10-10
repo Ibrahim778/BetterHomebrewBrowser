@@ -24,7 +24,7 @@ bool checkDownloadIcons()
     if((conf.db == CBPSDB ? conf.CBPSDBSettings.iconDownloadHourGap : conf.vitaDBSettings.iconDownloadHourGap) == -1)
         return 0;
     
-    if(!checkFileExist(conf.db == CBPSDB ? CBPSDB_TIME_SAVE_PATH : VITADB_TIME_SAVE_PATH))
+    if(!paf::io::Misc::Exists(conf.db == CBPSDB ? CBPSDB_TIME_SAVE_PATH : VITADB_TIME_SAVE_PATH))
         return 1;
     
     SceDateTime prevTime;

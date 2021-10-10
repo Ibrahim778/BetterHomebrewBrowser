@@ -438,7 +438,7 @@ void DownloadRemainingScreenShotThread(void)
     {
         CURLcode r = (CURLcode)Utils::DownloadFile(info->ScreenShotURLS[i], info->ScreenshotPaths[i]);
 
-        if(checkFileExist(info->ScreenshotPaths[i]) && r == CURLE_OK)
+        if(paf::io::Misc::Exists(info->ScreenshotPaths[i]) && r == CURLE_OK)
         {
             ((PicturePage *)currPage)->AddPictureFromFile(info->ScreenshotPaths[i]);
         }
@@ -491,7 +491,7 @@ void ScreenshotDownloadThread(void)
         }
     }
 
-    if(checkFileExist(page->ScreenshotPaths[0]))
+    if(paf::io::Misc::Exists(page->ScreenshotPaths[0]))
     {
         Misc::OpenResult res;
         SceInt32 err = 0;
@@ -552,7 +552,8 @@ InfoPage::InfoPage(homeBrewInfo *info, SceBool wait):Page(PAGE_TYPE_HOMBREW_INFO
     Utils::SetWidgetLabel(TitleText, &Info->title);
     Utils::SetWidgetColor(DownloadButton, 1, 0.5490196078f, 0, 1);
 
-    char credits[50] = {0};
+    char credits[50];
+	sce_paf_memset(credits, 0, sizeof(credits));
     sce_paf_snprintf(credits, 50, "By: %s", Info->credits.data);
 
     Utils::SetWidgetLabel(Credits, credits);
@@ -565,7 +566,7 @@ InfoPage::InfoPage(homeBrewInfo *info, SceBool wait):Page(PAGE_TYPE_HOMBREW_INFO
 
     if(loadFlags & LOAD_FLAGS_ICONS)
     {
-        if(checkFileExist(info->icon0Local.data))
+        if(paf::io::Misc::Exists(info->icon0Local.data))
         {
             Misc::OpenResult res;
             Misc::OpenFile(&res, info->icon0Local.data, SCE_O_RDONLY, 0777, NULL);

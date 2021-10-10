@@ -17,7 +17,12 @@ link_directories(
 )
 
 add_compile_options(
-    -D_SCE_TARGET_OS_PSP2=1 --no-standard-libraries -Map -sn-full-map
+    -D_SCE_TARGET_OS_PSP2=1 -Xdiag=0 -Xquit=2 -O3
+)
+
+add_link_options(
+  --no-standard-libraries
+  -Map -sn-full-map
 )
 
 add_executable(${PROJECT_NAME}
@@ -30,21 +35,23 @@ add_executable(${PROJECT_NAME}
     src/list.hpp
     src/net.cpp
     src/net.hpp
-    src/promote.c
+    src/promote.cpp
     src/head_bin.h
-    src/sha1.c
-    src/sha1.h
     src/notifmgr.cpp
     src/notifmgr.hpp
 )
 
 target_link_libraries(${PROJECT_NAME}
+    SceLibKernel_stub
+	SceIofilemgr_stub
     SceThreadmgr_stub
+	SceProcessmgr_stub
     SceNotificationUtilProgress_stub_weak
     ScePromoterUtil_stub_weak
     SceNotificationUtil_stub_weak
     SceNotificationUtilBgApp_stub_weak
     ScePafStdc_stub
+	ScePafMisc_stub
     SceHttp_stub
     SceNet_stub
     SceNetCtl_stub

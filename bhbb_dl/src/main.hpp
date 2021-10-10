@@ -3,7 +3,7 @@
 
 #include <scetypes.h>
 
-#define SET_TEXT(dest, src) wcsncpy(((wchar_t *)(dest)), ((wchar_t *)(src)), sizeof((dest)))
+#define SET_TEXT(dest, src) sce_paf_wcsncpy(((wchar_t *)(dest)), ((wchar_t *)(src)), sizeof((dest)))
 
 #ifdef _DEBUG
 #define print sceClibPrintf

@@ -8,7 +8,6 @@ using namespace widget;
 
 #include <curl/curl.h>
 
-#define BHBB_DL_PATH "ux0:app/BHBB00001/sce_module/bhbb_dl.suprx"
 class UtilThread : public paf::thread::Thread
 {
 public:
@@ -48,7 +47,6 @@ public:
     static SceInt32 AssignButtonHandler(Widget *widget, ECallback onPress = SCE_NULL, void *userDat = SCE_NULL, int id = ON_PRESS_EVENT_ID);
 };
 
-extern "C" bool checkFileExist(const char *file);
 extern "C" bool isDirEmpty(const char *path);
 
 #define makeSceColorInt(r,g,b,a) Utils::makeSceColor(r##.0f, g##.0f, b##.0f, a##.0f)

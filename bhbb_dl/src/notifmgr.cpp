@@ -21,7 +21,8 @@ void NotifMgr::Init()
 
 void NotifMgr::EndNotif(const char *txt, const char *subtxt)
 {
-    SceNotificationUtilProgressFinishParam p = {0};
+    SceNotificationUtilProgressFinishParam p;
+    sce_paf_memset(&p, 0, sizeof(SceNotificationUtilProgressFinishParam));
     charToWchar((wchar_t *)p.text, txt);
     charToWchar((wchar_t *)p.subText, subtxt);
     sceNotificationUtilProgressFinish(&p);
@@ -29,7 +30,8 @@ void NotifMgr::EndNotif(const char *txt, const char *subtxt)
 
 void NotifMgr::UpdateProgressNotif(float val, const char *subText, const char *text)
 {
-    SceNotificationUtilProgressUpdateParam p = {0};
+    SceNotificationUtilProgressUpdateParam p;
+    sce_paf_memset(&p, 0, sizeof(SceNotificationUtilProgressUpdateParam));
 
     if(subText != NULL)
         charToWchar((wchar_t *)p.subText, subText);
@@ -45,7 +47,8 @@ void NotifMgr::MakeProgressNotif(const char *mainText, const char *subText, cons
     charToWchar(currProgressNotifSubText, subText);
     charToWchar(currProgressNotifText, mainText);
 
-    SceNotificationUtilProgressInitParam pinit = {0};
+    SceNotificationUtilProgressInitParam pinit;
+    sce_paf_memset(&pinit, 0, sizeof(SceNotificationUtilProgressInitParam));
     pinit.cancelCallback = cancelCallback;
     SET_TEXT(pinit.text, currProgressNotifText);
     SET_TEXT(pinit.subText, currProgressNotifSubText);
@@ -60,7 +63,8 @@ void NotifMgr::MakeProgressNotif(const wchar_t *mainText, const wchar_t *subText
     SET_TEXT(currProgressNotifSubText, subText);
     SET_TEXT(currProgressNotifText, mainText);
 
-    SceNotificationUtilProgressInitParam pinit = {0};
+    SceNotificationUtilProgressInitParam pinit;
+    sce_paf_memset(&pinit, 0, sizeof(SceNotificationUtilProgressInitParam));
     pinit.cancelCallback = cancelCallback;
     SET_TEXT(pinit.text, currProgressNotifText);
     SET_TEXT(pinit.subText, currProgressNotifSubText);
@@ -71,14 +75,16 @@ void NotifMgr::MakeProgressNotif(const wchar_t *mainText, const wchar_t *subText
 
 void NotifMgr::SendNotif(const wchar_t *text)
 {
-    SceNotificationUtilSendParam s = {0};
+    SceNotificationUtilSendParam s;
+    sce_paf_memset(&s, 0, sizeof(SceNotificationUtilSendParam));
     SET_TEXT(s.text, text);
     sceNotificationUtilSendNotification(&s);
 }
 
 void NotifMgr::SendNotif(const char *text)
 {
-    SceNotificationUtilSendParam s = {0};
+    SceNotificationUtilSendParam s;
+    sce_paf_memset(&s, 0, sizeof(SceNotificationUtilSendParam));
     charToWchar((wchar_t *)s.text, text);
     sceNotificationUtilSendNotification(&s);
 }

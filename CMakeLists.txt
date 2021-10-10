@@ -20,7 +20,12 @@ link_directories(
 )
 
 add_compile_options(
-    -D_SCE_TARGET_OS_PSP2=1 --no-standard-libraries -Map -sn-full-map
+    -D_SCE_TARGET_OS_PSP2=1 -Xdiag=0 -Xquit=2 -O3
+)
+
+add_link_options(
+  --no-standard-libraries
+  -Map -sn-full-map
 )
 
 add_executable(${PROJECT_NAME}
@@ -58,13 +63,15 @@ add_executable(${PROJECT_NAME}
 )
 
 target_link_libraries(${PROJECT_NAME}
-    SceKernel_stub
+    SceLibKernel_stub
     SceThreadmgr_stub
+	SceIofilemgr_stub
+	SceProcessmgr_stub
+	ScePower_stub
     SceDbg_stub
     SceAppMgrUser_stub
     SceAppMgr_stub
     SceVshBridge_stub
-    ScePower_stub
     SceHttp_stub
     SceNet_stub
     SceNetCtl_stub
@@ -73,16 +80,15 @@ target_link_libraries(${PROJECT_NAME}
     SceAppUtil_stub
     SceDisplay_stub
     SceShellSvc_stub
-    ScePafCommon_stub_weak
-    ScePafGraphics_stub_weak
-    ScePafLowLayer_stub_weak
-    ScePafMisc_stub_weak
-    ScePafResource_stub_weak
+	ScePafStdc_stub
+    ScePafThread_stub
+    ScePafTopLevel_stub
+    ScePafWidget_stub
+    ScePafCommon_stub
+    ScePafGraphics_stub
+    ScePafMisc_stub
+    ScePafResource_stub
     SceJson_stub
-    ScePafStdc_stub_weak
-    ScePafThread_stub_weak
-    ScePafTopLevel_stub_weak
-    ScePafWidget_stub_weak
     ShellAudio
     SceBgAppUtil_stub
     taihenUnsafe_stub

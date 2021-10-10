@@ -41,8 +41,8 @@ void initPaf()
     if(loadFlags & LOAD_FLAGS_SCREENSHOTS)
         initParam.global_heap_size += 2 * 1024 * 1024;
 
-	initParam.a2 = 0x0000EA60;
-	initParam.a3 = 0x00040000;
+    initParam.a2 = 0x0000EA60;
+    initParam.a3 = 0x00040000;
 
     initParam.cdlg_mode = SCE_FALSE;
 
@@ -115,13 +115,13 @@ void initPlugin()
 
     fw->LoadCommonResource();
     fwAllocator = fw->defaultAllocator;
-	SceAppUtilInitParam init;
-	SceAppUtilBootParam boot;
+    SceAppUtilInitParam init;
+    SceAppUtilBootParam boot;
     
     //Can use sce_paf_... because paf is now loaded
-	sce_paf_memset(&init, 0, sizeof(SceAppUtilInitParam));
-	sce_paf_memset(&boot, 0, sizeof(SceAppUtilBootParam));
-	sceAppUtilInit(&init, &boot);
+    sce_paf_memset(&init, 0, sizeof(SceAppUtilInitParam));
+    sce_paf_memset(&boot, 0, sizeof(SceAppUtilBootParam));
+    sceAppUtilInit(&init, &boot);
 
     main_thread = sceKernelGetThreadId();
 
@@ -131,7 +131,7 @@ void initPlugin()
     piParam.resourcePath.Set(RESOURCE_PATH);
     piParam.scopeName.Set("__main__");
 
-    piParam.loadCB3 = onPluginReady;
+    piParam.pluginStartCB = onPluginReady;
 
     fw->LoadPluginAsync(&piParam);
 

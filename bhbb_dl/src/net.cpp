@@ -10,20 +10,29 @@
 
 extern SceBool Running;
 
+#define MODULE_PATH "vs0:data/external/webcore/ScePsp2Compat.suprx"
+#define LIBC_PATH "vs0:sys/external/libc.suprx"
+#define FIOS2_PATH "vs0:sys/external/libfios2.suprx"
+
 #define USER_AGENT "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.36"
 
 CURL *curl = SCE_NULL;
 
-#define MODULE_PATH "vs0:data/external/webcore/ScePsp2Compat.suprx"
 #define NET_INIT_SIZE 1024 * 512
 
-SceUID moduleID;
+static SceUID moduleID = SCE_UID_INVALID_UID;
+static SceUID cLibID = SCE_UID_INVALID_UID;
+static SceUID fios2ID = SCE_UID_INVALID_UID;
 
 void loadPsp2CompatModule()
 {
-    //curl needs compat
-    if(moduleID <= 0)
-        moduleID = sceKernelLoadStartModule(MODULE_PATH, 0, NULL, 0, NULL, NULL);
+	//PSp2Compat needs libc, curl needs compat
+	if (fios2ID <= 0)
+		fios2ID = sceKernelLoadStartModule(FIOS2_PATH, 0, NULL, 0, NULL, NULL);
+	if (cLibID <= 0)
+		cLibID = sceKernelLoadStartModule(LIBC_PATH, 0, NULL, 0, NULL, NULL);
+	if (moduleID <= 0)
+		moduleID = sceKernelLoadStartModule(MODULE_PATH, 0, NULL, 0, NULL, NULL);
 }
 
 void netInit() 
@@ -69,8 +78,9 @@ int curlProgressCallback(void *userDat, double dltotal, double dlnow, double ult
         return 1; //End
 
 
-    char subtxt[64] = {0};
-    snprintf(subtxt, 64, "%d%% Done", (int)(dlnow / dltotal * 100.0));
+    char subtxt[64];
+	sce_paf_memset(subtxt, 0, sizeof(subtxt));
+	sce_paf_snprintf(subtxt, 64, "%d%% Done", (int)(dlnow / dltotal * 100.0));
     NotifMgr::UpdateProgressNotif(dlnow / dltotal * 100.0, subtxt);
 
     
