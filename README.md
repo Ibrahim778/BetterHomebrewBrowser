@@ -13,8 +13,7 @@ The homebrew browser that's actually good. Massive thanks to [GrapheneCt](https:
 9. It has tunes (Yes, I've ran out of things now)
 
 ## Downsides
-1. Background downloads will be terminated without warning when you open an enlarged memory mode game. There is no way to avoid this, but it's not a problem in most cases.
-2. Has a chance of crashing on boot. In this case reboot your system and hold the L trigger next time you open the app.
+1. Background downloads will be terminated without warning when you open an enlarged memory mode game. There is no way to avoid this, but it's not a problem in most cases. 
 
 # Note
 This *is* an open beta. So don't be suprised if it crashes. Bug reports are greatly appreciated.
