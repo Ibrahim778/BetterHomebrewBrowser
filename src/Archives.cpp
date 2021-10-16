@@ -4,21 +4,14 @@
 */
 
 #include <paf.h>
-
+#include <kernel.h>
+#include "pagemgr.hpp"
+#include "common.hpp"
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-#include <stdio.h>
-#include <string.h>
-#include <stddef.h>
-#include <string.h>
-#include <stdlib.h>
-#include <kernel.h>
 #include "Archives.hpp"
-#include "pagemgr.hpp"
-
-extern Page *currPage;
 
 /******************************************************************************
  ** UnZip *********************************************************************
@@ -1090,7 +1083,7 @@ int ZipExtractCurrentFile(Zip *zip, int *nopath, const char *password, const cha
 
             if(err < 0)
             {
-                sceClibPrintf("Error with zipfile in ZipReadCurrentFile\n");
+                sceClibPrintf("Error with zipfile in ZipReadCurrentFile %d\n", err);
                 break;
             }
 
@@ -1136,9 +1129,8 @@ int ZipExtract(Zip* zip, const char *password, const char* path, ProgressBar *pr
     if(err != _ZIP_OK)
         sceClibPrintf("Error with zipfile in ZitGlobalInfo\n");
 
-    for(i = 0;i < gi.countentries && !currPage->pageThread->EndThread;i++)
+    for(i = 0;i < gi.countentries /*&& !currPage->pageThread->EndThread*/; i++)
     {
-        sceKernelPowerTick(SCE_KERNEL_POWER_TICK_DEFAULT);
         if(ZipExtractCurrentFile(zip, &nopath, password, path) != _ZIP_OK)
             break;
 
@@ -1149,10 +1141,12 @@ int ZipExtract(Zip* zip, const char *password, const char* path, ProgressBar *pr
             if(err != _ZIP_OK)
                 sceClibPrintf("Error with zipfile in ZipGotoNextFile\n");
         }
-
-        double progress = i + 1.0;
-        double percent = (double)progress / gi.countentries * 100.0;
-        progressReporter->SetProgress(percent, 0, 0);
+        if(progressReporter != NULL)
+        {
+            double progress = i + 1.0;
+            double percent = (double)progress / gi.countentries * 100.0;
+            progressReporter->SetProgress(percent, 0, 0);
+        }
     }
 
     return err;

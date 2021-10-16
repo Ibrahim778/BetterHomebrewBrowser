@@ -1,14 +1,12 @@
 #include "eventhandler.hpp"
 #include "pagemgr.hpp"
 #include "main.hpp"
-
-extern Page *currPage;
+#include "common.hpp"
 
 static ECallback backButtonCB = NULL;
 static ECallback forwardButtonCB = NULL;
 
-#define DELETE_PAGE(Type, Class) case Type: { delete (Class *)currPage; break; }
-
+#define DELETE_PAGE_TYPE(Type, Class) case Type: { delete (Class *)currPage; break; }
 EventHandler::EventHandler()
 {
     eventHandler = onGet;
@@ -48,17 +46,17 @@ BUTTON_CB(DefaultCB)
     switch (currPage->type)
     {
 
-    DELETE_PAGE(PAGE_TYPE_SELECTION_LIST, SelectionList);
-    DELETE_PAGE(PAGE_TYPE_TEXT_PAGE, TextPage);
-    DELETE_PAGE(PAGE_TYPE_TEXT_PAGE_WITH_TITLE, TextPage);
-    DELETE_PAGE(PAGE_TYPE_SELECTION_LIST_WITH_TITLE, SelectionList);
-    DELETE_PAGE(PAGE_TYPE_LOADING_SCREEN, LoadingPage);
-    DELETE_PAGE(PAGE_TYPE_PROGRESS_PAGE, ProgressPage);
-    DELETE_PAGE(PAGE_TYPE_HOMBREW_INFO, InfoPage);
-    DELETE_PAGE(PAGE_TYPE_PICTURE_PAGE, PicturePage);
-    DELETE_PAGE(PAGE_TYPE_BLANK_PAGE, BlankPage);
+    DELETE_PAGE_TYPE(PAGE_TYPE_SELECTION_LIST, SelectionList);
+    DELETE_PAGE_TYPE(PAGE_TYPE_SELECTION_LIST_WITH_TITLE, SelectionList);
+    DELETE_PAGE_TYPE(PAGE_TYPE_TEXT_PAGE, TextPage);
+    DELETE_PAGE_TYPE(PAGE_TYPE_TEXT_PAGE_WITH_TITLE, TextPage);
+    DELETE_PAGE_TYPE(PAGE_TYPE_LOADING_SCREEN, LoadingPage);
+    DELETE_PAGE_TYPE(PAGE_TYPE_PROGRESS_PAGE, ProgressPage);
+    DELETE_PAGE_TYPE(PAGE_TYPE_HOMBREW_INFO, InfoPage);
+    DELETE_PAGE_TYPE(PAGE_TYPE_PICTURE_PAGE, PicturePage);
     
     default:
+        delete currPage;
         break;
     }
 }

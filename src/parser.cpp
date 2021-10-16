@@ -11,12 +11,7 @@
 using namespace sce;
 using namespace Json;
 
-unsigned int sceLibcHeapSize = 5 * 1024 * 1024;
-
 linked_list list;
-extern Page *currPage;
-extern graphics::Texture *BrokenTex;
-extern Plugin *mainPlugin;
 
 #pragma region JsonClassses
 class JsonAllocator : public MemAllocator
@@ -108,7 +103,7 @@ void linked_list::printall()
     node *current = head;
     while (current != NULL)
     {
-        print("%s, ", current->widget.title.data);
+        print("%s, ", current->info.title.data);
         current = current->next;
     }
 #endif
@@ -117,7 +112,8 @@ void linked_list::printall()
 homeBrewInfo *linked_list::add_node()
 {
     node *tmp = new node;
-    sce_paf_memset(&tmp->widget, 0, sizeof(tmp->widget));
+    sce_paf_memset(&tmp->info, 0, sizeof(tmp->info) - sizeof(graphics::Texture));
+    tmp->tex.texSurface = NULL;
     tmp->next = NULL;
 
     if (head == NULL)
@@ -131,7 +127,7 @@ homeBrewInfo *linked_list::add_node()
         tail = tail->next;
     }
     num ++;
-    return &tmp->widget;
+    return &tmp->info;
 }
 
 void linked_list::clear()
@@ -143,6 +139,7 @@ void linked_list::clear()
     {
         temp = head;
         head = head->next;
+        Utils::DeleteTexture(&temp->tex);
         delete temp;
     }
 
@@ -164,8 +161,8 @@ homeBrewInfo *linked_list::get(const char *id)
     node *curr = head;
     while (curr != NULL)
     {
-        if(sce_paf_strcmp(curr->widget.id.data, id))
-            return &curr->widget;
+        if(sce_paf_strcmp(curr->info.id.data, id))
+            return &curr->info;
         
         curr = curr->next;
     }
@@ -180,7 +177,7 @@ void linked_list::remove_node(const char *tag)
         return;
 
     //First, handle the case where we free the head
-    if (sce_paf_strcmp(head->widget.id.data, tag) == 0)
+    if (sce_paf_strcmp(head->info.id.data, tag) == 0)
     {
         node *nodeToDelete = head;
         head = head->next;
@@ -196,7 +193,7 @@ void linked_list::remove_node(const char *tag)
     node **pCurrentNodeNext = &head; //This points to the current node's `next` field (or to pHead)
     while (1)
     {
-        if (sce_paf_strcmp((*pCurrentNodeNext)->widget.id.data, tag) == 0) //pCurrentNodeNext points to the pointer that points to the node we need to delete
+        if (sce_paf_strcmp((*pCurrentNodeNext)->info.id.data, tag) == 0) //pCurrentNodeNext points to the pointer that points to the node we need to delete
             break;
 
         //If the next node's next is NULL, we reached the end of the list. Bail out.
@@ -238,6 +235,8 @@ void parseJson(const char *path)
         info->icon0Local.Setf(VITADB_ICON_SAVE_PATH "/%s", rootval[i]["icon"].getString().c_str());
 
         info->title.Set(rootval[i]["name"].getString().c_str());
+        info->title.ToWString(&info->wstrtitle);
+        
         info->download_url.Set(rootval[i]["url"].getString().c_str());
         info->credits.Set(rootval[i]["author"].getString().c_str());
         info->options.Set(rootval[i]["data"].getString().c_str());
@@ -274,7 +273,10 @@ void parseCSV(const char *path)
                 homeBrewInfo *info = list.add_node();
 
                 info->id.Set(parsed[0]);
+
                 info->title.Set(parsed[1]);
+
+                info->title.ToWString(&info->wstrtitle);           
                 info->credits.Set(parsed[2]);
                 info->icon0.Set(parsed[3]);
                 info->download_url.Set(parsed[5]);

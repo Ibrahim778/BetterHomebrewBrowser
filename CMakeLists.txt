@@ -95,7 +95,6 @@ target_link_libraries(${PROJECT_NAME}
     taihen_stub
     ScePsp2Compat_stub_weak
     SceRtcUser_stub
-    SceCtrl_stub
 )
 
 

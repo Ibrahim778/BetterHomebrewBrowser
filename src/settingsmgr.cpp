@@ -8,9 +8,6 @@
 #include "utils.hpp"
 #include "bgdl.h"
 
-extern userConfig conf;
-extern int loadFlags;
-
 BUTTON_CB(updateDBType)
 {
     conf.db = (DB_Type)(int)(userDat);
@@ -85,38 +82,51 @@ BUTTON_CB(VitaDBSettings)
     page->AddOption("Download Icons After", IconTimeSelectorVITADB);
 }
 
+BUTTON_CB(DBOptions)
+{
+    SelectionList *list = new SelectionList("DB Options");
+    list->busy->Stop();
+    list->AddOption("Vita DB", VitaDBSettings);
+    list->AddOption("CBPS DB", CBPSDBSettings);
+}
+
+BUTTON_CB(CreditsPage)
+{
+    new TextPage("Better Homebrew Browser By M Ibrahim\nScePaf Reversing By Graphene\nLivearea Assets By SomonPC", "Credits");
+}
+
+BUTTON_CB(FixesPage)
+{
+    new TextPage("\n1. Fix CBPS DB\n2. Add Sorting\n3. Add Plugins\n4. Add Themes", "Upcoming Fixes and Features");
+}
+
+BUTTON_CB(InfoPage)
+{
+    SelectionList *list = new SelectionList("Info");
+    list->busy->Stop();
+    list->AddOption("Credits", CreditsPage);
+    list->AddOption("Upcoming Fixes and Features", FixesPage);
+}
+
+BUTTON_CB(TermBGDL)
+{
+    termBhbbDl();
+    new TextPage("Crashed BGDL Successfully!\nYou can now Update/Delete");
+}
+
+BUTTON_CB(OtherPage)
+{
+    SelectionList *s = new SelectionList("Info");
+    s->busy->Stop();
+    s->AddOption("Info", InfoPage);
+    s->AddOption("Terminate BGDL", TermBGDL);
+}
+
 #ifdef _DEBUG
-BUTTON_CB(slidebarRet)
-{
-    SlideBar *slidebar = (SlideBar *)self;
-
-    int res =(int) slidebar->TypeSlideBar();
-    print("Res = 0x%X\n", res);
-}
-
-BUTTON_CB(SlideBarTest)
-{
-    BlankPage *page = new BlankPage();
-
-    SlideBar *slidebar = (SlideBar *)page->AddFromStyle("slidebartest", "_common_default_style_slidebar", "slidebar");
-    Utils::SetWidgetSize(slidebar, 544, 80);
-    Utils::SetWidgetPosition(slidebar, 0, 0);
-
-    eventcb cb;
-    cb.Callback = slidebarRet;
-    cb.dat = slidebar;
-
-    EventHandler *eh = new EventHandler();
-    eh->pUserData = sce_paf_malloc(sizeof(cb));
-    sce_paf_memcpy(eh->pUserData, &cb, sizeof(cb));
-
-    slidebar->RegisterEventCallback(2, eh, 0);
-    print("ret = 0x%X\n", slidebar->ScePafWidget_FDB59013(50, 0));
-}
 
 BUTTON_CB(DebugPage)
 {
-    BlankPage *page = new BlankPage();
+    Page *page = new Page();
     page->busy->Stop();
 
     Text *IconInfo = (Text *)page->AddFromStyle("BHBBIconInfo", "_common_default_style_text", "text");
@@ -146,11 +156,10 @@ void SettingsButtonEventHandler::onGet(SceInt32, Widget*, SceInt32, ScePVoid)
 {
     SelectionList *settingsPage = new SelectionList("Settings");
     settingsPage->AddOption("Source", DBSelector);
-    settingsPage->AddOption("Vita DB", VitaDBSettings);
-    settingsPage->AddOption("CBPS DB", CBPSDBSettings);
+    settingsPage->AddOption("DB Options", DBOptions);
+    settingsPage->AddOption("Other", OtherPage);
 
     #ifdef _DEBUG
-    //settingsPage->AddOption("Slidebar Test", SlideBarTest);
     settingsPage->AddOption("★DEBUG", DebugPage);
     #endif
     settingsPage->busy->Stop();

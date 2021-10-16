@@ -8,8 +8,6 @@
 #include <bgapputil.h>
 #include <taihen.h>
 
-extern Page *currPage;
-
 CURL *Utils::curl = SCE_NULL;
 SceInt32 Utils::currStok = 0;
 
@@ -62,14 +60,28 @@ bool isDirEmpty(const char *path)
     SceUID f = sceIoDopen(path);
     if(f < 0) return false;
     SceIoDirent d;
-    bool r = sceIoDread(f, &d) > 0;
+    bool r = sceIoDread(f, &d) < 0;
     sceIoDclose(f);
+
     return r;
 }
 
 SceVoid UtilThread::EntryFunction()
 {
     if(Entry != NULL) Entry();
+}
+
+SceVoid UtilThread::Kill()
+{
+    EndThread = SCE_TRUE;
+    Join();
+    EndThread = SCE_FALSE;
+}
+
+SceVoid UtilThread::Delete()
+{
+    Kill();
+    delete this;
 }
 
 int curlProgressCallback(void *userDat, double dltotal, double dlnow, double ultotal, double ulnow)
@@ -102,11 +114,10 @@ SceInt32 Utils::DownloadFile(const char *url, const char *dest, ProgressBar *pro
     curl_easy_setopt(curl, CURLOPT_URL, url);
     curl_easy_setopt(curl, CURLOPT_XFERINFODATA, progressBar);
     curl_easy_setopt(curl, CURLOPT_WRITEDATA, &file);
-
     CURLcode ret = curl_easy_perform(curl);
 
     sceIoClose(file);
-    if(ret == 6 || ret == 42) sceIoRemove(dest);
+    if(ret == CURLE_COULDNT_RESOLVE_HOST || ret == CURLE_ABORTED_BY_CALLBACK) sceIoRemove(dest);
     return (int)(ret == 6 ? 0 : ret);
 }
 
@@ -167,12 +178,14 @@ char *Utils::strtok(char splitter, char *str)
 
 void Utils::MakeDataDirs()
 {
+    
     if(!paf::io::Misc::Exists(DATA_PATH))
-		paf::io::Misc::Mkdir(DATA_PATH, 0777);
+    	paf::io::Misc::Mkdir(DATA_PATH, 0777);
     if(!paf::io::Misc::Exists(ICON_SAVE_PATH))
 		paf::io::Misc::Mkdir(ICON_SAVE_PATH, 0777);
     if(!paf::io::Misc::Exists(SCREENSHOT_SAVE_PATH))
 		paf::io::Misc::Mkdir(SCREENSHOT_SAVE_PATH, 0777);
+    
 }
 
 void Utils::StartBGDL()
@@ -248,7 +261,60 @@ SceInt32 Utils::AssignButtonHandler(Widget *button, ECallback onPress, void *use
     callback.dat = userDat;
 
     eh->pUserData = sce_paf_malloc(sizeof(callback));
+    if(eh->pUserData == NULL)
+    {
+        print("Error Allocating Memory for button userData");
+        new TextPage("Error Allocating Memory for button userData", "Assign Handler Error");
+        delete eh;
+        return;
+    }
     sce_paf_memcpy(eh->pUserData, &callback, sizeof(callback));
 
     return button->RegisterEventCallback(id, eh, 1);
 }
+
+SceBool Utils::CreateTextureFromFile(graphics::Texture *tex, const char *file)
+{
+    if(tex == NULL) return SCE_FALSE;
+
+    Misc::OpenResult openResult;
+    SceInt32 err;
+    Misc::OpenFile(&openResult, file, SCE_O_RDONLY, 0777, &err);
+
+    if(err < 0)
+        return SCE_FALSE;
+
+    graphics::Texture::CreateFromFile(tex, mainPlugin->memoryPool, &openResult);
+
+    delete openResult.localFile;
+    sce_paf_free(openResult.unk_04);
+
+    return tex->texSurface != NULL;
+}
+
+SceVoid Utils::DeleteTexture(graphics::Texture *tex)
+{
+    if(tex != NULL)
+    {
+        if(tex->texSurface != NULL)
+        {
+            graphics::Surface *s = tex->texSurface;
+            tex->texSurface = SCE_NULL;
+            delete s;
+        }
+    }
+}
+
+#ifdef _DEBUG
+
+SceVoid Utils::PrintAllChildren(Widget *widget, int offset)
+{
+    for (int i = 0; i < widget->childNum; i++)
+    {
+        for (int i = 0; i < offset; i++) print("-");
+        print(" %d 0x%X\n", i, widget->GetChildByNum(i)->hash);
+        Utils::PrintAllChildren(widget->GetChildByNum(i), offset + 4);
+    }
+}
+
+#endif

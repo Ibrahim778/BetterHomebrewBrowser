@@ -6,18 +6,6 @@
 #include "bgdl.h"
 #include "eventhandler.hpp"
 
-extern Plugin *mainPlugin;
-extern Plane *mainRoot;
-extern CornerButton *mainBackButton;
-extern CornerButton *settingsButton;
-extern CornerButton *forwardButton;
-extern Widget *mainScene;
-
-extern graphics::Texture *BrokenTex;
-
-extern userConfig conf;
-extern int loadFlags;
-
 SceInt32 pageDepth;
 Page *currPage = SCE_NULL;
 
@@ -27,24 +15,16 @@ Dialog *PopupMgr::diag = SCE_NULL;
 SceBool PopupMgr::showingDialog = SCE_FALSE;
 
 graphics::Texture *PopupMgr::checkmark = SCE_NULL;
-graphics::Texture *PopupMgr::transparent = SCE_NULL;
-
-#define DEFINE_PAGE(PageType, pageID) case PageType:{search = Utils::GetParamWithHashFromId(pageID);break;}
+graphics::Texture *transparentTex = SCE_NULL;
 
 Page::Page(pageType page, SceBool wait)
 {
     if(wait)
-    {
         if(currPage->pageThread != NULL)
-        {
             if(currPage->pageThread->IsStarted())
-            {
-                //currPage->pageThread->EndThread = SCE_TRUE;
                 currPage->pageThread->Join();
-            }
-        }
-    }
-
+        
+        
     type = page;
 
     this->prev = currPage;
@@ -53,6 +33,7 @@ Page::Page(pageType page, SceBool wait)
     OnDelete = NULL;
     AfterDelete = NULL;
     OnRedisplay = NULL;
+
     pageDepth ++;
     skipAnimation = SCE_FALSE;
 
@@ -96,9 +77,8 @@ Page::Page(pageType page, SceBool wait)
     
     DEFINE_PAGE(PAGE_TYPE_PICTURE_PAGE, PICTURE_PAGE_ID)
 
-    DEFINE_PAGE(PAGE_TYPE_BLANK_PAGE, BLANK_PAGE_ID)
-
     default:
+        search = Utils::GetParamWithHashFromId(BLANK_PAGE_ID);
         break;
     }
 
@@ -109,7 +89,7 @@ Page::Page(pageType page, SceBool wait)
     busy = (BusyIndicator *)Utils::GetChildByHash(root, Utils::GetHashById(BUSY_INICATOR_ID));
     busy->Start();
 
-    root->PlayAnimation(-5000, Widget::Animation_3D_SlideFromFront);
+    root->PlayAnimation(-50000, Widget::Animation_3D_SlideFromFront);
 	if (root->animationStatus & 0x80)
 		root->animationStatus &= ~0x80;
 
@@ -140,21 +120,20 @@ TextPage::TextPage(const char *text, const char *title):Page(title != SCE_NULL ?
 
 Page::~Page()
 {
+    this->root->SetAlpha(0.39f);
+
     if(this->pageThread != NULL)
     {
-        if(this->pageThread->IsStarted())
-        {
-            this->pageThread->EndThread = true;
-            this->pageThread->Join();
-        }
-        if(this->pageThread != NULL) delete this->pageThread;
+        this->pageThread->Delete();
     }
+
 
     if(OnDelete != NULL)
         OnDelete();
-    
+
     common::Utils::WidgetStateTransition(-100, this->root, Widget::Animation_3D_SlideFromFront, SCE_TRUE, currPage == this ? skipAnimation : SCE_TRUE);
-    
+
+
     if(currPage == this)
     {
         if (prev != SCE_NULL && !skipAnimation) 
@@ -196,12 +175,9 @@ Page::~Page()
         mainBackButton->PlayAnimation(0, Widget::Animation_Reset);
     else mainBackButton->PlayAnimationReverse(0, Widget::Animation_Reset);
 
-
     if(AfterDelete != NULL)
         AfterDelete();
 }
-
-SelectionList::~SelectionList(){}
 
 ImageButton *SelectionList::AddOption(const char *text, ECallback onPress, void *userDat, SceBool isLong, SceBool needImage)
 {
@@ -259,11 +235,46 @@ ImageButton *SelectionList::AddOption(String *text, ECallback onPress, void *use
     
     mainPlugin->AddWidgetFromTemplate(scrollViewBox, &e, &tinit);
     ImageButton *button = (ImageButton *)scrollViewBox->GetChildByNum(scrollViewBox->childNum - 1);
- 
-    Utils::SetWidgetLabel(button, text);   
-    Utils::AssignButtonHandler(button, onPress, userDat);
+
+    if(text != NULL)
+        Utils::SetWidgetLabel(button, text);
+    
+    if(onPress != NULL)
+        Utils::AssignButtonHandler(button, onPress, userDat);
 
     return button;
+}
+
+ImageButton *SelectionList::AddOption(WString *text, ECallback onPress, void *userDat, SceBool isLong, SceBool needImage)
+{
+    Plugin::TemplateInitParam tinit;
+    Resource::Element e;
+    if(isLong)
+    {
+        if(needImage)
+            e = Utils::GetParamWithHashFromId(LIST_BUTTON_LONG_TEMPLATE_IMG);
+        else
+            e = Utils::GetParamWithHashFromId(LIST_BUTTON_LONG_TEMPLATE);
+    }
+    else
+    {
+        if(needImage)
+            e = Utils::GetParamWithHashFromId(LIST_BUTTON_TEMPLATE_IMG);
+        else
+            e = Utils::GetParamWithHashFromId(LIST_BUTTON_TEMPLATE);
+    }
+    
+    mainPlugin->AddWidgetFromTemplate(scrollViewBox, &e, &tinit);
+    ImageButton *button = (ImageButton *)scrollViewBox->GetChildByNum(scrollViewBox->childNum - 1);
+
+    if(text != NULL)
+        button->SetLabel(text);
+    
+    if(onPress != NULL)
+        Utils::AssignButtonHandler(button, onPress, userDat);
+
+    return button;
+
 }
 
 SceVoid SelectionList::Clear()
@@ -327,16 +338,33 @@ SelectionList::SelectionList(const char *title):Page(title != NULL ? PAGE_TYPE_S
         TitleText->SetLabel(&wstr);
     }
 
-    Resource::Element search = Utils::GetParamWithHashFromId(title != NULL ? LIST_TEMPLATE_ID : LIST_TEMPLATE_ID_NO_TITLE);
-    Plugin::TemplateInitParam tini;
-
-    mainPlugin->AddWidgetFromTemplate(root, &search, &tini);
-
-    listRoot = (Plane *)root->GetChildByNum(root->childNum - 1);
+    listRoot = (Plane *)AddFromTemplate(title != NULL ? LIST_TEMPLATE_ID : LIST_TEMPLATE_ID_NO_TITLE, root);
 
     scrollViewBox = (Box *)Utils::GetChildByHash(listRoot, Utils::GetHashById(LIST_SCROLL_BOX));
 
     disabled = false;
+}
+
+SelectionList::~SelectionList()
+{
+    for(int i = 0; i < scrollViewBox->childNum; i++)
+    {
+        Widget *w = scrollViewBox->GetChildByNum(i);
+        if(w != NULL)
+        {
+            w->SetTextureBase(transparentTex);
+        }
+    }
+}
+
+SceVoid SelectionList::Hide()
+{
+    listRoot->PlayAnimationReverse(0, Widget::Animation_Reset);
+}
+
+SceVoid SelectionList::Show()
+{
+    listRoot->PlayAnimation(0, Widget::Animation_Reset);
 }
 
 void Page::Init()
@@ -364,24 +392,30 @@ SceInt32 PicturePage::AddPictureFromFile(const char *file)
     else if(pictureNum > 0) pictures = (graphics::Texture **)sce_paf_realloc(pictures, sizeof(graphics::Texture *) * (pictureNum + 1));
 
     pictures[pictureNum] = new graphics::Texture();
-    Misc::OpenResult res;
-    Misc::OpenFile(&res, file, SCE_O_RDONLY, 0777, NULL);
 
-    graphics::Texture::CreateFromFile(pictures[pictureNum], mainPlugin->memoryPool, &res);
-    if(pictures[pictureNum]->texSurface == NULL)
-        new TextPage("Unknown Error", "Create Texture Error");
+    SceInt32 r;
+    if(Utils::CreateTextureFromFile(pictures[pictureNum], file))
+    {
+        Plane *p = (Plane *)AddFromTemplate(PICTURE_PAGE_PICTURE_TEMPLATE, listRoot);
+        r = p->SetTextureBase(pictures[pictureNum]);
+        pictureNum++;
+    }
+    else
+    {
+        delete pictures[pictureNum];
+        if(pictureNum == 0)
+        {
+            sce_paf_free(pictures);
+            pictures = SCE_NULL;
+        }
+        else if(pictures > 0)
+        {
+            pictures = (graphics::Texture **)sce_paf_realloc(pictures, sizeof(graphics::Texture *) * pictureNum);
+        }
 
-    delete res.localFile;
-    sce_paf_free(res.unk_04);
+        r = -1;
+    }
 
-    Plugin::TemplateInitParam tinit;
-    Resource::Element search = Utils::GetParamWithHashFromId(PICTURE_PAGE_PICTURE_TEMPLATE);
-
-    mainPlugin->AddWidgetFromTemplate(listRoot, &search, &tinit);
-
-    Plane *p = (Plane *)listRoot->GetChildByNum(listRoot->childNum - 1);
-    SceInt32 r = p->SetTextureBase(pictures[pictureNum]);
-    pictureNum++;
     mainBackButton->Enable(0);
     return r;
 }
@@ -390,15 +424,8 @@ SceInt32 PicturePage::AddPicture(graphics::Texture *src)
 {
     if(currPage != this) return -1;
     if(src == NULL) return -1;
-    mainBackButton->Disable(0);
-    Plugin::TemplateInitParam tinit;
-    Resource::Element search = Utils::GetParamWithHashFromId(PICTURE_PAGE_PICTURE_TEMPLATE);
 
-    mainPlugin->AddWidgetFromTemplate(listRoot, &search, &tinit);
-
-    Plane *p = (Plane *)listRoot->GetChildByNum(listRoot->childNum - 1);
-    mainBackButton->Enable(0);
-    return p->SetTextureBase(src);
+    return AddFromTemplate(PICTURE_PAGE_PICTURE_TEMPLATE, listRoot)->SetTextureBase(src);
 }
 
 PicturePage::PicturePage():Page(PAGE_TYPE_PICTURE_PAGE)
@@ -412,29 +439,33 @@ PicturePage::PicturePage():Page(PAGE_TYPE_PICTURE_PAGE)
 
 PicturePage::~PicturePage()
 {
+    for(int i = 0; i < listRoot->childNum; i++)
+    {
+        Widget *w = listRoot->GetChildByNum(i);
+        if(w != NULL) w->SetTextureBase(transparentTex);
+    }
+
     if(pictures != NULL)
     {
         for(int i = 0; i < pictureNum; i++)
         {
             if(pictures[i] != NULL)
             {
-                if(pictures[i]->texSurface != NULL)
-                {
-                    delete pictures[i]->texSurface;
-                    pictures[i]->texSurface = SCE_NULL;
-                }
+                Utils::DeleteTexture(pictures[i]);
+
                 delete pictures[i];
+                pictures[i] = SCE_NULL;
             }
         }
-    }
 
-    delete[] pictures;
+        delete[] pictures;
+    }
 }
 
-void DownloadRemainingScreenShotThread(void)
+CB(DownloadRemainingScreenShotThread)
 {
     InfoPage *info = (InfoPage *)currPage->prev;
-    for(int i = 1; i < info->ScreenshotNum - 1 && !currPage->pageThread->EndThread; i++)
+    for(int i = 1; i < info->ScreenshotNum && !currPage->pageThread->EndThread; i++)
     {
         CURLcode r = (CURLcode)Utils::DownloadFile(info->ScreenShotURLS[i], info->ScreenshotPaths[i]);
 
@@ -443,6 +474,7 @@ void DownloadRemainingScreenShotThread(void)
             ((PicturePage *)currPage)->AddPictureFromFile(info->ScreenshotPaths[i]);
         }
     }
+    sceKernelExitThread(0);
 }
 
 BUTTON_CB(ShowScreenShotPage)
@@ -454,12 +486,13 @@ BUTTON_CB(ShowScreenShotPage)
     pp->pageThread->Start();
 }
 
-void ScreenshotDownloadThread(void)
+CB(ScreenshotDownloadThread)
 {
     InfoPage *page = (InfoPage *)currPage;
     Utils::ResetStrtok();
 
     page->ScreenshotNum = Utils::getStrtokNum(';', page->Info->screenshot_url.data);
+    print("Strtoknum = %d\n", page->ScreenshotNum);
     page->ScreenShotURLS = (char **)sce_paf_malloc(page->ScreenshotNum * sizeof(char *));
     page->ScreenshotPaths = (char **)sce_paf_malloc(page->ScreenshotNum * sizeof(char *));
 
@@ -493,21 +526,13 @@ void ScreenshotDownloadThread(void)
 
     if(paf::io::Misc::Exists(page->ScreenshotPaths[0]))
     {
-        Misc::OpenResult res;
-        SceInt32 err = 0;
-        Misc::OpenFile(&res, page->ScreenshotPaths[0], SCE_O_RDONLY, 0777, &err);
-        
         graphics::Texture *tex = new graphics::Texture();
-        graphics::Texture::CreateFromFile(tex, mainPlugin->memoryPool, &res);
+        if(Utils::CreateTextureFromFile(tex, page->ScreenshotPaths[0]))
+        {
+            page->mainScreenshot = tex;
+            page->ScreenShot->SetTextureBase(page->mainScreenshot);
+        }
 
-        if(tex->texSurface == NULL)
-            new TextPage("Unknown Error Occourred", "Create Texture Error");
-
-        delete res.localFile;
-        sce_paf_free(res.unk_04);
-
-        page->mainScreenshot = tex;
-        page->ScreenShot->SetTextureBase(page->mainScreenshot);
         Utils::AssignButtonHandler(page->ScreenShot, ShowScreenShotPage);
     }
     else
@@ -516,6 +541,7 @@ void ScreenshotDownloadThread(void)
         if(!currPage->pageThread->EndThread)
             new TextPage("File Missing", "Screenshot Download Error");
     }
+    sceKernelExitThread(0);
 }
 
 BUTTON_CB(DownloadApp)
@@ -559,32 +585,26 @@ InfoPage::InfoPage(homeBrewInfo *info, SceBool wait):Page(PAGE_TYPE_HOMBREW_INFO
     Utils::SetWidgetLabel(Credits, credits);
 
     float y = ((float)Info->description.length / 75.0) * 70.0;
-    if(Info->description.length <= 10) y = 50;
+    if(Info->description.length <= 15) y = 50;
 
     Utils::SetWidgetSize(Description, 960, y);
     Utils::SetWidgetLabel(Description, &Info->description);
 
     if(loadFlags & LOAD_FLAGS_ICONS)
     {
-        if(paf::io::Misc::Exists(info->icon0Local.data))
+        iconTex = new graphics::Texture();
+        if(paf::io::Misc::Exists(info->icon0Local.data) && Utils::CreateTextureFromFile(iconTex, info->icon0Local.data))
         {
-            Misc::OpenResult res;
-            Misc::OpenFile(&res, info->icon0Local.data, SCE_O_RDONLY, 0777, NULL);
-        
-            iconTex = new graphics::Texture();
-
-            graphics::Texture::CreateFromFile(iconTex, mainPlugin->memoryPool, &res);
-            Icon->SetTextureBase(iconTex);        
-            delete res.localFile;
-            sce_paf_free(res.unk_04);
+            Icon->SetTextureBase(iconTex);
         }
         else
         {
+            delete iconTex;
+            iconTex = SCE_NULL;
             Icon->SetTextureBase(BrokenTex);
         }
     }
 
-    iconTex = NULL;
     ScreenShotURLS = NULL;
     ScreenshotPaths = NULL;
     mainScreenshot = NULL;
@@ -604,13 +624,15 @@ InfoPage::InfoPage(homeBrewInfo *info, SceBool wait):Page(PAGE_TYPE_HOMBREW_INFO
 InfoPage::~InfoPage()
 {
     if(!(loadFlags & LOAD_FLAGS_SCREENSHOTS)) goto DELETE_ICON;
+
     if(ScreenshotPaths != NULL) 
     {
-        for(int i = 0; i < ScreenshotNum ; i++)
+        for(int i = 0; i < ScreenshotNum; i++)
         {
             if(ScreenshotPaths[i] != NULL) sce_paf_free(ScreenshotPaths[i]);
         }
         sce_paf_free(ScreenshotPaths);
+        ScreenshotPaths = SCE_NULL;
     }
     
     if(ScreenShotURLS != NULL)
@@ -620,22 +642,24 @@ InfoPage::~InfoPage()
             if(ScreenShotURLS[i] != NULL) sce_paf_free(ScreenShotURLS[i]);
         }
         sce_paf_free(ScreenShotURLS);
+        ScreenShotURLS = SCE_NULL;
     }
-
+    
     if(mainScreenshot != NULL)
     {
-        delete mainScreenshot->texSurface;
-        mainScreenshot->texSurface = SCE_NULL;
-        delete mainScreenshot;
+        ScreenShot->SetTextureBase(transparentTex);
+        Utils::DeleteTexture(mainScreenshot);
+        mainScreenshot = SCE_NULL;
     }
 
 DELETE_ICON:
     if(iconTex != NULL)
     {
-        delete iconTex->texSurface;
-        iconTex->texSurface = SCE_NULL;
-        delete iconTex;
+        Icon->SetTextureBase(transparentTex);
+        Utils::DeleteTexture(iconTex);
+        iconTex = SCE_NULL;
     }
+
 }
 
 LoadingPage::LoadingPage(const char *info):Page(PAGE_TYPE_LOADING_SCREEN)
@@ -649,13 +673,6 @@ LoadingPage::LoadingPage(const char *info):Page(PAGE_TYPE_LOADING_SCREEN)
     infoText = (Text *)Utils::GetChildByHash(root, Utils::GetHashById(LOADING_PAGE_TEXT));
     infoText->SetLabel(&wstr);
 }
-
-BlankPage::BlankPage():Page(PAGE_TYPE_BLANK_PAGE)
-{
-    busy->Stop();
-}
-
-BlankPage::~BlankPage(){}
 
 LoadingPage::~LoadingPage()
 {
@@ -765,9 +782,9 @@ void PopupMgr::initDialog()
 	searchParam.hash = Utils::GetHashById("_common_texture_check_mark");
 	Plugin::LoadTexture(checkmark, Plugin::Find("__system__common_resource"), &searchParam);
 
-	transparent = new graphics::Texture();
+	transparentTex = new graphics::Texture();
 	searchParam.hash = Utils::GetHashById("_common_texture_transparent");
-	Plugin::LoadTexture(transparent, Plugin::Find("__system__common_resource"), &searchParam);
+	Plugin::LoadTexture(transparentTex, Plugin::Find("__system__common_resource"), &searchParam);
 
     diagBG = (Plane *)Utils::GetChildByHash(mainScene, Utils::GetHashById(POPUP_DIALOG_BG));
     if(diagBG == NULL) return;
@@ -778,7 +795,7 @@ void PopupMgr::initDialog()
 }
 
 //From QuickMenuReborn
-Widget *BlankPage::AddFromStyle(const char *refId, const char *style, const char *type, Widget *parent)
+Widget *Page::AddFromStyle(const char *refId, const char *style, const char *type, Widget *parent)
 {
     //WidgetInfo
     paf::Resource::Element winfo;
@@ -797,6 +814,24 @@ Widget *BlankPage::AddFromStyle(const char *refId, const char *style, const char
     if(newWidget == NULL) print("Error can't make widget with refID %s, type %s, style = %s\n", refId, type, style);
     if(newWidget == NULL || newWidget < 0) return NULL;
     return newWidget;
+}
+
+Widget *Page::AddFromTemplate(SceInt32 id, Widget *targetRoot)
+{
+    Resource::Element e = Utils::GetParamWithHash(id);
+    Plugin::TemplateInitParam tinit;
+
+    mainPlugin->AddWidgetFromTemplate(targetRoot, &e, &tinit);
+    return targetRoot->GetChildByNum(targetRoot->childNum - 1);
+}
+
+Widget *Page::AddFromTemplate(const char *id, Widget *targetRoot)
+{
+    Resource::Element e = Utils::GetParamWithHashFromId(id);
+    Plugin::TemplateInitParam tinit;
+
+    mainPlugin->AddWidgetFromTemplate(targetRoot, &e, &tinit);
+    return targetRoot->GetChildByNum(targetRoot->childNum - 1);
 }
 
 void PopupMgr::addDialogOption(const char *text, ECallback onPress, void *userDat, bool selected)
@@ -818,7 +853,7 @@ void PopupMgr::addDialogOption(const char *text, ECallback onPress, void *userDa
 
     currbutton->SetLabel(&wstr);
     if(selected) currbutton->SetTextureBase(checkmark);
-    else currbutton->SetTextureBase(transparent);
+    else currbutton->SetTextureBase(transparentTex);
 
     eventcb cb;
     cb.dat = userDat;

@@ -5,6 +5,8 @@
 #include "utils.hpp"
 #include "parser.hpp" //For homebrewInfo type
 
+#define DEFINE_PAGE(PageType, pageID) case PageType:{search = Utils::GetParamWithHashFromId(pageID);break;}
+
 typedef enum 
 {
     PAGE_TYPE_SELECTION_LIST,
@@ -15,7 +17,7 @@ typedef enum
     PAGE_TYPE_PROGRESS_PAGE,
     PAGE_TYPE_HOMBREW_INFO,
     PAGE_TYPE_PICTURE_PAGE,
-    PAGE_TYPE_BLANK_PAGE
+    PAGE_TYPE_BLANK_PAGE,
 } pageType;
 
 class Page
@@ -37,25 +39,20 @@ public:
 
     UtilThread *pageThread;
 
-    Page(pageType Type, SceBool = SCE_FALSE);
-    ~Page();
-};
-
-class BlankPage : public Page
-{
-public:
-    BlankPage();
-    ~BlankPage();
-
     Widget *AddFromStyle(const char *refId, const char *style, const char *type, Widget *parent = SCE_NULL);
+    Widget *AddFromTemplate(SceInt32 id, Widget *targetRoot);
+    Widget *AddFromTemplate(const char *id, Widget *targetRoot);
+
+    Page(pageType Type = PAGE_TYPE_BLANK_PAGE, SceBool = SCE_FALSE);
+    ~Page();
 };
 
 class PicturePage : public Page
 {
-private:
+public:
     SceInt32 pictureNum;
     graphics::Texture **pictures;
-public:
+
     Box *listRoot;
 
     SceInt32 AddPictureFromFile(const char *path);
@@ -68,12 +65,11 @@ public:
 
 class InfoPage : public Page
 {
-private:
-    graphics::Texture *iconTex;
 public:
     int ScreenshotNum;
     char **ScreenShotURLS;
     char **ScreenshotPaths;
+    graphics::Texture *iconTex;
     graphics::Texture *mainScreenshot;
 
     homeBrewInfo *Info;
@@ -105,9 +101,13 @@ public:
 
     ImageButton *AddOption(const char *text, ECallback onPress = NULL, void *userDat = NULL, SceBool isLong = SCE_FALSE, SceBool needImage = SCE_FALSE);
     ImageButton *AddOption(String *text, ECallback onPress = NULL, void *userDat = NULL, SceBool isLong = SCE_FALSE, SceBool needImage = SCE_FALSE);
-    
+    ImageButton *AddOption(WString *text, ECallback onPress = NULL, void *userDat = NULL, SceBool isLong = SCE_FALSE, SceBool needImage = SCE_FALSE);
+
     SceVoid DisableAllButtons();
     SceVoid EnableAllButtons();
+
+    SceVoid Hide();
+    SceVoid Show();
 
     SceVoid Clear();
 
@@ -143,13 +143,13 @@ public:
     Text *InfoText;
 
     TextPage(const char *text, const char *title = SCE_NULL);
+    ~TextPage(){}
 };
 
 class PopupMgr
 {
 public:
     static graphics::Texture *checkmark;
-    static graphics::Texture *transparent;
 
     static Plane *diagBG;
     static Dialog *diag;

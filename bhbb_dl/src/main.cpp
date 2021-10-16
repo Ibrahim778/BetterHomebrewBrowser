@@ -218,6 +218,7 @@ int main()
                 break;
             case SHUTDOWN:
                 Running = SCE_FALSE;
+                sceKernelWaitThreadEnd(dlThreadID, NULL, NULL);
                 break;
             default:
                 print("[Error] Unknown Command!\n");

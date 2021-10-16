@@ -1,5 +1,10 @@
-#ifndef VHH_COMMON_H
-#define VHH_COMMON_H
+#ifndef BHBB_COMMON_H
+#define BHBB_COMMON_H
+
+#include <paf.h>
+#include "pagemgr.hpp"
+#include "parser.hpp"
+#include "configmgr.hpp"
 
 #define SCENE_NAME "page_main"
 #define PLUGIN_NAME "bhbb_plugin"
@@ -60,20 +65,20 @@
 #define CBPSDB_DOWNLOAD_ICONS_URL "https://github.com/Ibrahim778/CBPS-DB-Icon-Downloader/blob/main/icons.zip?raw=true"
 #define VITADB_URL "https://rinnegatamante.it/vitadb/list_hbs_json.php"
 #define VITADB_DOWNLOAD_ICONS_URL "https://vitadb.rinnegatamante.it/icons_zip.php"
-#define DATA_PATH "savedata0:data"
+#define DATA_PATH "ux0:data/betterHomebrewBrowser"
 #define SCREENSHOT_SAVE_PATH DATA_PATH "/screenshots"
 
 #define TEMP_PATH "ux0:/temp"
 
-#define ICON_SAVE_PATH "savedata0:data/icons"
+#define ICON_SAVE_PATH "ux0:data/betterHomebrewBrowser/icons"
 #define CBPSDB_ICON_ZIP_SAVE_PATH TEMP_PATH "/bhbb_cbps_db_icons.zip"
 #define CBPSDB_ICON_SAVE_PATH ICON_SAVE_PATH "/cbpsdb"
 #define VITADB_ICON_ZIP_SAVE_PATH TEMP_PATH "/bhbb_vita_db_icons.zip"
 #define VITADB_ICON_SAVE_PATH ICON_SAVE_PATH "/vitadb"
 
-#define CBPSDB_TIME_SAVE_PATH "savedata0:data/cbpsdb_icon_download"
-#define VITADB_TIME_SAVE_PATH "savedata0:data/vitadb_icon_download"
-#define CONFIG_SAVE_PATH "savedata0:data/config"
+#define CBPSDB_TIME_SAVE_PATH "ux0:data/betterHomebrewBrowser/cbpsdb_icon_download"
+#define VITADB_TIME_SAVE_PATH "ux0:data/betterHomebrewBrowser/vitadb_icon_download"
+#define CONFIG_SAVE_PATH "ux0:data/betterHomebrewBrowser/config"
 
 #define POPUP_DIALOG_BG "popup_diag_bg"
 #define POPUP_DIALOG_ID "popup_dialog"
@@ -84,8 +89,24 @@
 
 #define ICON_MISSING_TEX_ID "tex_missing_icon"
 
+#define APPS_PER_PAGE 50
+
 #define userDownloadIconGapDefault 6
 #define userDbDefault VITADB
 
+extern Page *currPage;
+extern CornerButton *mainBackButton;
+extern CornerButton *settingsButton;
+extern CornerButton *forwardButton;
+extern Plugin *mainPlugin;
+extern Plane *mainRoot;
+extern linked_list list;
+extern graphics::Texture *BrokenTex;
+extern graphics::Texture *transparentTex;
+extern Widget *mainScene;
+extern userConfig conf;
+extern int loadFlags;
+
+extern Allocator *fwAllocator;
 
 #endif

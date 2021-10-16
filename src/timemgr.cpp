@@ -6,8 +6,6 @@
 
 #define ABS(num) (num) < 0 ? -((num)) : (num)
 
-extern userConfig conf;
-
 void saveCurrentTime()
 {  
     SceDateTime time;

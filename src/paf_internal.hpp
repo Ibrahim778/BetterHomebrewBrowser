@@ -1,5 +1,5 @@
-#ifndef VHH_PAF_INTERNAL_HPP
-#define VHH_PAF_INTERNAL_HPP
+#ifndef BHBB_PAF_INTERNAL_HPP
+#define BHBB_PAF_INTERNAL_HPP
 
 #include <paf.h>
 #include <libsysmodule.h>

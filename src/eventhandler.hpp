@@ -1,5 +1,5 @@
-#ifndef VHH_EVENTHANDLER_HPP
-#define VHH_EVENTHANDLER_HPP
+#ifndef BHBB_EVENTHANDLER_HPP
+#define BHBB_EVENTHANDLER_HPP
 
 #include <paf.h>
 #include <kernel.h>

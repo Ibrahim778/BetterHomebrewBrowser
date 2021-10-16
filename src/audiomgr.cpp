@@ -1,10 +1,7 @@
-#include <paf.h>
+#include <paf/stdc.h>
 
 #include "audiomgr.hpp"
-#include "main.hpp"
 #include "configmgr.hpp"
-
-extern userConfig conf;
 
 void initMusic()
 {

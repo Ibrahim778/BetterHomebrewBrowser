@@ -6,6 +6,7 @@
 #include <kernel.h>
 #include <paf.h>
 
+#include "sha1.h"
 #include "head_bin.h"
 #include "main.hpp"
 #include <stdlib.h>
@@ -59,14 +60,13 @@ int getSfoString(char* buffer, char* name, char* string, int length) {
 }
 
 static void fpkg_hmac(const uint8_t* data, unsigned int len, uint8_t hmac[16]) {
-    paf::Sha1 *ctx;
+    SHA1_CTX ctx;
     uint8_t sha1[20];
     uint8_t buf[64];
 
-    ctx = new paf::Sha1();
-    ctx->BlockUpdate((ScePVoid)data, len);
-    ctx->BlockResult(sha1);
-    delete ctx;
+    sha1_init(&ctx);
+    sha1_update(&ctx, data, len);
+    sha1_final(&ctx, sha1);
 
     sce_paf_memset(buf, 0, 64);
     sce_paf_memcpy(&buf[0], &sha1[4], 8);
@@ -78,10 +78,9 @@ static void fpkg_hmac(const uint8_t* data, unsigned int len, uint8_t hmac[16]) {
     buf[23] = sha1[3];
     sce_paf_memcpy(&buf[24], &buf[16], 8);
 
-    ctx = new paf::Sha1();
-    ctx->BlockUpdate(buf, 64);
-    ctx->BlockResult(sha1);
-    delete ctx;
+    sha1_init(&ctx);
+    sha1_update(&ctx, buf, 64);
+    sha1_final(&ctx, sha1);
 
     sce_paf_memcpy(hmac, sha1, 16);
 }

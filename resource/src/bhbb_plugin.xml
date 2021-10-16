@@ -286,10 +286,10 @@
 	<styletable>
         <!-- Based on style from official common resource -->
         <style_corner_button sound="_common_sound_corner_button_menu" key_focus="1" highlight_obj="plane_obj3" glow_obj="plane_obj4" color="1, 1, 1, 1" corner_obj="plane_obj2" focus_in_group="0" direct_key="2" bg_obj="plane_obj1" layout_type="3" id="style_button_forward">
-        <planeobj color="0.159999996423721, 0.150000005960464, 0.219999998807907, 0.800000011920929" texture0="_common_texture_corner_button_base" id="plane_obj1" />
-        <planeobj size="64, 64, 0" texture0="tex_forward_arrow" id="plane_obj2" pos="13, -11, 0" />
-        <planeobj texture0="_common_texture_corner_button_highlight" id="plane_obj3" />
-        <planeobj texture0="_common_texture_corner_button_glow" blend="2" id="plane_obj4" />
+            <planeobj color="0.159999996423721, 0.150000005960464, 0.219999998807907, 0.800000011920929" texture0="_common_texture_corner_button_base" id="plane_obj1" />
+            <planeobj size="64, 64, 0" texture0="tex_forward_arrow" id="plane_obj2" pos="13, -11, 0" />
+            <planeobj texture0="_common_texture_corner_button_highlight" id="plane_obj3" />
+            <planeobj texture0="_common_texture_corner_button_glow" blend="2" id="plane_obj4" />
         </style_corner_button>
 
 		<style_plane id="plane_separator_style" planeobj="planeobj_separator">

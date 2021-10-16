@@ -1,5 +1,5 @@
-#ifndef BHH_PARSER_CPP 
-#define BHH_PARSER_CPP
+#ifndef BHH_PARSER_HPP 
+#define BHH_PARSER_HPP
 
 #include <kernel.h>
 #include <paf.h>
@@ -15,6 +15,7 @@ typedef struct
 {
     paf::String id;
     paf::String titleID;
+    paf::WString wstrtitle;
     paf::String title;
     paf::String credits;
     paf::String icon0;
@@ -28,9 +29,10 @@ typedef struct
 
 struct node
 {
-    homeBrewInfo widget;
+    homeBrewInfo info;
     node *next;
     widget::ImageButton *button;
+    paf::graphics::Texture tex;
 };
 
 class linked_list

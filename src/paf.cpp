@@ -24,9 +24,6 @@ Allocator *fwAllocator = SCE_NULL;
 
 graphics::Texture *BrokenTex = SCE_NULL;
 
-extern userConfig conf;
-extern int loadFlags;
-
 void initPaf()
 {
     print("Init paf\n");
