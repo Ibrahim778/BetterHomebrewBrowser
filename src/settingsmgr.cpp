@@ -116,7 +116,7 @@ BUTTON_CB(TermBGDL)
 
 BUTTON_CB(OtherPage)
 {
-    SelectionList *s = new SelectionList("Info");
+    SelectionList *s = new SelectionList("Other");
     s->busy->Stop();
     s->AddOption("Info", InfoPage);
     s->AddOption("Terminate BGDL", TermBGDL);

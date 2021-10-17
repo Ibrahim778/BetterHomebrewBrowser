@@ -115,7 +115,7 @@ SceInt32 DownloadThread(SceSize args, void *argp)
         }
         else
         {
-            if(r != 6) NotifMgr::EndNotif("An error occoured while downloading",curl_easy_strerror(r));
+            if(r != CURLE_COULDNT_RESOLVE_HOST) NotifMgr::EndNotif("An error occoured while downloading",curl_easy_strerror(r));
             sceIoRemove(dest);
         }
         queue.dequeue();
