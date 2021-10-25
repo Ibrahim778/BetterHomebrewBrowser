@@ -120,7 +120,9 @@ BUTTON_CB(PageIncrease)
 
 CB(RedisplayCB)
 {
-    forwardButton->PlayAnimation(0, Widget::Animation_Reset);
+    if ((pageNum * APPS_PER_PAGE) < list.num)
+        forwardButton->PlayAnimation(0, Widget::Animation_Reset);
+    
     if (pageNum > 1)
         EventHandler::SetBackButtonEvent(PageDecrease);
 }
@@ -138,12 +140,8 @@ CB(PageListThread)
         return;
     }
 
+    forwardButton->PlayAnimationReverse(0, Widget::Animation_Reset);
     Page::GetCurrentPage()->busy->Start();
-
-    if ((pageNum * APPS_PER_PAGE) < list.num)
-        forwardButton->PlayAnimation(0, Widget::Animation_Reset);
-    else 
-        forwardButton->PlayAnimationReverse(0, Widget::Animation_Reset); 
 
     EventHandler::SetForwardButtonEvent(PageIncrease);
 
@@ -217,6 +215,10 @@ CB(PageListThread)
     }
 
 END:
+    if ((pageNum * APPS_PER_PAGE) < list.num)
+        forwardButton->PlayAnimation(0, Widget::Animation_Reset);
+    else 
+        forwardButton->PlayAnimationReverse(0, Widget::Animation_Reset); 
     listp->OnRedisplay = RedisplayCB;
     listp->OnDelete = onListPageDelete;
     sceKernelExitDeleteThread(0);
