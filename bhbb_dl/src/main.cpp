@@ -72,15 +72,14 @@ int install(const char *file)
     
     if(NotifMgr::currDlCanceled) goto END;
 
-    {
-        int res = promoteApp(EXTRACT_PATH);
-        if(res == SCE_OK)
-			sce_paf_snprintf(txt, 64, "Installed %s Successfully!", queue.head->packet.name);
-        else
-			sce_paf_snprintf(txt, 64, "Error 0x%X", res);
+    int res = promoteApp(EXTRACT_PATH);
+    if(res == SCE_OK)
+		sce_paf_snprintf(txt, 64, "Installed %s Successfully!", queue.head->packet.name);
+    else
+		sce_paf_snprintf(txt, 64, "Error 0x%X", res);
 
-        NotifMgr::SendNotif(txt);
-    }
+    NotifMgr::SendNotif(txt);
+
 END:
     sceIoRemove(EXTRACT_PATH);
     sceIoRemove(file);
@@ -106,7 +105,7 @@ SceInt32 DownloadThread(SceSize args, void *argp)
         char dest[SCE_IO_MAX_PATH_BUFFER_SIZE];
 		sce_paf_memset(dest, 0, sizeof(dest));
 		sce_paf_snprintf(dest, SCE_IO_MAX_PATH_BUFFER_SIZE, "ux0:/temp/%s.vpk", queue.head->packet.name);
-        CURLcode r = (CURLcode)dlFile(queue.head->packet.url, dest);
+        int r = dlFile(queue.head->packet.url, dest);
 
         if(!NotifMgr::currDlCanceled && r == CURLE_OK)    
         {
@@ -115,8 +114,15 @@ SceInt32 DownloadThread(SceSize args, void *argp)
         }
         else
         {
-            if(r != CURLE_COULDNT_RESOLVE_HOST) NotifMgr::EndNotif("An error occoured while downloading",curl_easy_strerror(r));
             sceIoRemove(dest);
+            if(r > 0) NotifMgr::EndNotif("CURL Error while downloading",curl_easy_strerror((CURLcode)r));
+            else
+            {
+                char txt[64];
+                sce_paf_memset(txt, 0, 64);
+                sce_paf_snprintf(txt, 64, "0x%X", r);
+                NotifMgr::EndNotif("An error ocourred while downloading", txt);
+            }
         }
         queue.dequeue();
     };

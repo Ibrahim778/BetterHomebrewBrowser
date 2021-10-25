@@ -101,7 +101,13 @@ size_t curlWriteCB(void *datPtr, size_t chunkSize, size_t chunkNum, void *userDa
 int dlFile(const char *url, const char *dest)
 {
     sceIoRemove(dest);
-    SceUID file = sceIoOpen(dest, SCE_O_WRONLY | SCE_O_CREAT | SCE_O_TRUNC, 0777);
+    SceUID file = sceIoOpen(dest, SCE_O_WRONLY | SCE_O_CREAT | SCE_O_TRUNC, 0666);
+    if(file < 0)
+    {
+        print("Couldn't open file %s\n", dest);
+        LOG_ERROR("ERROR_OPEN_FILE", file);
+        return file;
+    }
     curl_easy_setopt(curl, CURLOPT_URL, url);
     curl_easy_setopt(curl, CURLOPT_WRITEDATA, &file);
     CURLcode ret = curl_easy_perform(curl);

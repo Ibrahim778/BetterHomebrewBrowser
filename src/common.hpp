@@ -15,8 +15,9 @@
 #define FORWARD_BUTTON_ID "forward_button"
 #define SETTINGS_BUTTON_ID "settings_button"
 #define MAIN_PLANE_ID "plane_common"
-#define SELECTION_PAGE_ID "page_common"
+#define MAIN_PAGE_ID "page_common"
 #define PAGE_TITLE_ID "main_titlebar_text"
+#define PAGE_ROOT_ID "page_root_plane"
 
 #define LIST_TEMPLATE_ID "list_template"
 #define LIST_TEMPLATE_ID_NO_TITLE "list_template_no_title"
@@ -30,8 +31,9 @@
 #define LIST_BUTTON_LONG_TEMPLATE_IMG "list_button_long_template"
 
 #define SELECTION_LIST_TEMPLATE "selection_template"
-#define PAGE_ROOT_ID "page_root_plane"
 #define SELECTION_LIST_NO_TITLE_TEMPLATE "selection_template_no_title"
+#define SELECTION_LIST_TOP_BUTTON_TEMPLATE "selection_list_top_button_template"
+#define SELECTION_LIST_TOP_BUTTON_PLANE_ID "buttons_plane"
 
 #define LOADING_PAGE_ID "loading_template"
 #define LOADING_PAGE_TEXT "info_text"
@@ -57,8 +59,10 @@
 #define PICTURE_PAGE_ID "picture_list_page_template"
 #define PICTURE_PAGE_PICTURE_TEMPLATE "picture_page_picture_template"
 
-#define NEXT_BUTTON_ID "button_top_right"
-#define PREV_BUTTON_ID "button_top_left"
+#define DECISION_PAGE_ID "decision_page_template"
+#define DECISION_PAGE_CONFIRM_BUTTON_ID "button_confirm"
+#define DECISION_PAGE_DECLINE_BUTTON_ID "button_decline"
+#define DECISION_PAGE_TEXT_ID "info_text"
 
 #define USER_AGENT "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.36"
 #define CBPSDB_URL "https://raw.githubusercontent.com/KuromeSan/cbps-db/master/cbpsdb.csv"
@@ -94,7 +98,6 @@
 #define userDownloadIconGapDefault 6
 #define userDbDefault VITADB
 
-extern Page *currPage;
 extern CornerButton *mainBackButton;
 extern CornerButton *settingsButton;
 extern CornerButton *forwardButton;

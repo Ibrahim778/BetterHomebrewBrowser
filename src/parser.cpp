@@ -139,7 +139,7 @@ void linked_list::clear()
     {
         temp = head;
         head = head->next;
-        Utils::DeleteTexture(&temp->tex);
+        BHBB::Utils::DeleteTexture(&temp->tex);
         delete temp;
     }
 
@@ -288,7 +288,7 @@ void parseCSV(const char *path)
                 sceClibStrncat(titleID, parsed[0], 10);
 
                 info->titleID.Set(titleID);
-                info->icon0Local.Setf(VITADB_ICON_SAVE_PATH "/%s.png",  info->id.data);
+                info->icon0Local.Setf(CBPSDB_ICON_SAVE_PATH "/%s.png",  info->id.data);
                 info->version.SetEmpty();
             }
         }

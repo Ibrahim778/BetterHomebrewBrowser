@@ -11,7 +11,7 @@ void saveCurrentTime()
     SceDateTime time;
     sceRtcGetCurrentClockUtc(&time);
 
-    SceUID file = sceIoOpen(conf.db == CBPSDB ? CBPSDB_TIME_SAVE_PATH : VITADB_TIME_SAVE_PATH, SCE_O_WRONLY | SCE_O_CREAT | SCE_O_TRUNC, 0777);
+    SceUID file = sceIoOpen(conf.db == CBPSDB ? CBPSDB_TIME_SAVE_PATH : VITADB_TIME_SAVE_PATH, SCE_O_WRONLY | SCE_O_CREAT | SCE_O_TRUNC, 0666);
     sceIoWrite(file, &time, sizeof(time));
 
     sceIoClose(file);
@@ -27,7 +27,7 @@ bool checkDownloadIcons()
     
     SceDateTime prevTime;
 
-    SceUID file = sceIoOpen(conf.db == CBPSDB ? CBPSDB_TIME_SAVE_PATH : VITADB_TIME_SAVE_PATH, SCE_O_RDONLY, 0777);
+    SceUID file = sceIoOpen(conf.db == CBPSDB ? CBPSDB_TIME_SAVE_PATH : VITADB_TIME_SAVE_PATH, SCE_O_RDONLY, 0666);
     sceIoRead(file, &prevTime, sizeof(prevTime));
 
     sceIoClose(file);

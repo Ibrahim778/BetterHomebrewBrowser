@@ -6,7 +6,7 @@
 using namespace paf;
 using namespace widget;
 
-typedef void (*ECallback)(Widget *, SceInt32, void*);;
+typedef void (*ECallback)(Widget *, SceInt32, void*);
 
 class EventHandler : public Widget::EventCallback
 {

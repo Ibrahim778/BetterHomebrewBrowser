@@ -41,11 +41,14 @@ extern "C" {
 userConfig conf;
 int loadFlags = 0;
 int pageNum = 1;
+bool triedRedownloadIcons = false;
+
 CB(PageListThread);
 
 int main()
 {
-    Utils::StartBGDL();
+    
+    BHBB::Utils::StartBGDL();
 
     if (sceAppMgrGrowMemory3(10 * 1024 * 1024, 1) >= 0)
         loadFlags |= LOAD_FLAGS_SCREENSHOTS;
@@ -81,17 +84,17 @@ BUTTON_CB(PageDecrease)
     if (pageNum == 1)
         EventHandler::ResetBackButtonEvent();
 
-    if (currPage->pageThread->IsStarted())
+    if (Page::GetCurrentPage()->pageThread->IsStarted())
     {
-        currPage->pageThread->EndThread = SCE_TRUE;
-        currPage->pageThread->Join();
+        Page::GetCurrentPage()->pageThread->EndThread = SCE_TRUE;
+        Page::GetCurrentPage()->pageThread->Join();
     }
     
-    delete currPage->pageThread;
-    currPage->pageThread = new UtilThread(SCE_KERNEL_COMMON_QUEUE_LOWEST_PRIORITY, SCE_KERNEL_16KiB, "BHBB_PAGE_THREAD");
-    currPage->pageThread->Entry = PageListThread;
-    currPage->pageThread->EndThread = SCE_FALSE;
-    currPage->pageThread->Start();
+    delete Page::GetCurrentPage()->pageThread;
+    Page::GetCurrentPage()->pageThread = new UtilThread(SCE_KERNEL_COMMON_QUEUE_LOWEST_PRIORITY, SCE_KERNEL_16KiB, "BHBB_PAGE_THREAD");
+    Page::GetCurrentPage()->pageThread->Entry = PageListThread;
+    Page::GetCurrentPage()->pageThread->EndThread = SCE_FALSE;
+    Page::GetCurrentPage()->pageThread->Start();
 
 }
 
@@ -102,16 +105,16 @@ BUTTON_CB(PageIncrease)
         pageNum++;
 
         EventHandler::SetBackButtonEvent(PageDecrease);
-        if (currPage->pageThread->IsStarted())
+        if (Page::GetCurrentPage()->pageThread->IsStarted())
         {
-            currPage->pageThread->EndThread = SCE_TRUE;
-            currPage->pageThread->Join();
+            Page::GetCurrentPage()->pageThread->EndThread = SCE_TRUE;
+            Page::GetCurrentPage()->pageThread->Join();
         }
-        delete currPage->pageThread;
-        currPage->pageThread = new UtilThread(SCE_KERNEL_COMMON_QUEUE_LOWEST_PRIORITY, SCE_KERNEL_16KiB, "BHBB_PAGE_THREAD");
-        currPage->pageThread->Entry = PageListThread;
-        currPage->pageThread->EndThread = SCE_FALSE;
-        currPage->pageThread->Start();
+        delete Page::GetCurrentPage()->pageThread;
+        Page::GetCurrentPage()->pageThread = new UtilThread(SCE_KERNEL_COMMON_QUEUE_LOWEST_PRIORITY, SCE_KERNEL_16KiB, "BHBB_PAGE_THREAD");
+        Page::GetCurrentPage()->pageThread->Entry = PageListThread;
+        Page::GetCurrentPage()->pageThread->EndThread = SCE_FALSE;
+        Page::GetCurrentPage()->pageThread->Start();
     }
 }
 
@@ -124,18 +127,18 @@ CB(RedisplayCB)
 
 CB(PageListThread)
 {
-    SelectionList *listp = (SelectionList *)currPage;
+    SelectionList *listp = (SelectionList *)Page::GetCurrentPage();
     listp->Clear();
     listp->Hide();
     
     if (list.num == 0)
     {
         new TextPage("Why is there nothing here?");
-        delete listp;
+        Page::DeletePage(listp, false);
         return;
     }
 
-    currPage->busy->Start();
+    Page::GetCurrentPage()->busy->Start();
 
     if ((pageNum * APPS_PER_PAGE) < list.num)
         forwardButton->PlayAnimation(0, Widget::Animation_Reset);
@@ -148,11 +151,11 @@ CB(PageListThread)
     switch (conf.db)
     {
     case CBPSDB:
-        enableIcons = !isDirEmpty(CBPSDB_ICON_SAVE_PATH);
+        enableIcons = !BHBB::Utils::isDirEmpty(CBPSDB_ICON_SAVE_PATH);
         break;
 
     case VITADB:
-        enableIcons = !isDirEmpty(VITADB_ICON_SAVE_PATH);
+        enableIcons = !BHBB::Utils::isDirEmpty(VITADB_ICON_SAVE_PATH);
         break;
 
     default:
@@ -163,15 +166,15 @@ CB(PageListThread)
     enableIcons = enableIcons && (loadFlags & LOAD_FLAGS_ICONS);
 
     node *n = list.getByNum((pageNum - 1) * APPS_PER_PAGE);
-    for (int i = 0; i < APPS_PER_PAGE && !currPage->pageThread->EndThread && n != NULL; i++, n = n->next)
+    for (int i = 0; i < APPS_PER_PAGE && !Page::GetCurrentPage()->pageThread->EndThread && n != NULL; i++, n = n->next)
     {
-        n->button = ((SelectionList *)currPage)->AddOption(&n->info.wstrtitle, DisplayInfo, &n->info, SCE_TRUE, enableIcons);
+        n->button = ((SelectionList *)Page::GetCurrentPage())->AddOption(&n->info.wstrtitle, DisplayInfo, &n->info, SCE_TRUE, enableIcons);
         sceKernelDelayThread(10000);
     }
 
-    if(!currPage->pageThread->EndThread)
+    if(!Page::GetCurrentPage()->pageThread->EndThread)
     {
-        currPage->busy->Stop();
+        Page::GetCurrentPage()->busy->Stop();
         listp->Show();
     }
 
@@ -180,7 +183,7 @@ CB(PageListThread)
         goto END;
     if (!enableIcons)
         goto END;
-    if (currPage->pageThread->EndThread)
+    if (Page::GetCurrentPage()->pageThread->EndThread)
         goto END;
 
     //Texture Loading
@@ -190,11 +193,11 @@ CB(PageListThread)
     case CBPSDB:
     {
         n = list.getByNum((pageNum - 1) * APPS_PER_PAGE);
-        for(int i = 0; i < APPS_PER_PAGE && !currPage->pageThread->EndThread && n != NULL; i++, n = n->next)
+        for(int i = 0; i < APPS_PER_PAGE && !Page::GetCurrentPage()->pageThread->EndThread && n != NULL; i++, n = n->next)
         {
             if(n->tex.texSurface == NULL)
             {
-                if(Utils::CreateTextureFromFile(&n->tex, n->info.icon0Local.data))
+                if(BHBB::Utils::CreateTextureFromFile(&n->tex, n->info.icon0Local.data))
                 {
                     n->button->SetTextureBase(&n->tex);
                 }
@@ -216,7 +219,7 @@ CB(PageListThread)
 END:
     listp->OnRedisplay = RedisplayCB;
     listp->OnDelete = onListPageDelete;
-    sceKernelExitThread(0);
+    sceKernelExitDeleteThread(0);
 }
 
 CB(DownloadThread)
@@ -226,34 +229,33 @@ CB(DownloadThread)
     {
     case VITADB:
     {
-        res = Utils::DownloadFile(VITADB_URL, DATA_PATH "/vitadb.json");
+        res = BHBB::Utils::DownloadFile(VITADB_URL, DATA_PATH "/vitadb.json");
         if (res != CURLE_OK)
             break;
-        Utils::SetWidgetLabel(((LoadingPage *)currPage)->infoText, "Parsing");
-        print("Parsing\n");
+        BHBB::Utils::SetWidgetLabel(((LoadingPage *)Page::GetCurrentPage())->infoText, "Parsing");
+
         parseJson(DATA_PATH "/vitadb.json");
-        print("Done\n");
+
         if ((loadFlags & LOAD_FLAGS_ICONS) && checkDownloadIcons())
         {
-            Utils::SetWidgetLabel(((LoadingPage *)currPage)->infoText, "Downloading Icons");
-            res = Utils::DownloadFile(VITADB_DOWNLOAD_ICONS_URL, VITADB_ICON_ZIP_SAVE_PATH);
-            if(!currPage->pageThread->EndThread && res == CURLE_OK)
+            BHBB::Utils::SetWidgetLabel(((LoadingPage *)Page::GetCurrentPage())->infoText, "Downloading Icons");
+            res = BHBB::Utils::DownloadFile(VITADB_DOWNLOAD_ICONS_URL, VITADB_ICON_ZIP_SAVE_PATH);
+            if(!Page::GetCurrentPage()->pageThread->EndThread && res == CURLE_OK)
             {
-                LoadingPage *oldPage = (LoadingPage *)currPage;
+                LoadingPage *oldPage = (LoadingPage *)Page::GetCurrentPage();
                 new ProgressPage("Extracting");
+                Page::DeletePage(oldPage, false);
 
                 mainBackButton->PlayAnimationReverse(0, Widget::Animation_Reset);
-                currPage->busy->Stop();
+                Page::GetCurrentPage()->busy->Stop();
 
                 Zip *zipFile = ZipOpen(VITADB_ICON_ZIP_SAVE_PATH);
-                ZipExtract(zipFile, NULL, VITADB_ICON_SAVE_PATH, ((ProgressPage *)currPage)->progressBars[0]);
+                ZipExtract(zipFile, NULL, VITADB_ICON_SAVE_PATH, ((ProgressPage *)Page::GetCurrentPage())->progressBars[0]);
                 ZipClose(zipFile);
 
                 sceIoRemove(VITADB_ICON_ZIP_SAVE_PATH);
 
                 saveCurrentTime();
-
-                delete oldPage;
             }
             mainBackButton->PlayAnimation(0, Widget::Animation_Reset);
         }
@@ -261,25 +263,24 @@ CB(DownloadThread)
     }
     case CBPSDB:
     {
-        SceInt32 res = Utils::DownloadFile(CBPSDB_URL, DATA_PATH "/cbpsdb.csv");
+        SceInt32 res = BHBB::Utils::DownloadFile(CBPSDB_URL, DATA_PATH "/cbpsdb.csv");
         if (res != CURLE_OK)
             break;
-        print("Parsing\n");
-        Utils::SetWidgetLabel(((LoadingPage *)currPage)->infoText, "Parsing");
+
+        BHBB::Utils::SetWidgetLabel(((LoadingPage *)Page::GetCurrentPage())->infoText, "Parsing");
         parseCSV(DATA_PATH "/cbpsdb.csv");
-        print("Done\n");
 
         if ((loadFlags & LOAD_FLAGS_ICONS) && checkDownloadIcons())
         {
-            sceIoMkdir(CBPSDB_ICON_SAVE_PATH, 0777);
-            Utils::SetWidgetLabel(((LoadingPage *)currPage)->infoText, "Downloading Icons");
-            res = Utils::DownloadFile(CBPSDB_DOWNLOAD_ICONS_URL, CBPSDB_ICON_ZIP_SAVE_PATH);
+            sceIoMkdir(CBPSDB_ICON_SAVE_PATH, 0666);
+            BHBB::Utils::SetWidgetLabel(((LoadingPage *)Page::GetCurrentPage())->infoText, "Downloading Icons");
+            res = BHBB::Utils::DownloadFile(CBPSDB_DOWNLOAD_ICONS_URL, CBPSDB_ICON_ZIP_SAVE_PATH);
 
-            if(!currPage->pageThread->EndThread && res == CURLE_OK)
+            if(!Page::GetCurrentPage()->pageThread->EndThread && res == CURLE_OK)
             {
-                LoadingPage *oldPage = (LoadingPage *)currPage;
+                LoadingPage *oldPage = (LoadingPage *)Page::GetCurrentPage();
                 ProgressPage *extractPage = new ProgressPage("Extracting");
-                delete oldPage;
+                Page::DeletePage(oldPage, false);
 
                 mainBackButton->PlayAnimationReverse(0, Widget::Animation_Reset);
                 extractPage->busy->Stop();
@@ -289,7 +290,6 @@ CB(DownloadThread)
                 ZipClose(zipFile);
 
                 sceIoRemove(CBPSDB_ICON_ZIP_SAVE_PATH);
-
                 saveCurrentTime();
             }
 
@@ -302,13 +302,12 @@ CB(DownloadThread)
         break;
     }
 
-    if (currPage->pageThread->EndThread == SCE_TRUE)
+    if (Page::GetCurrentPage()->pageThread->EndThread == SCE_TRUE)
         return;
 
-    currPage->skipAnimation = SCE_TRUE;
-    delete currPage;
+    Page::GetCurrentPage()->skipAnimation = SCE_TRUE;
 
-    if(res != 0)
+    if(res != CURLE_OK)
     {
         new TextPage("Download DB Error");
         return;
@@ -316,7 +315,10 @@ CB(DownloadThread)
 
     print("Done download index\n");
     sceKernelDelayThread(1000);
+
+    LoadingPage *oldPage = (LoadingPage *)Page::GetCurrentPage();
     SelectionList *currlist = new SelectionList();
+    Page::DeletePage(oldPage);
     currlist->pageThread->Entry = PageListThread;
     currlist->pageThread->Start();
 }
@@ -325,17 +327,17 @@ BUTTON_CB(DownloadIndex)
 {
     new LoadingPage("Downloading Index");
 
-    currPage->pageThread->Entry = DownloadThread;
-    currPage->pageThread->Start();
+    Page::GetCurrentPage()->pageThread->Entry = DownloadThread;
+    Page::GetCurrentPage()->pageThread->Start();
 }
 
 void onReady()
 {
-    Utils::MakeDataDirs();
+    BHBB::Utils::MakeDataDirs();
     GetConfig(&conf);
     
     Page::Init();
-    Utils::NetInit();
+    BHBB::Utils::NetInit();
 
     sceSysmoduleLoadModule(SCE_SYSMODULE_JSON);
 

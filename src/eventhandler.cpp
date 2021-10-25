@@ -6,7 +6,6 @@
 static ECallback backButtonCB = NULL;
 static ECallback forwardButtonCB = NULL;
 
-#define DELETE_PAGE_TYPE(Type, Class) case Type: { delete (Class *)currPage; break; }
 EventHandler::EventHandler()
 {
     eventHandler = onGet;
@@ -38,33 +37,12 @@ void EventHandler::ResetForwardButtonEvent()
     forwardButtonCB = NULL;
 }
 
-BUTTON_CB(DefaultCB)
+BUTTON_CB(DefaultBackButtonCB)
 {
-    currPage->skipAnimation = SCE_FALSE;
-
-    //Just to call the correct destructors, if you have a better way to do this, please fix it
-    switch (currPage->type)
-    {
-
-    DELETE_PAGE_TYPE(PAGE_TYPE_SELECTION_LIST, SelectionList);
-    DELETE_PAGE_TYPE(PAGE_TYPE_SELECTION_LIST_WITH_TITLE, SelectionList);
-    DELETE_PAGE_TYPE(PAGE_TYPE_TEXT_PAGE, TextPage);
-    DELETE_PAGE_TYPE(PAGE_TYPE_TEXT_PAGE_WITH_TITLE, TextPage);
-    DELETE_PAGE_TYPE(PAGE_TYPE_LOADING_SCREEN, LoadingPage);
-    DELETE_PAGE_TYPE(PAGE_TYPE_PROGRESS_PAGE, ProgressPage);
-    DELETE_PAGE_TYPE(PAGE_TYPE_HOMBREW_INFO, InfoPage);
-    DELETE_PAGE_TYPE(PAGE_TYPE_PICTURE_PAGE, PicturePage);
-    
-    default:
-        delete currPage;
-        break;
-    }
+    Page::DeletePage(Page::GetCurrentPage(), true);
 }
 
-void EventHandler::ResetBackButtonEvent()
-{
-    backButtonCB = DefaultCB;
-}
+void EventHandler::ResetBackButtonEvent(){backButtonCB = DefaultBackButtonCB;}
 
 void BackButtonEventHandler::onGet(SceInt32 e, Widget *self, SceInt32, ScePVoid puserData)
 {

@@ -37,6 +37,7 @@
                 <layout_box layout_type="1" bottom_margin="0" top_margin="0" />
             </box>
         </template>
+
         <template fast_open="1" id="diag_button_template">
             <image_button sound="_common_sound_image_button" style="settings_option_style_button" id="option_popup_button" >
                 <layout_hint size="280, 70" align="1, 2" adjust="0, 0" />
@@ -72,10 +73,29 @@
 			</plane>
 		</template>
 
+        <template fast_open="1" id="selection_template_top_buttons">
+			<plane style="_common_style_plane_transparent" id="page_root_plane">
+				<layout_hint size="960, 544" pos="0, 0" />
+				<busyindicator style="base_style_busyindicator" texture="_common_texture_busy" id="busy_indicator" >
+					<layout_hint pos="0, 0" size="60, 60" />
+				</busyindicator>
+
+				<plane style="_common_style_plane_transparent" id="plane_top">
+					<layout_hint align="0, 2" anchor="0, 2" size="960, 74" pos="0, 0" />
+					<plane style="_common_style_plane_transparent" id="buttons_plane">
+						<layout_hint size="956, 72" pos="0, 0" />
+                    </plane>
+					<plane style="plane_separator_style" id="plane_separator_top">
+						<layout_hint anchor="0, 1" align="0, 2" size="960, 2" pos="0, -2" />
+					</plane>
+				</plane>
+			</plane>
+		</template>
+
 		<template fast_open="1" id="list_template_no_title">
 			<plane style = "_common_style_plane_transparent" id="list_plane_bg">
 				<layout_hint size="960, 544" pos="0, 0"/>
-				<scroll_view style="menu_style_scroll_view" id="list_scroll_view">
+				<scroll_view sound="_common_sound_scroll_view" style="menu_style_scroll_view" id="list_scroll_view">
             		<layout_hint align="0, 1" anchor="0, 1" size="960, 544" pos="0, 0" />
 					<box id="list_scroll_box">
                 		<layout_box anchor="0, 2" layout_type="1" bottom_margin="-200" top_margin="273" right_margin="0" left_margin="0" />
@@ -85,9 +105,9 @@
 		</template>
 
 		<template fast_open="1" id="list_template">
-			<plane style = "_common_style_plane_transparent" id="list_plane_bg">
+			<plane style="_common_style_plane_transparent" id="list_plane_bg">
 				<layout_hint size="960, 544" pos="0, 0"/>
-				<scroll_view style="menu_style_scroll_view" id="list_scroll_view">
+				<scroll_view sound="_common_sound_scroll_view" style="menu_style_scroll_view" id="list_scroll_view">
             		<layout_hint align="0, 1" anchor="0, 1" size="960, 420" pos="0, 0" />
 					<box id="list_scroll_box">
                 		<layout_box anchor="0, 2" layout_type="1" bottom_margin="-200" top_margin="182" right_margin="0" left_margin="0" />
@@ -135,6 +155,29 @@
                 <text style="text_normal_style" auto_scroll="1" id="info_text">
                     <layout_hint size="960, 50" pos="0, -40" />
                 </text>
+			</plane>
+        </template>
+
+        <template fast_open="1" id="decision_page_template">
+			<plane style="_common_style_plane_transparent" id="page_root_plane">
+				<layout_hint size="960, 544" pos="0, 0" />
+
+				<busyindicator style="base_style_busyindicator" texture="_common_texture_busy" id="busy_indicator" >
+					<layout_hint pos="0, 0" size="60, 60" />
+				</busyindicator>
+
+                <text style="text_normal_style" auto_scroll="1" id="info_text">
+                    <layout_hint size="960, 80" pos="0, 50" />
+                </text>
+
+                <button sound="_common_sound_button_enter" style="_common_default_style_button" id="button_confirm">
+                    <layout_hint pos="-200, -80" size="160, 80" />
+                </button>
+
+                <button sound="_common_sound_button_enter" style="_common_default_style_button" id="button_decline">
+                    <layout_hint pos="200, -80" size="160, 80" />
+                </button>
+
 			</plane>
         </template>
 
@@ -216,7 +259,7 @@
                         </image_button>
 
                         <text style="text_normal_style" id="hb_description">
-                            <layout_hint anchor="0,1" pos="0, 100" size="960, 180" />
+                            <layout_hint anchor="0,1" pos="0, 100" size="960, 0" />
                         </text>
 
                         <button style="_common_default_style_button" id="download_button" sound="_common_sound_button_enter" label="download_button_text">
@@ -336,6 +379,24 @@
     <stringtable>
 	    <locale src="locale\en.rcs" id="en-gb" />
 	    <locale src="locale\en.rcs" id="en" />
+        <locale src="locale\ja.rcs" id="ja" />
+	    <locale src="locale\en.rcs" id="fr" />
+	    <locale src="locale\es.rcs" id="es" />        
+	    <locale src="locale\en.rcs" id="de" />
+	    <locale src="locale\en.rcs" id="it" />
+	    <locale src="locale\en.rcs" id="nl" />
+	    <locale src="locale\en.rcs" id="pt" />
+        <locale src="locale\en.rcs" id="pt-br" />
+	    <locale src="locale\en.rcs" id="ru" />
+	    <locale src="locale\en.rcs" id="ko" />
+	    <locale src="locale\en.rcs" id="zh-t" />
+	    <locale src="locale\en.rcs" id="zh-s" />
+	    <locale src="locale\en.rcs" id="fi" />
+	    <locale src="locale\en.rcs" id="sv" />
+	    <locale src="locale\en.rcs" id="da" />
+	    <locale src="locale\en.rcs" id="no" />
+	    <locale src="locale\en.rcs" id="pl" />
+	    <locale src="locale\en.rcs" id="tr" />
     </stringtable>
 
 	<texturetable>

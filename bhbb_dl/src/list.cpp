@@ -77,13 +77,6 @@ void Queue::remove(const char *url)
 
 void Queue::enqueue(LIST_TYPE *data, int dataSize)
 {
-    if(num > 1)
-    {
-        char txt[64];
-        sce_paf_memset(txt, 0, sizeof(txt));
-        sce_paf_snprintf(txt, sizeof(txt), "Added %s to queue", data->name);
-        NotifMgr::SendNotif(txt);
-    }
     node *tmp = new node;
     sce_paf_memset(&tmp->packet, 0, sizeof(tmp->packet));
     sce_paf_memcpy(&tmp->packet, data, dataSize);

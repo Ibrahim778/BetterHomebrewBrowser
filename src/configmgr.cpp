@@ -4,7 +4,7 @@
 
 void WriteConfig(userConfig *conf)
 {
-    SceUID file = sceIoOpen(CONFIG_SAVE_PATH, SCE_O_CREAT | SCE_O_WRONLY | SCE_O_TRUNC, 0777);
+    SceUID file = sceIoOpen(CONFIG_SAVE_PATH, SCE_O_CREAT | SCE_O_WRONLY | SCE_O_TRUNC, 0666);
     sceIoWrite(file, conf, sizeof(userConfig));
     sceIoClose(file);
 }
@@ -16,7 +16,7 @@ void WriteDefaultConfig()
     conf.CBPSDBSettings.iconDownloadHourGap = userDownloadIconGapDefault;
     conf.vitaDBSettings.iconDownloadHourGap = userDownloadIconGapDefault;
 
-    SceUID file = sceIoOpen(CONFIG_SAVE_PATH, SCE_O_WRONLY | SCE_O_CREAT | SCE_O_TRUNC, 0777);
+    SceUID file = sceIoOpen(CONFIG_SAVE_PATH, SCE_O_WRONLY | SCE_O_CREAT | SCE_O_TRUNC, 0666);
     sceIoWrite(file, &conf, sizeof(conf));
     sceIoClose(file);
 }

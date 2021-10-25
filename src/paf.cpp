@@ -63,21 +63,21 @@ void getDefaultWidgets()
 {
     print("Getting defaults..\n");
     Plugin::SceneInitParam sinit;
-    Resource::Element search = Utils::GetParamWithHashFromId(SELECTION_PAGE_ID);
+    Resource::Element search = BHBB::Utils::GetParamWithHashFromId(MAIN_PAGE_ID);
     mainScene = mainPlugin->CreateScene(&search, &sinit);
 
     if(mainScene == NULL) sceKernelExitProcess(0);
     print("mainScene = 0x%X\n");
-    mainRoot = (Plane *)Utils::GetChildByHash(mainScene, Utils::GetHashById(MAIN_PLANE_ID));
-    mainBackButton = (CornerButton *)Utils::GetChildByHash(mainScene, Utils::GetHashById(BACK_BUTTON_ID));
+    mainRoot = (Plane *)BHBB::Utils::GetChildByHash(mainScene, BHBB::Utils::GetHashById(MAIN_PLANE_ID));
+    mainBackButton = (CornerButton *)BHBB::Utils::GetChildByHash(mainScene, BHBB::Utils::GetHashById(BACK_BUTTON_ID));
 
-    forwardButton = (CornerButton *)Utils::GetChildByHash(mainScene, Utils::GetHashById(FORWARD_BUTTON_ID));
-    settingsButton = (CornerButton *)Utils::GetChildByHash(mainScene, Utils::GetHashById(SETTINGS_BUTTON_ID));
+    forwardButton = (CornerButton *)BHBB::Utils::GetChildByHash(mainScene, BHBB::Utils::GetHashById(FORWARD_BUTTON_ID));
+    settingsButton = (CornerButton *)BHBB::Utils::GetChildByHash(mainScene, BHBB::Utils::GetHashById(SETTINGS_BUTTON_ID));
 
     PopupMgr::initDialog();
 
     BrokenTex = new graphics::Texture();
-    Resource::Element e = Utils::GetParamWithHashFromId(ICON_MISSING_TEX_ID);
+    Resource::Element e = BHBB::Utils::GetParamWithHashFromId(ICON_MISSING_TEX_ID);
     mainPlugin->LoadTexture(BrokenTex, mainPlugin, &e);
 
 }

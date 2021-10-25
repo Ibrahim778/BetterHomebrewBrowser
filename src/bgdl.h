@@ -4,7 +4,7 @@
 extern "C" {
 #endif
 
-void SendDlRequest(const char *title, const char *url);
+int SendDlRequest(const char *title, const char *url);
 void termBhbbDl();
 
 #ifdef __cplusplus

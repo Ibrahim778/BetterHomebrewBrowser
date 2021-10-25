@@ -3,4 +3,5 @@
 /build
 /build.bat
 /resource/cxml
-/resource/bhbb_plugin.rco
+/resource/*.rco
+/resource/src/locale/*.rcs

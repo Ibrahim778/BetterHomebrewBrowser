@@ -147,11 +147,11 @@ int makeHead(const char *path) {
 
     // Make dir
     sce_paf_snprintf(tmp_path, sizeof(tmp_path), "%s/sce_sys/package", path);
-    sceIoMkdir(tmp_path, 0777);
+    sceIoMkdir(tmp_path, 0666);
 
     // Write head.bin
     sce_paf_snprintf(tmp_path, sizeof(tmp_path), "%s/sce_sys/package/head.bin", path);
-    fd = sceIoOpen(tmp_path, SCE_O_WRONLY | SCE_O_TRUNC | SCE_O_CREAT, 0777);
+    fd = sceIoOpen(tmp_path, SCE_O_WRONLY | SCE_O_TRUNC | SCE_O_CREAT, 0666);
     if (fd < 0) {
         sce_paf_free(head_bin);
         return fd;

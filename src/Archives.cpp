@@ -988,10 +988,10 @@ void mkdir_rec(const char* dir) {
     for (p = tmp + 1; *p; p++)
         if (*p == '/')         {
             *p = 0;
-            sceIoMkdir(tmp, 0777);
+            sceIoMkdir(tmp, 0666);
             *p = '/';
         }
-    sceIoMkdir(tmp, 0777);
+    sceIoMkdir(tmp, 0666);
 }
 
 int ZipExtractCurrentFile(Zip *zip, int *nopath, const char *password, const char* path)
@@ -1044,7 +1044,7 @@ int ZipExtractCurrentFile(Zip *zip, int *nopath, const char *password, const cha
         {
             sceClibPrintf("Creating directory: %s\n", filenameinzip);
             sce_paf_snprintf(extract_path, sizeof(extract_path), "%s/%s", path, filenameinzip);
-            sceIoMkdir(extract_path, 0777);
+            sceIoMkdir(extract_path, 0666);
         }
     }
     else
@@ -1122,7 +1122,7 @@ int ZipExtract(Zip* zip, const char *password, const char* path, ProgressBar *pr
     int err;
     int nopath = 0;
     
-    sceIoMkdir(path, 0777);
+    sceIoMkdir(path, 0666);
 
     err = ZitGlobalInfo(zip, &gi);
 
