@@ -140,7 +140,6 @@ CB(PageListThread)
         return;
     }
 
-    forwardButton->PlayAnimationReverse(0, Widget::Animation_Reset);
     Page::GetCurrentPage()->busy->Start();
 
     EventHandler::SetForwardButtonEvent(PageIncrease);
@@ -167,7 +166,7 @@ CB(PageListThread)
     for (int i = 0; i < APPS_PER_PAGE && !Page::GetCurrentPage()->pageThread->EndThread && n != NULL; i++, n = n->next)
     {
         n->button = ((SelectionList *)Page::GetCurrentPage())->AddOption(&n->info.wstrtitle, DisplayInfo, &n->info, SCE_TRUE, enableIcons);
-        sceKernelDelayThread(10000);
+        sceKernelDelayThread(20000);
     }
 
     if(!Page::GetCurrentPage()->pageThread->EndThread)
@@ -175,6 +174,11 @@ CB(PageListThread)
         Page::GetCurrentPage()->busy->Stop();
         listp->Show();
     }
+
+    if ((pageNum * APPS_PER_PAGE) < list.num)
+        forwardButton->PlayAnimation(0, Widget::Animation_Reset);
+    else 
+        forwardButton->PlayAnimationReverse(0, Widget::Animation_Reset); 
 
 
     if (!(loadFlags & LOAD_FLAGS_ICONS))
@@ -215,10 +219,6 @@ CB(PageListThread)
     }
 
 END:
-    if ((pageNum * APPS_PER_PAGE) < list.num)
-        forwardButton->PlayAnimation(0, Widget::Animation_Reset);
-    else 
-        forwardButton->PlayAnimationReverse(0, Widget::Animation_Reset); 
     listp->OnRedisplay = RedisplayCB;
     listp->OnDelete = onListPageDelete;
     sceKernelExitDeleteThread(0);

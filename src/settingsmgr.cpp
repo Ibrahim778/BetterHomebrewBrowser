@@ -92,7 +92,7 @@ BUTTON_CB(DBOptions)
 
 BUTTON_CB(CreditsPage)
 {
-    new TextPage("Better Homebrew Browser By M Ibrahim\nScePaf Reversing By Graphene\nLivearea Assets By SomonPC", "Credits");
+    new TextPage("Better Homebrew Browser By M Ibrahim\nScePaf Reversing By Graphene\nLivearea Assets By SomonPC\nV0.5B", "Credits");
 }
 
 BUTTON_CB(FixesPage)
