@@ -45,6 +45,7 @@
 #define INFO_PAGE_SCREENSHOT_ID "hb_screenshot"
 #define INFO_PAGE_DOWNLOAD_BUTTON_ID "download_button"
 #define INFO_PAGE_VERSION_TEXT_ID "hb_version"
+#define INFO_PAGE_SIZE_TEXT_ID "hb_size"
 
 #define TEXT_PAGE_NO_TITLE_ID "text_page_no_title"
 #define TEXT_PAGE_ID "text_page"
@@ -64,11 +65,25 @@
 #define DECISION_PAGE_DECLINE_BUTTON_ID "button_decline"
 #define DECISION_PAGE_TEXT_ID "info_text"
 
+#define HOMEBREW_LIST_PAGE_ID "homebrew_list_page_template"
+#define HOMEBREW_LIST_PAGE_LIST_PLANE_ID "list_plane"
+#define HOMEBREW_LIST_TEMPLATE_ID "homebrew_list_template"
+#define HOMEBREW_LIST_PAGE_UTIL_BUTTON_ID "util_button"
+#define HOMEBREW_LIST_PAGE_EMU_BUTTON_ID "emu_button"
+#define HOMEBREW_LIST_PAGE_ALL_BUTTON_ID "all_button"
+#define HOMEBREW_LIST_PAGE_PORT_BUTTON_ID "port_button"
+#define HOMEBREW_LIST_PAGE_GAME_BUTTON_ID "game_button"
+#define HOMEBREW_LIST_PAGE_SEARCH_BUTTON_ID "search_button"
+
+#define SEARCH_PAGE_TEMPLATE_ID "search_page_template"
+#define SEARCH_PAGE_SEARCH_BOX_ID "search_box"
+
 #define USER_AGENT "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.36"
 #define CBPSDB_URL "https://raw.githubusercontent.com/KuromeSan/cbps-db/master/cbpsdb.csv"
 #define CBPSDB_DOWNLOAD_ICONS_URL "https://github.com/Ibrahim778/CBPS-DB-Icon-Downloader/blob/main/icons.zip?raw=true"
 #define VITADB_URL "https://rinnegatamante.it/vitadb/list_hbs_json.php"
 #define VITADB_DOWNLOAD_ICONS_URL "https://vitadb.rinnegatamante.it/icons_zip.php"
+#define VITADB_ICON_URL "https://rinnegatamante.it/vitadb/icons/"
 #define DATA_PATH "ux0:data/betterHomebrewBrowser"
 #define SCREENSHOT_SAVE_PATH DATA_PATH "/screenshots"
 
@@ -95,21 +110,26 @@
 
 #define APPS_PER_PAGE 50
 
-#define userDownloadIconGapDefault 6
-#define userDbDefault VITADB
+#define userDbDefault CBPSDB
 
 extern CornerButton *mainBackButton;
 extern CornerButton *settingsButton;
 extern CornerButton *forwardButton;
 extern Plugin *mainPlugin;
 extern Plane *mainRoot;
-extern linked_list list;
+extern LinkedList list;
 extern graphics::Texture *BrokenTex;
 extern graphics::Texture *transparentTex;
 extern Widget *mainScene;
 extern userConfig conf;
 extern int loadFlags;
 
+extern BackButtonEventHandler *mainBackButtonEvent;
+extern ForwardButtonEventHandler *mainForwardButtonEvent;
+
 extern Allocator *fwAllocator;
+
+extern int pageNum;
+extern int category;
 
 #endif

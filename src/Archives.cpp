@@ -35,7 +35,7 @@ extern "C" {
 #define zdecode(pkeys, crc32tab, c) (ZipUpdateKeys(pkeys, crc32tab, c ^= ZipDecryptByte(pkeys, crc32tab)))
 #define _ZIP_BUF_READ_COMMENT (0x400)
 
-#define TMPBUF_SIZE 1048576
+#define TMPBUF_SIZE 524288
 
 typedef struct
 {

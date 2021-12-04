@@ -6,7 +6,7 @@
 
 typedef struct
 {   
-    short iconDownloadHourGap;
+    short downloadIconsDuringLoad;
 } DBSettings;
 
 typedef struct

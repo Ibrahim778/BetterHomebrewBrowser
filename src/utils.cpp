@@ -67,7 +67,14 @@ bool BHBB::Utils::isDirEmpty(const char *path)
 
 SceVoid UtilThread::EntryFunction()
 {
-    if(Entry != NULL) Entry();
+    if(Entry != NULL) Entry(ParentPage);
+}
+
+UtilThread::UtilThread(ThreadCB entry, const char *pName):Thread(SCE_KERNEL_COMMON_QUEUE_LOWEST_PRIORITY, SCE_KERNEL_16KiB, pName, NULL)
+{
+    Entry = entry;
+    EndThread = SCE_FALSE;
+    ParentPage = Page::GetCurrentPage();
 }
 
 SceVoid UtilThread::Kill()
@@ -111,13 +118,33 @@ SceInt32 BHBB::Utils::DownloadFile(const char *url, const char *dest, ProgressBa
     if(file < 0) return file;
 
     curl_easy_setopt(curl, CURLOPT_URL, url);
-    curl_easy_setopt(curl, CURLOPT_XFERINFODATA, progressBar);
+    curl_easy_setopt(curl, CURLOPT_PROGRESSDATA, progressBar);
     curl_easy_setopt(curl, CURLOPT_WRITEDATA, &file);
     CURLcode ret = curl_easy_perform(curl);
 
     sceIoClose(file);
     if(ret != CURLE_OK) sceIoRemove(dest);
-    return (int)(ret == 6 ? 0 : ret);
+    return (int)ret;
+}
+
+SceBool BHBB::Utils::TestTexture(const char *path)
+{
+    SceBool ret = true;
+    Misc::OpenResult res;
+    SceInt32 err;
+    Misc::OpenFile(&res, path, SCE_O_RDONLY, 0666, &err);
+    print("%d\n", res.localFile->GetSize());
+    if(err < 0) return SCE_FALSE;
+
+    graphics::Texture tex;
+    graphics::Texture::CreateFromFile(&tex, mainPlugin->memoryPool, &res);
+    if(tex.texSurface == NULL) ret = false;
+
+    Utils::DeleteTexture(&tex, false);
+
+    delete res.localFile;
+    sce_paf_free(res.unk_04);
+    return ret;
 }
 
 SceInt32 BHBB::Utils::SetWidgetLabel(Widget *widget, const char *text)
@@ -219,6 +246,25 @@ void BHBB::Utils::NetInit()
     }
 }
 
+void BHBB::Utils::ToLowerCase(char *string)
+{
+    //Convert to lowerCase
+    for(int i = 0; string[i] != '\0'; i++)
+        if(string[i] > 64 && string[i] < 91) string[i] += 0x20;
+}
+
+bool BHBB::Utils::StringContains(char *h, char *n)
+{
+    int needleLen = sce_paf_strlen(n);
+    for(int currMatchLen = 0; *h != '\0'; h++)
+    {
+        if(*h == n[currMatchLen]) currMatchLen++;
+        else currMatchLen = 0;
+        if(currMatchLen == needleLen) return true;
+    }
+
+    return false;
+}
 SceInt32 BHBB::Utils::SetWidgetSize(Widget *widget, SceFloat x, SceFloat y, SceFloat z, SceFloat w)
 {
     SceFVector4 v;
@@ -254,6 +300,7 @@ SceInt32 BHBB::Utils::SetWidgetColor(Widget *widget, SceFloat r, SceFloat g, Sce
 
 SceInt32 BHBB::Utils::AssignButtonHandler(Widget *button, ECallback onPress, void *userDat, int id)
 {
+    if(button == NULL) return -1;
     EventHandler *eh = new EventHandler();
     eventcb callback;
     callback.Callback = onPress;
@@ -269,7 +316,7 @@ SceInt32 BHBB::Utils::AssignButtonHandler(Widget *button, ECallback onPress, voi
     }
     sce_paf_memcpy(eh->pUserData, &callback, sizeof(callback));
 
-    return button->RegisterEventCallback(id, eh, 1);
+    return button->RegisterEventCallback(id, eh, 0);
 }
 
 SceBool BHBB::Utils::CreateTextureFromFile(graphics::Texture *tex, const char *file)
@@ -291,8 +338,9 @@ SceBool BHBB::Utils::CreateTextureFromFile(graphics::Texture *tex, const char *f
     return tex->texSurface != NULL;
 }
 
-SceVoid BHBB::Utils::DeleteTexture(graphics::Texture *tex)
+SceVoid BHBB::Utils::DeleteTexture(graphics::Texture *tex, bool deletePointer)
 {
+    if(tex == transparentTex) return;
     if(tex != NULL)
     {
         if(tex->texSurface != NULL)
@@ -301,6 +349,8 @@ SceVoid BHBB::Utils::DeleteTexture(graphics::Texture *tex)
             tex->texSurface = SCE_NULL;
             delete s;
         }
+        if(deletePointer)
+            delete tex;
     }
 }
 
@@ -319,6 +369,7 @@ SceVoid BHBB::Utils::PrintAllChildren(Widget *widget, int offset)
         print(" %d 0x%X\n", i, widget->GetChildByNum(i)->hash);
         BHBB::Utils::PrintAllChildren(widget->GetChildByNum(i), offset + 4);
     }
+    if(widget->childNum == 0) print("No Children to Print!\n");
 }
 
 #endif

@@ -37,7 +37,7 @@ extern Queue queue;
 #define zdecode(pkeys, crc32tab, c) (ZipUpdateKeys(pkeys, crc32tab, c ^= ZipDecryptByte(pkeys, crc32tab)))
 #define _ZIP_BUF_READ_COMMENT (0x400)
 
-#define TMPBUF_SIZE 1048576
+#define TMPBUF_SIZE 2097152
 
 typedef struct
 {
@@ -726,36 +726,6 @@ static int ZipOpenCurrentFile(Zip* file, const char *password)
 
     s->currentzipfileinfo = pfileinzipreadinfo;
 
-/*
-    if(password != NULL)
-    {
-        int i;
-        s->crc32tab = (const unsigned long*)get_crc_table();
-        ZipInitKeys(password, s->keys, s->crc32tab);
-
-        if(fseek(pfileinzipreadinfo->file, s->currentzipfileinfo->posinzip + s->currentzipfileinfo->bytebeforezip, SEEK_SET) != 0)
-        {
-            FreePatch(pfileinzipreadinfo->buffer);
-            FreePatch(pfileinzipreadinfo);
-
-            return _ZIP_INTERNAL_ERROR;
-        }
-
-        if(fread(source, 1, 12, pfileinzipreadinfo->file) < 12)
-        {
-            FreePatch(pfileinzipreadinfo->buffer);
-            FreePatch(pfileinzipreadinfo);
-
-            return _ZIP_INTERNAL_ERROR;
-        }
-
-        for(i = 0; i < 12; i++)
-            zdecode(s->keys, s->crc32tab, source[i]);
-
-        s->currentzipfileinfo->posinzip += 12;
-        s->encrypted = 1;
-    }
-*/
     return _ZIP_OK;
 }
 
@@ -1149,7 +1119,7 @@ int ZipExtract(Zip* zip, const char *password, const char* path)
 
         char subtxt[64];
 		sce_paf_memset(subtxt, 0, sizeof(subtxt));
-        sce_paf_snprintf(subtxt, 64, "%d%% Done", (int)percent);
+        sce_paf_snprintf(subtxt, 64, "%d%% Done (%d Files / %d Files)", (int)percent, i + 1, gi.countentries);
 
         NotifMgr::UpdateProgressNotif(percent, subtxt, queue.head->packet.name);
     }

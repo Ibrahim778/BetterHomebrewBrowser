@@ -13,8 +13,8 @@ void WriteDefaultConfig()
 {
     userConfig conf;
     conf.db = userDbDefault;
-    conf.CBPSDBSettings.iconDownloadHourGap = userDownloadIconGapDefault;
-    conf.vitaDBSettings.iconDownloadHourGap = userDownloadIconGapDefault;
+    conf.CBPSDBSettings.downloadIconsDuringLoad = false;
+    conf.vitaDBSettings.downloadIconsDuringLoad = true;
 
     SceUID file = sceIoOpen(CONFIG_SAVE_PATH, SCE_O_WRONLY | SCE_O_CREAT | SCE_O_TRUNC, 0666);
     sceIoWrite(file, &conf, sizeof(conf));

@@ -19,24 +19,24 @@ void saveCurrentTime()
 
 bool checkDownloadIcons()
 {
-    if((conf.db == CBPSDB ? conf.CBPSDBSettings.iconDownloadHourGap : conf.vitaDBSettings.iconDownloadHourGap) == -1)
-        return 0;
+    char *dbIconPath = NULL;
+
+    switch (conf.db)
+    {
+    case CBPSDB:
+        dbIconPath = CBPSDB_ICON_SAVE_PATH;
+        break;
     
-    if(!paf::io::Misc::Exists(conf.db == CBPSDB ? CBPSDB_TIME_SAVE_PATH : VITADB_TIME_SAVE_PATH))
+    case VITADB:
+        dbIconPath = VITADB_ICON_SAVE_PATH;
+        break;
+
+    default:
+        break;
+    }
+
+    if(!paf::io::Misc::Exists(dbIconPath))
         return 1;
     
-    SceDateTime prevTime;
-
-    SceUID file = sceIoOpen(conf.db == CBPSDB ? CBPSDB_TIME_SAVE_PATH : VITADB_TIME_SAVE_PATH, SCE_O_RDONLY, 0666);
-    sceIoRead(file, &prevTime, sizeof(prevTime));
-
-    sceIoClose(file);
-
-    SceDateTime currTime;
-
-    sceRtcGetCurrentClockUtc(&currTime);
-
-    //Get time difference in hours between 2 SceDateTime
-    short hourGap =  ( ABS(currTime.year - prevTime.year) * 8760) + ( ABS(currTime.month - prevTime.month) * 730 ) + ABS(currTime.hour - prevTime.hour);
-    return hourGap >= (conf.db == CBPSDB ? conf.CBPSDBSettings.iconDownloadHourGap : conf.vitaDBSettings.iconDownloadHourGap);
+    return BHBB::Utils::isDirEmpty(dbIconPath);
 }

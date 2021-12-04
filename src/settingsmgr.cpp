@@ -14,72 +14,60 @@ BUTTON_CB(updateDBType)
     WriteConfig(&conf);
 }
 
-BUTTON_CB(updateIconTimeCBPSDB)
-{
-    conf.CBPSDBSettings.iconDownloadHourGap = (short)(int)userDat;
-    WriteConfig(&conf);
-}
-
-BUTTON_CB(updateIconTimeVitaDB)
-{
-    conf.vitaDBSettings.iconDownloadHourGap = (short)(int)userDat;
-    WriteConfig(&conf);
-}
-
 BUTTON_CB(DBSelector)
 {
     if(PopupMgr::showingDialog) return;
-    PopupMgr::showDialog();
-    PopupMgr::addDialogOption("CBPS DB", updateDBType, (void *)CBPSDB, conf.db == CBPSDB);
-    PopupMgr::addDialogOption("Vita DB", updateDBType, (void *)VITADB, conf.db == VITADB);
+    PopupMgr::ShowDialog();
+    PopupMgr::AddDialogOption("CBPS DB", updateDBType, (void *)CBPSDB, conf.db == CBPSDB);
+    PopupMgr::AddDialogOption("Vita DB", updateDBType, (void *)VITADB, conf.db == VITADB);
 }
 
-#define ADD_TIME_POPUP_OPTION_CBPSDB(hours) PopupMgr::addDialogOption(hours > 1 ? #hours " Hours" : #hours " Hour", updateIconTimeCBPSDB, (void *)hours, conf.CBPSDBSettings.iconDownloadHourGap == hours)
-
-BUTTON_CB(IconTimeSelectorCBPSDB)
+BUTTON_CB(SetVitaDbDownloadIconsOnLoad)
 {
-    if(PopupMgr::showingDialog) return;
-
-    PopupMgr::showDialog();
-    
-    PopupMgr::addDialogOption("Never", updateIconTimeCBPSDB, (void *)-1, conf.CBPSDBSettings.iconDownloadHourGap == -1);
-    PopupMgr::addDialogOption("Every Time", updateIconTimeCBPSDB, (void *)0, conf.CBPSDBSettings.iconDownloadHourGap == 0);
-
-    ADD_TIME_POPUP_OPTION_CBPSDB(1);
-    ADD_TIME_POPUP_OPTION_CBPSDB(3);
-    ADD_TIME_POPUP_OPTION_CBPSDB(6);
-    ADD_TIME_POPUP_OPTION_CBPSDB(12);
+    conf.vitaDBSettings.downloadIconsDuringLoad = (bool)userDat;
+    WriteConfig(&conf);
 }
 
-#define ADD_TIME_POPUP_OPTION_VITADB(hours) PopupMgr::addDialogOption(hours > 1 ? #hours " Hours" : #hours " Hour", updateIconTimeVitaDB, (void *)hours, conf.vitaDBSettings.iconDownloadHourGap == hours)
+BUTTON_CB(SetCBPSDbDownloadIconsOnLoad)
+{
+    conf.CBPSDBSettings.downloadIconsDuringLoad = (bool)userDat;
+    WriteConfig(&conf);
+}
 
-BUTTON_CB(IconTimeSelectorVITADB)
+BUTTON_CB(VitaDBOnLoadSetter)
 {
     if(PopupMgr::showingDialog) return;
+    PopupMgr::ShowDialog();
 
-    PopupMgr::showDialog();
-    
-    PopupMgr::addDialogOption("Never", updateIconTimeVitaDB, (void *)-1, conf.vitaDBSettings.iconDownloadHourGap == -1);
-    PopupMgr::addDialogOption("Every Time", updateIconTimeVitaDB, (void *)0, conf.vitaDBSettings.iconDownloadHourGap == 0);
+    PopupMgr::AddDialogOption("Enabled", SetVitaDbDownloadIconsOnLoad, (void *)true, conf.vitaDBSettings.downloadIconsDuringLoad);
+    PopupMgr::AddDialogOption("Disabled", SetVitaDbDownloadIconsOnLoad, (void *)false, !conf.vitaDBSettings.downloadIconsDuringLoad);
 
-    ADD_TIME_POPUP_OPTION_VITADB(1);
-    ADD_TIME_POPUP_OPTION_VITADB(3);
-    ADD_TIME_POPUP_OPTION_VITADB(6);
-    ADD_TIME_POPUP_OPTION_VITADB(12);
+}
+
+BUTTON_CB(CBPSDBOnLoadSetter)
+{
+    if(PopupMgr::showingDialog) return;
+    PopupMgr::ShowDialog();
+
+    PopupMgr::AddDialogOption("Enabled", SetCBPSDbDownloadIconsOnLoad, (void *)true, conf.CBPSDBSettings.downloadIconsDuringLoad);
+    PopupMgr::AddDialogOption("Disabled", SetCBPSDbDownloadIconsOnLoad, (void *)false, !conf.CBPSDBSettings.downloadIconsDuringLoad);
+
 }
 
 BUTTON_CB(CBPSDBSettings)
 {
     SelectionList *page = new SelectionList("CBPS DB Settings");
     page->busy->Stop();
-    page->AddOption("Download Icons After", IconTimeSelectorCBPSDB);
+
+    page->AddOption("Download Icons During Load", CBPSDBOnLoadSetter);
 }
 
 BUTTON_CB(VitaDBSettings)
 {
     SelectionList *page = new SelectionList("Vita DB Settings");
     page->busy->Stop();
-    page->AddOption("Download Icons After", IconTimeSelectorVITADB);
+
+    page->AddOption("Download Icons During Load", VitaDBOnLoadSetter);
 }
 
 BUTTON_CB(DBOptions)
@@ -92,12 +80,12 @@ BUTTON_CB(DBOptions)
 
 BUTTON_CB(CreditsPage)
 {
-    new TextPage("Better Homebrew Browser By M Ibrahim\nScePaf Reversing By Graphene\nLivearea Assets By SomonPC\nV0.5B", "Credits");
+    new TextPage("Better Homebrew Browser By M Ibrahim\nScePaf Reversing By Graphene\nLivearea Assets By SomonPC\nV0.61B", "Credits");
 }
 
 BUTTON_CB(FixesPage)
 {
-    new TextPage("\n1. Fix CBPS DB\n2. Add Sorting\n3. Add Plugins\n4. Add Themes", "Upcoming Fixes and Features");
+    new TextPage("1. Fix Extraction on some apps\n2. Add Plugins\n3. Add Themes", "Upcoming Fixes and Features");
 }
 
 BUTTON_CB(InfoPage)

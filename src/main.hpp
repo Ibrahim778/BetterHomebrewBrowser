@@ -40,6 +40,7 @@ void PrintFreeMem(ScePVoid);
 
 #define BUTTON_CB(name) void name(Widget *self, SceInt32 eventID, void *userDat)
 #define CB(name) void name(void)
+#define THREAD(name) void name(void *callingPage)
 
 #define APPS_PER_PAGE 80
 

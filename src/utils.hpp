@@ -9,8 +9,12 @@ using namespace widget;
 
 #include <curl/curl.h>
 
+typedef SceVoid (*ThreadCB)(void *);
+
 class UtilThread : public paf::thread::Thread
 {
+private:
+    void *ParentPage;
 public:
     bool EndThread;
 
@@ -19,7 +23,9 @@ public:
 
     SceVoid Kill();
     SceVoid Delete();
-    SceVoid (*Entry)(void);
+    ThreadCB Entry;
+
+    UtilThread::UtilThread(ThreadCB entry = SCE_NULL, const char *pName = "BHBB_PAGE_THREAD");
 };
 
 namespace BHBB
@@ -39,7 +45,8 @@ namespace BHBB
         static int getStrtokNum(char splitter, char *str);
         static char *strtok(char splitter, char *str);
         static void ResetStrtok();
-        static void SetCurlOptions(CURL *curl, const char *url, ProgressBar *ProgressBar = NULL);
+        static void ToLowerCase(char *string);
+        static bool StringContains(char *str1, char *str2);
         static SceUInt32 GetHashById(const char *id);    
         static Resource::Element GetParamWithHashFromId(const char *id);
         static Resource::Element GetParamWithHash(SceUInt32 hash);
@@ -53,9 +60,10 @@ namespace BHBB
         static SceInt32 SetWidgetSize(Widget *widget, SceFloat x, SceFloat y, SceFloat z = 0.0f, SceFloat w = 0.0f);
         static SceInt32 SetWidgetColor(Widget *widget, SceFloat r, SceFloat g, SceFloat b, SceFloat a);
         static SceInt32 AssignButtonHandler(Widget *widget, ECallback onPress = SCE_NULL, void *userDat = SCE_NULL, int id = ON_PRESS_EVENT_ID);
-        static SceVoid DeleteTexture(graphics::Texture *tex);
+        static SceVoid DeleteTexture(graphics::Texture *tex, bool DeletePointer = true);
         static SceBool CreateTextureFromFile(graphics::Texture *tex, const char *file);
         static SceVoid DeleteWidget(Widget *widget);
+        static SceBool TestTexture(const char *path);
 
     #ifdef _DEBUG
         static SceVoid PrintAllChildren(Widget *widget, int offset = 0);
@@ -63,7 +71,5 @@ namespace BHBB
 
     };
 }
-
-#define makeSceColorInt(r,g,b,a) BHBB::Utils::makeSceColor(r##.0f, g##.0f, b##.0f, a##.0f)
 
 #endif

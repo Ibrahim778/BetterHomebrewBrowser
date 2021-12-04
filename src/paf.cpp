@@ -71,10 +71,13 @@ void getDefaultWidgets()
     mainRoot = (Plane *)BHBB::Utils::GetChildByHash(mainScene, BHBB::Utils::GetHashById(MAIN_PLANE_ID));
     mainBackButton = (CornerButton *)BHBB::Utils::GetChildByHash(mainScene, BHBB::Utils::GetHashById(BACK_BUTTON_ID));
 
+    mainBackButtonEvent = new BackButtonEventHandler();
+    mainForwardButtonEvent = new ForwardButtonEventHandler();
+
     forwardButton = (CornerButton *)BHBB::Utils::GetChildByHash(mainScene, BHBB::Utils::GetHashById(FORWARD_BUTTON_ID));
     settingsButton = (CornerButton *)BHBB::Utils::GetChildByHash(mainScene, BHBB::Utils::GetHashById(SETTINGS_BUTTON_ID));
 
-    PopupMgr::initDialog();
+    PopupMgr::InitDialog();
 
     BrokenTex = new graphics::Texture();
     Resource::Element e = BHBB::Utils::GetParamWithHashFromId(ICON_MISSING_TEX_ID);

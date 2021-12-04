@@ -20,6 +20,8 @@ typedef enum
     PAGE_TYPE_PICTURE_PAGE,
     PAGE_TYPE_BLANK_PAGE,
     PAGE_TYPE_DECISION_PAGE,
+    PAGE_TYPE_HOMEBREW_LIST_PAGE,
+    PAGE_TYPE_SEARCH_PAGE,
 } pageType;
 
 class Page
@@ -28,6 +30,7 @@ private:
     static Page *currPage;
     static SceInt32 pageDepth;
     SceVoid SetRoot();
+
 public:
     pageType type;
     Page *prev;
@@ -48,13 +51,82 @@ public:
     UtilThread *pageThread;
 
     Widget *AddFromStyle(const char *refId, const char *style, const char *type, Widget *parent = SCE_NULL);
-    Widget *AddFromTemplate(SceInt32 id, Widget *targetRoot);
-    Widget *AddFromTemplate(const char *id, Widget *targetRoot);
+    Widget *AddFromTemplate(SceInt32 id, Widget *targetRoot = SCE_NULL);
+    Widget *AddFromTemplate(const char *id, Widget *targetRoot = SCE_NULL);
 
-    Page *ChangeType(pageType toType);
-
-    Page(pageType Type = PAGE_TYPE_BLANK_PAGE, SceBool = SCE_FALSE);
+    Page(pageType Type = PAGE_TYPE_BLANK_PAGE);
     ~Page();
+};
+
+class SearchPage : public Page
+{
+private:
+    Plane *listRoot;
+    Plane *listPlane;
+    Box *scrollBox;
+
+    TextBox *SearchBox;
+    Button *SearchButton;
+
+
+public:
+    SearchPage(LinkedList *list);
+    ~SearchPage();
+
+    LinkedList *list;
+    ImageButton *AddEntry(WString *text, ECallback onPress = SCE_NULL, void *userData = SCE_NULL, SceBool isLong = SCE_FALSE, SceBool needImage = SCE_FALSE);
+
+    void GetKeyString(String *out);
+    void Search();
+    void Clear();
+    void Hide();
+    void Show();
+    int GetNum();
+
+    ImageButton *GetEntryByIndex(int index);
+};
+
+class HomebrewListPage : public Page
+{
+private:
+    Plane *listRoot;
+    Plane *listPlane;
+    Box *scrollBox;
+
+    Button *SearchButton;
+    Button *EmulatorButton;
+    Button *PortButton;
+    Button *UtilitiesButton;
+    Button *GamesButton;
+    Button *AllButton;
+
+public:
+    HomebrewListPage();
+    ~HomebrewListPage();
+
+    SceVoid AssignSearchButtonEvent(ECallback onPress = NULL, void *userDat = NULL);
+    SceVoid AssignEmulatorButtonEvent(ECallback onPress = NULL, void *userDat = NULL);
+    SceVoid AssignPortButtonEvent(ECallback onPress = NULL, void *userDat = NULL);
+    SceVoid AssignUtilitiesButtonEvent(ECallback onPress = NULL, void *userDat = NULL);
+    SceVoid AssignAllButtonEvent(ECallback onPress = NULL, void *userDat = NULL);
+    SceVoid AssignGameButtonEvent(ECallback onPress = NULL, void *userDat = NULL);
+
+    SceVoid SetCategoryColor(int category);
+
+    ImageButton *AddOption(const char *text, ECallback onPress = NULL, void *userDat = NULL, SceBool isLong = SCE_FALSE, SceBool needImage = SCE_FALSE);
+    ImageButton *AddOption(String *text, ECallback onPress = NULL, void *userDat = NULL, SceBool isLong = SCE_FALSE, SceBool needImage = SCE_FALSE);
+    ImageButton *AddOption(WString *text, ECallback onPress = NULL, void *userDat = NULL, SceBool isLong = SCE_FALSE, SceBool needImage = SCE_FALSE);
+
+    SceVoid Hide();
+    SceVoid Show();
+
+    SceVoid Clear();
+
+    SceInt32 GetNum();
+
+    SceVoid SetSearchMode();
+
+    Box *GetListBox();
 };
 
 class PicturePage : public Page
@@ -89,9 +161,10 @@ public:
     Text *Credits;
     Text *Description;
     Text *Version;
+    Text *Size;
     Plane *Icon;
 
-    InfoPage(homeBrewInfo *info, SceBool wait = SCE_FALSE);
+    InfoPage(homeBrewInfo *info);
     ~InfoPage();
 
 };
@@ -105,7 +178,6 @@ private:
     Box *scrollViewBox;
     Text *TitleText;
 
-    Plane *TopListRoot;
 public:
     SelectionList(const char *title = SCE_NULL);
     ~SelectionList();
@@ -114,8 +186,6 @@ public:
     ImageButton *AddOption(String *text, ECallback onPress = NULL, void *userDat = NULL, SceBool isLong = SCE_FALSE, SceBool needImage = SCE_FALSE);
     ImageButton *AddOption(WString *text, ECallback onPress = NULL, void *userDat = NULL, SceBool isLong = SCE_FALSE, SceBool needImage = SCE_FALSE);
 
-    ImageButton *AddTopOption(const char *text, ECallback onPress = NULL, void *userDat = NULL);
-
     SceVoid DisableAllButtons();
     SceVoid EnableAllButtons();
 
@@ -123,6 +193,8 @@ public:
     SceVoid Show();
 
     SceVoid Clear();
+
+    SceInt32 GetNum();
 
 };
 
@@ -189,11 +261,11 @@ public:
     static Dialog *diag;
     static Box *diagBox;
     static SceBool showingDialog;
-    static void initDialog();
-    static void showDialog();
-    static void hideDialog();
+    static void InitDialog();
+    static void ShowDialog();
+    static void HideDialog();
 
-    static void addDialogOption(const char *text, ECallback onPress = NULL, void *userDat = NULL, bool selected = false);
+    static void AddDialogOption(const char *text, ECallback onPress = NULL, void *userDat = NULL, bool selected = false);
     static void clearOptions();
 };
 

@@ -11,7 +11,7 @@
 using namespace sce;
 using namespace Json;
 
-linked_list list;
+LinkedList list;
 
 #pragma region JsonClassses
 class JsonAllocator : public MemAllocator
@@ -90,14 +90,14 @@ public:
 
 #pragma endregion JsonClassses
 
-linked_list::linked_list()
+LinkedList::LinkedList()
 {
     head = NULL;
     tail = NULL;
     num = 0;
 }
 
-void linked_list::printall()
+void LinkedList::PrintAll()
 {
 #ifdef _DEBUG
     node *current = head;
@@ -109,11 +109,34 @@ void linked_list::printall()
 #endif
 }
 
-homeBrewInfo *linked_list::add_node()
+void LinkedList::AddFromPointer(node *p)
 {
     node *tmp = new node;
-    sce_paf_memset(&tmp->info, 0, sizeof(tmp->info) - sizeof(graphics::Texture));
-    tmp->tex.texSurface = NULL;
+    sce_paf_memset(tmp, 0, sizeof(tmp->info));
+
+    tmp->next = NULL;
+
+    sce_paf_memcpy(tmp, p, sizeof(node));
+
+    if (head == NULL)
+    {
+        head = tmp;
+        tail = tmp;
+    }
+    else
+    {
+        tail->next = tmp;
+        tail = tail->next;
+    }
+    num ++;
+}
+
+homeBrewInfo *LinkedList::AddNode()
+{
+    node *tmp = new node;
+    sce_paf_memset(&tmp->info, 0, sizeof(tmp->info));
+    tmp->tex = new graphics::Texture();
+    tmp->tex->texSurface = NULL;
     tmp->next = NULL;
 
     if (head == NULL)
@@ -130,7 +153,7 @@ homeBrewInfo *linked_list::add_node()
     return &tmp->info;
 }
 
-void linked_list::clear()
+void LinkedList::Clear(bool deleteTex)
 {
     if(head == NULL) return;
 
@@ -139,14 +162,40 @@ void linked_list::clear()
     {
         temp = head;
         head = head->next;
-        BHBB::Utils::DeleteTexture(&temp->tex);
+        if(deleteTex)
+            BHBB::Utils::DeleteTexture(temp->tex);
         delete temp;
     }
 
     num = 0;
 }
 
-node *linked_list::getByNum(int n)
+int LinkedList::GetNumByCategory(int cat)
+{
+    if(cat == -1) return num;
+
+    int i = 0;
+    node *n = list.head;
+    while (n != NULL)
+    {
+        if(n->info.type == cat) i++;
+        n = n->next;
+    }
+
+    return i;
+}
+
+void LinkedList::CopyTo(LinkedList *list)
+{
+    if(list == NULL) return;
+    node *n = head;
+    for(int i = 0; i < num && n != NULL, n = n->next; i++)
+    {
+        list->AddFromPointer(n);
+    }
+}
+
+node *LinkedList::GetByIndex(int n)
 {
     node *node = head;
 
@@ -156,7 +205,22 @@ node *linked_list::getByNum(int n)
     return node;
 }
 
-homeBrewInfo *linked_list::get(const char *id)
+node *LinkedList::GetByCategoryIndex(int n, int category)
+{
+    node *node = head;
+
+    for (int i = 0; i < n && node != NULL; i++)
+    {
+        if(node->info.type != category && category != -1)
+        {
+            i--;
+        }
+        node = node->next;
+    }
+    return node;
+}
+
+homeBrewInfo *LinkedList::Get(const char *id)
 {
     node *curr = head;
     while (curr != NULL)
@@ -169,8 +233,22 @@ homeBrewInfo *linked_list::get(const char *id)
     return NULL;
 }
 
+node *LinkedList::Find(const char *name)
+{
+    node *curr = head;
+    int nLen = sce_paf_strlen(name);
+    while(curr != NULL)
+    {
+        if(sce_paf_strncmp(curr->info.title.data, name, nLen) == 0)
+            return curr;
+        
+        curr = curr->next;
+    }
+    return NULL;
+}
+
 //Credit to CreepNT for this
-void linked_list::remove_node(const char *tag)
+void LinkedList::RemoveNode(const char *tag)
 {
     //Check head isn't NULL
     if (head == NULL)
@@ -204,14 +282,16 @@ void linked_list::remove_node(const char *tag)
     }
     node *nodeToDelete = *pCurrentNodeNext;
     *pCurrentNodeNext = (*pCurrentNodeNext)->next;
+    BHBB::Utils::DeleteTexture(nodeToDelete->tex);
     sce_paf_free(nodeToDelete);
-
     num --;
 }
 
+#define SET_STRING(pafString, jsonString) { if(rootval[i][jsonString] != NULL) { pafString.Set(rootval[i][jsonString].getString().c_str()); } } 
+ 
 void parseJson(const char *path)
 {
-    list.clear();
+    list.Clear(true);
     JsonAllocator allocator;
     InitParameter initParam((MemAllocator *)&allocator, 0, 512);
 
@@ -221,34 +301,42 @@ void parseJson(const char *path)
     Value rootval;
     NullAccess na;
     rootval.setNullAccessCallBack(NullAccess::NullAccessCB, &na);
-    Parser::parse(rootval, path);
+    int r = Parser::parse(rootval, path);
+    if(r < 0) return;
 
     SceInt32 ItemNum = rootval.count();
     for(int i = 0; i < ItemNum; i++)
     {
-        homeBrewInfo *info = list.add_node();
+        if(rootval[i] == NULL) return;
+        homeBrewInfo *info = list.AddNode();
 
-        info->titleID.Set(rootval[i]["titleid"].getString().c_str());
-        info->id.Set(rootval[i]["id"].getString().c_str());
-        info->icon0.Set(rootval[i]["icon"].getString().c_str());
-
-        info->icon0Local.Setf(VITADB_ICON_SAVE_PATH "/%s", rootval[i]["icon"].getString().c_str());
-
-        info->title.Set(rootval[i]["name"].getString().c_str());
-        info->title.ToWString(&info->wstrtitle);
+        SET_STRING(info->titleID, "titleid");
+        SET_STRING(info->id, "id");
+        SET_STRING(info->icon0, "icon");
         
-        info->download_url.Set(rootval[i]["url"].getString().c_str());
-        info->credits.Set(rootval[i]["author"].getString().c_str());
-        info->options.Set(rootval[i]["data"].getString().c_str());
-        info->description.Set(rootval[i]["long_description"].getString().c_str());
-        info->screenshot_url.Set(rootval[i]["screenshots"].getString().c_str());
-        info->version.Set(rootval[i]["version"].getString().c_str());
+        if(rootval[i]["icon"] != NULL)
+            info->icon0Local.Setf(VITADB_ICON_SAVE_PATH "/%s", rootval[i]["icon"].getString().c_str());
+
+        SET_STRING(info->title, "name");
+        info->title.ToWString(&info->wstrtitle);
+
+        SET_STRING(info->download_url, "url");
+        SET_STRING(info->credits, "author");
+        SET_STRING(info->options, "data");
+        SET_STRING(info->description, "long_description");
+        SET_STRING(info->screenshot_url, "screenshots");
+        SET_STRING(info->version, "version");        
+
+        if(rootval[i]["type"] != NULL)
+            info->type = (Category)sce_paf_strtoul(rootval[i]["type"].getString().c_str(), NULL, 10);
+
+        SET_STRING(info->size, "size");
     }
 }
 
 void parseCSV(const char *path)
 {
-    list.clear();
+    list.Clear(true);
 
     FILE *file = sce_paf_fopen(path, "rb");
     if(file == NULL) return;
@@ -270,7 +358,7 @@ void parseCSV(const char *path)
             
             if(!dead && sce_paf_strncmp(parsed[14], "VPK", 3) == 0)
             {
-                homeBrewInfo *info = list.add_node();
+                homeBrewInfo *info = list.AddNode();
 
                 info->id.Set(parsed[0]);
 
@@ -282,7 +370,7 @@ void parseCSV(const char *path)
                 info->download_url.Set(parsed[5]);
                 info->options.Set(parsed[13]);
                 info->description.Set(parsed[0]);
-                
+
                 //In CBPS DB titleID is used for id, so if any contradict _n is added, this is done to get just the id
                 char titleID[10] = {0};
                 sceClibStrncat(titleID, parsed[0], 10);

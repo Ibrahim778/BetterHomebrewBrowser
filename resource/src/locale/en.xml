@@ -1,4 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <stringset>
     <string src="Download" id="download_button_text"/>
+    <string src="All" id="all_button_text" />
+    <string src="Utilities" id="util_button_text" />
+    <string src="Emulators" id="emu_button_text" />
+    <string src="Ports" id="port_button_text" />
+    <string src="Games" id="games_button_text" />
 </stringset>

@@ -41,9 +41,10 @@ extern "C" {
 userConfig conf;
 int loadFlags = 0;
 int pageNum = 1;
-bool triedRedownloadIcons = false;
 
-CB(PageListThread);
+int category;
+
+THREAD(PageListThread);
 
 int main()
 {
@@ -74,65 +75,103 @@ CB(onListPageDelete)
 {
     pageNum = 1;
     forwardButton->PlayAnimationReverse(0, Widget::Animation_Reset);
+
+    list.Clear(true);
+    
 }
 
 BUTTON_CB(PageDecrease)
 {
+    Page *page = (Page *)userDat;
+
     if (pageNum > 1)
         pageNum--;
 
     if (pageNum == 1)
         EventHandler::ResetBackButtonEvent();
 
-    if (Page::GetCurrentPage()->pageThread->IsStarted())
+    if (page->pageThread->IsStarted())
     {
-        Page::GetCurrentPage()->pageThread->EndThread = SCE_TRUE;
-        Page::GetCurrentPage()->pageThread->Join();
+        page->pageThread->EndThread = SCE_TRUE;
+        page->pageThread->Join();
     }
     
-    delete Page::GetCurrentPage()->pageThread;
-    Page::GetCurrentPage()->pageThread = new UtilThread(SCE_KERNEL_COMMON_QUEUE_LOWEST_PRIORITY, SCE_KERNEL_16KiB, "BHBB_PAGE_THREAD");
-    Page::GetCurrentPage()->pageThread->Entry = PageListThread;
-    Page::GetCurrentPage()->pageThread->EndThread = SCE_FALSE;
-    Page::GetCurrentPage()->pageThread->Start();
+    delete page->pageThread;
+    page->pageThread = new UtilThread(PageListThread);
+    page->pageThread->Start();
 
 }
 
 BUTTON_CB(PageIncrease)
 {
-    if ((pageNum * APPS_PER_PAGE) < list.num)
+    Page *page = (Page *)userDat;
+    if ((pageNum * APPS_PER_PAGE) < list.GetNumByCategory(category))
     {
         pageNum++;
 
-        EventHandler::SetBackButtonEvent(PageDecrease);
-        if (Page::GetCurrentPage()->pageThread->IsStarted())
+        EventHandler::SetBackButtonEvent(PageDecrease, page);
+        if (page->pageThread->IsStarted())
         {
-            Page::GetCurrentPage()->pageThread->EndThread = SCE_TRUE;
-            Page::GetCurrentPage()->pageThread->Join();
+            page->pageThread->EndThread = SCE_TRUE;
+            page->pageThread->Join();
         }
-        delete Page::GetCurrentPage()->pageThread;
-        Page::GetCurrentPage()->pageThread = new UtilThread(SCE_KERNEL_COMMON_QUEUE_LOWEST_PRIORITY, SCE_KERNEL_16KiB, "BHBB_PAGE_THREAD");
-        Page::GetCurrentPage()->pageThread->Entry = PageListThread;
-        Page::GetCurrentPage()->pageThread->EndThread = SCE_FALSE;
-        Page::GetCurrentPage()->pageThread->Start();
+        delete page->pageThread;
+        page->pageThread = new UtilThread(PageListThread);
+        page->pageThread->Start();
     }
 }
 
 CB(RedisplayCB)
 {
-    if ((pageNum * APPS_PER_PAGE) < list.num)
+    if ((pageNum * APPS_PER_PAGE) < list.GetNumByCategory(category))
         forwardButton->PlayAnimation(0, Widget::Animation_Reset);
     
     if (pageNum > 1)
         EventHandler::SetBackButtonEvent(PageDecrease);
 }
 
-CB(PageListThread)
+BUTTON_CB(SetCategory)
 {
-    SelectionList *listp = (SelectionList *)Page::GetCurrentPage();
+    HomebrewListPage *page = (HomebrewListPage *)Page::GetCurrentPage();
+    category = (int)userDat;
+    page->SetCategoryColor(category);
+    pageNum = 1;
+    EventHandler::ResetBackButtonEvent();
+    //Reload Page
+    if (page->pageThread->IsStarted())
+    {
+        page->pageThread->Kill();
+    }
+    delete page->pageThread;
+    page->pageThread = new UtilThread(PageListThread);
+    page->pageThread->Start();
+}
+
+BUTTON_CB(Search)
+{
+    forwardButton->PlayAnimationReverse(0, Widget::Animation_Reset);
+
+    new SearchPage(&list);
+}
+
+THREAD(PageListThread)
+{
+    HomebrewListPage *listp = (HomebrewListPage *)callingPage;
+
+    listp->AssignAllButtonEvent(SetCategory, (void *)-1);
+    listp->AssignEmulatorButtonEvent(SetCategory, (void *)EMULATOR);
+    listp->AssignGameButtonEvent(SetCategory, (void *)GAME);
+    listp->AssignPortButtonEvent(SetCategory, (void *)PORT);
+    listp->AssignUtilitiesButtonEvent(SetCategory, (void *)UTIL);
+    listp->AssignSearchButtonEvent(Search);
+
     listp->Clear();
     listp->Hide();
+
+    sceKernelDelayThread(10000);
     
+    if(conf.db == CBPSDB) listp->SetSearchMode();
+
     if (list.num == 0)
     {
         new TextPage("Why is there nothing here?");
@@ -140,9 +179,9 @@ CB(PageListThread)
         return;
     }
 
-    Page::GetCurrentPage()->busy->Start();
+    listp->busy->Start();
 
-    EventHandler::SetForwardButtonEvent(PageIncrease);
+    EventHandler::SetForwardButtonEvent(PageIncrease, listp);
 
     bool enableIcons;
     switch (conf.db)
@@ -161,31 +200,52 @@ CB(PageListThread)
     }
 
     enableIcons = enableIcons && (loadFlags & LOAD_FLAGS_ICONS);
-
-    node *n = list.getByNum((pageNum - 1) * APPS_PER_PAGE);
-    for (int i = 0; i < APPS_PER_PAGE && !Page::GetCurrentPage()->pageThread->EndThread && n != NULL; i++, n = n->next)
+    
+    /*
+    HomebrewListButtonEventHandler *eh = new HomebrewListButtonEventHandler();
+    eh->pUserData = listp->GetListBox();
+    */
+    node *n = list.GetByCategoryIndex((pageNum - 1) * APPS_PER_PAGE, category);
+    for (int i = 0; i < APPS_PER_PAGE && !listp->pageThread->EndThread && n != NULL; i++, n = n->next)
     {
-        n->button = ((SelectionList *)Page::GetCurrentPage())->AddOption(&n->info.wstrtitle, DisplayInfo, &n->info, SCE_TRUE, enableIcons);
-        sceKernelDelayThread(20000);
+        if(n->info.type != category && category != -1)
+        {
+            i--;
+        }
+        else
+        {
+            n->button = listp->AddOption(&n->info.wstrtitle, DisplayInfo, &n->info, SCE_TRUE, enableIcons);
+            sceKernelDelayThread(20000);
+            /*
+            if(n->button != NULL)
+            {
+                n->button->hash = BHBB::Utils::GetHashById(n->info.id.data);
+                n->button->RegisterEventCallback(ON_PRESS_EVENT_ID, eh, 1);
+            }
+            */
+        }
     }
 
-    if(!Page::GetCurrentPage()->pageThread->EndThread)
+    if(!listp->pageThread->EndThread)
     {
-        Page::GetCurrentPage()->busy->Stop();
+        listp->busy->Stop();
         listp->Show();
     }
 
-    if ((pageNum * APPS_PER_PAGE) < list.num)
+    if ((pageNum * APPS_PER_PAGE) < list.GetNumByCategory(category))
         forwardButton->PlayAnimation(0, Widget::Animation_Reset);
     else 
         forwardButton->PlayAnimationReverse(0, Widget::Animation_Reset); 
+
+    if(listp->GetNum() < APPS_PER_PAGE)
+        forwardButton->PlayAnimationReverse(0, Widget::Animation_Reset);
 
 
     if (!(loadFlags & LOAD_FLAGS_ICONS))
         goto END;
     if (!enableIcons)
         goto END;
-    if (Page::GetCurrentPage()->pageThread->EndThread)
+    if (listp->pageThread->EndThread)
         goto END;
 
     //Texture Loading
@@ -194,21 +254,58 @@ CB(PageListThread)
     case VITADB:
     case CBPSDB:
     {
-        n = list.getByNum((pageNum - 1) * APPS_PER_PAGE);
-        for(int i = 0; i < APPS_PER_PAGE && !Page::GetCurrentPage()->pageThread->EndThread && n != NULL; i++, n = n->next)
+        n = list.GetByCategoryIndex((pageNum - 1) * APPS_PER_PAGE, category);
+        for(int i = 0; i < APPS_PER_PAGE && !listp->pageThread->EndThread && n != NULL; i++, n = n->next)
         {
-            if(n->tex.texSurface == NULL)
+            bool triedDownload = false; 
+
+            if(n->info.type != category && category != -1) 
             {
-                if(BHBB::Utils::CreateTextureFromFile(&n->tex, n->info.icon0Local.data))
-                {
-                    n->button->SetTextureBase(&n->tex);
-                }
-                else
-                {
-                    n->button->SetTextureBase(BrokenTex);
-                }
+                i--;
             }
-            else n->button->SetTextureBase(&n->tex);
+            else
+            {
+                if(n->tex->texSurface == NULL)
+                {
+ASSIGN:        
+                    if(BHBB::Utils::CreateTextureFromFile(n->tex, n->info.icon0Local.data))
+                    {
+                        n->button->SetTextureBase(n->tex);
+                    }
+                    else
+                    {
+                        if(!triedDownload)
+                        {
+
+                            switch (conf.db)
+                            {
+                            case CBPSDB:
+                                if(!conf.CBPSDBSettings.downloadIconsDuringLoad) break;
+                                BHBB::Utils::DownloadFile(n->info.icon0.data, n->info.icon0Local.data);
+                                break;
+                            
+                            case VITADB:
+                                if(!conf.vitaDBSettings.downloadIconsDuringLoad) break;
+                                char url[0x400];
+                                
+                                sce_paf_memset(url, 0, sizeof(url));
+                                sce_paf_snprintf(url, 0x400, VITADB_ICON_URL "%s", n->info.icon0);
+                                BHBB::Utils::DownloadFile(url, n->info.icon0Local.data);
+
+                                break;
+
+                            default:
+                                break;
+                            }
+
+                            triedDownload = true;
+                            goto ASSIGN;
+                        }
+                        n->button->SetTextureBase(BrokenTex);
+                    }
+                }
+                else n->button->SetTextureBase(n->tex);
+            }
         }
         break;
     }
@@ -224,7 +321,7 @@ END:
     sceKernelExitDeleteThread(0);
 }
 
-CB(DownloadThread)
+THREAD(DownloadThread)
 {
     SceInt32 res = 0;
     switch (conf.db)
@@ -295,7 +392,6 @@ CB(DownloadThread)
                 saveCurrentTime();
             }
 
-            saveCurrentTime();
             mainBackButton->PlayAnimation(0, Widget::Animation_Reset);
         }
         break;
@@ -318,9 +414,11 @@ CB(DownloadThread)
     print("Done download index\n");
     sceKernelDelayThread(1000);
 
-    LoadingPage *oldPage = (LoadingPage *)Page::GetCurrentPage();
-    SelectionList *currlist = new SelectionList();
-    Page::DeletePage(oldPage);
+    HomebrewListPage *currlist = new HomebrewListPage();
+    currlist->Hide();
+    category = -1;
+    currlist->SetCategoryColor(category);
+    Page::DeletePage((Page *)callingPage);
     currlist->pageThread->Entry = PageListThread;
     currlist->pageThread->Start();
 }
@@ -344,7 +442,10 @@ void onReady()
     sceSysmoduleLoadModule(SCE_SYSMODULE_JSON);
 
     pageNum = 1;
+    print("Set Defaults\n");
+    print("Creating Page....\n");
     SelectionList *categoryPage = new SelectionList("Homebrew Type");
+    print("Done\n");
     categoryPage->AddOption("Apps", DownloadIndex);
     categoryPage->busy->Stop();
 }

@@ -80,7 +80,7 @@ int curlProgressCallback(void *userDat, double dltotal, double dlnow, double ult
 
     char subtxt[64];
 	sce_paf_memset(subtxt, 0, sizeof(subtxt));
-	sce_paf_snprintf(subtxt, 64, "%d%% Done", (int)(dlnow / dltotal * 100.0));
+	sce_paf_snprintf(subtxt, 64, "%d%% Done (%d KB / %d KB)", (int)(dlnow / dltotal * 100.0), (int)(dlnow / 1024.0), (int)(dltotal / 1024.0));
     NotifMgr::UpdateProgressNotif(dlnow / dltotal * 100.0, subtxt);
 
     

@@ -12,10 +12,10 @@ class EventHandler : public Widget::EventCallback
 {
 public:
     EventHandler();
-    static void SetBackButtonEvent(ECallback callback);
+    static void SetBackButtonEvent(ECallback callback, void *userDat = SCE_NULL);
     static void ResetBackButtonEvent();
 
-    static void SetForwardButtonEvent(ECallback callback);
+    static void SetForwardButtonEvent(ECallback callback, void *userDat = SCE_NULL);
     static void ResetForwardButtonEvent();
 
     static void onGet(SceInt32 , Widget *self, SceInt32, ScePVoid puserData);
@@ -33,6 +33,14 @@ class ForwardButtonEventHandler : public Widget::EventCallback
 {
 public:
     ForwardButtonEventHandler();
+
+    static void onGet(SceInt32 , Widget *self, SceInt32, ScePVoid puserData);
+};
+
+class HomebrewListButtonEventHandler : public Widget::EventCallback
+{
+public:
+    HomebrewListButtonEventHandler();
 
     static void onGet(SceInt32 , Widget *self, SceInt32, ScePVoid puserData);
 };

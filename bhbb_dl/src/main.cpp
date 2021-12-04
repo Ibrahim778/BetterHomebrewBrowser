@@ -48,6 +48,7 @@ extern "C" {
 }
 
 #define EXTRACT_PATH "ux0:temp/app"
+#define VPK_DOWNLOAD_PATH "ux0:temp/bhbb_dl.vpk"
 
 Queue queue;
 
@@ -57,6 +58,16 @@ SceUID dlThreadID = SCE_UID_INVALID_UID;
 int install(const char *file)
 {
     sceIoRemove(EXTRACT_PATH);
+    sceIoRemove("ux0:temp/new");
+    sceIoRemove("ux0:appmeta/new");
+    sceIoRemove("ux0:temp/promote");
+    sceIoRemove("ux0:temp/game");
+
+    sceIoRemove("ur0:temp/new");
+    sceIoRemove("ur0:appmeta/new");
+    sceIoRemove("ur0:temp/promote");
+    sceIoRemove("ur0:temp/game");
+
     Zip *zfile;
     char txt[64];
 	sce_paf_memset(txt, 0, sizeof(txt));
@@ -83,6 +94,17 @@ int install(const char *file)
 END:
     sceIoRemove(EXTRACT_PATH);
     sceIoRemove(file);
+
+    sceIoRemove("ux0:temp/new");
+    sceIoRemove("ux0:appmeta/new");
+    sceIoRemove("ux0:temp/promote");
+    sceIoRemove("ux0:temp/game");
+
+    sceIoRemove("ur0:temp/new");
+    sceIoRemove("ur0:appmeta/new");
+    sceIoRemove("ur0:temp/promote");
+    sceIoRemove("ur0:temp/game");
+
     return 0;
 }
 
@@ -94,34 +116,30 @@ SceInt32 DownloadThread(SceSize args, void *argp)
     {
         if(queue.num == 0)
         {
-            sceKernelDelayThread(10000);
+            sceKernelDelayThread(100000);
             continue;
         }
         
         NotifMgr::Init();
         NotifMgr::MakeProgressNotif(queue.head->packet.name, "Installing", "Are you sure you want to cancel the install?");
 
-
-        char dest[SCE_IO_MAX_PATH_BUFFER_SIZE];
-		sce_paf_memset(dest, 0, sizeof(dest));
-		sce_paf_snprintf(dest, SCE_IO_MAX_PATH_BUFFER_SIZE, "ux0:/temp/%s.vpk", queue.head->packet.name);
-        int r = dlFile(queue.head->packet.url, dest);
+        int r = dlFile(queue.head->packet.url, VPK_DOWNLOAD_PATH);
 
         if(!NotifMgr::currDlCanceled && r == CURLE_OK)    
         {
             NotifMgr::UpdateProgressNotif(0, "Extracting", queue.head->packet.name);
-            install(dest);
+            install(VPK_DOWNLOAD_PATH);
         }
         else
         {
-            sceIoRemove(dest);
+            sceIoRemove(VPK_DOWNLOAD_PATH);
             if(r > 0) NotifMgr::EndNotif("CURL Error while downloading",curl_easy_strerror((CURLcode)r));
             else
             {
                 char txt[64];
                 sce_paf_memset(txt, 0, 64);
                 sce_paf_snprintf(txt, 64, "0x%X", r);
-                NotifMgr::EndNotif("An error ocourred while downloading", txt);
+                NotifMgr::EndNotif("An error ocourred before downloading", txt);
             }
         }
         queue.dequeue();

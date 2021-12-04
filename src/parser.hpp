@@ -11,6 +11,14 @@ typedef enum
     DATA
 } homebrewType;
 
+typedef enum
+{
+    GAME = 1,
+    PORT = 2,
+    EMULATOR = 5,
+    UTIL = 4
+} Category;
+
 typedef struct
 {
     paf::String id;
@@ -25,6 +33,9 @@ typedef struct
     paf::String description;
     paf::String screenshot_url;
     paf::String version;
+    paf::String size;
+    Category type;
+
 } homeBrewInfo;
 
 struct node
@@ -32,23 +43,30 @@ struct node
     homeBrewInfo info;
     node *next;
     widget::ImageButton *button;
-    paf::graphics::Texture tex;
+    paf::graphics::Texture *tex;
 };
 
-class linked_list
+class LinkedList
 {
 public:
     node *head, *tail;
-    linked_list();
-    void printall();
+    LinkedList();
+    void PrintAll();
 
     int num;
 
-    void clear();
-    homeBrewInfo *add_node();
-    void remove_node(const char *tag);
-    homeBrewInfo *get(const char *id);
-    node *getByNum(int n);
+    int GetNumByCategory(int category);
+
+    void LinkedList::AddFromPointer(node *p);
+    void Clear(bool deleteTex = false);
+    homeBrewInfo *AddNode();
+    void RemoveNode(const char *tag);
+    homeBrewInfo *Get(const char *id);
+    node *GetByIndex(int n);
+    node *GetByCategoryIndex(int n, int category);
+    void CopyTo(LinkedList *list);
+
+    node *Find(const char *name);
 
 };
 
