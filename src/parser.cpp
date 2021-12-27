@@ -163,7 +163,7 @@ void LinkedList::Clear(bool deleteTex)
         temp = head;
         head = head->next;
         if(deleteTex)
-            BHBB::Utils::DeleteTexture(temp->tex);
+            Utils::DeleteTexture(temp->tex);
         delete temp;
     }
 
@@ -282,12 +282,12 @@ void LinkedList::RemoveNode(const char *tag)
     }
     node *nodeToDelete = *pCurrentNodeNext;
     *pCurrentNodeNext = (*pCurrentNodeNext)->next;
-    BHBB::Utils::DeleteTexture(nodeToDelete->tex);
+    Utils::DeleteTexture(nodeToDelete->tex);
     sce_paf_free(nodeToDelete);
     num --;
 }
 
-#define SET_STRING(pafString, jsonString) { if(rootval[i][jsonString] != NULL) { pafString.Set(rootval[i][jsonString].getString().c_str()); } } 
+#define SET_STRING(pafString, jsonString) { if(rootval[i][jsonString] != NULL) { pafString = rootval[i][jsonString].getString().c_str(); } } 
  
 void parseJson(const char *path)
 {
@@ -360,24 +360,24 @@ void parseCSV(const char *path)
             {
                 homeBrewInfo *info = list.AddNode();
 
-                info->id.Set(parsed[0]);
+                info->id = parsed[0];
 
-                info->title.Set(parsed[1]);
+                info->title = parsed[1];
 
                 info->title.ToWString(&info->wstrtitle);           
-                info->credits.Set(parsed[2]);
-                info->icon0.Set(parsed[3]);
-                info->download_url.Set(parsed[5]);
-                info->options.Set(parsed[13]);
-                info->description.Set(parsed[0]);
+                info->credits = parsed[2];
+                info->icon0 = parsed[3];
+                info->download_url = parsed[5];
+                info->options = parsed[13];
+                info->description = parsed[0];
 
                 //In CBPS DB titleID is used for id, so if any contradict _n is added, this is done to get just the id
                 char titleID[10] = {0};
-                sceClibStrncat(titleID, parsed[0], 10);
+                sce_paf_strncpy(titleID, parsed[0], 10);
 
-                info->titleID.Set(titleID);
+                info->titleID = titleID;
                 info->icon0Local.Setf(CBPSDB_ICON_SAVE_PATH "/%s.png",  info->id.data);
-                info->version.SetEmpty();
+                info->version = "";
             }
         }
 

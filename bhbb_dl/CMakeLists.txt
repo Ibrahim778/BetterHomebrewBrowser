@@ -31,8 +31,6 @@ add_executable(${PROJECT_NAME}
     src/Archives.cpp
     src/Archives.hpp
     src/bhbb_dl.h
-    src/list.cpp
-    src/list.hpp
     src/net.cpp
     src/net.hpp
     src/promote.cpp

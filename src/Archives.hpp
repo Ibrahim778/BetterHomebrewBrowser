@@ -124,7 +124,7 @@ ZipFile* ZipFileRead(Zip *zip, const char *filename, const char *password);
  *
  * @returns 1 on success, 0 on error.
  */
-int ZipExtract(Zip *zip, const char *password, const char* path, paf::widget::ProgressBar *progressReporter = NULL);
+int ZipExtract(Zip *zip, const char *password, const char* path, paf::ui::ProgressBar *progressReporter = NULL);
 
 /**
  * Free the file data previously loaded from a zip

@@ -48,11 +48,11 @@ SceVoid Page::SetRoot()
     DEFINE_PAGE(PAGE_TYPE_SEARCH_PAGE, SEARCH_PAGE_TEMPLATE_ID)
 
     default:
-        search = BHBB::Utils::GetParamWithHashFromId(BLANK_PAGE_ID);
+        search = Utils::GetParamWithHashFromId(BLANK_PAGE_ID);
         break;
     }
 
-    mainPlugin->AddWidgetFromTemplate(mainRoot, &search, &tini);
+    mainPlugin->TemplateOpen(mainRoot, &search, &tini);
     root = (Plane *)mainRoot->GetChildByNum(mainRoot->childNum - 1);
 }
 
@@ -61,7 +61,7 @@ Page *Page::GetCurrentPage()
     return currPage;
 }
 
-Page::Page(pageType pageType)
+Page::Page(pageType pageType, const char *threadName)
 {
     type = pageType;
 
@@ -75,9 +75,7 @@ Page::Page(pageType pageType)
     pageDepth ++;
     skipAnimation = SCE_FALSE;
 
-    currPage->pageThread = new UtilThread();
-    currPage->pageThread->Entry = SCE_NULL;
-    currPage->pageThread->EndThread = SCE_FALSE;
+    jobs = new UtilQueue(this);
 
     if(pageDepth > 1)
     {
@@ -97,7 +95,7 @@ Page::Page(pageType pageType)
     SetRoot();
 
 
-    busy = (BusyIndicator *)BHBB::Utils::GetChildByHash(root, BHBB::Utils::GetHashById(BUSY_INICATOR_ID));
+    busy = (BusyIndicator *)Utils::GetChildByHash(root, Utils::GetHashById(BUSY_INICATOR_ID));
     busy->Start();
 
     root->PlayAnimation(-50000, Widget::Animation_3D_SlideFromFront);
@@ -118,14 +116,14 @@ TextPage::TextPage(const char *text, const char *title):Page(title != SCE_NULL ?
 {
     busy->Stop();
 
-    InfoText = (Text *)BHBB::Utils::GetChildByHash(root, BHBB::Utils::GetHashById(TEXT_PAGE_TEXT));
+    InfoText = (Text *)Utils::GetChildByHash(root, Utils::GetHashById(TEXT_PAGE_TEXT));
 
-    BHBB::Utils::SetWidgetLabel(InfoText, text);
+    Utils::SetWidgetLabel(InfoText, text);
 
     if(title != NULL)
     {
-        TitleText = (Text *)BHBB::Utils::GetChildByHash(root, BHBB::Utils::GetHashById(TEXT_PAGE_TITLE_TEXT));
-        BHBB::Utils::SetWidgetLabel(TitleText, title);
+        TitleText = (Text *)Utils::GetChildByHash(root, Utils::GetHashById(TEXT_PAGE_TITLE_TEXT));
+        Utils::SetWidgetLabel(TitleText, title);
     }
 }
 
@@ -133,14 +131,11 @@ Page::~Page()
 {
     this->root->SetAlpha(0.39f);
 
-    if(this->pageThread != NULL)
-    {
-        this->pageThread->Delete();
-    }
+    jobs->End = SCE_TRUE;
 
 
     if(OnDelete != NULL)
-        OnDelete();
+        OnDelete(this);
 
     common::Utils::WidgetStateTransition(-100, this->root, Widget::Animation_3D_SlideFromFront, SCE_TRUE, currPage == this ? skipAnimation : SCE_TRUE);
 
@@ -149,19 +144,19 @@ Page::~Page()
     {
         if (prev != SCE_NULL && !skipAnimation) 
         {
-            prev->root->PlayAnimationReverse(0.0f, widget::Widget::Animation_3D_SlideToBack1);
-            prev->root->PlayAnimation(0.0f, widget::Widget::Animation_Reset);
+            prev->root->PlayAnimationReverse(0.0f, ui::Widget::Animation_3D_SlideToBack1);
+            prev->root->PlayAnimation(0.0f, ui::Widget::Animation_Reset);
             if (prev->root->animationStatus & 0x80)
                 prev->root->animationStatus &= ~0x80;
         
             if (prev->prev != SCE_NULL) {
-                prev->prev->root->PlayAnimation(0.0f, widget::Widget::Animation_Reset);
+                prev->prev->root->PlayAnimation(0.0f, ui::Widget::Animation_Reset);
                 if (prev->prev->root->animationStatus & 0x80)
                     prev->prev->root->animationStatus &= ~0x80;
             }
         }
         currPage = this->prev;
-        if(currPage->OnRedisplay != NULL) currPage->OnRedisplay();
+        if(currPage->OnRedisplay != NULL) currPage->OnRedisplay(currPage);
     }
     else
     {
@@ -187,7 +182,7 @@ Page::~Page()
     else mainBackButton->PlayAnimationReverse(0, Widget::Animation_Reset);
 
     if(AfterDelete != NULL)
-        AfterDelete();
+        AfterDelete(this);
 }
 
 ImageButton *SelectionList::AddOption(const char *text, ECallback onPress, void *userDat, SceBool isLong, SceBool needImage)
@@ -197,24 +192,24 @@ ImageButton *SelectionList::AddOption(const char *text, ECallback onPress, void 
     if(isLong)
     {
         if(needImage)
-            e = BHBB::Utils::GetParamWithHashFromId(LIST_BUTTON_LONG_TEMPLATE_IMG);
+            e = Utils::GetParamWithHashFromId(LIST_BUTTON_LONG_TEMPLATE_IMG);
         else
-            e = BHBB::Utils::GetParamWithHashFromId(LIST_BUTTON_LONG_TEMPLATE);
+            e = Utils::GetParamWithHashFromId(LIST_BUTTON_LONG_TEMPLATE);
     }
     else
     {
         if(needImage)
-            e = BHBB::Utils::GetParamWithHashFromId(LIST_BUTTON_TEMPLATE_IMG);
+            e = Utils::GetParamWithHashFromId(LIST_BUTTON_TEMPLATE_IMG);
         else
-            e = BHBB::Utils::GetParamWithHashFromId(LIST_BUTTON_TEMPLATE);
+            e = Utils::GetParamWithHashFromId(LIST_BUTTON_TEMPLATE);
     }
     
-    mainPlugin->AddWidgetFromTemplate(scrollViewBox, &e, &tinit);
+    mainPlugin->TemplateOpen(scrollViewBox, &e, &tinit);
     ImageButton *button = (ImageButton *)scrollViewBox->GetChildByNum(scrollViewBox->childNum - 1);
 
-    BHBB::Utils::SetWidgetLabel(button, text);
+    Utils::SetWidgetLabel(button, text);
     if(onPress != NULL)
-        BHBB::Utils::AssignButtonHandler(button, onPress, userDat);
+        Utils::AssignButtonHandler(button, onPress, userDat);
 
     return button;
 }
@@ -226,26 +221,26 @@ ImageButton *SelectionList::AddOption(String *text, ECallback onPress, void *use
     if(isLong)
     {
         if(needImage)
-            e = BHBB::Utils::GetParamWithHashFromId(LIST_BUTTON_LONG_TEMPLATE_IMG);
+            e = Utils::GetParamWithHashFromId(LIST_BUTTON_LONG_TEMPLATE_IMG);
         else
-            e = BHBB::Utils::GetParamWithHashFromId(LIST_BUTTON_LONG_TEMPLATE);
+            e = Utils::GetParamWithHashFromId(LIST_BUTTON_LONG_TEMPLATE);
     }
     else
     {
         if(needImage)
-            e = BHBB::Utils::GetParamWithHashFromId(LIST_BUTTON_TEMPLATE_IMG);
+            e = Utils::GetParamWithHashFromId(LIST_BUTTON_TEMPLATE_IMG);
         else
-            e = BHBB::Utils::GetParamWithHashFromId(LIST_BUTTON_TEMPLATE);
+            e = Utils::GetParamWithHashFromId(LIST_BUTTON_TEMPLATE);
     }
     
-    mainPlugin->AddWidgetFromTemplate(scrollViewBox, &e, &tinit);
+    mainPlugin->TemplateOpen(scrollViewBox, &e, &tinit);
     ImageButton *button = (ImageButton *)scrollViewBox->GetChildByNum(scrollViewBox->childNum - 1);
 
     if(text != NULL)
-        BHBB::Utils::SetWidgetLabel(button, text);
+        Utils::SetWidgetLabel(button, text);
     
     if(onPress != NULL)
-        BHBB::Utils::AssignButtonHandler(button, onPress, userDat);
+        Utils::AssignButtonHandler(button, onPress, userDat);
 
     return button;
 }
@@ -257,26 +252,26 @@ ImageButton *SelectionList::AddOption(WString *text, ECallback onPress, void *us
     if(isLong)
     {
         if(needImage)
-            e = BHBB::Utils::GetParamWithHashFromId(LIST_BUTTON_LONG_TEMPLATE_IMG);
+            e = Utils::GetParamWithHashFromId(LIST_BUTTON_LONG_TEMPLATE_IMG);
         else
-            e = BHBB::Utils::GetParamWithHashFromId(LIST_BUTTON_LONG_TEMPLATE);
+            e = Utils::GetParamWithHashFromId(LIST_BUTTON_LONG_TEMPLATE);
     }
     else
     {
         if(needImage)
-            e = BHBB::Utils::GetParamWithHashFromId(LIST_BUTTON_TEMPLATE_IMG);
+            e = Utils::GetParamWithHashFromId(LIST_BUTTON_TEMPLATE_IMG);
         else
-            e = BHBB::Utils::GetParamWithHashFromId(LIST_BUTTON_TEMPLATE);
+            e = Utils::GetParamWithHashFromId(LIST_BUTTON_TEMPLATE);
     }
     
-    mainPlugin->AddWidgetFromTemplate(scrollViewBox, &e, &tinit);
+    mainPlugin->TemplateOpen(scrollViewBox, &e, &tinit);
     ImageButton *button = (ImageButton *)scrollViewBox->GetChildByNum(scrollViewBox->childNum - 1);
 
     if(text != NULL)
         button->SetLabel(text);
     
     if(onPress != NULL)
-        BHBB::Utils::AssignButtonHandler(button, onPress, userDat);
+        Utils::AssignButtonHandler(button, onPress, userDat);
 
     return button;
 
@@ -295,13 +290,13 @@ SceVoid SelectionList::Clear()
 
     common::Utils::WidgetStateTransition(0, listRoot, Widget::Animation_Reset, SCE_TRUE, SCE_TRUE);
     
-    Resource::Element search = BHBB::Utils::GetParamWithHashFromId(type == PAGE_TYPE_SELECTION_LIST_WITH_TITLE ? LIST_TEMPLATE_ID : LIST_TEMPLATE_ID_NO_TITLE);
+    Resource::Element search = Utils::GetParamWithHashFromId(type == PAGE_TYPE_SELECTION_LIST_WITH_TITLE ? LIST_TEMPLATE_ID : LIST_TEMPLATE_ID_NO_TITLE);
     Plugin::TemplateInitParam tinit;
 
-    mainPlugin->AddWidgetFromTemplate(root, &search, &tinit);
+    mainPlugin->TemplateOpen(root, &search, &tinit);
 
     listRoot = (Plane *)root->GetChildByNum(root->childNum - 1);
-    scrollViewBox = (Box *)BHBB::Utils::GetChildByHash(listRoot, BHBB::Utils::GetHashById(LIST_SCROLL_BOX));
+    scrollViewBox = (Box *)Utils::GetChildByHash(listRoot, Utils::GetHashById(LIST_SCROLL_BOX));
 
     disabled = false;
 }
@@ -342,19 +337,16 @@ SelectionList::SelectionList(const char *title):Page(title != NULL ? PAGE_TYPE_S
 {
     if(title != NULL)
     {
-        String str;
-        str.Set(title);
-
         WString wstr;
-        str.ToWString(&wstr);
+        WString::CharToNewWString(title, &wstr);
 
-        TitleText = (Text *)BHBB::Utils::GetChildByHash(root, BHBB::Utils::GetHashById(PAGE_TITLE_ID));
+        TitleText = (Text *)Utils::GetChildByHash(root, Utils::GetHashById(PAGE_TITLE_ID));
         TitleText->SetLabel(&wstr);
     }
 
     listRoot = (Plane *)AddFromTemplate(title != NULL ? LIST_TEMPLATE_ID : LIST_TEMPLATE_ID_NO_TITLE, root);
 
-    scrollViewBox = (Box *)BHBB::Utils::GetChildByHash(listRoot, BHBB::Utils::GetHashById(LIST_SCROLL_BOX));
+    scrollViewBox = (Box *)Utils::GetChildByHash(listRoot, Utils::GetHashById(LIST_SCROLL_BOX));
 
     disabled = false;
 }
@@ -386,48 +378,48 @@ SceInt32 SelectionList::GetNum()
     return scrollViewBox->childNum;   
 }
 
-HomebrewListPage::HomebrewListPage():Page(PAGE_TYPE_HOMEBREW_LIST_PAGE)
+HomebrewListPage::HomebrewListPage(const char *threadName):Page(PAGE_TYPE_HOMEBREW_LIST_PAGE, threadName)
 {
-    listPlane = (Plane *)BHBB::Utils::GetChildByHash(root, BHBB::Utils::GetHashById(HOMEBREW_LIST_PAGE_LIST_PLANE_ID));
+    listPlane = (Plane *)Utils::GetChildByHash(root, Utils::GetHashById(HOMEBREW_LIST_PAGE_LIST_PLANE_ID));
     listRoot = (Plane *)AddFromTemplate(HOMEBREW_LIST_TEMPLATE_ID, listPlane);
-    scrollBox = (Box *)BHBB::Utils::GetChildByHash(listRoot, BHBB::Utils::GetHashById(LIST_SCROLL_BOX));
+    scrollBox = (Box *)Utils::GetChildByHash(listRoot, Utils::GetHashById(LIST_SCROLL_BOX));
 
-    AllButton = (Button *)BHBB::Utils::GetChildByHash(root, BHBB::Utils::GetHashById(HOMEBREW_LIST_PAGE_ALL_BUTTON_ID));
-    EmulatorButton = (Button *)BHBB::Utils::GetChildByHash(root, BHBB::Utils::GetHashById(HOMEBREW_LIST_PAGE_EMU_BUTTON_ID));
-    PortButton = (Button *)BHBB::Utils::GetChildByHash(root, BHBB::Utils::GetHashById(HOMEBREW_LIST_PAGE_PORT_BUTTON_ID));
-    GamesButton = (Button *)BHBB::Utils::GetChildByHash(root, BHBB::Utils::GetHashById(HOMEBREW_LIST_PAGE_GAME_BUTTON_ID));
-    UtilitiesButton = (Button *)BHBB::Utils::GetChildByHash(root, BHBB::Utils::GetHashById(HOMEBREW_LIST_PAGE_UTIL_BUTTON_ID));
-    SearchButton = (Button *)BHBB::Utils::GetChildByHash(root, BHBB::Utils::GetHashById(HOMEBREW_LIST_PAGE_SEARCH_BUTTON_ID));
+    AllButton = (Button *)Utils::GetChildByHash(root, Utils::GetHashById(HOMEBREW_LIST_PAGE_ALL_BUTTON_ID));
+    EmulatorButton = (Button *)Utils::GetChildByHash(root, Utils::GetHashById(HOMEBREW_LIST_PAGE_EMU_BUTTON_ID));
+    PortButton = (Button *)Utils::GetChildByHash(root, Utils::GetHashById(HOMEBREW_LIST_PAGE_PORT_BUTTON_ID));
+    GamesButton = (Button *)Utils::GetChildByHash(root, Utils::GetHashById(HOMEBREW_LIST_PAGE_GAME_BUTTON_ID));
+    UtilitiesButton = (Button *)Utils::GetChildByHash(root, Utils::GetHashById(HOMEBREW_LIST_PAGE_UTIL_BUTTON_ID));
+    SearchButton = (Button *)Utils::GetChildByHash(root, Utils::GetHashById(HOMEBREW_LIST_PAGE_SEARCH_BUTTON_ID));
 }
 
 SceVoid HomebrewListPage::AssignAllButtonEvent(ECallback c, void *d)
 {
-    BHBB::Utils::AssignButtonHandler(AllButton, c, d);
+    Utils::AssignButtonHandler(AllButton, c, d);
 }
 
 SceVoid HomebrewListPage::AssignEmulatorButtonEvent(ECallback c, void *d)
 {
-    BHBB::Utils::AssignButtonHandler(EmulatorButton, c, d);
+    Utils::AssignButtonHandler(EmulatorButton, c, d);
 }
 
 SceVoid HomebrewListPage::AssignGameButtonEvent(ECallback c, void *d)
 {
-    BHBB::Utils::AssignButtonHandler(GamesButton, c, d);
+    Utils::AssignButtonHandler(GamesButton, c, d);
 }
 
 SceVoid HomebrewListPage::AssignPortButtonEvent(ECallback c, void *d)
 {
-    BHBB::Utils::AssignButtonHandler(PortButton, c, d);
+    Utils::AssignButtonHandler(PortButton, c, d);
 }
 
 SceVoid HomebrewListPage::AssignSearchButtonEvent(ECallback c, void *d)
 {
-    BHBB::Utils::AssignButtonHandler(SearchButton, c, d);
+    Utils::AssignButtonHandler(SearchButton, c, d);
 }
 
 SceVoid HomebrewListPage::AssignUtilitiesButtonEvent(ECallback c, void *d)
 {
-    BHBB::Utils::AssignButtonHandler(UtilitiesButton, c, d);
+    Utils::AssignButtonHandler(UtilitiesButton, c, d);
 }
 
 SceVoid HomebrewListPage::Clear()
@@ -443,7 +435,7 @@ SceVoid HomebrewListPage::Clear()
 
     common::Utils::WidgetStateTransition(0, listRoot, Widget::Animation_Reset, SCE_TRUE, SCE_TRUE);
     listRoot = (Plane *)AddFromTemplate(HOMEBREW_LIST_TEMPLATE_ID, listPlane);
-    scrollBox = (Box *)BHBB::Utils::GetChildByHash(listRoot, BHBB::Utils::GetHashById(LIST_SCROLL_BOX));
+    scrollBox = (Box *)Utils::GetChildByHash(listRoot, Utils::GetHashById(LIST_SCROLL_BOX));
 }
 
 SceVoid HomebrewListPage::Hide()
@@ -463,7 +455,7 @@ SceInt32 HomebrewListPage::GetNum()
 
 SceVoid HomebrewListPage::SetSearchMode()
 {
-    BHBB::Utils::SetWidgetPosition(SearchButton, 0, 0);
+    Utils::SetWidgetPosition(SearchButton, 0, 0);
 
     AllButton->PlayAnimationReverse(0, Widget::Animation_Reset);
     GamesButton->PlayAnimationReverse(0, Widget::Animation_Reset);
@@ -474,32 +466,32 @@ SceVoid HomebrewListPage::SetSearchMode()
 
 SceVoid HomebrewListPage::SetCategoryColor(int category)
 {
-    BHBB::Utils::SetWidgetColor(AllButton, 1,1,1,1);
-    BHBB::Utils::SetWidgetColor(GamesButton, 1,1,1,1);
-    BHBB::Utils::SetWidgetColor(EmulatorButton, 1,1,1,1);
-    BHBB::Utils::SetWidgetColor(PortButton, 1,1,1,1);
-    BHBB::Utils::SetWidgetColor(UtilitiesButton, 1,1,1,1);
+    Utils::SetWidgetColor(AllButton, 1,1,1,1);
+    Utils::SetWidgetColor(GamesButton, 1,1,1,1);
+    Utils::SetWidgetColor(EmulatorButton, 1,1,1,1);
+    Utils::SetWidgetColor(PortButton, 1,1,1,1);
+    Utils::SetWidgetColor(UtilitiesButton, 1,1,1,1);
 
     switch (category)
     {
     case -1:
-        BHBB::Utils::SetWidgetColor(AllButton, 1, 0.5490196078f, 0, 1);
+        Utils::SetWidgetColor(AllButton, 1, 0.5490196078f, 0, 1);
         break;
     
     case GAME:
-        BHBB::Utils::SetWidgetColor(GamesButton, 1, 0.5490196078f, 0, 1);
+        Utils::SetWidgetColor(GamesButton, 1, 0.5490196078f, 0, 1);
         break;
     
     case EMULATOR:
-        BHBB::Utils::SetWidgetColor(EmulatorButton, 1, 0.5490196078f, 0, 1);
+        Utils::SetWidgetColor(EmulatorButton, 1, 0.5490196078f, 0, 1);
         break;
     
     case PORT:
-        BHBB::Utils::SetWidgetColor(PortButton, 1, 0.5490196078f, 0, 1);
+        Utils::SetWidgetColor(PortButton, 1, 0.5490196078f, 0, 1);
         break;
     
     case UTIL:
-        BHBB::Utils::SetWidgetColor(UtilitiesButton, 1, 0.5490196078f, 0, 1);
+        Utils::SetWidgetColor(UtilitiesButton, 1, 0.5490196078f, 0, 1);
         break;
     
     default:
@@ -531,24 +523,24 @@ ImageButton *HomebrewListPage::AddOption(const char *text, ECallback onPress, vo
     if(isLong)
     {
         if(needImage)
-            e = BHBB::Utils::GetParamWithHashFromId(LIST_BUTTON_LONG_TEMPLATE_IMG);
+            e = Utils::GetParamWithHashFromId(LIST_BUTTON_LONG_TEMPLATE_IMG);
         else
-            e = BHBB::Utils::GetParamWithHashFromId(LIST_BUTTON_LONG_TEMPLATE);
+            e = Utils::GetParamWithHashFromId(LIST_BUTTON_LONG_TEMPLATE);
     }
     else
     {
         if(needImage)
-            e = BHBB::Utils::GetParamWithHashFromId(LIST_BUTTON_TEMPLATE_IMG);
+            e = Utils::GetParamWithHashFromId(LIST_BUTTON_TEMPLATE_IMG);
         else
-            e = BHBB::Utils::GetParamWithHashFromId(LIST_BUTTON_TEMPLATE);
+            e = Utils::GetParamWithHashFromId(LIST_BUTTON_TEMPLATE);
     }
     
-    mainPlugin->AddWidgetFromTemplate(scrollBox, &e, &tinit);
+    mainPlugin->TemplateOpen(scrollBox, &e, &tinit);
     ImageButton *button = (ImageButton *)scrollBox->GetChildByNum(scrollBox->childNum - 1);
 
-    BHBB::Utils::SetWidgetLabel(button, text);
+    Utils::SetWidgetLabel(button, text);
     if(onPress != NULL)
-        BHBB::Utils::AssignButtonHandler(button, onPress, userDat);
+        Utils::AssignButtonHandler(button, onPress, userDat);
 
     return button;
 }
@@ -560,58 +552,58 @@ ImageButton *HomebrewListPage::AddOption(String *text, ECallback onPress, void *
     if(isLong)
     {
         if(needImage)
-            e = BHBB::Utils::GetParamWithHashFromId(LIST_BUTTON_LONG_TEMPLATE_IMG);
+            e = Utils::GetParamWithHashFromId(LIST_BUTTON_LONG_TEMPLATE_IMG);
         else
-            e = BHBB::Utils::GetParamWithHashFromId(LIST_BUTTON_LONG_TEMPLATE);
+            e = Utils::GetParamWithHashFromId(LIST_BUTTON_LONG_TEMPLATE);
     }
     else
     {
         if(needImage)
-            e = BHBB::Utils::GetParamWithHashFromId(LIST_BUTTON_TEMPLATE_IMG);
+            e = Utils::GetParamWithHashFromId(LIST_BUTTON_TEMPLATE_IMG);
         else
-            e = BHBB::Utils::GetParamWithHashFromId(LIST_BUTTON_TEMPLATE);
+            e = Utils::GetParamWithHashFromId(LIST_BUTTON_TEMPLATE);
     }
     
-    mainPlugin->AddWidgetFromTemplate(scrollBox, &e, &tinit);
+    mainPlugin->TemplateOpen(scrollBox, &e, &tinit);
     ImageButton *button = (ImageButton *)scrollBox->GetChildByNum(scrollBox->childNum - 1);
 
     if(text != NULL)
-        BHBB::Utils::SetWidgetLabel(button, text);
+        Utils::SetWidgetLabel(button, text);
     
     if(onPress != NULL)
-        BHBB::Utils::AssignButtonHandler(button, onPress, userDat);
+        Utils::AssignButtonHandler(button, onPress, userDat);
 
     return button;
 }
 
 ImageButton *HomebrewListPage::AddOption(WString *text, ECallback onPress, void *userDat, SceBool isLong, SceBool needImage)
 {
-    while(scrollBox == NULL) paf::thread::Thread::Sleep(10000);
+    while(scrollBox == NULL) paf::thread::Sleep(10000);
     Plugin::TemplateInitParam tinit;
     Resource::Element e;
     if(isLong)
     {
         if(needImage)
-            e = BHBB::Utils::GetParamWithHashFromId(LIST_BUTTON_LONG_TEMPLATE_IMG);
+            e = Utils::GetParamWithHashFromId(LIST_BUTTON_LONG_TEMPLATE_IMG);
         else
-            e = BHBB::Utils::GetParamWithHashFromId(LIST_BUTTON_LONG_TEMPLATE);
+            e = Utils::GetParamWithHashFromId(LIST_BUTTON_LONG_TEMPLATE);
     }
     else
     {
         if(needImage)
-            e = BHBB::Utils::GetParamWithHashFromId(LIST_BUTTON_TEMPLATE_IMG);
+            e = Utils::GetParamWithHashFromId(LIST_BUTTON_TEMPLATE_IMG);
         else
-            e = BHBB::Utils::GetParamWithHashFromId(LIST_BUTTON_TEMPLATE);
+            e = Utils::GetParamWithHashFromId(LIST_BUTTON_TEMPLATE);
     }
     
-    mainPlugin->AddWidgetFromTemplate(scrollBox, &e, &tinit);
+    mainPlugin->TemplateOpen(scrollBox, &e, &tinit);
     ImageButton *button = (ImageButton *)scrollBox->GetChildByNum(scrollBox->childNum - 1);
 
     if(text != NULL)
         button->SetLabel(text);
     
     if(onPress != NULL)
-        BHBB::Utils::AssignButtonHandler(button, onPress, userDat);
+        Utils::AssignButtonHandler(button, onPress, userDat);
 
     return button;
 
@@ -625,13 +617,13 @@ BUTTON_CB(SearchPageSearchButtonCB)
 SearchPage::SearchPage(LinkedList *list):Page(PAGE_TYPE_SEARCH_PAGE)
 {
     busy->Stop();
-    listPlane = (Plane *)BHBB::Utils::GetChildByHash(root, BHBB::Utils::GetHashById(HOMEBREW_LIST_PAGE_LIST_PLANE_ID));
+    listPlane = (Plane *)Utils::GetChildByHash(root, Utils::GetHashById(HOMEBREW_LIST_PAGE_LIST_PLANE_ID));
     listRoot = (Plane *)AddFromTemplate(HOMEBREW_LIST_TEMPLATE_ID, listPlane);
-    scrollBox = (Box *)BHBB::Utils::GetChildByHash(listRoot, BHBB::Utils::GetHashById(LIST_SCROLL_BOX));
+    scrollBox = (Box *)Utils::GetChildByHash(listRoot, Utils::GetHashById(LIST_SCROLL_BOX));
 
-    SearchBox = (TextBox *)BHBB::Utils::GetChildByHash(root, BHBB::Utils::GetHashById(SEARCH_PAGE_SEARCH_BOX_ID));
-    SearchButton = (Button *)BHBB::Utils::GetChildByHash(root, BHBB::Utils::GetHashById(HOMEBREW_LIST_PAGE_SEARCH_BUTTON_ID));
-    BHBB::Utils::AssignButtonHandler(SearchButton, SearchPageSearchButtonCB);
+    SearchBox = (TextBox *)Utils::GetChildByHash(root, Utils::GetHashById(SEARCH_PAGE_SEARCH_BOX_ID));
+    SearchButton = (Button *)Utils::GetChildByHash(root, Utils::GetHashById(HOMEBREW_LIST_PAGE_SEARCH_BUTTON_ID));
+    Utils::AssignButtonHandler(SearchButton, SearchPageSearchButtonCB);
     this->list = list;
 }
 
@@ -662,7 +654,7 @@ THREAD(SearchThread)
         return;
     }
 
-    BHBB::Utils::ToLowerCase(keystring.data);
+    Utils::ToLowerCase(keystring.data);
 
     //Get rid of trailing space char
     for(int i = keystring.length; i > 0; i--)
@@ -673,7 +665,8 @@ THREAD(SearchThread)
             break;
         }
     }
-    
+
+ /*
     HomebrewListButtonEventHandler *eh = new HomebrewListButtonEventHandler();
 
     node *n = currPage->list->head;
@@ -681,13 +674,13 @@ THREAD(SearchThread)
     {
         String title;
         String titleID;
-        title.Set(n->info.title.data);
-        titleID.Set(n->info.titleID.data);
+        title = n->info.title.data;
+        titleID = n->info.titleID.data;
 
-        BHBB::Utils::ToLowerCase(title.data);
-        BHBB::Utils::ToLowerCase(titleID.data);
+        Utils::ToLowerCase(title.data);
+        Utils::ToLowerCase(titleID.data);
 
-        if(BHBB::Utils::StringContains(title.data, keystring.data) || BHBB::Utils::StringContains(titleID.data, keystring.data))
+        if(Utils::StringContains(title.data, keystring.data) || Utils::StringContains(titleID.data, keystring.data))
         {
             ImageButton *b = currPage->AddEntry(&n->info.wstrtitle, NULL, NULL, SCE_TRUE, SCE_TRUE);
             if(b != NULL)
@@ -717,7 +710,7 @@ THREAD(SearchThread)
         if(n->tex->texSurface == NULL)
         {
 ASSIGN:        
-            if(BHBB::Utils::CreateTextureFromFile(n->tex, n->info.icon0Local.data))
+            if(Utils::CreateTextureFromFile(n->tex, n->info.icon0Local.data))
             {
                 currButton->SetTextureBase(n->tex);
             }
@@ -728,7 +721,7 @@ ASSIGN:
                     char url[0x400];
                     sce_paf_memset(url, 0, sizeof(url));
                     sce_paf_snprintf(url, 0x400, VITADB_ICON_URL "%s", n->info.icon0);
-                    BHBB::Utils::DownloadFile(url, n->info.icon0Local.data);
+                    Utils::DownloadFile(url, n->info.icon0Local.data, currPage);
                     triedDownload = true;
                     goto ASSIGN;
                 }
@@ -736,7 +729,7 @@ ASSIGN:
             }
         }
         else currButton->SetTextureBase(n->tex);
-    }
+    }*/
 }        
 
 void SearchPage::Hide()
@@ -751,14 +744,7 @@ void SearchPage::Show()
 
 void SearchPage::Search()
 {
-    if(pageThread == NULL) return;
-    if(pageThread->IsStarted())
-    {
-        pageThread->Kill();
-    }
-    delete pageThread;
-    pageThread = new UtilThread(SearchThread);
-    pageThread->Start();
+    jobs->AddTask(SearchThread, "BHBB_SEARCH_TASK");
 }
 
 void SearchPage::GetKeyString(String *out)
@@ -781,7 +767,7 @@ void SearchPage::Clear()
 
     common::Utils::WidgetStateTransition(0, listRoot, Widget::Animation_Reset, SCE_TRUE, SCE_TRUE);
     listRoot = (Plane *)AddFromTemplate(HOMEBREW_LIST_TEMPLATE_ID, listPlane);
-    scrollBox = (Box *)BHBB::Utils::GetChildByHash(listRoot, BHBB::Utils::GetHashById(LIST_SCROLL_BOX));
+    scrollBox = (Box *)Utils::GetChildByHash(listRoot, Utils::GetHashById(LIST_SCROLL_BOX));
 }
 
 ImageButton *SearchPage::AddEntry(WString *text, ECallback onPress, void *userDat, SceBool isLong, SceBool needImage)
@@ -791,25 +777,25 @@ ImageButton *SearchPage::AddEntry(WString *text, ECallback onPress, void *userDa
     if(isLong)
     {
         if(needImage)
-            e = BHBB::Utils::GetParamWithHashFromId(LIST_BUTTON_LONG_TEMPLATE_IMG);
+            e = Utils::GetParamWithHashFromId(LIST_BUTTON_LONG_TEMPLATE_IMG);
         else
-            e = BHBB::Utils::GetParamWithHashFromId(LIST_BUTTON_LONG_TEMPLATE);
+            e = Utils::GetParamWithHashFromId(LIST_BUTTON_LONG_TEMPLATE);
     }
     else
     {
         if(needImage)
-            e = BHBB::Utils::GetParamWithHashFromId(LIST_BUTTON_TEMPLATE_IMG);
+            e = Utils::GetParamWithHashFromId(LIST_BUTTON_TEMPLATE_IMG);
         else
-            e = BHBB::Utils::GetParamWithHashFromId(LIST_BUTTON_TEMPLATE);
+            e = Utils::GetParamWithHashFromId(LIST_BUTTON_TEMPLATE);
     }
     
-    mainPlugin->AddWidgetFromTemplate(scrollBox, &e, &tinit);
+    mainPlugin->TemplateOpen(scrollBox, &e, &tinit);
     ImageButton *button = (ImageButton *)scrollBox->GetChildByNum(scrollBox->childNum - 1);
 
     button->SetLabel(text);
 
     if(onPress != NULL)
-        BHBB::Utils::AssignButtonHandler(button, onPress, userDat);
+        Utils::AssignButtonHandler(button, onPress, userDat);
 
     return button;
 }
@@ -879,7 +865,7 @@ SceInt32 PicturePage::AddPictureFromFile(const char *file)
     pictures[pictureNum] = new graphics::Texture();
 
     SceInt32 r;
-    if(BHBB::Utils::CreateTextureFromFile(pictures[pictureNum], file))
+    if(Utils::CreateTextureFromFile(pictures[pictureNum], file))
     {
         Plane *p = (Plane *)AddFromTemplate(PICTURE_PAGE_PICTURE_TEMPLATE, listRoot);
         r = p->SetTextureBase(pictures[pictureNum]);
@@ -918,7 +904,7 @@ PicturePage::PicturePage():Page(PAGE_TYPE_PICTURE_PAGE)
     pictures = NULL;
     pictureNum = 0;
     pictures = NULL;
-    listRoot = (Box *)BHBB::Utils::GetChildByHash(root, BHBB::Utils::GetHashById(LIST_SCROLL_BOX));
+    listRoot = (Box *)Utils::GetChildByHash(root, Utils::GetHashById(LIST_SCROLL_BOX));
     busy->Stop();
 }
 
@@ -936,7 +922,7 @@ PicturePage::~PicturePage()
         {
             if(pictures[i] != NULL)
             {
-                BHBB::Utils::DeleteTexture(pictures[i]);
+                Utils::DeleteTexture(pictures[i]);
 
                 pictures[i] = SCE_NULL;
             }
@@ -948,17 +934,17 @@ PicturePage::~PicturePage()
 
 THREAD(DownloadRemainingScreenShotThread)
 {
-    InfoPage *info = (InfoPage *)Page::GetCurrentPage()->prev;
-    for(int i = 1; i < info->ScreenshotNum && !Page::GetCurrentPage()->pageThread->EndThread; i++)
+    PicturePage *picturePage = (PicturePage *)callingPage;
+    InfoPage *info = (InfoPage *)picturePage->prev;
+    for(int i = 1; i < info->ScreenshotNum && !picturePage->jobs->End; i++)
     {
-        CURLcode r = (CURLcode)BHBB::Utils::DownloadFile(info->ScreenShotURLS[i], info->ScreenshotPaths[i]);
+        CURLcode r = (CURLcode)Utils::DownloadFile(info->ScreenShotURLS[i], info->ScreenshotPaths[i], picturePage);
 
         if(paf::io::Misc::Exists(info->ScreenshotPaths[i]) && r == CURLE_OK)
         {
-            ((PicturePage *)Page::GetCurrentPage())->AddPictureFromFile(info->ScreenshotPaths[i]);
+            picturePage->AddPictureFromFile(info->ScreenshotPaths[i]);
         }
     }
-    sceKernelExitThread(0);
 }
 
 BUTTON_CB(ShowScreenShotPage)
@@ -966,24 +952,23 @@ BUTTON_CB(ShowScreenShotPage)
     graphics::Texture *screenShot1 = ((InfoPage *)Page::GetCurrentPage())->mainScreenshot;
     PicturePage *pp = new PicturePage();
     pp->AddPicture(screenShot1);
-    pp->pageThread->Entry = DownloadRemainingScreenShotThread;
-    pp->pageThread->Start();
+    pp->jobs->AddTask(DownloadRemainingScreenShotThread, "BHBB_SCREENSHOT_DOWNLOAD_TASK");
 }
 
 THREAD(ScreenshotDownloadThread)
 {
-    InfoPage *page = (InfoPage *)Page::GetCurrentPage();
-    BHBB::Utils::ResetStrtok();
+    InfoPage *page = (InfoPage *)callingPage;
+    Utils::ResetStrtok();
 
-    page->ScreenshotNum = BHBB::Utils::getStrtokNum(';', page->Info->screenshot_url.data);
+    page->ScreenshotNum = Utils::getStrtokNum(';', page->Info->screenshot_url.data);
     print("Strtoknum = %d\n", page->ScreenshotNum);
     page->ScreenShotURLS = (char **)sce_paf_malloc(page->ScreenshotNum * sizeof(char *));
     page->ScreenshotPaths = (char **)sce_paf_malloc(page->ScreenshotNum * sizeof(char *));
 
     //Download all textures and save the path in an array
-    for(int i = 0; !Page::GetCurrentPage()->pageThread->EndThread; i++)
+    for(int i = 0; !page->jobs->End; i++)
     {
-        char *str = BHBB::Utils::strtok(';', page->Info->screenshot_url.data);
+        char *str = Utils::strtok(';', page->Info->screenshot_url.data);
         if(str == NULL) break;
      
         page->ScreenshotPaths[i] = (char *)sce_paf_malloc(SCE_IO_MAX_PATH_BUFFER_SIZE);
@@ -997,10 +982,10 @@ THREAD(ScreenshotDownloadThread)
         sce_paf_free(str);
 
     }
-    CURLcode res = (CURLcode)BHBB::Utils::DownloadFile(page->ScreenShotURLS[0], page->ScreenshotPaths[0]);
+    CURLcode res = (CURLcode)Utils::DownloadFile(page->ScreenShotURLS[0], page->ScreenshotPaths[0], page);
     if(res != CURLE_OK)
     {
-        if(!Page::GetCurrentPage()->pageThread->EndThread)
+        if(!page->jobs->End)
         {
             new TextPage(curl_easy_strerror(res), "Screenshot Download Error");
         }
@@ -1010,20 +995,19 @@ THREAD(ScreenshotDownloadThread)
     if(paf::io::Misc::Exists(page->ScreenshotPaths[0]))
     {
         graphics::Texture *tex = new graphics::Texture();
-        if(BHBB::Utils::CreateTextureFromFile(tex, page->ScreenshotPaths[0]))
+        if(Utils::CreateTextureFromFile(tex, page->ScreenshotPaths[0]))
         {
             page->mainScreenshot = tex;
             page->ScreenShot->SetTextureBase(page->mainScreenshot);
-            BHBB::Utils::AssignButtonHandler(page->ScreenShot, ShowScreenShotPage);
+            Utils::AssignButtonHandler(page->ScreenShot, ShowScreenShotPage);
         }
     }
     else
     {
         page->mainScreenshot = NULL;
-        if(!Page::GetCurrentPage()->pageThread->EndThread)
+        if(page->jobs->End)
             new TextPage("File Missing", "Screenshot Download Error");
     }
-    sceKernelExitThread(0);
 }
 
 BUTTON_CB(DownloadApp)
@@ -1060,45 +1044,45 @@ InfoPage::InfoPage(homeBrewInfo *info):Page(PAGE_TYPE_HOMBREW_INFO_PAGE)
 {
     this->Info = info;
 
-    TitleText = (Text *)BHBB::Utils::GetChildByHash(root, BHBB::Utils::GetHashById(PAGE_TITLE_ID));
-    Icon = (Plane *)BHBB::Utils::GetChildByHash(root, BHBB::Utils::GetHashById(INFO_PAGE_ICON_ID));
-    Description = (Text *)BHBB::Utils::GetChildByHash(root, BHBB::Utils::GetHashById(INFO_PAGE_DESCRIPTION_TEXT_ID));
-    ScreenShot = (CompositeButton *)BHBB::Utils::GetChildByHash(root, BHBB::Utils::GetHashById(INFO_PAGE_SCREENSHOT_ID));
-    Credits = (Text *)BHBB::Utils::GetChildByHash(root, BHBB::Utils::GetHashById(INFO_PAGE_CREDITS_TEXT_ID));
-    DownloadButton = (Button *)BHBB::Utils::GetChildByHash(root, BHBB::Utils::GetHashById(INFO_PAGE_DOWNLOAD_BUTTON_ID));
-    Version = (Text *)BHBB::Utils::GetChildByHash(root, BHBB::Utils::GetHashById(INFO_PAGE_VERSION_TEXT_ID));
-    Size = (Text *)BHBB::Utils::GetChildByHash(root, BHBB::Utils::GetHashById(INFO_PAGE_SIZE_TEXT_ID));
+    TitleText = (Text *)Utils::GetChildByHash(root, Utils::GetHashById(PAGE_TITLE_ID));
+    Icon = (Plane *)Utils::GetChildByHash(root, Utils::GetHashById(INFO_PAGE_ICON_ID));
+    Description = (Text *)Utils::GetChildByHash(root, Utils::GetHashById(INFO_PAGE_DESCRIPTION_TEXT_ID));
+    ScreenShot = (CompositeButton *)Utils::GetChildByHash(root, Utils::GetHashById(INFO_PAGE_SCREENSHOT_ID));
+    Credits = (Text *)Utils::GetChildByHash(root, Utils::GetHashById(INFO_PAGE_CREDITS_TEXT_ID));
+    DownloadButton = (Button *)Utils::GetChildByHash(root, Utils::GetHashById(INFO_PAGE_DOWNLOAD_BUTTON_ID));
+    Version = (Text *)Utils::GetChildByHash(root, Utils::GetHashById(INFO_PAGE_VERSION_TEXT_ID));
+    Size = (Text *)Utils::GetChildByHash(root, Utils::GetHashById(INFO_PAGE_SIZE_TEXT_ID));
 
     if(conf.db == CBPSDB)
     {
-        BHBB::Utils::DeleteWidget(Version);
+        Utils::DeleteWidget(Version);
     }
     else
     {
-        BHBB::Utils::SetWidgetLabel(Version, &Info->version);
+        Utils::SetWidgetLabel(Version, &Info->version);
     }
 
     if(info->download_url.length != 0)
-        BHBB::Utils::AssignButtonHandler(DownloadButton, DownloadApp, Info);
+        Utils::AssignButtonHandler(DownloadButton, DownloadApp, Info);
 
-    BHBB::Utils::SetWidgetLabel(TitleText, &Info->title);
-    BHBB::Utils::SetWidgetColor(DownloadButton, 1, 0.5490196078f, 0, 1);
+    Utils::SetWidgetLabel(TitleText, &Info->title);
+    Utils::SetWidgetColor(DownloadButton, 1, 0.5490196078f, 0, 1);
 
-    BHBB::Utils::SetWidgetLabel(Credits, info->credits.data);
+    Utils::SetWidgetLabel(Credits, info->credits.data);
     
     float y = (Info->description.length * 4.5f) / 5.0;
     if(Info->description.length <= 15) y = 130;
 
     y += 80;
 
-    BHBB::Utils::SetWidgetSize(Description, 960, y);
+    Utils::SetWidgetSize(Description, 960, y);
 
-    BHBB::Utils::SetWidgetLabel(Description, &Info->description);
+    Utils::SetWidgetLabel(Description, &Info->description);
 
     if(loadFlags & LOAD_FLAGS_ICONS)
     {
         iconTex = new graphics::Texture();
-        if(paf::io::Misc::Exists(info->icon0Local.data) && BHBB::Utils::CreateTextureFromFile(iconTex, info->icon0Local.data))
+        if(paf::io::Misc::Exists(info->icon0Local.data) && Utils::CreateTextureFromFile(iconTex, info->icon0Local.data))
         {
             Icon->SetTextureBase(iconTex);
         }
@@ -1137,16 +1121,15 @@ InfoPage::InfoPage(homeBrewInfo *info):Page(PAGE_TYPE_HOMBREW_INFO_PAGE)
     }
 
     sce_paf_snprintf(sizeText, sizeof(sizeText), "%d %s", size, extension);
-    BHBB::Utils::SetWidgetLabel(Size, sizeText);
+    Utils::SetWidgetLabel(Size, sizeText);
 
     if(Info->screenshot_url.length != 0 && (loadFlags & LOAD_FLAGS_SCREENSHOTS))
     {
-        Page::GetCurrentPage()->pageThread->Entry = ScreenshotDownloadThread;
-        Page::GetCurrentPage()->pageThread->Start();
+        jobs->AddTask(ScreenshotDownloadThread, "SNAPSHOT_DOWNLOAD_TASK");
     }
     else
     {
-        BHBB::Utils::DeleteWidget(ScreenShot);
+        Utils::DeleteWidget(ScreenShot);
     }
     this->busy->Stop();
 }
@@ -1178,7 +1161,7 @@ InfoPage::~InfoPage()
     if(mainScreenshot != NULL)
     {
         ScreenShot->SetTextureBase(transparentTex);
-        BHBB::Utils::DeleteTexture(mainScreenshot);
+        Utils::DeleteTexture(mainScreenshot);
         mainScreenshot = SCE_NULL;
     }
 
@@ -1186,7 +1169,7 @@ DELETE_ICON:
     if(iconTex != NULL)
     {
         Icon->SetTextureBase(transparentTex);
-        BHBB::Utils::DeleteTexture(iconTex);
+        Utils::DeleteTexture(iconTex);
         iconTex = SCE_NULL;
     }
 
@@ -1195,12 +1178,10 @@ DELETE_ICON:
 LoadingPage::LoadingPage(const char *info):Page(PAGE_TYPE_LOADING_PAGE)
 {
     skipAnimation = SCE_TRUE;
-    String str;
-    str.Set(info);
     WString wstr;
-    str.ToWString(&wstr);
+    WString::CharToNewWString(info, &wstr);
 
-    infoText = (Text *)BHBB::Utils::GetChildByHash(root, BHBB::Utils::GetHashById(LOADING_PAGE_TEXT));
+    infoText = (Text *)Utils::GetChildByHash(root, Utils::GetHashById(LOADING_PAGE_TEXT));
     infoText->SetLabel(&wstr);
 }
 
@@ -1213,23 +1194,22 @@ ProgressPage::ProgressPage(const char *info, int BarNum):Page(PAGE_TYPE_PROGRESS
 {
     barNum = BarNum;
     skipAnimation = SCE_TRUE;
-    String str;
-    str.Set(info);
+
     WString wstr;
-    str.ToWString(&wstr);
+    WString::CharToNewWString(info, &wstr);
 
     progressBars = new ProgressBar *[BarNum];
 
     Plugin::TemplateInitParam tinit;
-    Resource::Element search = BHBB::Utils::GetParamWithHashFromId(PROGRESS_PAGE_BAR_TEMPLATE);
+    Resource::Element search = Utils::GetParamWithHashFromId(PROGRESS_PAGE_BAR_TEMPLATE);
 
     for (int i = 0; i < BarNum; i++)
     {
-        mainPlugin->AddWidgetFromTemplate(root, &search, &tinit);
+        mainPlugin->TemplateOpen(root, &search, &tinit);
         Widget *plane = root->GetChildByNum(root->childNum - 1);
 
 
-        progressBars[i] = (ProgressBar *)BHBB::Utils::GetChildByHash(plane, BHBB::Utils::GetHashById(PROGRESS_PAGE_BAR));
+        progressBars[i] = (ProgressBar *)Utils::GetChildByHash(plane, Utils::GetHashById(PROGRESS_PAGE_BAR));
 
         SceFVector4 pos;
         pos.x = 0;
@@ -1241,7 +1221,7 @@ ProgressPage::ProgressPage(const char *info, int BarNum):Page(PAGE_TYPE_PROGRESS
         progressBars[i]->SetProgress(0, 0, 0);
 
         if(i == 0)
-            busyIndicator = (BusyIndicator *)BHBB::Utils::GetChildByHash(plane, BHBB::Utils::GetHashById(BUSY_INICATOR_ID));
+            busyIndicator = (BusyIndicator *)Utils::GetChildByHash(plane, Utils::GetHashById(BUSY_INICATOR_ID));
 
         SceFVector4 pos2;
         pos2.x = 225;
@@ -1253,7 +1233,7 @@ ProgressPage::ProgressPage(const char *info, int BarNum):Page(PAGE_TYPE_PROGRESS
         busyIndicator->Start();
     }
 
-    infoText = (Text *)BHBB::Utils::GetChildByHash(root, BHBB::Utils::GetHashById(LOADING_PAGE_TEXT));
+    infoText = (Text *)Utils::GetChildByHash(root, Utils::GetHashById(LOADING_PAGE_TEXT));
     infoText->SetLabel(&wstr);
 }
 
@@ -1267,29 +1247,29 @@ DecisionPage::DecisionPage(const char *text, ECallback onConfirmPress, ECallback
 {
     busy->Stop();
 
-    ConfirmButton = (Button *)BHBB::Utils::GetChildByHash(root, BHBB::Utils::GetHashById(DECISION_PAGE_CONFIRM_BUTTON_ID));
-    DeclineButton = (Button *)BHBB::Utils::GetChildByHash(root, BHBB::Utils::GetHashById(DECISION_PAGE_DECLINE_BUTTON_ID));
-    InfoText = (Text *)BHBB::Utils::GetChildByHash(root, BHBB::Utils::GetHashById(DECISION_PAGE_TEXT_ID));
+    ConfirmButton = (Button *)Utils::GetChildByHash(root, Utils::GetHashById(DECISION_PAGE_CONFIRM_BUTTON_ID));
+    DeclineButton = (Button *)Utils::GetChildByHash(root, Utils::GetHashById(DECISION_PAGE_DECLINE_BUTTON_ID));
+    InfoText = (Text *)Utils::GetChildByHash(root, Utils::GetHashById(DECISION_PAGE_TEXT_ID));
 
     if(text != NULL)
-        BHBB::Utils::SetWidgetLabel(InfoText, text);
+        Utils::SetWidgetLabel(InfoText, text);
 
     if(onConfirmPress != NULL)
-        BHBB::Utils::AssignButtonHandler(ConfirmButton, onConfirmPress);
+        Utils::AssignButtonHandler(ConfirmButton, onConfirmPress);
     if(onDeclinePress != NULL)
-        BHBB::Utils::AssignButtonHandler(DeclineButton, onDeclinePress);
+        Utils::AssignButtonHandler(DeclineButton, onDeclinePress);
     
     switch (type)
     {
     case DECISION_TYPE_OK_CANCEL:
-        BHBB::Utils::SetWidgetLabel(ConfirmButton, "OK");
-        BHBB::Utils::SetWidgetLabel(DeclineButton, "Cancel");
+        Utils::SetWidgetLabel(ConfirmButton, "OK");
+        Utils::SetWidgetLabel(DeclineButton, "Cancel");
         break;
 
     default:
     case DECISION_TYPE_YES_NO:
-        BHBB::Utils::SetWidgetLabel(ConfirmButton, "Yes");
-        BHBB::Utils::SetWidgetLabel(DeclineButton, "No");
+        Utils::SetWidgetLabel(ConfirmButton, "Yes");
+        Utils::SetWidgetLabel(DeclineButton, "No");
         break;
     }
 }
@@ -1314,9 +1294,9 @@ void PopupMgr::ShowDialog()
 
     Plugin::TemplateInitParam tinit;
     Resource::Element e;
-    e.hash = BHBB::Utils::GetHashById(POPUP_DIALOG_BOX);
+    e.hash = Utils::GetHashById(POPUP_DIALOG_BOX);
     
-    mainPlugin->AddWidgetFromTemplate(diag, &e, &tinit);
+    mainPlugin->TemplateOpen(diag, &e, &tinit);
 
     diagBox = (Box *)diag->GetChildByNum(diag->childNum - 1);
 }
@@ -1340,17 +1320,17 @@ void PopupMgr::InitDialog()
 {
     Resource::Element searchParam;
 	checkmark = new graphics::Texture();
-	searchParam.hash = BHBB::Utils::GetHashById("_common_texture_check_mark");
+	searchParam.hash = Utils::GetHashById("_common_texture_check_mark");
 	Plugin::LoadTexture(checkmark, Plugin::Find("__system__common_resource"), &searchParam);
 
 	transparentTex = new graphics::Texture();
-	searchParam.hash = BHBB::Utils::GetHashById("_common_texture_transparent");
+	searchParam.hash = Utils::GetHashById("_common_texture_transparent");
 	Plugin::LoadTexture(transparentTex, Plugin::Find("__system__common_resource"), &searchParam);
 
-    diagBG = (Plane *)BHBB::Utils::GetChildByHash(mainScene, BHBB::Utils::GetHashById(POPUP_DIALOG_BG));
+    diagBG = (Plane *)Utils::GetChildByHash(mainScene, Utils::GetHashById(POPUP_DIALOG_BG));
     if(diagBG == NULL) return;
 
-    diag = (Dialog *)BHBB::Utils::GetChildByHash(diagBG, BHBB::Utils::GetHashById(POPUP_DIALOG_ID));
+    diag = (Dialog *)Utils::GetChildByHash(diagBG, Utils::GetHashById(POPUP_DIALOG_ID));
     showingDialog = true;
     return HideDialog();
 }
@@ -1365,10 +1345,10 @@ Widget *Page::AddFromStyle(const char *refId, const char *style, const char *typ
     //Search Request
     paf::Resource::Element searchRequest;
 
-    searchRequest.id.Set(refId);
+    searchRequest.id = refId;
     winfo.hash = winfo.GetHashById(&searchRequest);
     
-    searchRequest.id.Set(style);
+    searchRequest.id = style;
     sinfo.hash = sinfo.GetHashById(&searchRequest);    
     
     Widget *newWidget = mainPlugin->CreateWidgetWithStyle(parent != NULL ? parent : root, type, &winfo, &sinfo);
@@ -1378,19 +1358,19 @@ Widget *Page::AddFromStyle(const char *refId, const char *style, const char *typ
 
 Widget *Page::AddFromTemplate(SceInt32 id, Widget *targetRoot)
 {
-    Resource::Element e = BHBB::Utils::GetParamWithHash(id);
+    Resource::Element e = Utils::GetParamWithHash(id);
     Plugin::TemplateInitParam tinit;
 
-    mainPlugin->AddWidgetFromTemplate(targetRoot == NULL ? root : targetRoot, &e, &tinit);
+    mainPlugin->TemplateOpen(targetRoot == NULL ? root : targetRoot, &e, &tinit);
     return targetRoot == NULL ? root->GetChildByNum(root->childNum - 1) : targetRoot->GetChildByNum(targetRoot->childNum - 1);
 }
 
 Widget *Page::AddFromTemplate(const char *id, Widget *targetRoot)
 {
-    Resource::Element e = BHBB::Utils::GetParamWithHashFromId(id);
+    Resource::Element e = Utils::GetParamWithHashFromId(id);
     Plugin::TemplateInitParam tinit;
 
-    mainPlugin->AddWidgetFromTemplate(targetRoot == NULL ? root : targetRoot, &e, &tinit);
+    mainPlugin->TemplateOpen(targetRoot == NULL ? root : targetRoot, &e, &tinit);
     return targetRoot == NULL ? root->GetChildByNum(root->childNum - 1) : targetRoot->GetChildByNum(targetRoot->childNum - 1);
 }
 
@@ -1400,13 +1380,13 @@ void PopupMgr::AddDialogOption(const char *text, ECallback onPress, void *userDa
     
     Plugin::TemplateInitParam tinit;
     Resource::Element e;
-    e.hash = BHBB::Utils::GetHashById(POPUP_DIALOG_BUTTON);
+    e.hash = Utils::GetHashById(POPUP_DIALOG_BUTTON);
 
-    mainPlugin->AddWidgetFromTemplate(diagBox, &e, &tinit);
+    mainPlugin->TemplateOpen(diagBox, &e, &tinit);
 
     ImageButton *currbutton = (ImageButton *)diagBox->GetChildByNum(diagBox->childNum - 1);
 
-    BHBB::Utils::SetWidgetLabel(currbutton, text);    
+    Utils::SetWidgetLabel(currbutton, text);    
 
     if(selected) currbutton->SetTextureBase(checkmark);
     else currbutton->SetTextureBase(transparentTex);

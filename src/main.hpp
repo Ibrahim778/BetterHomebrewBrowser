@@ -6,7 +6,6 @@
 #include <stdio.h>
 #include <curl/curl.h>
 
-
 #ifdef _DEBUG
 #define print sceClibPrintf
 #define LOG_ERROR(prefix, error_code) print("[%s] Got Error: 0x%X\n", prefix, error_code);
@@ -39,7 +38,7 @@ typedef enum
 void PrintFreeMem(ScePVoid);
 
 #define BUTTON_CB(name) void name(Widget *self, SceInt32 eventID, void *userDat)
-#define CB(name) void name(void)
+#define PAGE_CB(name) void name(void *callingPage)
 #define THREAD(name) void name(void *callingPage)
 
 #define APPS_PER_PAGE 80

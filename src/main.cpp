@@ -36,6 +36,11 @@ extern "C" {
     {
         return 9;
     }
+
+    int __at_quick_exit()
+    {
+        return 0;
+    }
 }
 
 userConfig conf;
@@ -49,7 +54,7 @@ THREAD(PageListThread);
 int main()
 {
     
-    BHBB::Utils::StartBGDL();
+    Utils::StartBGDL();
 
     if (sceAppMgrGrowMemory3(10 * 1024 * 1024, 1) >= 0)
         loadFlags |= LOAD_FLAGS_SCREENSHOTS;
@@ -71,13 +76,11 @@ BUTTON_CB(DisplayInfo)
     new InfoPage((homeBrewInfo *)userDat);
 }
 
-CB(onListPageDelete)
+PAGE_CB(onListPageDelete)
 {
     pageNum = 1;
     forwardButton->PlayAnimationReverse(0, Widget::Animation_Reset);
-
     list.Clear(true);
-    
 }
 
 BUTTON_CB(PageDecrease)
@@ -85,21 +88,18 @@ BUTTON_CB(PageDecrease)
     Page *page = (Page *)userDat;
 
     if (pageNum > 1)
+    {
+        mainBackButton->Disable(0);
+        forwardButton->Disable(0);
         pageNum--;
+        mainBackButton->Enable(0);
+        forwardButton->Enable(0);
+    }
 
     if (pageNum == 1)
         EventHandler::ResetBackButtonEvent();
 
-    if (page->pageThread->IsStarted())
-    {
-        page->pageThread->EndThread = SCE_TRUE;
-        page->pageThread->Join();
-    }
-    
-    delete page->pageThread;
-    page->pageThread = new UtilThread(PageListThread);
-    page->pageThread->Start();
-
+    page->jobs->AddTask(PageListThread, "PAGE_LIST_TASK");
 }
 
 BUTTON_CB(PageIncrease)
@@ -107,27 +107,24 @@ BUTTON_CB(PageIncrease)
     Page *page = (Page *)userDat;
     if ((pageNum * APPS_PER_PAGE) < list.GetNumByCategory(category))
     {
+        mainBackButton->Disable(0);
+        forwardButton->Disable(0);
         pageNum++;
+        mainBackButton->Enable(0);
+        forwardButton->Enable(0);
 
         EventHandler::SetBackButtonEvent(PageDecrease, page);
-        if (page->pageThread->IsStarted())
-        {
-            page->pageThread->EndThread = SCE_TRUE;
-            page->pageThread->Join();
-        }
-        delete page->pageThread;
-        page->pageThread = new UtilThread(PageListThread);
-        page->pageThread->Start();
+        page->jobs->AddTask(PageListThread, "PAGE_LIST_TASK");
     }
 }
 
-CB(RedisplayCB)
+PAGE_CB(RedisplayCB)
 {
     if ((pageNum * APPS_PER_PAGE) < list.GetNumByCategory(category))
         forwardButton->PlayAnimation(0, Widget::Animation_Reset);
     
     if (pageNum > 1)
-        EventHandler::SetBackButtonEvent(PageDecrease);
+        EventHandler::SetBackButtonEvent(PageDecrease, callingPage);
 }
 
 BUTTON_CB(SetCategory)
@@ -138,13 +135,7 @@ BUTTON_CB(SetCategory)
     pageNum = 1;
     EventHandler::ResetBackButtonEvent();
     //Reload Page
-    if (page->pageThread->IsStarted())
-    {
-        page->pageThread->Kill();
-    }
-    delete page->pageThread;
-    page->pageThread = new UtilThread(PageListThread);
-    page->pageThread->Start();
+    page->jobs->AddTask(PageListThread, "PAGE_LIST_TASK");
 }
 
 BUTTON_CB(Search)
@@ -187,11 +178,11 @@ THREAD(PageListThread)
     switch (conf.db)
     {
     case CBPSDB:
-        enableIcons = !BHBB::Utils::isDirEmpty(CBPSDB_ICON_SAVE_PATH);
+        enableIcons = !Utils::isDirEmpty(CBPSDB_ICON_SAVE_PATH);
         break;
 
     case VITADB:
-        enableIcons = !BHBB::Utils::isDirEmpty(VITADB_ICON_SAVE_PATH);
+        enableIcons = !Utils::isDirEmpty(VITADB_ICON_SAVE_PATH);
         break;
 
     default:
@@ -201,12 +192,8 @@ THREAD(PageListThread)
 
     enableIcons = enableIcons && (loadFlags & LOAD_FLAGS_ICONS);
     
-    /*
-    HomebrewListButtonEventHandler *eh = new HomebrewListButtonEventHandler();
-    eh->pUserData = listp->GetListBox();
-    */
     node *n = list.GetByCategoryIndex((pageNum - 1) * APPS_PER_PAGE, category);
-    for (int i = 0; i < APPS_PER_PAGE && !listp->pageThread->EndThread && n != NULL; i++, n = n->next)
+    for (int i = 0; i < APPS_PER_PAGE && !listp->jobs->End && !listp->jobs->WaitingTasks() && n != NULL; i++, n = n->next)
     {
         if(n->info.type != category && category != -1)
         {
@@ -214,19 +201,22 @@ THREAD(PageListThread)
         }
         else
         {
-            n->button = listp->AddOption(&n->info.wstrtitle, DisplayInfo, &n->info, SCE_TRUE, enableIcons);
-            sceKernelDelayThread(20000);
-            /*
+            n->button = listp->AddOption(&n->info.wstrtitle, NULL, NULL, SCE_TRUE, enableIcons);
+            //sceKernelDelayThread(20000);
+            
             if(n->button != NULL)
             {
-                n->button->hash = BHBB::Utils::GetHashById(n->info.id.data);
-                n->button->RegisterEventCallback(ON_PRESS_EVENT_ID, eh, 1);
+                n->button->hash = Utils::GetHashById(n->info.id.data);
+                n->buttonCB = new HomebrewListButtonEventHandler();
+                n->buttonCB->pUserData = &n->info;
+                
+                n->button->RegisterEventCallback(ON_PRESS_EVENT_ID, n->buttonCB, 0);
             }
-            */
+            
         }
     }
 
-    if(!listp->pageThread->EndThread)
+    if(!listp->jobs->End && !listp->jobs->WaitingTasks())
     {
         listp->busy->Stop();
         listp->Show();
@@ -237,7 +227,7 @@ THREAD(PageListThread)
     else 
         forwardButton->PlayAnimationReverse(0, Widget::Animation_Reset); 
 
-    if(listp->GetNum() < APPS_PER_PAGE)
+    if(listp->GetNum() < APPS_PER_PAGE && category != -1)
         forwardButton->PlayAnimationReverse(0, Widget::Animation_Reset);
 
 
@@ -245,7 +235,7 @@ THREAD(PageListThread)
         goto END;
     if (!enableIcons)
         goto END;
-    if (listp->pageThread->EndThread)
+    if (listp->jobs->End && !listp->jobs->WaitingTasks())
         goto END;
 
     //Texture Loading
@@ -255,9 +245,9 @@ THREAD(PageListThread)
     case CBPSDB:
     {
         n = list.GetByCategoryIndex((pageNum - 1) * APPS_PER_PAGE, category);
-        for(int i = 0; i < APPS_PER_PAGE && !listp->pageThread->EndThread && n != NULL; i++, n = n->next)
+        for(int i = 0; i < APPS_PER_PAGE && !listp->jobs->End && !listp->jobs->WaitingTasks() && n != NULL; i++, n = n->next)
         {
-            bool triedDownload = false; 
+            bool triedDownload = true; 
 
             if(n->info.type != category && category != -1) 
             {
@@ -267,8 +257,8 @@ THREAD(PageListThread)
             {
                 if(n->tex->texSurface == NULL)
                 {
-ASSIGN:        
-                    if(BHBB::Utils::CreateTextureFromFile(n->tex, n->info.icon0Local.data))
+ASSIGN:             
+                    if(Utils::CreateTextureFromFile(n->tex, n->info.icon0Local.data))
                     {
                         n->button->SetTextureBase(n->tex);
                     }
@@ -281,7 +271,7 @@ ASSIGN:
                             {
                             case CBPSDB:
                                 if(!conf.CBPSDBSettings.downloadIconsDuringLoad) break;
-                                BHBB::Utils::DownloadFile(n->info.icon0.data, n->info.icon0Local.data);
+                                Utils::DownloadFile(n->info.icon0.data, n->info.icon0Local.data, listp);
                                 break;
                             
                             case VITADB:
@@ -290,7 +280,7 @@ ASSIGN:
                                 
                                 sce_paf_memset(url, 0, sizeof(url));
                                 sce_paf_snprintf(url, 0x400, VITADB_ICON_URL "%s", n->info.icon0);
-                                BHBB::Utils::DownloadFile(url, n->info.icon0Local.data);
+                                Utils::DownloadFile(url, n->info.icon0Local.data, listp);
 
                                 break;
 
@@ -318,38 +308,39 @@ ASSIGN:
 END:
     listp->OnRedisplay = RedisplayCB;
     listp->OnDelete = onListPageDelete;
-    sceKernelExitDeleteThread(0);
 }
 
 THREAD(DownloadThread)
 {
+    ScrollView
+    LoadingPage *currPage = (LoadingPage *)callingPage;
     SceInt32 res = 0;
     switch (conf.db)
     {
     case VITADB:
     {
-        res = BHBB::Utils::DownloadFile(VITADB_URL, DATA_PATH "/vitadb.json");
+        res = Utils::DownloadFile(VITADB_URL, DATA_PATH "/vitadb.json", currPage);
         if (res != CURLE_OK)
             break;
-        BHBB::Utils::SetWidgetLabel(((LoadingPage *)Page::GetCurrentPage())->infoText, "Parsing");
+        Utils::SetWidgetLabel(currPage->infoText, "Parsing");
 
         parseJson(DATA_PATH "/vitadb.json");
 
         if ((loadFlags & LOAD_FLAGS_ICONS) && checkDownloadIcons())
         {
-            BHBB::Utils::SetWidgetLabel(((LoadingPage *)Page::GetCurrentPage())->infoText, "Downloading Icons");
-            res = BHBB::Utils::DownloadFile(VITADB_DOWNLOAD_ICONS_URL, VITADB_ICON_ZIP_SAVE_PATH);
-            if(!Page::GetCurrentPage()->pageThread->EndThread && res == CURLE_OK)
+            Utils::SetWidgetLabel(currPage->infoText, "Downloading Icons");
+            res = Utils::DownloadFile(VITADB_DOWNLOAD_ICONS_URL, VITADB_ICON_ZIP_SAVE_PATH, currPage);
+            if(!currPage->jobs->End && res == CURLE_OK)
             {
-                LoadingPage *oldPage = (LoadingPage *)Page::GetCurrentPage();
-                new ProgressPage("Extracting");
+                LoadingPage *oldPage = currPage;
+                ProgressPage *extractPage = new ProgressPage("Extracting");
                 Page::DeletePage(oldPage, false);
 
                 mainBackButton->PlayAnimationReverse(0, Widget::Animation_Reset);
-                Page::GetCurrentPage()->busy->Stop();
+                extractPage->busy->Stop();
 
                 Zip *zipFile = ZipOpen(VITADB_ICON_ZIP_SAVE_PATH);
-                ZipExtract(zipFile, NULL, VITADB_ICON_SAVE_PATH, ((ProgressPage *)Page::GetCurrentPage())->progressBars[0]);
+                ZipExtract(zipFile, NULL, VITADB_ICON_SAVE_PATH, extractPage->progressBars[0]);
                 ZipClose(zipFile);
 
                 sceIoRemove(VITADB_ICON_ZIP_SAVE_PATH);
@@ -362,22 +353,22 @@ THREAD(DownloadThread)
     }
     case CBPSDB:
     {
-        SceInt32 res = BHBB::Utils::DownloadFile(CBPSDB_URL, DATA_PATH "/cbpsdb.csv");
+        SceInt32 res = Utils::DownloadFile(CBPSDB_URL, DATA_PATH "/cbpsdb.csv", currPage);
         if (res != CURLE_OK)
             break;
 
-        BHBB::Utils::SetWidgetLabel(((LoadingPage *)Page::GetCurrentPage())->infoText, "Parsing");
+        Utils::SetWidgetLabel(currPage->infoText, "Parsing");
         parseCSV(DATA_PATH "/cbpsdb.csv");
 
         if ((loadFlags & LOAD_FLAGS_ICONS) && checkDownloadIcons())
         {
             sceIoMkdir(CBPSDB_ICON_SAVE_PATH, 0666);
-            BHBB::Utils::SetWidgetLabel(((LoadingPage *)Page::GetCurrentPage())->infoText, "Downloading Icons");
-            res = BHBB::Utils::DownloadFile(CBPSDB_DOWNLOAD_ICONS_URL, CBPSDB_ICON_ZIP_SAVE_PATH);
+            Utils::SetWidgetLabel(currPage->infoText, "Downloading Icons");
+            res = Utils::DownloadFile(CBPSDB_DOWNLOAD_ICONS_URL, CBPSDB_ICON_ZIP_SAVE_PATH, currPage);
 
-            if(!Page::GetCurrentPage()->pageThread->EndThread && res == CURLE_OK)
+            if(!currPage->jobs->End && res == CURLE_OK)
             {
-                LoadingPage *oldPage = (LoadingPage *)Page::GetCurrentPage();
+                LoadingPage *oldPage =currPage;
                 ProgressPage *extractPage = new ProgressPage("Extracting");
                 Page::DeletePage(oldPage, false);
 
@@ -400,44 +391,43 @@ THREAD(DownloadThread)
         break;
     }
 
-    if (Page::GetCurrentPage()->pageThread->EndThread == SCE_TRUE)
+    if (currPage->jobs->End == SCE_TRUE)
         return;
 
-    Page::GetCurrentPage()->skipAnimation = SCE_TRUE;
+    currPage->skipAnimation = SCE_TRUE;
 
     if(res != CURLE_OK)
     {
         new TextPage("Download DB Error");
+        Page::DeletePage((Page *)callingPage);
         return;
     }
 
     print("Done download index\n");
     sceKernelDelayThread(1000);
 
-    HomebrewListPage *currlist = new HomebrewListPage();
+    HomebrewListPage *currlist = new HomebrewListPage("PAGE_LIST_THREAD");
     currlist->Hide();
     category = -1;
     currlist->SetCategoryColor(category);
     Page::DeletePage((Page *)callingPage);
-    currlist->pageThread->Entry = PageListThread;
-    currlist->pageThread->Start();
+    currlist->jobs->AddTask(PageListThread, "PAGE_LIST_TASK");
 }
 
 BUTTON_CB(DownloadIndex)
 {
-    new LoadingPage("Downloading Index");
+    LoadingPage *page = new LoadingPage("Downloading Index");
 
-    Page::GetCurrentPage()->pageThread->Entry = DownloadThread;
-    Page::GetCurrentPage()->pageThread->Start();
+    page->jobs->AddTask(DownloadThread, "DOWNLOAD_INDEX_TASK");
 }
 
 void onReady()
 {
-    BHBB::Utils::MakeDataDirs();
+    Utils::MakeDataDirs();
     GetConfig(&conf);
     
     Page::Init();
-    BHBB::Utils::NetInit();
+    Utils::NetInit();
 
     sceSysmoduleLoadModule(SCE_SYSMODULE_JSON);
 

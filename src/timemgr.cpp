@@ -38,5 +38,5 @@ bool checkDownloadIcons()
     if(!paf::io::Misc::Exists(dbIconPath))
         return 1;
     
-    return BHBB::Utils::isDirEmpty(dbIconPath);
+    return Utils::isDirEmpty(dbIconPath);
 }

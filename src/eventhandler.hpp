@@ -4,7 +4,7 @@
 #include <paf.h>
 #include <kernel.h>
 using namespace paf;
-using namespace widget;
+using namespace ui;
 
 typedef void (*ECallback)(Widget *, SceInt32, void*);
 

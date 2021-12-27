@@ -6,7 +6,7 @@
 #include <ctrl.h>
 
 using namespace paf;
-using namespace widget;
+using namespace ui;
 
 typedef struct SceSysmoduleOpt {
 	int flags;

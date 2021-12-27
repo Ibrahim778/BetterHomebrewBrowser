@@ -5,8 +5,10 @@
 #include "utils.hpp"
 #include "parser.hpp" //For homebrewInfo type
 
-#define DEFINE_PAGE(PageType, pageID) case PageType:{search = BHBB::Utils::GetParamWithHashFromId(pageID);break;}
+#define DEFINE_PAGE(PageType, pageID) case PageType:{search = Utils::GetParamWithHashFromId(pageID);break;}
 #define DELETE_PAGE_TYPE(Type, Class) case Type: { delete (Class *)p; break; }
+
+typedef void (*PageCallback)(void *caller);
 
 typedef enum 
 {
@@ -37,24 +39,22 @@ public:
     
     Plane *root;
     BusyIndicator *busy;
-
+    UtilQueue *jobs;
     bool skipAnimation;
 
-    void (*OnDelete)(void);
-    void (*AfterDelete)(void);
-    void (*OnRedisplay)(void);
+    PageCallback OnDelete;
+    PageCallback AfterDelete;
+    PageCallback OnRedisplay;
 
     static void Init();
     static void DeletePage(Page *p = Page::GetCurrentPage(), bool playAnimation = SCE_TRUE);
     static Page *GetCurrentPage();
 
-    UtilThread *pageThread;
-
     Widget *AddFromStyle(const char *refId, const char *style, const char *type, Widget *parent = SCE_NULL);
     Widget *AddFromTemplate(SceInt32 id, Widget *targetRoot = SCE_NULL);
     Widget *AddFromTemplate(const char *id, Widget *targetRoot = SCE_NULL);
 
-    Page(pageType Type = PAGE_TYPE_BLANK_PAGE);
+    Page(pageType Type = PAGE_TYPE_BLANK_PAGE, const char *ThreadName = "");
     ~Page();
 };
 
@@ -101,7 +101,7 @@ private:
     Button *AllButton;
 
 public:
-    HomebrewListPage();
+    HomebrewListPage(const char *threadName = "");
     ~HomebrewListPage();
 
     SceVoid AssignSearchButtonEvent(ECallback onPress = NULL, void *userDat = NULL);

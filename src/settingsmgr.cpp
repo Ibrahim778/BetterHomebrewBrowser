@@ -119,25 +119,25 @@ BUTTON_CB(DebugPage)
 
     Text *IconInfo = (Text *)page->AddFromStyle("BHBBIconInfo", "_common_default_style_text", "text");
     
-    BHBB::Utils::SetWidgetColor(IconInfo, 1,1,1,1);
-    BHBB::Utils::SetWidgetSize(IconInfo, 544, 80);
-    BHBB::Utils::SetWidgetPosition(IconInfo, 0, 40);
+    Utils::SetWidgetColor(IconInfo, 1,1,1,1);
+    Utils::SetWidgetSize(IconInfo, 544, 80);
+    Utils::SetWidgetPosition(IconInfo, 0, 40);
 
     char IconText[16];
     sce_paf_memset(IconText, 0, 16);
     sce_paf_snprintf(IconText, 15, "Icons: %s", loadFlags & LOAD_FLAGS_ICONS ? "Enabled" : "Disabled");
-    BHBB::Utils::SetWidgetLabel(IconInfo, IconText);
+    Utils::SetWidgetLabel(IconInfo, IconText);
 
     Text *ScreenShotInfo = (Text *)page->AddFromStyle("BHBBScreenShotInfo", "_common_default_style_text", "text");
 
-    BHBB::Utils::SetWidgetColor(ScreenShotInfo, 1,1,1,1);
-    BHBB::Utils::SetWidgetSize(ScreenShotInfo, 544, 80);
-    BHBB::Utils::SetWidgetPosition(ScreenShotInfo, 0, -40);
+    Utils::SetWidgetColor(ScreenShotInfo, 1,1,1,1);
+    Utils::SetWidgetSize(ScreenShotInfo, 544, 80);
+    Utils::SetWidgetPosition(ScreenShotInfo, 0, -40);
 
     char ScreenshotText[22];
     sce_paf_memset(ScreenshotText, 0, 22);
     sce_paf_snprintf(ScreenshotText, 21, "Screenshots: %s\n", (loadFlags & LOAD_FLAGS_SCREENSHOTS) ? "Enabled" : "Disabled");
-    BHBB::Utils::SetWidgetLabel(ScreenShotInfo, ScreenshotText);
+    Utils::SetWidgetLabel(ScreenShotInfo, ScreenshotText);
 }
 
 #endif

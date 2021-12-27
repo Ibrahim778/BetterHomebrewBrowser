@@ -77,29 +77,9 @@ HomebrewListButtonEventHandler::HomebrewListButtonEventHandler()
 
 void HomebrewListButtonEventHandler::onGet(SceInt32 e, Widget *self, SceInt32, ScePVoid puserData)
 {
-    print("it is %p\n", puserData);
-    if(puserData == NULL) return;
-    Box *listBox = (Box *)puserData;
-    print("getting %p\n", listBox);
-    
-    for(int i = 0; i < listBox->childNum; i++) //Find the child number
-    {
-        Widget *w = listBox->GetChildByNum(i);
-        if(w == NULL)
-        {
-            print("Err nullll\n");
-            return;
-        }
-        if(w->hash == self->hash)
-        {
-            node *n = list.GetByCategoryIndex(((pageNum - 1) * APPS_PER_PAGE) + i, category);
-            print("Num = %d n = %p\n", ((pageNum - 1) * APPS_PER_PAGE) + i, n);
-            forwardButton->PlayAnimationReverse(0, Widget::Animation_Reset);
-            EventHandler::ResetBackButtonEvent();
-            new InfoPage(&n->info);
-            return;
-        }
-    }
+    forwardButton->PlayAnimationReverse(0, Widget::Animation_Reset);
+    EventHandler::ResetBackButtonEvent();
+    new InfoPage((homeBrewInfo *)puserData);
 }
 
 SettingsButtonEventHandler::SettingsButtonEventHandler()

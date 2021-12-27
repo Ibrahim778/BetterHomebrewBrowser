@@ -10,10 +10,64 @@
 #include "main.hpp"
 #include "Archives.hpp"
 #include "notifmgr.hpp"
-#include "list.hpp"
 #include "bhbb_dl.h"
+
+#define LIST_TYPE bhbbPacket
+#include "../../common/queue.cpp"
+
 #include "net.hpp"
 #include "promote.hpp"
+
+// Remaining functions that must be defined for ::Queue to work
+LIST_TYPE *Queue::Find(const char *name)
+{
+    qnode *n = head;
+    while(n != NULL)
+    {
+        if(sce_paf_strcmp(name, n->data.name) == 0) return &n->data;
+        n = n->next;
+    }
+    return NULL;
+}
+
+void Queue::remove(const char *url)
+{
+    //Check head isn't NULL
+    if (head == NULL)
+        return;
+
+    //First, handle the case where we free the head
+    if (sce_paf_strcmp(head->data.url, url) == 0)
+    {
+        qnode *nodeToDelete = head;
+        head = head->next;
+        free(nodeToDelete);
+        return;
+    }
+
+    //Bail out if the head is the only node
+    if (head->next == NULL)
+        return;
+
+    //Else, try to locate node we're asked to remove
+    qnode **pCurrentNodeNext = &head; //This points to the current node's `next` field (or to pHead)
+    while (1)
+    {
+        if (sce_paf_strcmp((*pCurrentNodeNext)->data.url, url) == 0) //pCurrentNodeNext points to the pointer that points to the node we need to delete
+            break;
+
+        //If the next node's next is NULL, we reached the end of the list. Bail out.
+        if ((*pCurrentNodeNext)->next == NULL)
+            return;
+
+        pCurrentNodeNext = &(*pCurrentNodeNext)->next;
+    }
+    qnode *nodeToDelete = *pCurrentNodeNext;
+    *pCurrentNodeNext = (*pCurrentNodeNext)->next;
+    free(nodeToDelete);
+
+    num --;
+}
 
 extern "C" {
 
@@ -44,6 +98,11 @@ extern "C" {
     int __aeabi_unwind_cpp_pr1()
     {
         return 9;
+    }
+
+    int __at_quick_exit()
+    {
+        return 0;
     }
 }
 
@@ -79,13 +138,13 @@ int install(const char *file)
     ZipExtract(zfile, NULL, EXTRACT_PATH);
     ZipClose(zfile);
 
-    NotifMgr::EndNotif(queue.head->packet.name, "Promoting");
+    NotifMgr::EndNotif(queue.head->data.name, "Promoting");
     
     if(NotifMgr::currDlCanceled) goto END;
 
     int res = promoteApp(EXTRACT_PATH);
     if(res == SCE_OK)
-		sce_paf_snprintf(txt, 64, "Installed %s Successfully!", queue.head->packet.name);
+		sce_paf_snprintf(txt, 64, "Installed %s Successfully!", queue.head->data.name);
     else
 		sce_paf_snprintf(txt, 64, "Error 0x%X", res);
 
@@ -121,13 +180,13 @@ SceInt32 DownloadThread(SceSize args, void *argp)
         }
         
         NotifMgr::Init();
-        NotifMgr::MakeProgressNotif(queue.head->packet.name, "Installing", "Are you sure you want to cancel the install?");
+        NotifMgr::MakeProgressNotif(queue.head->data.name, "Installing", "Are you sure you want to cancel the install?");
 
-        int r = dlFile(queue.head->packet.url, VPK_DOWNLOAD_PATH);
+        int r = dlFile(queue.head->data.url, VPK_DOWNLOAD_PATH);
 
         if(!NotifMgr::currDlCanceled && r == CURLE_OK)    
         {
-            NotifMgr::UpdateProgressNotif(0, "Extracting", queue.head->packet.name);
+            NotifMgr::UpdateProgressNotif(0, "Extracting", queue.head->data.name);
             install(VPK_DOWNLOAD_PATH);
         }
         else

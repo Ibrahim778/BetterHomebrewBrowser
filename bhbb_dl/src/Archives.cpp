@@ -11,7 +11,9 @@ extern "C" {
 #endif
 
 #include "Archives.hpp"
-#include "list.hpp"
+#include "bhbb_dl.h"
+#define LIST_TYPE bhbbPacket
+#include "../../common/queue.cpp"
 #include "notifmgr.hpp"
 extern Queue queue;
 
@@ -1121,7 +1123,7 @@ int ZipExtract(Zip* zip, const char *password, const char* path)
 		sce_paf_memset(subtxt, 0, sizeof(subtxt));
         sce_paf_snprintf(subtxt, 64, "%d%% Done (%d Files / %d Files)", (int)percent, i + 1, gi.countentries);
 
-        NotifMgr::UpdateProgressNotif(percent, subtxt, queue.head->packet.name);
+        NotifMgr::UpdateProgressNotif(percent, subtxt, queue.head->data.name);
     }
 
     return err;

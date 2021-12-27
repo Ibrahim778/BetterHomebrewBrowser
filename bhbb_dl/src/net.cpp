@@ -111,7 +111,7 @@ int dlFile(const char *url, const char *dest)
     curl_easy_setopt(curl, CURLOPT_URL, url);
     curl_easy_setopt(curl, CURLOPT_WRITEDATA, &file);
     CURLcode ret = curl_easy_perform(curl);
-    if(ret != CURLE_OK && ret != 42)
+    if(ret != CURLE_OK && ret != CURLE_ABORTED_BY_CALLBACK)
     {
         NotifMgr::SendNotif(curl_easy_strerror(ret));
     }

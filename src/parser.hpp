@@ -3,6 +3,7 @@
 
 #include <kernel.h>
 #include <paf.h>
+#include "eventhandler.hpp"
 using namespace paf;
 
 typedef enum
@@ -42,7 +43,8 @@ struct node
 {
     homeBrewInfo info;
     node *next;
-    widget::ImageButton *button;
+    ui::ImageButton *button;
+    HomebrewListButtonEventHandler *buttonCB;
     paf::graphics::Texture *tex;
 };
 

@@ -50,37 +50,43 @@ void initPaf()
     opt.flags = 0;
     opt.result = &load_res;
 
+    print("Set Vars\n");
+    print("Loading....");
     res = _sceSysmoduleLoadModuleInternalWithArg(SCE_SYSMODULE_INTERNAL_PAF, sizeof(initParam), &initParam, &opt);
+    print("Done!\n");
 
     if(res < 0 || load_res < 0)
     {
+        print("Error!\n");
         LOG_ERROR("INIT_PAF", res);
         LOG_ERROR("INIT_PAF", load_res);
     }
+
+    print("Done initPaf()\n");
 }
 
 void getDefaultWidgets()
 {
     print("Getting defaults..\n");
     Plugin::SceneInitParam sinit;
-    Resource::Element search = BHBB::Utils::GetParamWithHashFromId(MAIN_PAGE_ID);
+    Resource::Element search = Utils::GetParamWithHashFromId(MAIN_PAGE_ID);
     mainScene = mainPlugin->CreateScene(&search, &sinit);
 
     if(mainScene == NULL) sceKernelExitProcess(0);
     print("mainScene = 0x%X\n");
-    mainRoot = (Plane *)BHBB::Utils::GetChildByHash(mainScene, BHBB::Utils::GetHashById(MAIN_PLANE_ID));
-    mainBackButton = (CornerButton *)BHBB::Utils::GetChildByHash(mainScene, BHBB::Utils::GetHashById(BACK_BUTTON_ID));
+    mainRoot = (Plane *)Utils::GetChildByHash(mainScene, Utils::GetHashById(MAIN_PLANE_ID));
+    mainBackButton = (CornerButton *)Utils::GetChildByHash(mainScene, Utils::GetHashById(BACK_BUTTON_ID));
 
     mainBackButtonEvent = new BackButtonEventHandler();
     mainForwardButtonEvent = new ForwardButtonEventHandler();
 
-    forwardButton = (CornerButton *)BHBB::Utils::GetChildByHash(mainScene, BHBB::Utils::GetHashById(FORWARD_BUTTON_ID));
-    settingsButton = (CornerButton *)BHBB::Utils::GetChildByHash(mainScene, BHBB::Utils::GetHashById(SETTINGS_BUTTON_ID));
+    forwardButton = (CornerButton *)Utils::GetChildByHash(mainScene, Utils::GetHashById(FORWARD_BUTTON_ID));
+    settingsButton = (CornerButton *)Utils::GetChildByHash(mainScene, Utils::GetHashById(SETTINGS_BUTTON_ID));
 
     PopupMgr::InitDialog();
 
     BrokenTex = new graphics::Texture();
-    Resource::Element e = BHBB::Utils::GetParamWithHashFromId(ICON_MISSING_TEX_ID);
+    Resource::Element e = Utils::GetParamWithHashFromId(ICON_MISSING_TEX_ID);
     mainPlugin->LoadTexture(BrokenTex, mainPlugin, &e);
 
 }
@@ -102,38 +108,54 @@ SceVoid onPluginReady(Plugin *plugin)
 
 void initPlugin()
 {
+    print("Init Plugin\n");
     Framework::InitParam fwParam;
     fwParam.LoadDefaultParams();
-    fwParam.applicationMode = Framework::Mode_ApplicationA;
+    fwParam.applicationMode = Framework::ApplicationMode::Mode_Application;
     
     fwParam.defaultSurfacePoolSize = 5 * 1024 * 1024;
     if(loadFlags & LOAD_FLAGS_ICONS) fwParam.defaultSurfacePoolSize += 6 * 1024 * 1024;
     if(loadFlags & LOAD_FLAGS_SCREENSHOTS) fwParam.defaultSurfacePoolSize += 5 * 1024 * 1024;
     fwParam.textSurfaceCacheSize = 2621440; //2.5MB
 
+    print("Set Vars\n");
+    print("Making fw\n");
+
     Framework * fw = new Framework(&fwParam);
+    print("Loading Common Resource!\n");
 
     fw->LoadCommonResource();
+    print("Done!\n");
+
     fwAllocator = fw->defaultAllocator;
     SceAppUtilInitParam init;
     SceAppUtilBootParam boot;
-    
+
     //Can use sce_paf_... because paf is now loaded
     sce_paf_memset(&init, 0, sizeof(SceAppUtilInitParam));
     sce_paf_memset(&boot, 0, sizeof(SceAppUtilBootParam));
+    
+    print("Set Vars\n");
     sceAppUtilInit(&init, &boot);
 
+    print("Done!\n");
+
     main_thread = sceKernelGetThreadId();
+    print("main_thread = 0x%X\n", main_thread);
 
     Framework::PluginInitParam piParam;
+    print("Made Init Param\n");
 
-    piParam.pluginName.Set(PLUGIN_NAME);
-    piParam.resourcePath.Set(RESOURCE_PATH);
-    piParam.scopeName.Set("__main__");
+    piParam.pluginName = PLUGIN_NAME;
+    piParam.resourcePath = RESOURCE_PATH;
+    piParam.scopeName = "__main__";
 
     piParam.pluginStartCB = onPluginReady;
-
+    print("Set Vars\n");
+    print("Loading Plugin!\n");
     fw->LoadPluginAsync(&piParam);
-
+    print("Done");
+    print("Entering Rendering Loop\n");
     fw->EnterRenderingLoop();
+    print("Done InitPlugin()!\n");
 }
