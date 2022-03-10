@@ -5,3 +5,4 @@
 /resource/cxml
 /resource/*.rco
 /resource/src/locale/*.rcs
+/resource/bhbb_plugin.rco
