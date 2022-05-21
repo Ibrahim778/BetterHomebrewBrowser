@@ -26,13 +26,15 @@ static SceUID fios2ID = SCE_UID_INVALID_UID;
 
 void loadPsp2CompatModule()
 {
-	//PSp2Compat needs libc, curl needs compat
+	//curl needs compat, compat needs libc, libc needs fios2
 	if (fios2ID <= 0)
 		fios2ID = sceKernelLoadStartModule(FIOS2_PATH, 0, NULL, 0, NULL, NULL);
 	if (cLibID <= 0)
 		cLibID = sceKernelLoadStartModule(LIBC_PATH, 0, NULL, 0, NULL, NULL);
 	if (moduleID <= 0)
 		moduleID = sceKernelLoadStartModule(MODULE_PATH, 0, NULL, 0, NULL, NULL);
+
+    print("moduleID: 0x%X\ncLibID: 0x%X\nfios2ID: 0x%X\n", moduleID, cLibID, fios2ID);
 }
 
 void netInit() 
@@ -44,6 +46,7 @@ void netInit()
 	netInitParam.flags = 0;
 	ret = sceNetInit(&netInitParam);
 	ret = sceNetCtlInit();
+    print("netInit(): 0x%X\n", ret);
 }
 
 void netTerm() 
@@ -81,6 +84,7 @@ int curlProgressCallback(void *userDat, double dltotal, double dlnow, double ult
     char subtxt[64];
 	sce_paf_memset(subtxt, 0, sizeof(subtxt));
 	sce_paf_snprintf(subtxt, 64, "%d%% Done (%d KB / %d KB)", (int)(dlnow / dltotal * 100.0), (int)(dlnow / 1024.0), (int)(dltotal / 1024.0));
+    //print("%s\n", subtxt);
     NotifMgr::UpdateProgressNotif(dlnow / dltotal * 100.0, subtxt);
 
     
@@ -108,15 +112,21 @@ int dlFile(const char *url, const char *dest)
         LOG_ERROR("ERROR_OPEN_FILE", file);
         return file;
     }
+    print("Opened file!\n");
+
     curl_easy_setopt(curl, CURLOPT_URL, url);
     curl_easy_setopt(curl, CURLOPT_WRITEDATA, &file);
+    print("Set Vars!\n");
     CURLcode ret = curl_easy_perform(curl);
+    print("Done Perform!\n");
     if(ret != CURLE_OK && ret != CURLE_ABORTED_BY_CALLBACK)
     {
+        print("Sending err notif!\n");
         NotifMgr::SendNotif(curl_easy_strerror(ret));
     }
-
+    print("Closing File!\n");
     sceIoClose(file);
+    print("Done!\n");
     return (int)ret;
 }
 

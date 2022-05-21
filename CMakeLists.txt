@@ -8,11 +8,14 @@ set(CMAKE_C_STANDARD 99)
 set(CMAKE_CXX_STANDARD 11)
 
 add_subdirectory(bhbb_dl)
+add_subdirectory(libScePafPreload)
 
 include_directories(
-  ${CMAKE_SOURCE_DIR}
+  ${CMAKE_SOURCE_DIR}/include
   ${VDSUITE_USER_INCLUDE_DIRECTORIES}
   ${VDSUITE_STANDARD_INCLUDE_DIRECTORIES}
+  $ENV{SCE_PSP2_SDK_DIR}/target/include
+  $ENV{SCE_PSP2_SDK_DIR}/target/include_common
 )
 
 link_directories(
@@ -31,35 +34,18 @@ add_link_options(
 add_executable(${PROJECT_NAME}
     src/main.cpp
     src/utils.cpp
-    src/main.hpp
-    src/paf_internal.hpp
-    src/paf.hpp
     src/paf.cpp
-    src/utils.hpp
-    src/audiomgr.cpp
-    src/audiomgr.hpp
     src/bgdl.c
-    src/bgdl.h
-    src/pagemgr.cpp
-    src/pagemgr.hpp
-    src/common.hpp
-    src/eventhandler.cpp
-    src/eventhandler.hpp
     src/network.cpp
-    src/network.hpp
     src/parser.cpp
-    src/parser.hpp
     src/csv.c
-    src/csv.h
     src/fread_csv_line.c
     src/split.c
-    src/timemgr.cpp
-    src/timemgr.hpp
-    src/configmgr.cpp
-    src/configmgr.hpp
     src/settingsmgr.cpp
-    src/Archives.cpp
-    src/Archives.hpp
+    src/downloader.cpp
+    src/pages/page.cpp
+    src/pages/text_page.cpp
+    src/pages/home_page.cpp
 )
 
 target_link_libraries(${PROJECT_NAME}
@@ -95,6 +81,9 @@ target_link_libraries(${PROJECT_NAME}
     taihen_stub
     ScePsp2Compat_stub_weak
     SceRtcUser_stub
+    SceIpmi_stub
+    SceShellUtil_stub
+    SceCommonDialog_stub
 )
 
 
@@ -106,7 +95,9 @@ VDSuitePackage(${PROJECT_NAME}.vpk
     ${PROJECT_NAME}.self eboot.bin
     ${CMAKE_BINARY_DIR}/${PROJECT_NAME}.sfo sce_sys/param.sfo
     resource/bhbb_plugin.rco resource/bhbb_plugin.rco
-    resource/src/texture/bg.png sce_sys/pic0.png
+    resource/rco/src/texture/bg.png sce_sys/pic0.png
+    resource/settings.xml resource/settings.xml
+    ${CMAKE_BINARY_DIR}/libScePafPreload/libScePafPreload.suprx module/libScePafPreload.suprx
     ${CMAKE_BINARY_DIR}/bhbb_dl/bhbb_dl.sfo sce_sys/param2.sfo
     ${CMAKE_BINARY_DIR}/bhbb_dl/bhbb_dl.self eboot2.bin
     sce_sys sce_sys

@@ -39,6 +39,8 @@ add_executable(${PROJECT_NAME}
     src/notifmgr.hpp
     src/sha1.c
     src/sha1.h
+    src/queue.cpp
+    src/queue.hpp
 )
 
 target_link_libraries(${PROJECT_NAME}

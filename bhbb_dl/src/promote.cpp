@@ -39,7 +39,7 @@ typedef struct SfoEntry {
 } SfoEntry;
 
 
-int getSfoString(char* buffer, char* name, char* string, int length) {
+int getSfostring(char* buffer, char* name, char* string, int length) {
     SfoHeader* header = (SfoHeader*)buffer;
     SfoEntry* entries = (SfoEntry*)((uint32_t)buffer + sizeof(SfoHeader));
 
@@ -109,12 +109,12 @@ int makeHead(const char *path) {
     // Get title id
     char titleid[12];
     sce_paf_memset(titleid, 0, sizeof(titleid));
-    getSfoString((char *)sfo_buffer, "TITLE_ID", titleid, sizeof(titleid));
+    getSfostring((char *)sfo_buffer, "TITLE_ID", titleid, sizeof(titleid));
 
     // Get content id
     char contentid[48];
     sce_paf_memset(contentid, 0, sizeof(contentid));
-    getSfoString((char *)sfo_buffer, "CONTENT_ID", contentid, sizeof(contentid));
+    getSfostring((char *)sfo_buffer, "CONTENT_ID", contentid, sizeof(contentid));
     
     // Free sfo buffer
     sce_paf_free(sfo_buffer);

@@ -1,6 +1,5 @@
 #include "parser.hpp"
 #include "main.hpp"
-#include "pagemgr.hpp"
 #include <stdio.h>
 #include <paf.h>
 #include "csv.h"
@@ -135,8 +134,7 @@ homeBrewInfo *LinkedList::AddNode()
 {
     node *tmp = new node;
     sce_paf_memset(&tmp->info, 0, sizeof(tmp->info));
-    tmp->tex = new graphics::Texture();
-    tmp->tex->texSurface = NULL;
+    tmp->tex = NULL;
     tmp->next = NULL;
 
     if (head == NULL)
@@ -163,7 +161,7 @@ void LinkedList::Clear(bool deleteTex)
         temp = head;
         head = head->next;
         if(deleteTex)
-            Utils::DeleteTexture(temp->tex);
+            Utils::DeleteTexture(&temp->tex);
         delete temp;
     }
 
@@ -282,12 +280,12 @@ void LinkedList::RemoveNode(const char *tag)
     }
     node *nodeToDelete = *pCurrentNodeNext;
     *pCurrentNodeNext = (*pCurrentNodeNext)->next;
-    Utils::DeleteTexture(nodeToDelete->tex);
+    Utils::DeleteTexture(&nodeToDelete->tex);
     sce_paf_free(nodeToDelete);
     num --;
 }
 
-#define SET_STRING(pafString, jsonString) { if(rootval[i][jsonString] != NULL) { pafString = rootval[i][jsonString].getString().c_str(); } } 
+#define SET_STRING(pafstring, jsonstring) { if(rootval[i][jsonstring] != NULL) { pafstring = rootval[i][jsonstring].getString().c_str(); } } 
  
 void parseJson(const char *path)
 {

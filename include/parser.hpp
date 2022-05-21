@@ -1,10 +1,7 @@
 #ifndef BHH_PARSER_HPP 
 #define BHH_PARSER_HPP
 
-#include <kernel.h>
 #include <paf.h>
-#include "eventhandler.hpp"
-using namespace paf;
 
 typedef enum
 {
@@ -22,19 +19,19 @@ typedef enum
 
 typedef struct
 {
-    paf::String id;
-    paf::String titleID;
-    paf::WString wstrtitle;
-    paf::String title;
-    paf::String credits;
-    paf::String icon0;
-    paf::String download_url;
-    paf::String options;
-    paf::String icon0Local;
-    paf::String description;
-    paf::String screenshot_url;
-    paf::String version;
-    paf::String size;
+    paf::string id;
+    paf::string titleID;
+    paf::wstring wstrtitle;
+    paf::string title;
+    paf::string credits;
+    paf::string icon0;
+    paf::string download_url;
+    paf::string options;
+    paf::string icon0Local;
+    paf::string description;
+    paf::string screenshot_url;
+    paf::string version;
+    paf::string size;
     Category type;
 
 } homeBrewInfo;
@@ -43,9 +40,9 @@ struct node
 {
     homeBrewInfo info;
     node *next;
-    ui::ImageButton *button;
-    HomebrewListButtonEventHandler *buttonCB;
-    paf::graphics::Texture *tex;
+
+    paf::ui::ImageButton *button;
+    paf::graphics::Surface *tex;
 };
 
 class LinkedList

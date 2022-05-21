@@ -6,4 +6,8 @@
     <string src="Emulators" id="emu_button_text" />
     <string src="Ports" id="port_button_text" />
     <string src="Games" id="games_button_text" />
+
+    <string src="SSL Error Occurred\n\nPlease Ensure You Have iTLS-Enso Installed" id="msg_error_ssl"/>
+    <string src="Network Connection Error" id="msg_error_net"/>
+    <string src="Ensure your device is connected to the internet and restart this application" id="msg_net_fix"/>
 </stringset>

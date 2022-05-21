@@ -1,12 +1,7 @@
-#ifndef BHBB_PAF_INTERNAL_HPP
-#define BHBB_PAF_INTERNAL_HPP
+#ifndef BHBB_PAF_H
+#define BHBB_PAF_H
 
-#include <paf.h>
-#include <libsysmodule.h>
-#include <ctrl.h>
-
-using namespace paf;
-using namespace ui;
+void initPlugin();
 
 typedef struct SceSysmoduleOpt {
 	int flags;
@@ -22,5 +17,6 @@ typedef struct ScePafInit {
 	int heap_opt_param1;
 	int heap_opt_param2;
 } ScePafInit; // size is 0x18
+
 
 #endif

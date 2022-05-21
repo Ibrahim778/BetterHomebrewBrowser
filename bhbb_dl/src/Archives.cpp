@@ -12,8 +12,7 @@ extern "C" {
 
 #include "Archives.hpp"
 #include "bhbb_dl.h"
-#define LIST_TYPE bhbbPacket
-#include "../../common/queue.cpp"
+#include "queue.hpp"
 #include "notifmgr.hpp"
 extern Queue queue;
 

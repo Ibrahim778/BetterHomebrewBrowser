@@ -1,24 +1,27 @@
+#include <kernel.h>
+#include <bgapputil.h>
+#include <audioout.h>
+#include <ShellAudio.h>
+#include <curl/curl.h>
+#include <paf.h>
+#include <power.h>
+#include <libsysmodule.h>
+#include <appmgr.h>
+
 #include "utils.hpp"
 #include "main.hpp"
-#include "pagemgr.hpp"
+#include "parser.hpp"
 #include "common.hpp"
 #include "network.hpp"
 #include "..\bhbb_dl\src\bhbb_dl.h"
-#include "eventhandler.hpp"
-#include <bgapputil.h>
 
 static CURL *curl = SCE_NULL;
 static SceInt32 currStok = 0;
 
-typedef struct {
-    Page *callingPage;
-    void *data;
-} CURLUserData;
-
 SceUInt32 Utils::GetHashById(const char *id)
 {
-    Resource::Element searchReq;
-    Resource::Element searchRes;
+    paf::Resource::Element searchReq;
+    paf::Resource::Element searchRes;
     
     searchReq.id = id;
     searchRes.hash = searchRes.GetHashById(&searchReq);
@@ -26,36 +29,26 @@ SceUInt32 Utils::GetHashById(const char *id)
     return searchRes.hash;
 }
 
-Resource::Element Utils::GetParamWithHash(SceUInt32 hash)
+paf::Resource::Element Utils::GetParamWithHash(SceUInt32 hash)
 {
-    Resource::Element search;
+    paf::Resource::Element search;
     search.hash = hash;
 
     return search;
 }
 
-Resource::Element Utils::GetParamWithHashFromId(const char *id)
+paf::Resource::Element Utils::GetParamWithHashFromId(const char *id)
 {
-    Resource::Element search;
+    paf::Resource::Element search;
 
     search.hash = Utils::GetHashById(id);
 
     return search;
 }
 
-Widget::Color Utils::makeSceColor(float r, float g, float b, float a)
+paf::ui::Widget * Utils::GetChildByHash(paf::ui::Widget *parent, SceUInt32 hash)
 {
-    Widget::Color col;
-    col.r = r;
-    col.g = g;
-    col.b = b;
-    col.a = a;
-    return col;
-}
-
-Widget * Utils::GetChildByHash(Widget *parent, SceUInt32 hash)
-{
-    Resource::Element search = GetParamWithHash(hash);
+    paf::Resource::Element search = GetParamWithHash(hash);
     return parent->GetChildByHash(&search, 0);
 }
 
@@ -70,85 +63,10 @@ bool Utils::isDirEmpty(const char *path)
     return r;
 }
 
-UtilJob::UtilJob(JobCB task, void *callingPage, UtilQueue *caller, const char *name):Item(name) 
-{ 
-    this->task = task; 
-    parentPage = callingPage; 
-    this->caller = caller;
-}
-
-SceVoid UtilJob::Run()
-{
-    if(task != NULL) task(parentPage); 
-}
-
-SceVoid UtilJob::JobKiller(thread::JobQueue::Item *job)
-{
-    if(job != NULL)
-        delete job;
-}
-
-SceVoid UtilJob::Finish()
-{
-    if(caller != NULL)
-        caller->num--;
-}
-
-SceBool UtilQueue::WaitingTasks()
-{
-    return num > 1 || End;
-}
-
-UtilQueue::UtilQueue(void *callingPage, const char *name):JobQueue(name)
-{
-    End = SCE_FALSE;
-    num = 0;
-    this->parentPage = callingPage;
-}
-
-UtilQueue::~UtilQueue()
-{
-    Finish();
-    Join();
-}
-
-SceVoid UtilQueue::AddTask(JobCB Task, const char *name)
-{
-    auto item = new UtilJob(Task, parentPage, this, name);
-
-    CleanupHandler *req = new CleanupHandler();
-    req->userData = item;
-    req->refCount = 0;
-    req->unk_08 = 1;
-    req->cb = (CleanupHandler::CleanupCallback)UtilJob::JobKiller;
-
-    ObjectWithCleanup itemParam;
-    itemParam.object = item;
-    itemParam.cleanup = req;
-
-    Enqueue(&itemParam);
-
-    num++;
-}
-
 int curlProgressCallback(void *userDat, double dltotal, double dlnow, double ultotal, double ulnow)
 {
-    if(userDat == NULL)
-    {
-        print("Error no userDat provided in curlProgressCallback()!\n");
-        return 1; //End
-    }
-
-    CURLUserData *data = (CURLUserData *)userDat;
-
     sceKernelPowerTick(SCE_KERNEL_POWER_TICK_DEFAULT);
 
-    if(data->callingPage->jobs->End)
-        return 1; //End
-
-    if(!data->callingPage->jobs->End && data->data != NULL)
-        ((ProgressBar *)data->data)->SetProgress(dlnow / dltotal * 100.0, 0, 0);
-    
     return 0; //Signal Continue
 }
 
@@ -160,15 +78,11 @@ size_t curlWriteCB(void *datPtr, size_t chunkSize, size_t chunkNum, void *userDa
         return 0;
     }
 
-    CURLUserData *data = (CURLUserData *)userDat;
 
-    if(data->callingPage->jobs->End)
-        return 0;
-
-    return sceIoWrite(*((int *)data->data), datPtr, chunkSize * chunkNum);
+    return sceIoWrite(*(int *)userDat, datPtr, chunkSize * chunkNum);
 }
 
-SceInt32 Utils::DownloadFile(const char *url, const char *dest, void *callingPage, ProgressBar *progressBar)
+SceInt32 Utils::DownloadFile(const char *url, const char *dest, void *callingPage, paf::ui::ProgressBar *progressBar)
 {
     if(curl == NULL) return -1;
 
@@ -177,21 +91,86 @@ SceInt32 Utils::DownloadFile(const char *url, const char *dest, void *callingPag
 
     curl_easy_setopt(curl, CURLOPT_URL, url);
 
-    CURLUserData progressData;
-    progressData.callingPage = (Page *)callingPage;
-    progressData.data = progressBar;
-
-    CURLUserData writeData;
-    writeData.callingPage = (Page *)callingPage;
-    writeData.data = &file;
-
-    curl_easy_setopt(curl, CURLOPT_PROGRESSDATA, &progressData);
-    curl_easy_setopt(curl, CURLOPT_WRITEDATA, &writeData);
+    curl_easy_setopt(curl, CURLOPT_WRITEDATA, &file);
     CURLcode ret = curl_easy_perform(curl);
 
     sceIoClose(file);
     if(ret != CURLE_OK) sceIoRemove(dest);
     return (int)ret;
+}
+
+SceVoid Utils::GetStringFromID(const char *id, paf::string *out)
+{
+    paf::Resource::Element e = Utils::GetParamWithHashFromId(id);
+    SceWChar16 *wstr = mainPlugin->GetString(&e);
+    paf::string::WCharToNewString((const wchar_t *)wstr, out);
+}
+
+SceVoid Utils::GetfStringFromID(const char *id, paf::string *out)
+{
+    paf::string *str = new paf::string;
+    Utils::GetStringFromID(id, str);
+
+    int slashNum = 0;
+    for(int i = 0; i < str->length + 1 && str->data[i] != '\0'; i++)
+        if(str->data[i] == '\\') slashNum++;
+
+    int buffSize = (str->length + 1) - slashNum;
+    char *buff = new char[buffSize];
+    sce_paf_memset(buff, 0, buffSize);
+
+    for(char *buffPtr = buff, *strPtr = str->data; *strPtr != '\0'; strPtr++, buffPtr++)
+    {
+        if(*strPtr == '\\')
+        {
+            switch(*(strPtr + sizeof(char)))
+            {
+                case 'n':
+                    *buffPtr = '\n';
+                    break;
+                case 'a':
+                    *buffPtr = '\a';
+                    break;
+                case 'b':
+                    *buffPtr = '\b';
+                    break;
+                case 'e':
+                    *buffPtr = '\e';
+                    break;
+                case 'f':
+                    *buffPtr = '\f';
+                    break;
+                case 'r':
+                    *buffPtr = '\r';
+                    break;
+                case 'v':
+                    *buffPtr = '\v';
+                    break;
+                case '\\':
+                    *buffPtr = '\\';
+                    break;
+                case '\'':
+                    *buffPtr = '\'';
+                    break;
+                case '\"':
+                    *buffPtr = '\"';
+                    break;
+                case '\?':
+                    *buffPtr = '\?';
+                    break;
+                case 't':
+                    *buffPtr = '\t';
+                    break;
+            }
+            strPtr++;
+        }
+        else *buffPtr = *strPtr;
+    }
+
+    *out = buff;
+
+    delete str;
+    delete[] buff;
 }
 
 SceBool Utils::TestTexture(const char *path)
@@ -216,16 +195,16 @@ SceBool Utils::TestTexture(const char *path)
     */
 }
 
-SceInt32 Utils::SetWidgetLabel(Widget *widget, const char *text)
+SceInt32 Utils::SetWidgetLabel(paf::ui::Widget *widget, const char *text)
 {
-    WString wstr;
-    WString::CharToNewWString(text, &wstr);    
+    paf::wstring wstr;
+    paf::wstring::CharToNewWString(text, &wstr);    
     return widget->SetLabel(&wstr);
 }
 
-SceInt32 Utils::SetWidgetLabel(Widget *widget, String *text)
+SceInt32 Utils::SetWidgetLabel(paf::ui::Widget *widget, paf::string *text)
 {
-    WString wstr;
+    paf::wstring wstr;
     text->ToWString(&wstr);
 
     return widget->SetLabel(&wstr);
@@ -290,10 +269,6 @@ void Utils::StartBGDL()
 
 void Utils::NetInit()
 {
-    netInit();
-    httpInit();
-    loadPsp2CompatModule();
-
     curl = curl_easy_init();
     
     if(curl != NULL)
@@ -311,6 +286,12 @@ void Utils::NetInit()
     }
 }
 
+void Utils::NetTerm()
+{
+    if(curl != NULL)
+        curl_easy_cleanup(curl);
+}
+
 void Utils::ToLowerCase(char *string)
 {
     //Convert to lowerCase
@@ -318,7 +299,7 @@ void Utils::ToLowerCase(char *string)
         if(string[i] > 64 && string[i] < 91) string[i] += 0x20;
 }
 
-bool Utils::StringContains(char *h, char *n)
+bool Utils::stringContains(char *h, char *n)
 {
     int needleLen = sce_paf_strlen(n);
     for(int currMatchLen = 0; *h != '\0'; h++)
@@ -331,7 +312,43 @@ bool Utils::StringContains(char *h, char *n)
     return false;
 }
 
-SceInt32 Utils::SetWidgetSize(Widget *widget, SceFloat x, SceFloat y, SceFloat z, SceFloat w)
+void Utils::InitMusic()
+{
+    SceInt32 ret = -1;
+
+    ret = sceMusicInternalAppInitialize(0);
+    if(ret < 0) LOG_ERROR("AUDIO_INIT", ret);
+
+    SceMusicOpt optParams;
+    sce_paf_memset(&optParams, 0, 0x10);
+
+    optParams.flag = -1;
+
+    ret = sceMusicInternalAppSetUri((char *)MUSIC_PATH, &optParams);
+    if(ret < 0) LOG_ERROR("CORE_OPEN", ret);
+
+    ret = sceMusicInternalAppSetVolume(SCE_AUDIO_VOLUME_0DB);
+    if(ret < 0) LOG_ERROR("SET_VOL", ret);
+
+    ret = sceMusicInternalAppSetRepeatMode(SCE_MUSIC_REPEAT_ONE);
+    if(ret < 0) LOG_ERROR("SET_REPEAT_MODE", ret);
+
+    ret = sceMusicInternalAppSetPlaybackCommand(SCE_MUSIC_EVENTID_DEFAULT, 0);
+    if(ret < 0) LOG_ERROR("SEND_EVENT_PLAY", ret);
+}
+
+void Utils::SetMemoryInfo()
+{
+    SceAppMgrBudgetInfo info;
+    sce_paf_memset(&info, 0, sizeof(SceAppMgrBudgetInfo));
+    info.size = sizeof(SceAppMgrBudgetInfo);
+
+    sceAppMgrGetBudgetInfo(&info);
+    if(info.budgetMain >= 0x2800000) loadFlags |= LOAD_FLAGS_ICONS;
+    if(info.budgetMain >= 0x3200000) loadFlags |= LOAD_FLAGS_SCREENSHOTS;
+}
+
+SceInt32 Utils::SetWidgetSize(paf::ui::Widget *widget, SceFloat x, SceFloat y, SceFloat z, SceFloat w)
 {
     SceFVector4 v;
     v.x = x;
@@ -342,7 +359,7 @@ SceInt32 Utils::SetWidgetSize(Widget *widget, SceFloat x, SceFloat y, SceFloat z
     return widget->SetSize(&v);
 }
 
-SceInt32 Utils::SetWidgetPosition(Widget *widget, SceFloat x, SceFloat y, SceFloat z, SceFloat w)
+SceInt32 Utils::SetWidgetPosition(paf::ui::Widget *widget, SceFloat x, SceFloat y, SceFloat z, SceFloat w)
 {
     SceFVector4 v;
     v.x = x;
@@ -353,9 +370,9 @@ SceInt32 Utils::SetWidgetPosition(Widget *widget, SceFloat x, SceFloat y, SceFlo
     return widget->SetPosition(&v);
 }
 
-SceInt32 Utils::SetWidgetColor(Widget *widget, SceFloat r, SceFloat g, SceFloat b, SceFloat a)
+SceInt32 Utils::SetWidgetColor(paf::ui::Widget *widget, SceFloat r, SceFloat g, SceFloat b, SceFloat a)
 {
-    Widget::Color col;
+    paf::ui::Widget::Color col;
     col.r = r;
     col.g = g;
     col.b = b;
@@ -364,70 +381,45 @@ SceInt32 Utils::SetWidgetColor(Widget *widget, SceFloat r, SceFloat g, SceFloat 
     return widget->SetColor(&col);
 }
 
-SceInt32 Utils::AssignButtonHandler(Widget *button, ECallback onPress, void *userDat, int id)
-{
-    if(button == NULL) return -1;
-    EventHandler *eh = new EventHandler();
-    eventcb callback;
-    callback.Callback = onPress;
-    callback.dat = userDat;
-
-    eh->pUserData = sce_paf_malloc(sizeof(callback));
-    if(eh->pUserData == NULL)
-    {
-        print("Error Allocating Memory for button userData");
-        new TextPage("Error Allocating Memory for button userData", "Assign Handler Error");
-        delete eh;
-        return;
-    }
-    sce_paf_memcpy(eh->pUserData, &callback, sizeof(callback));
-
-    return button->RegisterEventCallback(id, eh, 0);
-}
-
-SceBool Utils::CreateTextureFromFile(graphics::Texture *tex, const char *file)
+SceBool Utils::CreateTextureFromFile(paf::graphics::Surface **tex, const char *file)
 {
     if(tex == NULL) return SCE_FALSE;
 
-    ObjectWithCleanup openResult;
+    paf::shared_ptr<paf::LocalFile> openResult;
     SceInt32 err;
-    LocalFile::Open(&openResult, file, SCE_O_RDONLY, 0666, &err);
+    paf::LocalFile::Open(&openResult, file, SCE_O_RDONLY, 0666, &err);
 
     if(err < 0)
         return SCE_FALSE;
 
-    graphics::Texture::CreateFromFile(tex, mainPlugin->memoryPool, &openResult);
+    paf::graphics::Surface::CreateFromFile(tex, mainPlugin->memoryPool, &openResult);
 
-    openResult.cleanup->cb(openResult.object);
-    delete openResult.cleanup;
-
-    return tex->texSurface != NULL;
+    return *tex != NULL;
 }
 
-SceVoid Utils::DeleteTexture(graphics::Texture *tex, bool deletePointer)
+SceVoid Utils::DeleteTexture(paf::graphics::Surface **tex, bool deletePointer)
 {
-    if(tex == transparentTex) return;
     if(tex != NULL)
     {
-        if(tex->texSurface != NULL)
+        if(*tex == TransparentTex) return;
+        if(*tex != NULL)
         {
-            graphics::Surface *s = tex->texSurface;
-            tex->texSurface = SCE_NULL;
+            paf::graphics::Surface *s = *tex;
+            *tex = SCE_NULL;
             delete s;
         }
-        if(deletePointer)
-            delete tex;
+        
     }
 }
 
-SceVoid Utils::DeleteWidget(Widget *w)
+SceVoid Utils::DeleteWidget(paf::ui::Widget *w)
 {
-    common::Utils::WidgetStateTransition(0, w, Widget::Animation_Reset, SCE_TRUE, SCE_TRUE);
+    paf::common::Utils::WidgetStateTransition(0, w, paf::ui::Widget::Animation_Reset, SCE_TRUE, SCE_TRUE);
 }
 
 #ifdef _DEBUG
 
-SceVoid Utils::PrintAllChildren(Widget *widget, int offset)
+SceVoid Utils::PrintAllChildren(paf::ui::Widget *widget, int offset)
 {
     for (int i = 0; i < widget->childNum; i++)
     {

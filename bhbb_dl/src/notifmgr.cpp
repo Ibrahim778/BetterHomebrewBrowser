@@ -1,6 +1,9 @@
 #include "notifmgr.hpp"
 #include <notification_util.h>
 #include "main.hpp"
+#include "queue.hpp"
+
+extern Queue queue;
 
 bool NotifMgr::currDlCanceled = SCE_FALSE;
 wchar_t NotifMgr::currProgressNotifSubText[64] = {0};
@@ -32,10 +35,8 @@ void NotifMgr::UpdateProgressNotif(float val, const char *subText, const char *t
 
     if(subText != NULL)
         charToWchar((wchar_t *)p.subText, subText);
-    else SET_TEXT(p.subText, currProgressNotifSubText);
     if(text != NULL)
         charToWchar((wchar_t *)p.text, text);
-    else SET_TEXT(p.subText, currProgressNotifText);
 
     p.progress = val;
     sceNotificationUtilProgressUpdate(&p);

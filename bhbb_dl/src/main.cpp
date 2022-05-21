@@ -11,63 +11,9 @@
 #include "Archives.hpp"
 #include "notifmgr.hpp"
 #include "bhbb_dl.h"
-
-#define LIST_TYPE bhbbPacket
-#include "../../common/queue.cpp"
-
+#include "queue.hpp"
 #include "net.hpp"
 #include "promote.hpp"
-
-// Remaining functions that must be defined for ::Queue to work
-LIST_TYPE *Queue::Find(const char *name)
-{
-    qnode *n = head;
-    while(n != NULL)
-    {
-        if(sce_paf_strcmp(name, n->data.name) == 0) return &n->data;
-        n = n->next;
-    }
-    return NULL;
-}
-
-void Queue::remove(const char *url)
-{
-    //Check head isn't NULL
-    if (head == NULL)
-        return;
-
-    //First, handle the case where we free the head
-    if (sce_paf_strcmp(head->data.url, url) == 0)
-    {
-        qnode *nodeToDelete = head;
-        head = head->next;
-        free(nodeToDelete);
-        return;
-    }
-
-    //Bail out if the head is the only node
-    if (head->next == NULL)
-        return;
-
-    //Else, try to locate node we're asked to remove
-    qnode **pCurrentNodeNext = &head; //This points to the current node's `next` field (or to pHead)
-    while (1)
-    {
-        if (sce_paf_strcmp((*pCurrentNodeNext)->data.url, url) == 0) //pCurrentNodeNext points to the pointer that points to the node we need to delete
-            break;
-
-        //If the next node's next is NULL, we reached the end of the list. Bail out.
-        if ((*pCurrentNodeNext)->next == NULL)
-            return;
-
-        pCurrentNodeNext = &(*pCurrentNodeNext)->next;
-    }
-    qnode *nodeToDelete = *pCurrentNodeNext;
-    *pCurrentNodeNext = (*pCurrentNodeNext)->next;
-    free(nodeToDelete);
-
-    num --;
-}
 
 extern "C" {
 
@@ -116,6 +62,9 @@ SceUID dlThreadID = SCE_UID_INVALID_UID;
 
 int install(const char *file)
 {
+    print("Update Progress Notif...");
+    NotifMgr::UpdateProgressNotif(0, "Extracting", queue.head->data.name);
+    print("Done!\nDeleting old dirs...");
     sceIoRemove(EXTRACT_PATH);
     sceIoRemove("ux0:temp/new");
     sceIoRemove("ux0:appmeta/new");
@@ -127,6 +76,7 @@ int install(const char *file)
     sceIoRemove("ur0:temp/promote");
     sceIoRemove("ur0:temp/game");
 
+    print("Done!\nExtract Files...\n");
     Zip *zfile;
     char txt[64];
 	sce_paf_memset(txt, 0, sizeof(txt));
@@ -138,8 +88,9 @@ int install(const char *file)
     ZipExtract(zfile, NULL, EXTRACT_PATH);
     ZipClose(zfile);
 
+    print("Done!\nEnd notif....");
     NotifMgr::EndNotif(queue.head->data.name, "Promoting");
-    
+    print("Done!\nPromoting...");
     if(NotifMgr::currDlCanceled) goto END;
 
     int res = promoteApp(EXTRACT_PATH);
@@ -149,8 +100,9 @@ int install(const char *file)
 		sce_paf_snprintf(txt, 64, "Error 0x%X", res);
 
     NotifMgr::SendNotif(txt);
-
+    print("Done!\n");
 END:
+    print("Removing dirs...\n");
     sceIoRemove(EXTRACT_PATH);
     sceIoRemove(file);
 
@@ -163,7 +115,7 @@ END:
     sceIoRemove("ur0:appmeta/new");
     sceIoRemove("ur0:temp/promote");
     sceIoRemove("ur0:temp/game");
-
+    print("Done!\n");
     return 0;
 }
 
@@ -179,15 +131,18 @@ SceInt32 DownloadThread(SceSize args, void *argp)
             continue;
         }
         
+        print("Init NotifMgr...");
         NotifMgr::Init();
+        print("Done!\nMakeing Progress Notif...");
         NotifMgr::MakeProgressNotif(queue.head->data.name, "Installing", "Are you sure you want to cancel the install?");
-
+        print("Done!\ndlFile()....");
         int r = dlFile(queue.head->data.url, VPK_DOWNLOAD_PATH);
-
+        print("Done!\n");
         if(!NotifMgr::currDlCanceled && r == CURLE_OK)    
         {
-            NotifMgr::UpdateProgressNotif(0, "Extracting", queue.head->data.name);
+            print("Install...\n");
             install(VPK_DOWNLOAD_PATH);
+            print("Done!\n");
         }
         else
         {
@@ -308,6 +263,7 @@ int main()
                 break;
             }
         }
+        print("Successfully Received Packet!\n");
         sceKernelDelayThread(1000);
     }
 
