@@ -1,16 +1,19 @@
-#include "parser.hpp"
-#include "main.hpp"
 #include <stdio.h>
 #include <paf.h>
+#include <json.h>
+#include <libsysmodule.h>
+
+#include "parser.hpp"
 #include "csv.h"
 #include "common.hpp"
-#include <json.h>
+#include "main.hpp"
 #include "utils.hpp"
 
 using namespace sce;
 using namespace Json;
+using namespace parser;
 
-LinkedList list;
+HomebrewList list;
 
 #pragma region JsonClassses
 class JsonAllocator : public MemAllocator
@@ -89,26 +92,26 @@ public:
 
 #pragma endregion JsonClassses
 
-LinkedList::LinkedList()
+HomebrewList::HomebrewList()
 {
     head = NULL;
     tail = NULL;
     num = 0;
 }
 
-void LinkedList::PrintAll()
+void HomebrewList::PrintAll()
 {
 #ifdef _DEBUG
     node *current = head;
     while (current != NULL)
     {
-        print("%s, ", current->info.title.data);
+        print("%s\n", current->info.title.data);
         current = current->next;
     }
 #endif
 }
 
-void LinkedList::AddFromPointer(node *p)
+void HomebrewList::AddFromPointer(node *p)
 {
     node *tmp = new node;
     sce_paf_memset(tmp, 0, sizeof(tmp->info));
@@ -130,7 +133,7 @@ void LinkedList::AddFromPointer(node *p)
     num ++;
 }
 
-homeBrewInfo *LinkedList::AddNode()
+HomebrewList::homeBrewInfo *HomebrewList::AddNode()
 {
     node *tmp = new node;
     sce_paf_memset(&tmp->info, 0, sizeof(tmp->info));
@@ -151,7 +154,7 @@ homeBrewInfo *LinkedList::AddNode()
     return &tmp->info;
 }
 
-void LinkedList::Clear(bool deleteTex)
+void HomebrewList::Clear(bool deleteTex)
 {
     if(head == NULL) return;
 
@@ -168,7 +171,7 @@ void LinkedList::Clear(bool deleteTex)
     num = 0;
 }
 
-int LinkedList::GetNumByCategory(int cat)
+int HomebrewList::GetNumByCategory(int cat)
 {
     if(cat == -1) return num;
 
@@ -183,7 +186,7 @@ int LinkedList::GetNumByCategory(int cat)
     return i;
 }
 
-void LinkedList::CopyTo(LinkedList *list)
+void HomebrewList::CopyTo(HomebrewList *list)
 {
     if(list == NULL) return;
     node *n = head;
@@ -193,7 +196,7 @@ void LinkedList::CopyTo(LinkedList *list)
     }
 }
 
-node *LinkedList::GetByIndex(int n)
+HomebrewList::node *HomebrewList::GetByIndex(int n)
 {
     node *node = head;
 
@@ -203,7 +206,7 @@ node *LinkedList::GetByIndex(int n)
     return node;
 }
 
-node *LinkedList::GetByCategoryIndex(int n, int category)
+HomebrewList::node *HomebrewList::GetByCategoryIndex(int n, int category)
 {
     node *node = head;
 
@@ -218,7 +221,7 @@ node *LinkedList::GetByCategoryIndex(int n, int category)
     return node;
 }
 
-homeBrewInfo *LinkedList::Get(const char *id)
+HomebrewList::homeBrewInfo *HomebrewList::Get(const char *id)
 {
     node *curr = head;
     while (curr != NULL)
@@ -231,7 +234,7 @@ homeBrewInfo *LinkedList::Get(const char *id)
     return NULL;
 }
 
-node *LinkedList::Find(const char *name)
+HomebrewList::node *HomebrewList::Find(const char *name)
 {
     node *curr = head;
     int nLen = sce_paf_strlen(name);
@@ -246,7 +249,7 @@ node *LinkedList::Find(const char *name)
 }
 
 //Credit to CreepNT for this
-void LinkedList::RemoveNode(const char *tag)
+void HomebrewList::RemoveNode(const char *tag)
 {
     //Check head isn't NULL
     if (head == NULL)
@@ -287,11 +290,12 @@ void LinkedList::RemoveNode(const char *tag)
 
 #define SET_STRING(pafstring, jsonstring) { if(rootval[i][jsonstring] != NULL) { pafstring = rootval[i][jsonstring].getString().c_str(); } } 
  
-void parseJson(const char *path)
+/*
+void parser::ParseJson(const char *path)
 {
     list.Clear(true);
     JsonAllocator allocator;
-    InitParameter initParam((MemAllocator *)&allocator, 0, 512);
+    InitParameter initParam((MemAllocator *)&allocator, 0, 1024);
 
     Initializer initializer;
     initializer.initialize(&initParam);
@@ -300,13 +304,16 @@ void parseJson(const char *path)
     NullAccess na;
     rootval.setNullAccessCallBack(NullAccess::NullAccessCB, &na);
     int r = Parser::parse(rootval, path);
-    if(r < 0) return;
-
+    if(r < 0)
+    {
+        print("Parser::parse() -> 0x%X\n", r);
+        return;
+    }
     SceInt32 ItemNum = rootval.count();
     for(int i = 0; i < ItemNum; i++)
     {
         if(rootval[i] == NULL) return;
-        homeBrewInfo *info = list.AddNode();
+        HomebrewList::homeBrewInfo *info = list.AddNode();
 
         SET_STRING(info->titleID, "titleid");
         SET_STRING(info->id, "id");
@@ -326,64 +333,8 @@ void parseJson(const char *path)
         SET_STRING(info->version, "version");        
 
         if(rootval[i]["type"] != NULL)
-            info->type = (Category)sce_paf_strtoul(rootval[i]["type"].getString().c_str(), NULL, 10);
+            info->type = (HomebrewList::Category)sce_paf_strtoul(rootval[i]["type"].getString().c_str(), NULL, 10);
 
         SET_STRING(info->size, "size");
     }
-}
-
-void parseCSV(const char *path)
-{
-    list.Clear(true);
-
-    FILE *file = sce_paf_fopen(path, "rb");
-    if(file == NULL) return;
-
-    int done = 0;
-    int err;
-    while (done != 1)
-    {
-        char *line = fread_csv_line(file, 1024, &done, &err);
-        char **parsed = parse_csv(line);
-
-        if(parsed != NULL)
-        {
-            int dead = 0;
-            for (int i = 0; i < 17 && !dead; i++)
-            {
-                dead = parsed[i] == NULL;
-            }
-            
-            if(!dead && sce_paf_strncmp(parsed[14], "VPK", 3) == 0)
-            {
-                homeBrewInfo *info = list.AddNode();
-
-                info->id = parsed[0];
-
-                info->title = parsed[1];
-
-                info->title.ToWString(&info->wstrtitle);           
-                info->credits = parsed[2];
-                info->icon0 = parsed[3];
-                info->download_url = parsed[5];
-                info->options = parsed[13];
-                info->description = parsed[0];
-
-                //In CBPS DB titleID is used for id, so if any contradict _n is added, this is done to get just the id
-                char titleID[10] = {0};
-                sce_paf_strncpy(titleID, parsed[0], 10);
-
-                info->titleID = titleID;
-                info->icon0Local.Setf(CBPSDB_ICON_SAVE_PATH "/%s.png",  info->id.data);
-                info->version = "";
-            }
-        }
-
-        if(line != NULL)
-            free_csv_line(parsed);
-
-    }
-
-	sce_paf_fclose(file);
-}
- 
+}*/

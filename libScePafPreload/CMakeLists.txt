@@ -12,6 +12,8 @@ include_directories(
     ${CMAKE_SOURCE_DIR}
     ${VDSUITE_USER_INCLUDE_DIRECTORIES}
     ${VDSUITE_STANDARD_INCLUDE_DIRECTORIES}
+    $ENV{SCE_PSP2_SDK_DIR}/target/include
+    $ENV{SCE_PSP2_SDK_DIR}/target/include_common
 )
 
 add_link_options(
@@ -23,7 +25,7 @@ link_directories(
 )
 
 add_compile_options(
-
+    -D_SCE_TARGET_OS_PSP2
 )
 
 add_library(${PROJECT_NAME} SHARED

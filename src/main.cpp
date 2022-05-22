@@ -3,6 +3,8 @@
 #include <curl/curl.h>
 #include <paf.h>
 #include <shellsvc.h>
+#include <message_dialog.h>
+#include <libhttp.h>
 
 #include "main.hpp"
 #include "paf.hpp"
@@ -55,7 +57,7 @@ int loadFlags = 0;
 paf::ui::Widget *g_mainPage;
 paf::ui::Widget *g_errorPage;
 
-paf::thread::JobQueue *g_mainJobQueue = SCE_NULL;
+home::Page *g_homePage = SCE_NULL;
 
 int main()
 {
@@ -72,27 +74,29 @@ void OnNetworkReady()
 {
     if(Network::GetCurrentStatus() == Network::Online)
     {
-
+        g_homePage->Load();   
     }
     else 
     {
+        Utils::MsgDialog::MessagePopupFromID("msg_error_net");
+
         paf::string errorMsg;
         Utils::GetfStringFromID("msg_net_fix", &errorMsg);
 
         new text::Page(errorMsg.data);
 
         g_backButton->PlayAnimationReverse(0, paf::ui::Widget::Animation_Reset);
-
     }
 }
 
 void OnReady()
 {
+    sceShellUtilInitEvents(0);
+    
+    generic::Page::Init();
+    g_homePage = new home::Page();
+
+
     Network::Init();
-    Network::Check();
-
-    //new home::Page();
-
-
-
+    Network::Check(OnNetworkReady);
 }

@@ -7,6 +7,7 @@
 #include <power.h>
 #include <libsysmodule.h>
 #include <appmgr.h>
+#include <message_dialog.h>
 
 #include "utils.hpp"
 #include "main.hpp"
@@ -415,6 +416,89 @@ SceVoid Utils::DeleteTexture(paf::graphics::Surface **tex, bool deletePointer)
 SceVoid Utils::DeleteWidget(paf::ui::Widget *w)
 {
     paf::common::Utils::WidgetStateTransition(0, w, paf::ui::Widget::Animation_Reset, SCE_TRUE, SCE_TRUE);
+}
+
+void Utils::MsgDialog::MessagePopup(const char *message, SceMsgDialogButtonType buttonType)
+{
+    if(sceMsgDialogGetStatus() == SCE_COMMON_DIALOG_STATUS_RUNNING) return;
+
+    SceMsgDialogParam               msgParam;
+    SceMsgDialogUserMessageParam    userParam;
+
+    sceMsgDialogParamInit(&msgParam);
+    msgParam.mode = SCE_MSG_DIALOG_MODE_USER_MSG;
+    msgParam.userMsgParam = &userParam;
+
+    sce_paf_memset(&userParam, 0, sizeof(userParam));
+    msgParam.userMsgParam->msg = (const SceChar8 *)message;
+    msgParam.userMsgParam->buttonType = buttonType;
+    
+    sceMsgDialogInit(&msgParam);
+
+    while(sceMsgDialogGetStatus() != SCE_COMMON_DIALOG_STATUS_FINISHED)
+        paf::thread::Sleep(100);
+    
+    sceMsgDialogTerm();
+}
+
+void Utils::MsgDialog::MessagePopupFromID(const char *messageID, SceMsgDialogButtonType buttonType)
+{
+    if(sceMsgDialogGetStatus() == SCE_COMMON_DIALOG_STATUS_RUNNING) return;
+
+    SceMsgDialogParam               msgParam;
+    SceMsgDialogUserMessageParam    userParam;
+
+    sceMsgDialogParamInit(&msgParam);
+    msgParam.mode = SCE_MSG_DIALOG_MODE_USER_MSG;
+    msgParam.sysMsgParam = SCE_NULL;
+    
+    sce_paf_memset(&userParam, 0, sizeof(userParam));
+
+    msgParam.userMsgParam = &userParam;
+
+    paf::string message;
+    Utils::GetfStringFromID(messageID, &message);
+
+    msgParam.userMsgParam->msg = (const SceChar8 *)message.data;
+    msgParam.userMsgParam->buttonType = buttonType;
+    
+    sceMsgDialogInit(&msgParam);
+
+    while(sceMsgDialogGetStatus() != SCE_COMMON_DIALOG_STATUS_FINISHED)
+        paf::thread::Sleep(100);
+
+    
+    sceMsgDialogTerm();
+}
+
+void Utils::MsgDialog::SystemMessage(SceMsgDialogSystemMessageType type)
+{
+    if(sceMsgDialogGetStatus() == SCE_COMMON_DIALOG_STATUS_RUNNING) return;
+
+    SceMsgDialogParam                 msgParam;
+    SceMsgDialogSystemMessageParam    sysParam;
+
+    sceMsgDialogParamInit(&msgParam);
+    msgParam.mode = SCE_MSG_DIALOG_MODE_SYSTEM_MSG;
+    msgParam.sysMsgParam = &sysParam;
+
+    sce_paf_memset(&sysParam, 0, sizeof(sysParam));
+    sysParam.sysMsgType = type;
+    
+    sceMsgDialogInit(&msgParam);
+}
+
+void Utils::MsgDialog::EndMessage()
+{
+    while(sceMsgDialogGetStatus() != SCE_COMMON_DIALOG_STATUS_RUNNING)
+        paf::thread::Sleep(100);
+    
+    sceMsgDialogClose();
+
+    while(sceMsgDialogGetStatus() != SCE_COMMON_DIALOG_STATUS_FINISHED)
+        paf::thread::Sleep(100);
+    
+    sceMsgDialogTerm();
 }
 
 #ifdef _DEBUG

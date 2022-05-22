@@ -12,6 +12,7 @@
 #define strlen sce_paf_strlen
 #define memcpy sce_paf_memcpy
 #define strdup paf_strdup
+#define memset sce_paf_memset
 
 char *paf_strdup(const char *s);
 
@@ -23,6 +24,7 @@ char **parse_csv( const char *line );
 void free_csv_line( char **parsed );
 char **split_on_unescaped_newlines(const char *txt);
 char *fread_csv_line(FILE *fp, int max_line_size, int *done, int *err);
+char *getLine(const char *buffer);
 #ifdef __cplusplus
 }
 #endif

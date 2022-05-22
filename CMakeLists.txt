@@ -23,7 +23,7 @@ link_directories(
 )
 
 add_compile_options(
-    -D_SCE_TARGET_OS_PSP2=1 -Xdiag=0 -Xquit=2 -O3
+    -D_SCE_TARGET_OS_PSP2=1 -Xdiag=0 -Xquit=2 -Od
 )
 
 add_link_options(
@@ -43,6 +43,7 @@ add_executable(${PROJECT_NAME}
     src/split.c
     src/settingsmgr.cpp
     src/downloader.cpp
+    src/db.cpp
     src/pages/page.cpp
     src/pages/text_page.cpp
     src/pages/home_page.cpp
@@ -77,8 +78,6 @@ target_link_libraries(${PROJECT_NAME}
     SceJson_stub
     ShellAudio
     SceBgAppUtil_stub
-    taihenUnsafe_stub
-    taihen_stub
     ScePsp2Compat_stub_weak
     SceRtcUser_stub
     SceIpmi_stub

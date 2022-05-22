@@ -16,7 +16,7 @@ public:
 
     static SceVoid Init();
     static SceVoid Term();
-    static SceVoid Check(/*void (*OnReady)(void)*/);
+    static SceVoid Check(void (*OnReady)(void));
     static Status GetCurrentStatus();
 
     class CheckThread : public paf::thread::Thread
@@ -27,7 +27,7 @@ public:
     };
 private:
     static Status CurrentStatus;
-    //static void (*OnReady)(void);
+    static void (*OnReady)(void);
 };
 
 

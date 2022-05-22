@@ -153,3 +153,25 @@ char **parse_csv( const char *line ) {
     free( tmp );
     return buf;
 }
+
+int currentOffset = 0;
+char *getLine(const char *buffer)
+{
+    if(buffer[currentOffset] == 0)
+    {
+        currentOffset = 0;
+        return NULL;
+    }
+
+    char *beginning = &buffer[currentOffset];
+    char *newLineChar = sce_paf_strchr(beginning, '\n');
+
+    char *line = sce_paf_malloc((newLineChar - beginning) + 1);
+    sce_paf_memset(line, 0, (newLineChar - beginning) + 1);
+
+    sce_paf_strncpy(line, beginning, newLineChar - beginning);
+
+    currentOffset += newLineChar - beginning + 1;
+
+    return line;
+}

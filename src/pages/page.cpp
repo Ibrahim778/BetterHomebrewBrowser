@@ -1,8 +1,10 @@
+#include <kernel.h>
 #include <paf.h>
 
 #include "pages/page.hpp"
 #include "utils.hpp"
 #include "common.hpp"
+#include "main.hpp"
 
 generic::Page *generic::Page::currPage = SCE_NULL;
 paf::ui::Plane *generic::Page::templateRoot = SCE_NULL;

@@ -2,6 +2,7 @@
 #define BHBB_COMMON_H
 
 #include "parser.hpp"
+#include "pages/home_page.hpp"
 
 #define PLUGIN_NAME "bhbb_plugin"
 #define RESOURCE_PATH "app0:resource/bhbb_plugin.rco"
@@ -41,7 +42,7 @@
 
 #define MUSIC_PATH "pd0:data/systembgm/store.at9"
 
-extern LinkedList list;
+extern parser::HomebrewList list;
 
 extern paf::Plugin *mainPlugin;
 
@@ -51,6 +52,7 @@ extern paf::graphics::Surface *TransparentTex;
 extern int loadFlags;
 
 extern paf::ui::CornerButton *g_backButton;
+extern home::Page *g_homePage;
 
 static paf::ui::Widget *s_currentPage;
 

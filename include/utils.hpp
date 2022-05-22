@@ -2,6 +2,7 @@
 #define BHBB_UTILS_HPP
 
 #include <paf.h>
+#include <message_dialog.h>
 
 typedef SceVoid (*ThreadCB)(void *);
 
@@ -58,6 +59,14 @@ namespace Utils
 #ifdef _DEBUG
     SceVoid PrintAllChildren(paf::ui::Widget *widget, int offset = 0);
 #endif
+
+    namespace MsgDialog
+    {
+        void MessagePopup(const char *message, SceMsgDialogButtonType buttonType = SCE_MSG_DIALOG_BUTTON_TYPE_OK);
+        void MessagePopupFromID(const char *messageID,  SceMsgDialogButtonType buttonType = SCE_MSG_DIALOG_BUTTON_TYPE_OK);
+        void SystemMessage(SceMsgDialogSystemMessageType type);
+        void EndMessage();
+    };
 
 };
 #endif

@@ -23,7 +23,7 @@ static SceUID fios2ID = SCE_UID_INVALID_UID;
 
 static Network::CheckThread *checkThread = SCE_NULL;
 
-//void (*Network::OnReady)(void) = SCE_NULL;
+void (*Network::OnReady)(void) = SCE_NULL;
 Network::Status Network::CurrentStatus = Network::Status::Offline;
 
 void Network::Init()
@@ -45,14 +45,7 @@ void Network::Init()
 	sceHttpInit(HTTP_HEAP_SIZE);
 	sceSslInit(SSL_HEAP_SIZE);
 
-    /* PSP2Compat */
-    //PSp2Compat needs libc, curl needs compat
-	if (fios2ID <= 0)
-		fios2ID = sceKernelLoadStartModule(FIOS2_PATH, 0, NULL, 0, NULL, NULL);
-    if(cLibID <= 0)
-        cLibID = sceKernelLoadStartModule(LIBC_PATH, 0, NULL, 0, NULL, NULL);
-    if(moduleID <= 0)
-        moduleID = sceKernelLoadStartModule(MODULE_PATH, 0, NULL, 0, NULL, NULL);
+    
 }
 
 void Network::Term()
@@ -77,9 +70,10 @@ void Network::Term()
 		fios2ID = sceKernelStopUnloadModule(fios2ID, 0, NULL, 0, NULL, NULL) == SCE_OK ? SCE_UID_INVALID_UID : fios2ID;
 }
 
-void Network::Check(/*void (*onReady)(void)*/)
+void Network::Check(void (*onReady)(void))
 {
-    //Network::OnReady = onReady;
+    Network::OnReady = onReady;
+    
     if(checkThread != NULL)
     {
         if(checkThread->IsAlive())
@@ -91,7 +85,7 @@ void Network::Check(/*void (*onReady)(void)*/)
         delete checkThread;
         checkThread = NULL;
     }
-
+    
     checkThread = new CheckThread(SCE_KERNEL_DEFAULT_PRIORITY_USER, SCE_KERNEL_4KiB, "BHBB::NetworkCheckThread");
     checkThread->Start();
 }
@@ -108,25 +102,12 @@ Network::Status Network::GetCurrentStatus()
 
 SceVoid Network::CheckThread::EntryFunction()
 {
-	SceMsgDialogParam				msgParam;
-	SceMsgDialogSystemMessageParam	sysMsgParam;
-	SceMsgDialogUserMessageParam    userMsgParam;
-	SceCommonDialogStatus           status;
 	SceInt32                        ret = -1;
 
     paf::HttpFile                   testFile;
     paf::HttpFile::Param            testHttp;
 
     sceShellUtilLock(SCE_SHELL_UTIL_LOCK_TYPE_PS_BTN);
-
-    sceMsgDialogParamInit(&msgParam);
-    msgParam.mode = SCE_MSG_DIALOG_MODE_SYSTEM_MSG;
-
-    sce_paf_memset(&sysMsgParam, 0, sizeof(SceMsgDialogSystemMessageParam));
-	msgParam.sysMsgParam = &sysMsgParam;
-	msgParam.sysMsgParam->sysMsgType = SCE_MSG_DIALOG_SYSMSG_TYPE_WAIT_SMALL;
-
-    sceMsgDialogInit(&msgParam);
 
 	testHttp.SetUrl("https://www.google.com/index.html");
 	testHttp.SetOpt(10000000, paf::HttpFile::Param::SCE_PAF_HTTP_FILE_PARAM_RESOLVE_TIME_OUT);
@@ -138,56 +119,10 @@ SceVoid Network::CheckThread::EntryFunction()
     if (ret == SCE_OK)
 		testFile.Close();
 
-	status = sceMsgDialogGetStatus();
-
-	while (status != SCE_COMMON_DIALOG_STATUS_RUNNING) {
-		status = sceMsgDialogGetStatus();
-		paf::thread::Sleep(10);
-	}
-
-	sceMsgDialogClose();
-
-	while (status != SCE_COMMON_DIALOG_STATUS_FINISHED) {
-		status = sceMsgDialogGetStatus();
-		paf::thread::Sleep(10);
-	}
-
-    sceMsgDialogTerm();
-
-    if(ret != SCE_OK)
-    {
-        msgParam.mode = SCE_MSG_DIALOG_MODE_USER_MSG;
-        msgParam.sysMsgParam = SCE_NULL;
-
-        sce_paf_memset(&userMsgParam, 0, sizeof(SceMsgDialogUserMessageParam));
-        msgParam.userMsgParam = &userMsgParam;
-        msgParam.userMsgParam->buttonType = SCE_MSG_DIALOG_BUTTON_TYPE_OK;
-
-        paf::string str;
-		if (ret == SCE_HTTP_ERROR_SSL)
-            Utils::GetfStringFromID("msg_error_ssl", &str);
-		else
-            Utils::GetStringFromID("msg_error_net", &str);
-
-        msgParam.userMsgParam->msg = (SceChar8 *)str.data;
-
-		sceMsgDialogInit(&msgParam);
-
-		status = sceMsgDialogGetStatus();
-
-		while (status != SCE_COMMON_DIALOG_STATUS_FINISHED) 
-        {
-			status = sceMsgDialogGetStatus();
-			paf::thread::Sleep(100);
-		}
-
-		sceMsgDialogTerm();        
-    }
-
 	sceShellUtilUnlock(SCE_SHELL_UTIL_LOCK_TYPE_PS_BTN);
 
-    //if(Network::OnReady)
-    //    Network::OnReady();
+    if(Network::OnReady)
+        Network::OnReady();
 
     sceKernelExitDeleteThread(0);
 }
