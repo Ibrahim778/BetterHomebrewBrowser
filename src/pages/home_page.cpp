@@ -11,6 +11,7 @@
 #include "parser.hpp"
 #include "common.hpp"
 #include "db.hpp"
+#include "parser.hpp"
 
 home::Page::Page():generic::Page::Page("home_page_template")
 {
@@ -23,6 +24,12 @@ home::Page::Page():generic::Page::Page("home_page_template")
     opt.workerStackSize = SCE_KERNEL_16KiB;
     
     populateQueue = new paf::thread::JobQueue("BHBB::home::Page::populateQueue", &opt);
+}
+
+SceVoid home::Page::OnParse(parser::HomebrewList::homeBrewInfo *parsedInfo)
+{
+
+
 }
 
 SceVoid home::Page::Populate()
@@ -49,24 +56,34 @@ SceVoid home::Page::Load()
 
 SceVoid home::Page::PopulateJob::Run()
 {
+    db::info[db::Id::CBPSDB].Parse(callingPage->dbIndex.data);
+    
+    SceBool isMainThread = paf::thread::IsMainThread();
+    
+    for(int i = 0; i < 4; i++)
+        print("m_work[%d] = 0x%X\n", i, paf::thread::s_mainThreadMutex.m_work[i]);
+
+    if (!isMainThread)
+            paf::thread::s_mainThreadMutex.Lock();
+    
     paf::Plugin::TemplateInitParam tInit;
     paf::Resource::Element e;
     e.hash = Utils::GetHashById("homebrew_button");
 
     auto scrollBox = Utils::GetChildByHash(callingPage->root, Utils::GetHashById("list_scroll_box"));
 
-    db::info[db::Id::CBPSDB].Parse(callingPage->dbIndex.data); //This doesn't touch any widgets, it works OK
-    
     parser::HomebrewList::node *node = list.head;
     while(node != NULL)
     {
         mainPlugin->TemplateOpen(scrollBox, &e, &tInit);
+
         auto button = scrollBox->GetChildByNum(scrollBox->childNum - 1);
         button->SetLabel(&node->info.wstrtitle);
 
         node = node->next;
-        paf::thread::Sleep(10);
     }
+    if(!isMainThread)
+        paf::thread::s_mainThreadMutex.Unlock();
 }
 
 SceVoid home::Page::PopulateJob::Finish()

@@ -13,6 +13,7 @@ paf::Plugin *mainPlugin = SCE_NULL;
 paf::graphics::Surface *BrokenTex = SCE_NULL;
 paf::graphics::Surface *TransparentTex = SCE_NULL;
 
+paf::Framework *fw;
 
 void getDefaultWidgets()
 {
@@ -49,7 +50,7 @@ void initPlugin()
     if(loadFlags & LOAD_FLAGS_SCREENSHOTS) fwParam.defaultSurfacePoolSize += 5 * 1024 * 1024;
     fwParam.textSurfaceCacheSize = 2621440; //2.5MB
 
-    paf::Framework * fw = new paf::Framework(&fwParam);
+    fw = new paf::Framework(&fwParam);
 
     fw->LoadCommonResource();
 

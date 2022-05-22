@@ -2,6 +2,7 @@
 #define HOME_PAGE_HPP
 
 #include "page.hpp"
+#include "parser.hpp"
 
 namespace home
 {
@@ -13,6 +14,8 @@ namespace home
 
         SceVoid Load();
         SceVoid Populate();
+
+        SceVoid OnParse(parser::HomebrewList::homeBrewInfo *parsedInfo);
 
         paf::ui::ImageButton *AddOption(paf::wstring *title);
     
