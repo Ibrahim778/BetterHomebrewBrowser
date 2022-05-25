@@ -15,32 +15,76 @@
 	</pagetable>
 
 	<templatetable>
+        
+        <template fast_open="1" id="recent_button_template">
+            <plane_button style="plane_button_recent_style" id="test_plane">
+                <layout_hint size="240, 136" pos="100,-100"/>
+                <plane style="_common_default_style_plane" id="test_plane_icon">
+                    <layout_hint size="80,80" pos="0,0"/>
+                </plane>
+            </plane_button>
+        </template>
+        
+        <template fast_open="1" id="blank_page_template">
+            <plane style="_common_style_plane_transparent" id="page_root">
+                <layout_hint size="960, 544"/>
+            </plane>
+        </template>
+
         <template fast_open="1" id="home_page_template">
             <plane style="_common_style_plane_transparent" id="page_root">
                 <layout_hint size="960,544"/>
+
+                <plane style="_common_style_plane_transparent" id="plane_categories">
+                    <layout_hint align="0,2" anchor="0,2" size="960, 60"/>
+
+                    <button style="_common_default_style_button" sound="_common_sound_button_enter" id="search_button" texture="search_icon">
+                        <layout_hint size="58, 58" pos="451,1" />
+                    </button>
+
+                    <image_button style="category_button" sound="_common_sound_button_enter" id="all_button" label="all_button_text">
+                        <layout_hint size="179.8, 58" pos="-388.6,1" />
+                    </image_button>
+
+                    <image_button style="category_button" sound="_common_sound_button_enter" id="game_button" label="games_button_text">
+                        <layout_hint size="179.8, 58" pos="-208.8,1" />
+                    </image_button>
+
+                    <image_button style="category_button" sound="_common_sound_button_enter" id="emu_button" label="emu_button_text">
+                        <layout_hint size="179.8, 58" pos="-29,1" />
+                    </image_button>
+
+                    <image_button style="category_button" sound="_common_sound_button_enter" id="port_button" label="port_button_text">
+                        <layout_hint size="179.8, 58" pos="150.8,1" />
+                    </image_button>
+                
+                    <image_button style="category_button" sound="_common_sound_button_enter" id="util_button" label="util_button_text">
+                        <layout_hint size="179.8, 58" pos="330.6,1" />
+                    </image_button>
+                </plane>
+
                 <scroll_view style="_common_style_scroll_view_transparent" id="main_scroll_view">
-                    <layout_hint align="0, 1" anchor="0, 1" size="960, 544" pos="0, 0" />
+                    <layout_hint align="0, 1" anchor="0, 1" size="960, 544" pos="0, -60" />
                     <box id="main_scroll_box">
                         <layout_box anchor="0, 2" align="0,2" layout_type="1" bottom_margin="-272" top_margin="272" right_margin="0" left_margin="0" />
+                    </box>
+                </scroll_view>
+            </plane>
+        </template>
+
+        <template fast_open="1" id="home_page_list_template">
+            <plane style="_common_style_plane_transparent" id="list_plane">
+                    <layout_hint size="960, 484" pos="0, -60"/>
+                <scroll_view style="list_style_scroll_view" id="list_scroll_view">
+                    <layout_hint align="0, 1" anchor="0, 1" size="960, 484" pos="0, 0"/>
+                    <box id="list_scroll_box">
+                        <layout_box anchor="0, 2" align="0,2" layout_type="1" bottom_margin="-200" top_margin="212" right_margin="0" left_margin="0" />
                         <plane style="_common_style_plane_transparent" id="plane_top">
                             <layout_hint size="960, 136"/>
                             <scroll_view style="_common_style_scroll_view_transparent" id="recent_scroll_view">
                                 <layout_hint align="0,1" anchor="0,1" size="960, 136" pos="0, 0"/>
                                 <box id="recent_scroll_box">
                                     <layout_box anchor="1, 0" align="1,0" layout_type="2" bottom_margin="0" top_margin="0" right_margin="-240" left_margin="0" />
-                                </box>
-                            </scroll_view>
-                        </plane>
-                        <plane style="_common_style_plane_transparent" id="list_plane">
-                            <layout_hint size="960, 544"/>
-                            <plane style="_common_style_plane_transparent" id="plane_categories">
-                                <layout_hint align="0,2" anchor="0,2" size="960, 60"/>
-                            </plane>
-                            
-                            <scroll_view style="_common_style_scroll_view_transparent" id="list_scroll_view">
-                                <layout_hint align="0, 1" anchor="0, 1" size="960, 484" pos="0,-30"/>
-                                <box id="list_scroll_box">
-                                    <layout_box anchor="0, 2" align="0,2" layout_type="1" bottom_margin="-200" top_margin="240" right_margin="0" left_margin="0" />
                                 </box>
                             </scroll_view>
                         </plane>
@@ -60,8 +104,8 @@
 
         <template fast_open="1" id="homebrew_button">
             <image_button sound="_common_sound_image_button" style="list_button_style" enable_long_press_text_auto_scroll="1" id="list_button">
-            <layout_hint size="960, 80" adjust="0, 0" pos="0, 0" />
-                    <focus_hint focus_shape="3" focus_size="960, 80" />
+                <layout_hint size="960, 80" adjust="0, 0" pos="0, 0" />
+                <focus_hint focus_shape="3" focus_size="960, 80" />
             </image_button>
         </template>
 
@@ -80,7 +124,20 @@
         <style_text textobj="text_normal_obj" id="text_info_style">
 			<textobj font_size="35" bold="0" color="1, 1, 1, 1" word_wrap="1" align_x="1" align_y="1" ellipsis="1" id="text_normal_obj" />
 		</style_text>
-    
+        
+        <style_plane_button image_obj="obj1" glow_obj="obj2" id="plane_button_recent_style">
+            <planeobj color="0.50, 0.50, 0.50, 0.40" texture0="_common_texture_transparent" id="obj1" />
+            <planeobj texture0="_common_texture_icon_glow" blend="2" id="obj2" />
+        </style_plane_button>
+
+        <style_image_button glow_obj="button_glow" color="1, 1, 1, 1" layout_type_y="0" label_obj="button_label" bg_obj="button_bg" id="category_button">
+			<planeobj texture0="_common_texture_transparent" id="button_bg" />
+			<textobj line_space="4" font_size="28" bold="1" align_y="1" align_x="1" ellipsis="1" id="button_label" />
+			<planeobj texture0="_common_texture_list_glow_70px" blend="2" id="button_glow" />
+		</style_image_button>
+
+        <style_scroll_view color="0, 0, 0, 0" sound="_common_sound_scroll_view" id="list_style_scroll_view" sbar_v_margin="0, 35, 9" />	
+
 	</styletable>
 
     <stringtable>

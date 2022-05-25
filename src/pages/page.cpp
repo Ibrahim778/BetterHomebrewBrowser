@@ -20,6 +20,11 @@ generic::Page::Page(const char *pageName)
     paf::Resource::Element e;
 
     e.hash = Utils::GetHashById(pageName);
+    
+    SceBool isMainThread = paf::thread::IsMainThread();
+    if(!isMainThread)
+        paf::thread::s_mainThreadMutex.Lock();
+
     mainPlugin->TemplateOpen(templateRoot, &e, &tInit);
     root = (paf::ui::Plane *)templateRoot->GetChildByNum(templateRoot->childNum - 1);
 
@@ -44,6 +49,8 @@ generic::Page::Page(const char *pageName)
 	if (root->animationStatus & 0x80)
 		root->animationStatus &= ~0x80;
 
+    if(!isMainThread)
+        paf::thread::s_mainThreadMutex.Lock();
 }
 
 generic::Page::~Page()
@@ -64,12 +71,12 @@ generic::Page::~Page()
 	}
 	currPage = this->prev;
 
-     if (currPage->prev != SCE_NULL)
+    if (currPage != NULL && currPage->prev != SCE_NULL)
         g_backButton->PlayAnimation(0, paf::ui::Widget::Animation_Reset);
-     else g_backButton->PlayAnimationReverse(0, paf::ui::Widget::Animation_Reset);
+    else g_backButton->PlayAnimationReverse(0, paf::ui::Widget::Animation_Reset);
 }
 
-void generic::Page::Init()
+void generic::Page::Setup()
 {
     if(templateRoot) return; //Already Initialised
 

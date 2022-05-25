@@ -27,11 +27,7 @@ public:
 
 namespace Utils
 {
-    bool isDirEmpty(const char *path);
     void MakeDataDirs();
-    void NetInit();
-    void NetTerm();
-    void StartBGDL();
     int getStrtokNum(char splitter, char *str);
     char *strtok(char splitter, char *str);
     void ResetStrtok();
@@ -51,10 +47,13 @@ namespace Utils
     SceInt32 SetWidgetPosition(paf::ui::Widget *widget, SceFloat x, SceFloat y, SceFloat z = 0, SceFloat w = 0);
     SceInt32 SetWidgetSize(paf::ui::Widget *widget, SceFloat x, SceFloat y, SceFloat z = 0.0f, SceFloat w = 0.0f);
     SceInt32 SetWidgetColor(paf::ui::Widget *widget, SceFloat r, SceFloat g, SceFloat b, SceFloat a);
-    SceVoid DeleteTexture(paf::graphics::Surface **tex, bool DeletePointer = true);
+    SceVoid DeleteTexture(paf::graphics::Surface **tex);
     SceBool CreateTextureFromFile(paf::graphics::Surface **tex, const char *file);
     SceVoid DeleteWidget(paf::ui::Widget *widget);
     SceBool TestTexture(const char *path);
+    paf::ui::Widget *TemplateOpen(paf::ui::Widget *root, SceInt32 hash);
+    void ExtractZipFromMemory(uint8_t *buff, size_t bufferSize, const char *outDir, bool logProgress = false);
+
 
 #ifdef _DEBUG
     SceVoid PrintAllChildren(paf::ui::Widget *widget, int offset = 0);
@@ -62,10 +61,14 @@ namespace Utils
 
     namespace MsgDialog
     {
-        void MessagePopup(const char *message, SceMsgDialogButtonType buttonType = SCE_MSG_DIALOG_BUTTON_TYPE_OK);
-        void MessagePopupFromID(const char *messageID,  SceMsgDialogButtonType buttonType = SCE_MSG_DIALOG_BUTTON_TYPE_OK);
+        int MessagePopup(const char *message, SceMsgDialogButtonType buttonType = SCE_MSG_DIALOG_BUTTON_TYPE_OK);
+        int MessagePopupFromID(const char *messageID,  SceMsgDialogButtonType buttonType = SCE_MSG_DIALOG_BUTTON_TYPE_OK);
         void SystemMessage(SceMsgDialogSystemMessageType type);
         void EndMessage();
+
+        void InitProgress(const char *text);
+        void UpdateProgress(SceFloat value);
+        void SetProgressMsg(const char *text);
     };
 
 };

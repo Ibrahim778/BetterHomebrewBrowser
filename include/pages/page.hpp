@@ -12,7 +12,7 @@ namespace generic
     public:
     	paf::ui::Plane *root;
 
-        static void Init();
+        static void Setup();
 		static void DeleteCurrentPage();
         static void BackButtonEventHandler(SceInt32, paf::ui::Widget *, SceInt32, ScePVoid);
 		

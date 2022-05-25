@@ -1,13 +1,12 @@
 #include <kernel.h>
-#include <bgapputil.h>
 #include <audioout.h>
 #include <ShellAudio.h>
-#include <curl/curl.h>
 #include <paf.h>
 #include <power.h>
 #include <libsysmodule.h>
 #include <appmgr.h>
 #include <message_dialog.h>
+#include <libdeflt.h>
 
 #include "utils.hpp"
 #include "main.hpp"
@@ -16,7 +15,8 @@
 #include "network.hpp"
 #include "..\bhbb_dl\src\bhbb_dl.h"
 
-static CURL *curl = SCE_NULL;
+using namespace paf;
+
 static SceInt32 currStok = 0;
 
 SceUInt32 Utils::GetHashById(const char *id)
@@ -51,53 +51,6 @@ paf::ui::Widget * Utils::GetChildByHash(paf::ui::Widget *parent, SceUInt32 hash)
 {
     paf::Resource::Element search = GetParamWithHash(hash);
     return parent->GetChildByHash(&search, 0);
-}
-
-bool Utils::isDirEmpty(const char *path)
-{
-    SceUID f = sceIoDopen(path);
-    if(f < 0) return false;
-    SceIoDirent d;
-    bool r = sceIoDread(f, &d) < 0;
-    sceIoDclose(f);
-
-    return r;
-}
-
-int curlProgressCallback(void *userDat, double dltotal, double dlnow, double ultotal, double ulnow)
-{
-    sceKernelPowerTick(SCE_KERNEL_POWER_TICK_DEFAULT);
-
-    return 0; //Signal Continue
-}
-
-size_t curlWriteCB(void *datPtr, size_t chunkSize, size_t chunkNum, void *userDat)
-{
-    if(userDat == NULL)
-    {
-        print("Error no userDat provided in curlWriteCB()!\n");
-        return 0;
-    }
-
-
-    return sceIoWrite(*(int *)userDat, datPtr, chunkSize * chunkNum);
-}
-
-SceInt32 Utils::DownloadFile(const char *url, const char *dest, void *callingPage, paf::ui::ProgressBar *progressBar)
-{
-    if(curl == NULL) return -1;
-
-    SceUID file = sceIoOpen(dest, SCE_O_WRONLY | SCE_O_CREAT | SCE_O_TRUNC, 0666);
-    if(file < 0) return file;
-
-    curl_easy_setopt(curl, CURLOPT_URL, url);
-
-    curl_easy_setopt(curl, CURLOPT_WRITEDATA, &file);
-    CURLcode ret = curl_easy_perform(curl);
-
-    sceIoClose(file);
-    if(ret != CURLE_OK) sceIoRemove(dest);
-    return (int)ret;
 }
 
 SceVoid Utils::GetStringFromID(const char *id, paf::string *out)
@@ -259,40 +212,6 @@ void Utils::MakeDataDirs()
     
 }
 
-void Utils::StartBGDL()
-{
-    SceUID pipe = sceKernelOpenMsgPipe(BHBB_DL_PIPE_NAME);
-    if(pipe > 0) return;
-
-    sceSysmoduleLoadModule(SCE_SYSMODULE_BG_APP_UTIL);
-    sceBgAppUtilStartBgApp(0);
-}
-
-void Utils::NetInit()
-{
-    curl = curl_easy_init();
-    
-    if(curl != NULL)
-    {
-        curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, 0L);
-        curl_easy_setopt(curl, CURLOPT_HTTPGET, 1L);
-        curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1L);
-        curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 0L);
-        curl_easy_setopt(curl, CURLOPT_USERAGENT, USER_AGENT);
-        curl_easy_setopt(curl, CURLOPT_SSLVERSION, CURL_SSLVERSION_TLSv1_2);
-        curl_easy_setopt(curl, CURLOPT_USE_SSL, CURLUSESSL_ALL);
-        curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, curlWriteCB);
-        curl_easy_setopt(curl, CURLOPT_PROGRESSFUNCTION, curlProgressCallback);
-        curl_easy_setopt(curl, CURLOPT_NOPROGRESS, 0);
-    }
-}
-
-void Utils::NetTerm()
-{
-    if(curl != NULL)
-        curl_easy_cleanup(curl);
-}
-
 void Utils::ToLowerCase(char *string)
 {
     //Convert to lowerCase
@@ -391,14 +310,19 @@ SceBool Utils::CreateTextureFromFile(paf::graphics::Surface **tex, const char *f
     paf::LocalFile::Open(&openResult, file, SCE_O_RDONLY, 0666, &err);
 
     if(err < 0)
+    {
+        print("Utils::CreateTextureFromFile() -> 0x%X\n", err);
         return SCE_FALSE;
+    }
+    
 
     paf::graphics::Surface::CreateFromFile(tex, mainPlugin->memoryPool, &openResult);
 
+    if(*tex == NULL) print("Utils::CreateTexureFromFile() Create texture failed!\n");
     return *tex != NULL;
 }
 
-SceVoid Utils::DeleteTexture(paf::graphics::Surface **tex, bool deletePointer)
+SceVoid Utils::DeleteTexture(paf::graphics::Surface **tex)
 {
     if(tex != NULL)
     {
@@ -418,12 +342,13 @@ SceVoid Utils::DeleteWidget(paf::ui::Widget *w)
     paf::common::Utils::WidgetStateTransition(0, w, paf::ui::Widget::Animation_Reset, SCE_TRUE, SCE_TRUE);
 }
 
-void Utils::MsgDialog::MessagePopup(const char *message, SceMsgDialogButtonType buttonType)
+int Utils::MsgDialog::MessagePopup(const char *message, SceMsgDialogButtonType buttonType)
 {
     if(sceMsgDialogGetStatus() == SCE_COMMON_DIALOG_STATUS_RUNNING) return;
 
     SceMsgDialogParam               msgParam;
     SceMsgDialogUserMessageParam    userParam;
+    SceMsgDialogResult              result;
 
     sceMsgDialogParamInit(&msgParam);
     msgParam.mode = SCE_MSG_DIALOG_MODE_USER_MSG;
@@ -437,16 +362,21 @@ void Utils::MsgDialog::MessagePopup(const char *message, SceMsgDialogButtonType 
 
     while(sceMsgDialogGetStatus() != SCE_COMMON_DIALOG_STATUS_FINISHED)
         paf::thread::Sleep(100);
-    
+
+    sce_paf_memset(&result, 0, sizeof(result));
+    sceMsgDialogGetResult(&result);
     sceMsgDialogTerm();
+
+    return result.buttonId;
 }
 
-void Utils::MsgDialog::MessagePopupFromID(const char *messageID, SceMsgDialogButtonType buttonType)
+int Utils::MsgDialog::MessagePopupFromID(const char *messageID, SceMsgDialogButtonType buttonType)
 {
     if(sceMsgDialogGetStatus() == SCE_COMMON_DIALOG_STATUS_RUNNING) return;
 
     SceMsgDialogParam               msgParam;
     SceMsgDialogUserMessageParam    userParam;
+    SceMsgDialogResult           result;
 
     sceMsgDialogParamInit(&msgParam);
     msgParam.mode = SCE_MSG_DIALOG_MODE_USER_MSG;
@@ -467,8 +397,11 @@ void Utils::MsgDialog::MessagePopupFromID(const char *messageID, SceMsgDialogBut
     while(sceMsgDialogGetStatus() != SCE_COMMON_DIALOG_STATUS_FINISHED)
         paf::thread::Sleep(100);
 
-    
+    sce_paf_memset(&result, 0, sizeof(result));
+    sceMsgDialogGetResult(&result);
     sceMsgDialogTerm();
+
+    return result.buttonId;
 }
 
 void Utils::MsgDialog::SystemMessage(SceMsgDialogSystemMessageType type)
@@ -499,6 +432,160 @@ void Utils::MsgDialog::EndMessage()
         paf::thread::Sleep(100);
     
     sceMsgDialogTerm();
+}
+
+void Utils::MsgDialog::InitProgress(const char *text)
+{
+    if(sceMsgDialogGetStatus() == SCE_COMMON_DIALOG_STATUS_RUNNING) return;
+
+    SceMsgDialogParam               msgParam;
+    SceMsgDialogProgressBarParam    progParam;
+
+    sceMsgDialogParamInit(&msgParam);
+    msgParam.mode = SCE_MSG_DIALOG_MODE_PROGRESS_BAR;
+    msgParam.progBarParam = &progParam;
+
+    sce_paf_memset(&progParam, 0, sizeof(progParam));
+    msgParam.progBarParam->msg = (const SceChar8 *)text;
+    msgParam.progBarParam->barType = SCE_MSG_DIALOG_PROGRESSBAR_TYPE_PERCENTAGE;
+
+    sceMsgDialogInit(&msgParam);
+
+    sceMsgDialogTerm();
+}
+
+void Utils::MsgDialog::UpdateProgress(float progress)
+{
+    if(sceMsgDialogGetStatus() != SCE_COMMON_DIALOG_STATUS_RUNNING) return;
+    
+    sceMsgDialogProgressBarSetValue(SCE_MSG_DIALOG_PROGRESSBAR_TARGET_BAR_DEFAULT, progress);
+}
+
+void Utils::MsgDialog::SetProgressMsg(const char *txt)
+{
+    sceMsgDialogProgressBarSetMsg(SCE_MSG_DIALOG_PROGRESSBAR_TARGET_BAR_DEFAULT, (const SceChar8 *)txt);
+}
+
+paf::ui::Widget *Utils::TemplateOpen(paf::ui::Widget *root, SceInt32 hash)
+{
+    paf::Resource::Element e;
+    paf::Plugin::TemplateInitParam tInit;
+
+    e.hash = hash;
+
+    SceBool isMainThread = paf::thread::IsMainThread();
+
+    if (!isMainThread)
+            paf::thread::s_mainThreadMutex.Lock();
+
+    mainPlugin->TemplateOpen(root, &e, &tInit);
+    if(!isMainThread)
+        paf::thread::s_mainThreadMutex.Unlock();
+
+    return root->GetChildByNum(root->childNum - 1);
+}
+
+void Utils::ExtractZipFromMemory(uint8_t *buff, size_t archiveSize, const char *outDir, bool logProgress)
+{   
+    if(!io::Misc::Exists(outDir)) io::Misc::CreateRecursive(outDir, 0666);
+
+    const uint8_t *pCurrIn = buff, *pZipEnd = buff + archiveSize;
+
+    int totalCount = 0;
+    
+    void *pData;
+    while(sceZipGetInfo(pCurrIn, NULL, NULL, &pData) == SCE_OK)
+    {
+        totalCount++;
+        pCurrIn = (const uint8_t *)((uintptr_t)pData + ((SceZipHeaderPK0304 *)pCurrIn)->compsize);
+    }
+
+    pCurrIn = buff;
+    pZipEnd = buff + archiveSize;
+    int processedEntries = 0;
+    while(pCurrIn < pZipEnd)
+    {
+        const void *pData;
+        char *fileName = SCE_NULL; //File names in headers aren't null terminated, we will extract and terminate it later
+
+        unsigned int crc;
+
+        SceInt32 res = SCE_OK;
+
+        SceZipHeaderPK0304 *header = (SceZipHeaderPK0304 *)pCurrIn;
+        
+        res = sceZipGetInfo(pCurrIn, NULL, &crc, &pData);
+        if(res < 0)
+        {
+            print("Error sceZipGetInfo() -> 0x%X\n", res);
+            break;
+        }
+
+        fileName = new char[header->fnamelen + 1];
+
+        sce_paf_strncpy(fileName, header->filename, header->fnamelen);
+        fileName[header->fnamelen] = 0;
+
+        string outPath;
+        outPath = outDir;
+        outPath += "/";
+        outPath += fileName;
+
+        delete[] fileName;
+
+        if(header->cm == 0) //Not compressed
+        {
+            io::File *file = new io::File();
+            SceInt32 res = file->Open(outPath.data, SCE_O_WRONLY | SCE_O_CREAT | SCE_O_TRUNC, 0666);
+            if(res == SCE_OK)
+            {
+                int bytesWritten = file->Write((void *)pData, header->uncompsize);
+                if(bytesWritten < 0)
+                    print("Only wrote %d bytes out of %d!\n", bytesWritten, header->uncompsize);
+                file->Close();
+            }
+            else print("Unable to open file %s for writing! (0x%X)\n", outPath.data, res);
+            delete file;
+        }
+        else if(header->cm == 8) //Compressed
+        {
+            char *outBuff = new char[header->uncompsize];
+            sce_paf_memset(outBuff, 0, header->uncompsize);
+
+            res = sceDeflateDecompress(outBuff, header->uncompsize, pData, NULL);
+            
+            if(res < 0)
+                print("sceDeflateDecompress() -> 0x%X\n", res);
+            else if (res != header->uncompsize)
+                print("Only %d out of %d bytes were extracted!\n", res, header->uncompsize);
+            else if(crc == sceGzipCrc32(0, (const unsigned char *)outBuff, res)) //Extraction successful
+            {
+                io::File *file = new io::File();
+
+                SceInt32 res = file->Open(outPath.data, SCE_O_WRONLY | SCE_O_CREAT | SCE_O_TRUNC, 0666);
+                if(res == SCE_OK)
+                {
+                    int bytesWritten = file->Write(outBuff, header->uncompsize);
+                    if(bytesWritten != header->uncompsize)
+                        print("Only able to write %d out of %d bytes!\n", bytesWritten);
+                    file->Close();
+                }
+                else print("Unable to open file %s for writing! (0x%X)\n", outPath.data, res);
+                delete file;
+            }
+
+            delete[] outBuff;
+        }
+        else 
+            print("Cannot extract (%s)\n", fileName);
+
+        print("Extractor: %s\n", outPath.data);
+
+        pCurrIn = (const uint8_t *)((uintptr_t)pData + header->compsize);
+        processedEntries ++;
+
+        if(logProgress) Utils::MsgDialog::UpdateProgress(((float)processedEntries / (float)totalCount) * 100.0f);
+    }
 }
 
 #ifdef _DEBUG

@@ -52,6 +52,8 @@ extern "C" {
     }
 }
 
+using namespace paf;
+
 int loadFlags = 0;
 
 paf::ui::Widget *g_mainPage;
@@ -74,7 +76,8 @@ void OnNetworkReady()
 {
     if(Network::GetCurrentStatus() == Network::Online)
     {
-        g_homePage->Load();   
+        g_homePage->Load();
+        g_homePage->Load();
     }
     else 
     {
@@ -93,9 +96,8 @@ void OnReady()
 {
     sceShellUtilInitEvents(0);
     
-    generic::Page::Init();
+    generic::Page::Setup();
     g_homePage = new home::Page();
-
 
     Network::Init();
     Network::Check(OnNetworkReady);

@@ -14,10 +14,7 @@ namespace home
 
         SceVoid Load();
         SceVoid Populate();
-
-        SceVoid OnParse(parser::HomebrewList::homeBrewInfo *parsedInfo);
-
-        paf::ui::ImageButton *AddOption(paf::wstring *title);
+        SceVoid LoadIcons();
     
         class LoadThread : public paf::thread::Thread
         {
@@ -47,10 +44,22 @@ namespace home
             Page *callingPage;
         };
 
+        class IconLoadThread : public paf::thread::Thread
+        {
+        public:
+            paf::thread::Thread::Thread;
+
+            SceVoid EntryFunction();
+        };
+
     private:
         paf::string dbIndex;
         home::Page::LoadThread *loadThread;
+
         paf::thread::JobQueue *populateQueue;
+        home::Page::IconLoadThread *iconLoadThread;
+
+        paf::ui::BusyIndicator *busyIndicator;
     };
 }
 

@@ -9,12 +9,7 @@ using namespace db;
 
 void vitadb::Parse(const char *json)
 {
-
-}
-
-void vitadb::GetScreenshotURL(int id, char *out, int outSize)
-{
-
+    
 }
 
 void cbpsdb::Parse(const char *csv)
@@ -44,13 +39,16 @@ void cbpsdb::Parse(const char *csv)
 
                 info->title.ToWString(&info->wstrtitle);           
                 info->credits = parsed[2];
-                info->icon0 = parsed[3];
+                if(parsed[3][0] == 'h')
+                    info->icon0 = parsed[3];
+                else info->icon0.Clear();
                 info->download_url = parsed[5];
                 info->options = parsed[13];
                 info->description = parsed[0];
 
                 //In CBPS DB titleID is used for id, so if any contradict _n is added, this is done to get just the id
-                char titleID[10] = {0};
+                char titleID[10];
+                sce_paf_memset(titleID, 0, sizeof(titleID));
                 sce_paf_strncpy(titleID, parsed[0], 10);
 
                 info->titleID = titleID;

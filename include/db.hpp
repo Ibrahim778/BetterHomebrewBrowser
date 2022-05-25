@@ -8,7 +8,6 @@ namespace db
     namespace vitadb
     {
         void Parse(const char *json);
-        void GetScreenshotURL(int id,  char *out, int maxBuffSize);
     };
 
     namespace cbpsdb
@@ -25,7 +24,7 @@ namespace db
     typedef struct
     {
         void (*Parse)(const char *data);
-        void (*GetScreenshotURL)(void *id,  char *out, int maxBuffSize);
+        void (*GetScreenshotURL)(parser::HomebrewList::node *node, paf::string *out);
         const char *name;
         const char *iconFolderPath;
         const char *iconsURL;
@@ -38,7 +37,6 @@ namespace db
     {
         {   //Vita DB
             .Parse = vitadb::Parse, 
-            .GetScreenshotURL = (void (*)(void *, char *, int))vitadb::GetScreenshotURL,
             .name = "Vita DB", 
             .iconFolderPath = "ux0:/data/betterHomebrewBrowser/icons/vitadb", 
             .iconsURL = "https://bhbb-wrapper.herokuapp.com/icon_zip", 

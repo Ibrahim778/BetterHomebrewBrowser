@@ -39,7 +39,6 @@ add_executable(${PROJECT_NAME}
     src/network.cpp
     src/parser.cpp
     src/csv.c
-    src/fread_csv_line.c
     src/split.c
     src/settingsmgr.cpp
     src/downloader.cpp
@@ -52,20 +51,15 @@ add_executable(${PROJECT_NAME}
 target_link_libraries(${PROJECT_NAME}
     SceLibKernel_stub
     SceThreadmgr_stub
-	SceIofilemgr_stub
 	SceProcessmgr_stub
-	ScePower_stub
-    SceDbg_stub
+	SceDbg_stub
     SceAppMgrUser_stub
-    SceAppMgr_stub
-    SceVshBridge_stub
     SceHttp_stub
     SceNet_stub
     SceNetCtl_stub
     SceSsl_stub
     SceSysmodule_stub
     SceAppUtil_stub
-    SceDisplay_stub
     SceShellSvc_stub
 	ScePafStdc_stub
     ScePafThread_stub
@@ -73,16 +67,14 @@ target_link_libraries(${PROJECT_NAME}
     ScePafWidget_stub
     ScePafCommon_stub
     ScePafGraphics_stub
-    ScePafMisc_stub
     ScePafResource_stub
-    SceJson_stub
+    ScePafMisc_stub
     ShellAudio
-    SceBgAppUtil_stub
-    ScePsp2Compat_stub_weak
     SceRtcUser_stub
     SceIpmi_stub
     SceShellUtil_stub
     SceCommonDialog_stub
+    SceDeflt
 )
 
 
