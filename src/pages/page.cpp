@@ -10,6 +10,11 @@ generic::Page *generic::Page::currPage = SCE_NULL;
 paf::ui::Plane *generic::Page::templateRoot = SCE_NULL;
 
 paf::ui::CornerButton *g_backButton;
+paf::ui::CornerButton *g_forwardButton;
+paf::ui::BusyIndicator *g_busyIndicator;
+
+generic::Page::BackButtonEventCallback generic::Page::backCallback;
+void *generic::Page::backData;
 
 generic::Page::Page(const char *pageName)
 {
@@ -35,6 +40,7 @@ generic::Page::Page(const char *pageName)
 			prev->root->animationStatus &= ~0x80;
 
 		g_backButton->PlayAnimation(0, paf::ui::Widget::Animation_Reset);
+        Page::SetBackButtonEvent(NULL, NULL);
 
 		if (currPage->prev->prev != SCE_NULL)
 		{
@@ -45,12 +51,24 @@ generic::Page::Page(const char *pageName)
 	}
 	else g_backButton->PlayAnimationReverse(0, paf::ui::Widget::Animation_Reset);
 	
+    g_forwardButton->PlayAnimationReverse(0, paf::ui::Widget::Animation_Reset);
+
     root->PlayAnimation(-50000, paf::ui::Widget::Animation_3D_SlideFromFront);
 	if (root->animationStatus & 0x80)
 		root->animationStatus &= ~0x80;
 
     if(!isMainThread)
         paf::thread::s_mainThreadMutex.Lock();
+}
+
+SceVoid generic::Page::OnRedisplay()
+{
+
+}
+
+SceVoid generic::Page::OnDelete()
+{
+
 }
 
 generic::Page::~Page()
@@ -74,6 +92,8 @@ generic::Page::~Page()
     if (currPage != NULL && currPage->prev != SCE_NULL)
         g_backButton->PlayAnimation(0, paf::ui::Widget::Animation_Reset);
     else g_backButton->PlayAnimationReverse(0, paf::ui::Widget::Animation_Reset);
+
+    if(currPage != SCE_NULL) currPage->OnRedisplay(); 
 }
 
 void generic::Page::Setup()
@@ -94,16 +114,36 @@ void generic::Page::Setup()
     e.hash = Utils::GetHashById("back_button");
     g_backButton = (paf::ui::CornerButton *)page->GetChildByHash(&e, 0);
 
+    backCallback = NULL;
+    backData = NULL;
+
     g_backButton->PlayAnimationReverse(0, paf::ui::Widget::Animation::Animation_Reset);
 
     paf::ui::Widget::EventCallback *backButtonEventCallback = new paf::ui::Widget::EventCallback();
     backButtonEventCallback->eventHandler = generic::Page::BackButtonEventHandler;
     g_backButton->RegisterEventCallback(paf::ui::Widget::EventMain_Decide, backButtonEventCallback, 0);
+
+    e.hash = Utils::GetHashById("main_busy");
+    g_busyIndicator = (paf::ui::BusyIndicator *)page->GetChildByHash(&e, 0);
+    g_busyIndicator->Stop();
+
+    e.hash = Utils::GetHashById("forward_button");
+    g_forwardButton = (paf::ui::CornerButton *)page->GetChildByHash(&e, 0);
+    g_forwardButton->PlayAnimationReverse(0, paf::ui::Widget::Animation_Reset);
+}
+
+void generic::Page::SetBackButtonEvent(BackButtonEventCallback callback, void *data)
+{
+    backCallback = callback;
+    backData = data;
 }
 
 void generic::Page::BackButtonEventHandler(SceInt32, paf::ui::Widget *, SceInt32, ScePVoid)
 {
-    generic::Page::DeleteCurrentPage();
+    if(backCallback)
+        backCallback(backData);
+    else    
+        generic::Page::DeleteCurrentPage();
 }
 
 void generic::Page::DeleteCurrentPage()

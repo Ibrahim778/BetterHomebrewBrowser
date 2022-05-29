@@ -40,12 +40,13 @@ add_executable(${PROJECT_NAME}
     src/parser.cpp
     src/csv.c
     src/split.c
-    src/settingsmgr.cpp
+    src/settings.cpp
     src/downloader.cpp
     src/db.cpp
     src/pages/page.cpp
     src/pages/text_page.cpp
     src/pages/home_page.cpp
+    src/json.cpp
 )
 
 target_link_libraries(${PROJECT_NAME}
@@ -75,6 +76,9 @@ target_link_libraries(${PROJECT_NAME}
     SceShellUtil_stub
     SceCommonDialog_stub
     SceDeflt
+    SceAppSettings_stub
+    SceAppSettings2_stub
+    SceJson_stub
 )
 
 
@@ -87,7 +91,7 @@ VDSuitePackage(${PROJECT_NAME}.vpk
     ${CMAKE_BINARY_DIR}/${PROJECT_NAME}.sfo sce_sys/param.sfo
     resource/bhbb_plugin.rco resource/bhbb_plugin.rco
     resource/rco/src/texture/bg.png sce_sys/pic0.png
-    resource/settings.xml resource/settings.xml
+    resource/bhbb_settings.xml resource/bhbb_settings.xml
     ${CMAKE_BINARY_DIR}/libScePafPreload/libScePafPreload.suprx module/libScePafPreload.suprx
     ${CMAKE_BINARY_DIR}/bhbb_dl/bhbb_dl.sfo sce_sys/param2.sfo
     ${CMAKE_BINARY_DIR}/bhbb_dl/bhbb_dl.self eboot2.bin

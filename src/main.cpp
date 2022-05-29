@@ -1,10 +1,8 @@
 #include <kernel.h>
 #include <stdio.h>
-#include <curl/curl.h>
 #include <paf.h>
 #include <shellsvc.h>
-#include <message_dialog.h>
-#include <libhttp.h>
+#include <libsysmodule.h>
 
 #include "main.hpp"
 #include "paf.hpp"
@@ -13,6 +11,7 @@
 #include "utils.hpp"
 #include "network.hpp"
 #include "downloader.hpp"
+#include "settings.hpp"
 #include "pages/page.hpp"
 #include "pages/home_page.hpp"
 #include "pages/text_page.hpp"
@@ -77,7 +76,6 @@ void OnNetworkReady()
     if(Network::GetCurrentStatus() == Network::Online)
     {
         g_homePage->Load();
-        g_homePage->Load();
     }
     else 
     {
@@ -97,8 +95,12 @@ void OnReady()
     sceShellUtilInitEvents(0);
     
     generic::Page::Setup();
+    new Settings();
     g_homePage = new home::Page();
 
     Network::Init();
     Network::Check(OnNetworkReady);
+
+    sceSysmoduleLoadModule(SCE_SYSMODULE_JSON);
+
 }

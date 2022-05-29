@@ -3,47 +3,41 @@
 
 #include <kernel.h>
 
+#include "parser.hpp"
+
 namespace db
 {
     namespace vitadb
     {
-        void Parse(const char *json);
+        void Parse(const char *json, int length);
     };
 
     namespace cbpsdb
     {
-        void Parse(const char *csv);
+        void Parse(const char *csv, int length);
     };
 
     typedef enum // Should match the index in info[]
     {
-        VITADB = 0,
-        CBPSDB = 1
+        CBPSDB = 0,
+        VITADB = 1
     } Id;
 
     typedef struct
     {
-        void (*Parse)(const char *data);
+        void (*Parse)(const char *data, int length);
         void (*GetScreenshotURL)(parser::HomebrewList::node *node, paf::string *out);
         const char *name;
         const char *iconFolderPath;
         const char *iconsURL;
         const char *indexURL;
         bool ScreenshotsSuppourted;
+        bool CategoriesSuppourted;
         int id;
     } dbInfo;
 
     static const dbInfo info[] =
     {
-        {   //Vita DB
-            .Parse = vitadb::Parse, 
-            .name = "Vita DB", 
-            .iconFolderPath = "ux0:/data/betterHomebrewBrowser/icons/vitadb", 
-            .iconsURL = "https://bhbb-wrapper.herokuapp.com/icon_zip", 
-            .indexURL = "https://bhbb-wrapper.herokuapp.com/index.json",
-            .ScreenshotsSuppourted = true,
-            .id = VITADB //index in info[]
-        },
         {   //CBPS DB
             .Parse = cbpsdb::Parse,
             .GetScreenshotURL = SCE_NULL,
@@ -52,7 +46,18 @@ namespace db
             .iconsURL = "https://github.com/Ibrahim778/CBPS-DB-Icon-Downloader/raw/main/icons.zip?raw=true",
             .indexURL = "https://raw.githubusercontent.com/KuromeSan/cbps-db/master/cbpsdb.csv",
             .ScreenshotsSuppourted = false,
+            .CategoriesSuppourted = false,
             .id = CBPSDB
+        },
+        {   //Vita DB
+            .Parse = vitadb::Parse, 
+            .name = "Vita DB", 
+            .iconFolderPath = "ux0:/data/betterHomebrewBrowser/icons/vitadb", 
+            .iconsURL = "https://bhbb-wrapper.herokuapp.com/icon_zip", 
+            .indexURL = "https://bhbb-wrapper.herokuapp.com/index.json",
+            .ScreenshotsSuppourted = true,
+            .CategoriesSuppourted = true,
+            .id = VITADB //index in info[]
         }
     };
 };

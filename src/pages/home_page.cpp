@@ -12,31 +12,169 @@
 #include "common.hpp"
 #include "db.hpp"
 #include "parser.hpp"
+#include "settings.hpp"
 
-db::Id currentDB = db::Id::CBPSDB;
+SceUInt32 totalLoads = 0;
 
 using namespace paf;
 
 home::Page::Page():generic::Page::Page("home_page_template")
 {
-    loadThread = SCE_NULL;
-    iconLoadThread = SCE_NULL;
+    loadQueue = SCE_NULL;
+    body = SCE_NULL;
 
     thread::JobQueue::Opt opt;
     opt.workerNum = 1;
     opt.workerOpt = NULL;
-    opt.workerPriority = SCE_KERNEL_HIGHEST_PRIORITY_USER + 20;
+    opt.workerPriority = SCE_KERNEL_DEFAULT_PRIORITY_USER;
     opt.workerStackSize = SCE_KERNEL_16KiB;
-    populateQueue = new thread::JobQueue("BHBB::home::Page::populateQueue", &opt);
+    loadQueue = new thread::JobQueue("BHBB::home::Page:loadQueue", &opt);
+
+    g_forwardButton->PlayAnimation(0, ui::Widget::Animation_Reset);
+    auto eventCallback = new ui::Widget::EventCallback();
+    eventCallback->eventHandler = Page::ForwardButtonCB;
+    eventCallback->pUserData = this;
+    
+    g_forwardButton->RegisterEventCallback(ui::Widget::EventMain_Decide, eventCallback, 0);
+
+    auto optionsButton = Utils::GetChildByHash(root, Utils::GetHashById("options_button"));
+    auto optionsCallback = new ui::Widget::EventCallback();
+    optionsCallback->eventHandler = Settings::OpenCB;
+
+    optionsButton->RegisterEventCallback(ui::Widget::EventMain_Decide, optionsCallback, 0);
 }
 
-SceVoid home::Page::Populate()
+SceVoid home::Page::ForwardButtonCB(SceInt32 id, ui::Widget *self, SceInt32 unk, ScePVoid pUserData)
 {
-    auto job = new PopulateJob("BHBB::home::Page::PopulateJob");
-    job->callingPage = this;
+    totalLoads++;
 
-    shared_ptr<thread::JobQueue::Item> item = shared_ptr<thread::JobQueue::Item>(job);
-    populateQueue->Enqueue(&item);
+    if(((totalLoads + 1) * Settings::GetInstance()->nLoad) <= list.GetNumByCategory(-1))
+        g_forwardButton->PlayAnimation(0, ui::Widget::Animation_Reset);
+    else
+        g_forwardButton->PlayAnimationReverse(0, ui::Widget::Animation_Reset);
+    
+    home::Page *page = (home::Page *)pUserData;
+    
+    auto populateJob = new PopulateJob("BHBB::PopulateJob()");
+    populateJob->callingPage = page;
+    
+    auto populatePtr = paf::shared_ptr<thread::JobQueue::Item>(populateJob);
+    page->loadQueue->Enqueue(&populatePtr);
+
+}
+
+SceVoid home::Page::DeleteBody(void *_page)
+{
+    totalLoads--;
+
+    Page *page = (Page *)_page;
+    PageBody *body = (PageBody *)page->body;
+
+    if(body->iconThread)
+    {
+        if(body->iconThread->IsAlive())
+        {
+            body->iconThread->Cancel();
+            body->iconThread->Join();
+        }
+        delete body->iconThread;
+    }
+
+	paf::common::Utils::WidgetStateTransition(-100, body->widget, paf::ui::Widget::Animation_3D_SlideFromFront, SCE_TRUE, SCE_TRUE);
+	if (body->prev != SCE_NULL)
+	{
+		body->prev->widget->PlayAnimationReverse(0.0f, paf::ui::Widget::Animation_3D_SlideToBack1);
+		body->prev->widget->PlayAnimation(0.0f, paf::ui::Widget::Animation_Reset);
+		if (body->prev->widget->animationStatus & 0x80)
+			body->prev->widget->animationStatus &= ~0x80;
+
+		if (body->prev->prev != SCE_NULL) {
+			body->prev->prev->widget->PlayAnimation(0.0f, paf::ui::Widget::Animation_Reset);
+			if (body->prev->prev->widget->animationStatus & 0x80)
+				body->prev->prev->widget->animationStatus &= ~0x80;
+		}
+	}
+	page->body = page->body->prev;
+
+    if (page->body != NULL && page->body->prev != SCE_NULL)
+    {
+        generic::Page::SetBackButtonEvent((generic::Page::BackButtonEventCallback)home::Page::DeleteBody, _page);
+        g_backButton->PlayAnimation(0, paf::ui::Widget::Animation_Reset);
+    }
+    else
+    {
+        generic::Page::SetBackButtonEvent(NULL, NULL); //Default
+        g_backButton->PlayAnimationReverse(0, paf::ui::Widget::Animation_Reset);
+    } 
+
+    if((totalLoads * Settings::GetInstance()->nLoad) < list.GetNumByCategory(-1))
+        g_forwardButton->PlayAnimation(0, ui::Widget::Animation_Reset);
+    else
+        g_forwardButton->PlayAnimationReverse(0, ui::Widget::Animation_Reset);
+}
+
+SceVoid home::Page::OnRedisplay()
+{
+    if(((totalLoads + 1) * Settings::GetInstance()->nLoad) < list.GetNumByCategory(-1))
+        g_forwardButton->PlayAnimation(0, ui::Widget::Animation_Reset);
+    else
+        g_forwardButton->PlayAnimationReverse(0, ui::Widget::Animation_Reset);
+    
+    if(body != NULL)
+    {
+        if(body->prev != NULL)
+        {
+            Page::SetBackButtonEvent(Page::DeleteBody, this);
+            g_backButton->PlayAnimation(0, ui::Widget::Animation_Reset);
+        }
+        else
+            Page::SetBackButtonEvent(NULL, NULL);
+    }
+}
+
+home::Page::PageBody *home::Page::MakeNewBody()
+{
+    PageBody *newBody = new PageBody;
+
+    newBody->prev = body;
+    body = newBody;
+
+    Plugin::TemplateInitParam tInit;
+    Resource::Element e = Utils::GetParamWithHashFromId("home_page_list_template");
+    
+    mainPlugin->TemplateOpen(root, &e, &tInit);
+
+    newBody->widget = (ui::Plane *)root->GetChildByNum(root->childNum - 1);
+	
+    if (newBody->prev != NULL)
+	{
+		newBody->prev->widget->PlayAnimation(0, paf::ui::Widget::Animation_3D_SlideToBack1);
+		if (newBody->prev->widget->animationStatus & 0x80)
+			newBody->prev->widget->animationStatus &= ~0x80;
+
+		if (newBody->prev->prev != SCE_NULL)
+		{
+			newBody->prev->prev->widget->PlayAnimationReverse(0, paf::ui::Widget::Animation_Reset);
+			if (newBody->prev->prev->widget->animationStatus & 0x80)
+				newBody->prev->prev->widget->animationStatus &= ~0x80;
+		}
+
+        auto recents = Utils::GetChildByHash(newBody->widget, Utils::GetHashById("plane_top"));
+        if(recents)
+            common::Utils::WidgetStateTransition(0, recents, ui::Widget::Animation_Reset, SCE_TRUE, SCE_TRUE);
+
+        generic::Page::SetBackButtonEvent((generic::Page::BackButtonEventCallback)home::Page::DeleteBody, this);
+        g_backButton->PlayAnimation(0, ui::Widget::Animation_Reset);
+        
+    }
+
+    newBody->widget->PlayAnimation(-50000, paf::ui::Widget::Animation_3D_SlideFromFront);
+	if (newBody->widget->animationStatus & 0x80)
+		newBody->widget->animationStatus &= ~0x80;
+
+    newBody->startNode = list.GetByIndex((totalLoads) * Settings::GetInstance()->nLoad);
+
+    return newBody;
 }
 
 home::Page::~Page()
@@ -44,41 +182,122 @@ home::Page::~Page()
 
 }
 
+SceVoid home::Page::LoadJob::Finish()
+{
+
+}
+
 SceVoid home::Page::Load()
 {
-    if(loadThread)
+    while(body)
     {
-        if(loadThread->IsAlive())
-        {
-            loadThread->Cancel();
-            loadThread->Join();
-        }
-        delete loadThread;
-        loadThread = SCE_NULL;
+        Page::DeleteBody(this);
     }
-    if(iconLoadThread)
-    {
-        print("Icon thread is alive!\n");
-        iconLoadThread->Cancel();
-        iconLoadThread->Join();
+
+    totalLoads = 0;
+
+    auto job = new LoadJob("BHBB::LoadJob()");
+    job->callingPage = this;
+
+    auto ptr = paf::shared_ptr<thread::JobQueue::Item>(job);
+    loadQueue->Enqueue(&ptr);
         
-        delete iconLoadThread;
-        iconLoadThread = SCE_NULL;
-    }
-    list.Clear(false);
+    auto populateJob = new PopulateJob("BHBB::PopulateJob()");
+    populateJob->callingPage = this;
     
-    loadThread = new LoadThread(SCE_KERNEL_DEFAULT_PRIORITY_USER, SCE_KERNEL_8KiB, "BHBB::LoadThread");
-    loadThread->callingPage = this;
-    loadThread->Start();
+    auto populatePtr = paf::shared_ptr<thread::JobQueue::Item>(populateJob);
+    loadQueue->Enqueue(&populatePtr);
+    
+}
+
+SceVoid home::Page::PopulateJob::Run()
+{
+    HttpFile        httpFile;
+    HttpFile::Param httpParam;
+    
+	httpParam.SetOpt(4000000, HttpFile::Param::SCE_PAF_HTTP_FILE_PARAM_RESOLVE_TIME_OUT);
+	httpParam.SetOpt(10000000, HttpFile::Param::SCE_PAF_HTTP_FILE_PARAM_CONNECT_TIME_OUT);
+
+    if(((totalLoads + 1) * Settings::GetInstance()->nLoad) <= list.GetNumByCategory(-1))
+        g_forwardButton->PlayAnimation(0, ui::Widget::Animation_Reset);
+    else
+        g_forwardButton->PlayAnimationReverse(0, ui::Widget::Animation_Reset);
+
+    g_busyIndicator->Start();
+    
+    Plugin::TemplateInitParam tInit;
+    Resource::Element e = Utils::GetParamWithHashFromId("homebrew_button");
+
+    thread::s_mainThreadMutex.Lock();
+
+    PageBody *body = callingPage->MakeNewBody();
+
+    auto listBox = Utils::GetChildByHash(body->widget, Utils::GetHashById("list_scroll_box"));
+
+    parser::HomebrewList::node *node = body->startNode;
+    for(auto i = 0; i < Settings::GetInstance()->nLoad && node != NULL; i++, node = node->next)
+    {
+        mainPlugin->TemplateOpen(listBox, &e, &tInit);
+        ui::ImageButton *button = (ui::ImageButton *)listBox->GetChildByNum(listBox->childNum - 1);
+        button->SetLabel(&node->info.wstrtitle);
+
+        node->button = button;
+        if(node->info.icon0.data == &string::s_emptyString)
+            button->SetTextureBase(&BrokenTex);
+    
+    }
+
+    if(db::info[Settings::GetInstance()->source].ScreenshotsSuppourted && callingPage->body->prev == NULL)
+    {
+        //Impliment recent view
+    }
+    else 
+    {
+        auto recents = Utils::GetChildByHash(body->widget, Utils::GetHashById("plane_top"));
+        if(recents)
+            common::Utils::WidgetStateTransition(0, recents, ui::Widget::Animation_Reset, SCE_TRUE, SCE_TRUE);
+    }
+
+    thread::s_mainThreadMutex.Unlock();
+    g_busyIndicator->Stop();
+
+    body->iconThread = new IconLoadThread(SCE_KERNEL_LOWEST_PRIORITY_USER, SCE_KERNEL_8KiB, "BHBB::IconLoadThread");
+    body->iconThread->startNode = body->startNode;
+    body->iconThread->Start();
+}
+
+SceVoid home::Page::Redisplay()
+{
+    while(body)
+    {
+        Page::DeleteBody(this);
+    }
+    totalLoads = 0;
+
+    auto populateJob = new PopulateJob("BHBB::PopulateJob()");
+    populateJob->callingPage = this;
+    
+    auto populatePtr = paf::shared_ptr<thread::JobQueue::Item>(populateJob);
+    loadQueue->Enqueue(&populatePtr);
+}
+
+SceVoid home::Page::PopulateJob::Finish()
+{
+
 }
 
 SceVoid home::Page::IconLoadThread::EntryFunction()
 {
-    parser::HomebrewList::node *node = list.head;
-    int i = 0;
-    while(node != NULL && !IsCanceled() && i < 100)
+    HttpFile        httpFile;
+    HttpFile::Param httpParam;
+
+    httpParam.SetOpt(4000000, HttpFile::Param::SCE_PAF_HTTP_FILE_PARAM_RESOLVE_TIME_OUT);
+	httpParam.SetOpt(10000000, HttpFile::Param::SCE_PAF_HTTP_FILE_PARAM_CONNECT_TIME_OUT);
+    
+    parser::HomebrewList::node *node = startNode;
+    for(int i = 0; i < Settings::GetInstance()->nLoad && node != NULL && !IsCanceled(); i++, node = node->next)
     {
-        print("IL: node %p button %p tex %p url %s\n", node, node->button, node->tex, node->info.icon0.data);
+
         if(node->tex != NULL)
         {
             node->button->SetTextureBase(&node->tex);
@@ -96,13 +315,9 @@ SceVoid home::Page::IconLoadThread::EntryFunction()
         }
         else if(node->info.icon0.data != &string::s_emptyString)
         {
-
-            shared_ptr<paf::HttpFile> httpFile;
-            SceInt32 error = SCE_OK;
-
-            HttpFile::Open(&httpFile, node->info.icon0.data, &error, SCE_O_RDONLY);    
+            httpParam.SetUrl(node->info.icon0.data);
             
-            if(error == SCE_OK)
+            if(httpFile.Open(&httpParam) == SCE_OK)
             {
                 SceInt32 bytesRead = 0;
                 io::File *file = new io::File();
@@ -112,13 +327,13 @@ SceVoid home::Page::IconLoadThread::EntryFunction()
                 {
                     char buff[256];
                     sce_paf_memset(buff, 0, sizeof(buff));
-                    bytesRead = httpFile->Read(buff, 256);
+                    bytesRead = httpFile.Read(buff, 256);
                     file->Write(buff, bytesRead);
                 } while (bytesRead > 0);
 
                 file->Close();
                 delete file;
-                httpFile->Close();
+                httpFile.Close();
                 
                 tried = true;
                 goto ASSIGN;
@@ -129,115 +344,22 @@ SceVoid home::Page::IconLoadThread::EntryFunction()
                 node->button->SetTextureBase(&BrokenTex);
             }
         }
-        node = node->next;
-        i++;
     }
 
-    print("Done!\n");
     sceKernelExitDeleteThread(0);
 }
 
-SceVoid home::Page::PopulateJob::Run()
-{
-    bool isMainThread = thread::IsMainThread();
-    if(!isMainThread)
-        thread::s_mainThreadMutex.Lock();
-
-    auto prevBody = Utils::GetChildByHash(callingPage->root, Utils::GetHashById("list_plane"));
-    if(prevBody)
-    {
-        parser::HomebrewList::node *n = list.head;
-        for(int i = 0; i < list.num && i < 100 && n != NULL; i++, n = n->next)
-        {
-            n->button->SetTextureBase(&TransparentTex);
-            Utils::DeleteTexture(&n->tex);
-        }
-        common::Utils::WidgetStateTransition(0, prevBody, ui::Widget::Animation_Reset, SCE_TRUE, SCE_TRUE);
-    } 
-
-    if(!isMainThread)
-        thread::s_mainThreadMutex.Unlock();
-
-    db::info[currentDB].Parse(callingPage->dbIndex.data);
-
-    parser::HomebrewList::node *node = list.head;
-    
-    Plugin::TemplateInitParam tInit;
-    Resource::Element e;
-
-    e.hash = Utils::GetHashById("home_page_list_template");
-
-    if(!isMainThread)
-        thread::s_mainThreadMutex.Lock();
-
-    mainPlugin->TemplateOpen(callingPage->root, &e, &tInit);
-    
-    e.hash = Utils::GetHashById("homebrew_button");
-    auto listBox = Utils::GetChildByHash(callingPage->root, Utils::GetHashById("list_scroll_box"));
-    int i = 0;
-    while(node != NULL && i < 100)
-    {
-        mainPlugin->TemplateOpen(listBox, &e, &tInit);
-        
-        ui::ImageButton *button = (ui::ImageButton *)listBox->GetChildByNum(listBox->childNum - 1);
-        button->SetLabel(&node->info.wstrtitle);
-        
-        node->button = button;
-        if(node->info.icon0.data == &string::s_emptyString)
-            button->SetTextureBase(&BrokenTex);
-        
-        node = node->next;
-        i++;
-    }
-
-    if(db::info[currentDB].ScreenshotsSuppourted)
-    {
-        //Impliment recent view
-    }
-    else common::Utils::WidgetStateTransition(0, Utils::GetChildByHash(callingPage->root, Utils::GetHashById("plane_top")), ui::Widget::Animation_Reset, SCE_TRUE, SCE_TRUE);
-
-    if(!isMainThread)
-        thread::s_mainThreadMutex.Unlock();
-
-    callingPage->LoadIcons();
-}
-
-SceVoid home::Page::PopulateJob::Finish()
-{
-
-}
-
-SceVoid home::Page::LoadIcons()
-{
-    if(iconLoadThread)
-    {
-        if(iconLoadThread->IsAlive())
-        {
-            iconLoadThread->Cancel();
-            iconLoadThread->Join();
-        }
-        delete iconLoadThread;
-    }
-
-    iconLoadThread = new IconLoadThread(SCE_KERNEL_LOWEST_PRIORITY_USER, SCE_KERNEL_16KiB, "BHBB::IconLoadThread");
-    iconLoadThread->Start();
-}
-
-home::Page::PopulateJob::~PopulateJob()
-{
-
-}
-
-SceVoid home::Page::LoadThread::EntryFunction()
+SceVoid home::Page::LoadJob::Run()
 {    
-    sceShellUtilLock(SCE_SHELL_UTIL_LOCK_TYPE_PS_BTN);
-
     HttpFile        httpFile;
     HttpFile::Param httpParam;
 
+    sceShellUtilLock(SCE_SHELL_UTIL_LOCK_TYPE_PS_BTN);
+
     Utils::MsgDialog::SystemMessage(SCE_MSG_DIALOG_SYSMSG_TYPE_WAIT_SMALL);
 
-	httpParam.SetUrl(db::info[currentDB].indexURL);
+    httpParam.userAgent = "Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/101.0.4951.67 Safari/537.36 (PS Vita)";
+	httpParam.SetUrl(db::info[Settings::GetInstance()->source].indexURL);
 	httpParam.SetOpt(4000000, HttpFile::Param::SCE_PAF_HTTP_FILE_PARAM_RESOLVE_TIME_OUT);
 	httpParam.SetOpt(10000000, HttpFile::Param::SCE_PAF_HTTP_FILE_PARAM_CONNECT_TIME_OUT);
 
@@ -255,13 +377,13 @@ SceVoid home::Page::LoadThread::EntryFunction()
             bytesRead = httpFile.Read(buff, 256);
 
             callingPage->dbIndex += buff;
-        } while(bytesRead > 0 && !IsCanceled());
+        } while(bytesRead > 0);
 
         httpFile.Close();
 
         Utils::MsgDialog::EndMessage();
         
-        if(io::Misc::Exists(db::info[currentDB].iconFolderPath) || IsCanceled()) //Skip icon downloading
+        if(io::Misc::Exists(db::info[Settings::GetInstance()->source].iconFolderPath)) //Skip icon downloading
             goto LOAD_PAGE;
 
         SceMsgDialogButtonId buttonId = Utils::MsgDialog::MessagePopupFromID("msg_icon_pack_missing", SCE_MSG_DIALOG_BUTTON_TYPE_YESNO);
@@ -271,7 +393,7 @@ SceVoid home::Page::LoadThread::EntryFunction()
             sceShellUtilLock(SCE_SHELL_UTIL_LOCK_TYPE_PS_BTN);
             Utils::MsgDialog::InitProgress("Downloading");
             
-            httpParam.SetUrl(db::info[currentDB].iconsURL);
+            httpParam.SetUrl(db::info[Settings::GetInstance()->source].iconsURL);
 
             if(httpFile.Open(&httpParam) == SCE_OK)    
             {
@@ -280,11 +402,13 @@ SceVoid home::Page::LoadThread::EntryFunction()
                 SceUInt64 totalRead = 0;
 
                 char *buff = new char[dlSize];
-
+                
                 int bytesRead = 0;
                 do
                 {
                     bytesRead = httpFile.Read(&buff[totalRead], 1024);
+                    if(bytesRead < 0)
+                        print("Error reading from server: 0x%X\n", bytesRead);
 
                     totalRead += bytesRead;
                     Utils::MsgDialog::UpdateProgress(((float)totalRead / (float)dlSize) * 100.0f);
@@ -297,7 +421,7 @@ SceVoid home::Page::LoadThread::EntryFunction()
 
                 Utils::MsgDialog::InitProgress("Extracting");
 
-                Utils::ExtractZipFromMemory((uint8_t *)buff, dlSize, db::info[currentDB].iconFolderPath, true);
+                Utils::ExtractZipFromMemory((uint8_t *)buff, dlSize, db::info[Settings::GetInstance()->source].iconFolderPath, true);
 
                 delete[] buff;
                 Utils::MsgDialog::EndMessage();
@@ -311,23 +435,16 @@ SceVoid home::Page::LoadThread::EntryFunction()
 
             sceShellUtilUnlock(SCE_SHELL_UTIL_LOCK_TYPE_PS_BTN);
         }
-
-LOAD_PAGE:
-        if(!IsCanceled());
-            callingPage->Populate();
     }
     else
     {
         Utils::MsgDialog::EndMessage();
+        Utils::MsgDialog::MessagePopupFromID("msg_error_index");
         print("ret = 0x%X\n", ret);
     }
-    
-    if(ret != SCE_OK)
-    {
-        Utils::MsgDialog::MessagePopupFromID("msg_error_index");
-    }
-    
+
+LOAD_PAGE:
     sceShellUtilUnlock(SCE_SHELL_UTIL_LOCK_TYPE_PS_BTN);
 
-    sceKernelExitDeleteThread(0);
+    db::info[Settings::GetInstance()->source].Parse(callingPage->dbIndex.data, callingPage->dbIndex.length);
 }

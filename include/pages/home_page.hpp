@@ -1,6 +1,8 @@
 #ifndef HOME_PAGE_HPP
 #define HOME_PAGE_HPP
 
+#include <paf.h>
+
 #include "page.hpp"
 #include "parser.hpp"
 
@@ -12,16 +14,21 @@ namespace home
         Page();
         virtual ~Page();
 
+        void OnRedisplay() override; 
+
         SceVoid Load();
-        SceVoid Populate();
-        SceVoid LoadIcons();
+        SceVoid Redisplay();
+
+        static SceVoid DeleteBody(void *body);
+        static SceVoid ForwardButtonCB(SceInt32 eventID, paf::ui::Widget *self, SceInt32 unk, ScePVoid pUserData);
     
-        class LoadThread : public paf::thread::Thread
+        class LoadJob : public paf::thread::JobQueue::Item
         {
         public:
-            using paf::thread::Thread::Thread;
+            using paf::thread::JobQueue::Item::Item;
 
-            SceVoid EntryFunction();
+            SceVoid Run();
+            SceVoid Finish();
 
             Page *callingPage;
         };
@@ -29,37 +36,50 @@ namespace home
         class PopulateJob : public paf::thread::JobQueue::Item
         {
         public:
-            paf::thread::JobQueue::Item::Item;
-
-            ~PopulateJob();
+            using paf::thread::JobQueue::Item::Item;
 
             SceVoid Run();
             SceVoid Finish();
 
-            static SceVoid JobKiller(paf::thread::JobQueue::Item *job)
-            {
-                if(job) delete job;
-            }
-
             Page *callingPage;
         };
 
-        class IconLoadThread : public paf::thread::Thread
+        class IconLoadThread : public::paf::thread::Thread
         {
         public:
-            paf::thread::Thread::Thread;
-
+            using paf::thread::Thread::Thread;
+            
             SceVoid EntryFunction();
+
+            parser::HomebrewList::node *startNode;
         };
+
+        struct PageBody 
+        {
+            PageBody *prev;
+            paf::ui::Plane *widget;
+            IconLoadThread *iconThread;
+            parser::HomebrewList::node *startNode;
+        };
+
+
+        PageBody *MakeNewBody();
+        
+        paf::thread::JobQueue *loadQueue;
+        PageBody *body;
 
     private:
         paf::string dbIndex;
-        home::Page::LoadThread *loadThread;
-
-        paf::thread::JobQueue *populateQueue;
-        home::Page::IconLoadThread *iconLoadThread;
 
         paf::ui::BusyIndicator *busyIndicator;
+    };
+
+    class MoreButtonEventHandler : public paf::ui::Widget::EventCallback
+    {
+    public:
+        MoreButtonEventHandler();
+
+        static void OnGet(SceInt32 eventID, paf::ui::Widget *self, SceInt32, ScePVoid puserData);
     };
 }
 

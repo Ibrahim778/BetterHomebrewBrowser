@@ -13,8 +13,6 @@ paf::Plugin *mainPlugin = SCE_NULL;
 paf::graphics::Surface *BrokenTex = SCE_NULL;
 paf::graphics::Surface *TransparentTex = SCE_NULL;
 
-paf::Framework *fw;
-
 void getDefaultWidgets()
 {
     paf::Resource::Element e = Utils::GetParamWithHashFromId(ICON_MISSING_TEX_ID);
@@ -46,11 +44,11 @@ void initPlugin()
     fwParam.applicationMode = paf::Framework::ApplicationMode::Mode_Application;
     
     fwParam.defaultSurfacePoolSize = 5 * 1024 * 1024;
-    if(loadFlags & LOAD_FLAGS_ICONS) fwParam.defaultSurfacePoolSize += 6 * 1024 * 1024;
+    if(loadFlags & LOAD_FLAGS_ICONS) fwParam.defaultSurfacePoolSize += 16 * 1024 * 1024;
     if(loadFlags & LOAD_FLAGS_SCREENSHOTS) fwParam.defaultSurfacePoolSize += 5 * 1024 * 1024;
     fwParam.textSurfaceCacheSize = 2621440; //2.5MB
 
-    fw = new paf::Framework(&fwParam);
+    paf::Framework *fw = new paf::Framework(&fwParam);
 
     fw->LoadCommonResource();
 

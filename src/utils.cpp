@@ -500,6 +500,8 @@ void Utils::ExtractZipFromMemory(uint8_t *buff, size_t archiveSize, const char *
         pCurrIn = (const uint8_t *)((uintptr_t)pData + ((SceZipHeaderPK0304 *)pCurrIn)->compsize);
     }
 
+    if(totalCount == 0) io::Misc::RemoveRecursive(outDir);
+
     pCurrIn = buff;
     pZipEnd = buff + archiveSize;
     int processedEntries = 0;

@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<application_settings version="1.0" bg_color="4.0, 21.0, 105.0, 255.0">
+	<setting_list id="bhbb_options" title="msg_options">
+	    <button id="refresh_button" title="msg_refresh" />
+        <list id="list_source" title="msg_settings_source" key="source" default_value="0">
+            <list_item id="list_source_00" title="db_0" value="0" />
+            <list_item id="list_source_01" title="db_1" value="1" />
+        </list>
+        <list id="list_nLoad" title="msg_settings_nLoad" key="nLoad" default_value="100">
+            <list_item id="list_nLoad_00" title="50" value="50" />
+            <list_item id="list_nLoad_01" title="100" value="100" />
+            <list_item id="list_nLoad_02" title="200" value="200" />
+            <list_item id="list_nLoad_03" title="500" value="500" />
+        </list>
+        <button id="info_button" title="msg_settings_info"/>
+	</setting_list>
+</application_settings>

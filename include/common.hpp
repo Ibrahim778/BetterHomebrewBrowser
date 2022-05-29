@@ -2,6 +2,7 @@
 #define BHBB_COMMON_H
 
 #include "parser.hpp"
+#include "pages/home_page.hpp"
 
 #define PLUGIN_NAME "bhbb_plugin"
 #define RESOURCE_PATH "app0:resource/bhbb_plugin.rco"
@@ -51,9 +52,11 @@ extern paf::graphics::Surface *TransparentTex;
 extern int loadFlags;
 
 extern paf::ui::CornerButton *g_backButton;
+extern paf::ui::CornerButton *g_forwardButton;
+extern paf::ui::BusyIndicator *g_busyIndicator;
 
 static paf::ui::Widget *s_currentPage;
 
-extern paf::Framework *fw;
+extern home::Page *g_homePage;
 
 #endif
