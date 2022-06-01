@@ -31,7 +31,7 @@ namespace parser
             paf::string screenshot_url;
             paf::string version;
             paf::string size;
-            Category type;
+            int type;
 
         } homeBrewInfo;
 

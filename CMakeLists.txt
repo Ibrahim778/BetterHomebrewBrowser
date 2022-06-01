@@ -52,7 +52,6 @@ add_executable(${PROJECT_NAME}
 target_link_libraries(${PROJECT_NAME}
     SceLibKernel_stub
     SceThreadmgr_stub
-	SceProcessmgr_stub
 	SceDbg_stub
     SceAppMgrUser_stub
     SceHttp_stub

@@ -9,12 +9,12 @@ namespace db
 {
     namespace vitadb
     {
-        void Parse(const char *json, int length);
+        void Parse(parser::HomebrewList& list, const char *json, int length);
     };
 
     namespace cbpsdb
     {
-        void Parse(const char *csv, int length);
+        void Parse(parser::HomebrewList& list, const char *csv, int length);
     };
 
     typedef enum // Should match the index in info[]
@@ -25,7 +25,7 @@ namespace db
 
     typedef struct
     {
-        void (*Parse)(const char *data, int length);
+        void (*Parse)(parser::HomebrewList& list, const char *data, int length);
         void (*GetScreenshotURL)(parser::HomebrewList::node *node, paf::string *out);
         const char *name;
         const char *iconFolderPath;

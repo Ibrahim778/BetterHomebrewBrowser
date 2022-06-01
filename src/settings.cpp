@@ -179,14 +179,14 @@ SceInt32 Settings::CBValueChange(const char *elementId, const char *newValue)
         GetInstance()->nLoad = value;
         g_homePage->Redisplay();
         break;
-    
-    case Hash_Refresh:
-        g_homePage->Load();
-        GetInstance()->Close();
-        break;
 
     case Hash_Source:
         GetInstance()->source = (db::Id)value;
+    
+    case Hash_Refresh:
+        g_homePage->SetCategory(-1);
+        g_homePage->Load();
+        GetInstance()->Close();
         break;
 
     case Hash_Info:

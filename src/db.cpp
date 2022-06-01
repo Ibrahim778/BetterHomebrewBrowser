@@ -12,9 +12,9 @@ using namespace sce;
 using namespace db;
 
 #define SET_STRING(pafString, jsonString) { if(rootval[i][jsonString] != NULL) { pafString = rootval[i][jsonString].getString().c_str(); } } 
-void vitadb::Parse(const char *jsonStr, int length)
+void vitadb::Parse(parser::HomebrewList& list, const char *jsonStr, int length)
 {
-    list.Clear();
+    list.Clear(true);
 
     PAFAllocator allocator;
     Json::InitParameter initParam((Json::MemAllocator *)&allocator, 0, 512);
@@ -39,12 +39,12 @@ void vitadb::Parse(const char *jsonStr, int length)
 
             SET_STRING(info->titleID, "titleid");
             SET_STRING(info->id, "id");
-            
+
             if(rootval[i]["icon"] != NULL)
+            {
                 info->icon0.Setf("https://rinnegatamante.it/vitadb/icons/%s", rootval[i]["icon"].getString().c_str());
-            
-            if(rootval[i]["icon"] != NULL)
                 info->icon0Local.Setf(VITADB_ICON_SAVE_PATH "/%s", rootval[i]["icon"].getString().c_str());
+            }
 
             SET_STRING(info->title, "name");
             info->title.ToWString(&info->wstrtitle);
@@ -57,14 +57,14 @@ void vitadb::Parse(const char *jsonStr, int length)
             SET_STRING(info->version, "version");        
 
             if(rootval[i]["type"] != NULL)
-                info->type = (parser::HomebrewList::Category)sce_paf_strtoul(rootval[i]["type"].getString().c_str(), NULL, 10);
+                info->type = (int)sce_paf_strtoul(rootval[i]["type"].getString().c_str(), NULL, 10);
 
             SET_STRING(info->size, "size");
         }
     }
 }
 
-void cbpsdb::Parse(const char *csv, int length)
+void cbpsdb::Parse(parser::HomebrewList& list, const char *csv, int length)
 {
     list.Clear(true);
 
@@ -97,6 +97,7 @@ void cbpsdb::Parse(const char *csv, int length)
                 info->download_url = parsed[5];
                 info->options = parsed[13];
                 info->description = parsed[0];
+                info->type = -1;
 
                 //In CBPS DB titleID is used for id, so if any contradict _n is added, this is done to get just the id
                 char titleID[10];

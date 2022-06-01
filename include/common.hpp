@@ -42,7 +42,7 @@
 
 #define MUSIC_PATH "pd0:data/systembgm/store.at9"
 
-extern parser::HomebrewList list;
+extern parser::HomebrewList g_mainList;
 
 extern paf::Plugin *mainPlugin;
 
@@ -54,8 +54,6 @@ extern int loadFlags;
 extern paf::ui::CornerButton *g_backButton;
 extern paf::ui::CornerButton *g_forwardButton;
 extern paf::ui::BusyIndicator *g_busyIndicator;
-
-static paf::ui::Widget *s_currentPage;
 
 extern home::Page *g_homePage;
 

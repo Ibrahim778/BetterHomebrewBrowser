@@ -18,11 +18,33 @@ SceUInt32 totalLoads = 0;
 
 using namespace paf;
 
-home::Page::Page():generic::Page::Page("home_page_template")
+home::Page::Page():generic::Page::Page("home_page_template"),list(&parsedList)
 {
     loadQueue = SCE_NULL;
     body = SCE_NULL;
 
+    ui::Widget::EventCallback *categoryCallback = new ui::Widget::EventCallback();
+    categoryCallback->pUserData = this;
+    categoryCallback->eventHandler = Page::CategoryButtonCB;
+
+    Utils::GetChildByHash(root, Utils::GetHashById("game_button"))->RegisterEventCallback(ui::Widget::EventMain_Decide, categoryCallback, 0);
+    Utils::GetChildByHash(root, Utils::GetHashById("all_button"))->RegisterEventCallback(ui::Widget::EventMain_Decide, categoryCallback, 0);
+    Utils::GetChildByHash(root, Utils::GetHashById("emu_button"))->RegisterEventCallback(ui::Widget::EventMain_Decide, categoryCallback, 0);
+    Utils::GetChildByHash(root, Utils::GetHashById("port_button"))->RegisterEventCallback(ui::Widget::EventMain_Decide, categoryCallback, 0);
+    Utils::GetChildByHash(root, Utils::GetHashById("util_button"))->RegisterEventCallback(ui::Widget::EventMain_Decide, categoryCallback, 0);
+
+    SetCategory(-1);
+
+    ui::Widget::EventCallback *searchCallback = new ui::Widget::EventCallback();
+    searchCallback->pUserData = this;
+    searchCallback->eventHandler = Page::SearchCB;
+
+    Utils::GetChildByHash(root, Utils::GetHashById("search_button"))->RegisterEventCallback(ui::Widget::EventMain_Decide, searchCallback, 0);
+    Utils::GetChildByHash(root, Utils::GetHashById("search_enter_button"))->RegisterEventCallback(ui::Widget::EventMain_Decide, searchCallback, 0);
+    Utils::GetChildByHash(root, Utils::GetHashById("search_back_button"))->RegisterEventCallback(ui::Widget::EventMain_Decide, searchCallback, 0);
+
+    SetMode(PageMode_Browse);
+ 
     thread::JobQueue::Opt opt;
     opt.workerNum = 1;
     opt.workerOpt = NULL;
@@ -44,16 +66,124 @@ home::Page::Page():generic::Page::Page("home_page_template")
     optionsButton->RegisterEventCallback(ui::Widget::EventMain_Decide, optionsCallback, 0);
 }
 
+home::Page::~Page()
+{
+
+}
+
+SceVoid home::Page::SetMode(PageMode targetMode)
+{
+    if(mode == targetMode) return;
+
+    ui::Widget *categoriesPlane = Utils::GetChildByHash(root, Utils::GetHashById("plane_categories"));
+    ui::Widget *searchPlane = Utils::GetChildByHash(root, Utils::GetHashById("plane_search"));
+    ui::Widget *searchBox = Utils::GetChildByHash(root, Utils::GetHashById("search_box"));
+
+    switch(targetMode)
+    {
+    case PageMode_Browse:
+        searchPlane->PlayAnimationReverse(0, ui::Widget::Animation_Fadein1);
+        categoriesPlane->PlayAnimation(0, ui::Widget::Animation_Fadein1);
+
+        if(list != &parsedList)
+        {
+            list = &parsedList;
+            Redisplay();
+        }
+        break;
+    
+    case PageMode_Search:
+        categoriesPlane->PlayAnimationReverse(0, ui::Widget::Animation_Fadein1);
+        searchPlane->PlayAnimation(0, ui::Widget::Animation_Fadein1);
+        break;
+    }
+
+    mode = targetMode;
+}
+
+SceVoid home::Page::SearchCB(SceInt32 eventID, ui::Widget *self, SceInt32 unk, ScePVoid pUserData)
+{
+    Page *page = (Page *)pUserData;
+    switch(self->hash)
+    {
+    case Hash_SearchButton:
+        page->SetMode(PageMode_Search);
+        break;
+
+    case Hash_SearchBackButton:
+        page->SetMode(PageMode_Browse);
+        break;
+
+    case Hash_SearchEnterButton:
+        paf::wstring keystring;
+        
+        ui::Widget *textBox = Utils::GetChildByHash(page->root, Utils::GetHashById("search_box"));
+        textBox->GetLabel(&keystring);
+
+        if(keystring.length == 0) break;
+
+        paf::string key;
+        keystring.ToString(&key);
+
+        while(page->searchList.head != NULL)
+        {
+            page->searchList.RemoveNode(page->searchList.head->info.title.data);
+            print("Page->searchList.head: %p\n", page->searchList.head);
+        }
+
+        Utils::ToLowerCase(key.data);
+
+        //Get rid of trailing space char
+        for(int i = key.length - 1; i > 0; i--)
+        {
+            if(key.data[i] == ' ')
+            {
+                key.data[i] = 0; //Shouldn't really do this with a paf::string but w/e
+                break;
+            } else break;
+        }
+
+        parser::HomebrewList::node *parsedNode = page->parsedList.head;
+        for(int i = 0; i < page->parsedList.num && parsedNode != NULL; i++, parsedNode = parsedNode->next)
+        {
+            string titleID;
+            string title;
+
+            titleID = parsedNode->info.titleID.data;
+            title = parsedNode->info.title.data;
+
+            print("Checking %s -> %s (%s)\n", key.data, title.data, parsedNode->info.title.data);
+            Utils::ToLowerCase(titleID.data);
+            Utils::ToLowerCase(title.data);
+
+            if(Utils::StringContains(title.data, key.data) || Utils::StringContains(titleID.data, key.data))
+            {
+                print("Match found!\n");
+            }
+        }
+
+        print("Search with keystring %s result (%d):\n", key.data, page->searchList.num);
+        page->searchList.PrintAll();
+
+        page->list = &page->searchList;
+        
+        page->SetCategory(-1);
+        page->Redisplay();
+
+        break;
+    }
+}
+
 SceVoid home::Page::ForwardButtonCB(SceInt32 id, ui::Widget *self, SceInt32 unk, ScePVoid pUserData)
 {
+    home::Page *page = (home::Page *)pUserData;
     totalLoads++;
 
-    if(((totalLoads + 1) * Settings::GetInstance()->nLoad) <= list.GetNumByCategory(-1))
+    if(((totalLoads + 1) * Settings::GetInstance()->nLoad) <= page->list->GetNumByCategory(-1))
         g_forwardButton->PlayAnimation(0, ui::Widget::Animation_Reset);
     else
         g_forwardButton->PlayAnimationReverse(0, ui::Widget::Animation_Reset);
     
-    home::Page *page = (home::Page *)pUserData;
     
     auto populateJob = new PopulateJob("BHBB::PopulateJob()");
     populateJob->callingPage = page;
@@ -107,7 +237,7 @@ SceVoid home::Page::DeleteBody(void *_page)
         g_backButton->PlayAnimationReverse(0, paf::ui::Widget::Animation_Reset);
     } 
 
-    if((totalLoads * Settings::GetInstance()->nLoad) < list.GetNumByCategory(-1))
+    if((totalLoads * Settings::GetInstance()->nLoad) < page->list->GetNumByCategory(-1))
         g_forwardButton->PlayAnimation(0, ui::Widget::Animation_Reset);
     else
         g_forwardButton->PlayAnimationReverse(0, ui::Widget::Animation_Reset);
@@ -115,7 +245,7 @@ SceVoid home::Page::DeleteBody(void *_page)
 
 SceVoid home::Page::OnRedisplay()
 {
-    if(((totalLoads + 1) * Settings::GetInstance()->nLoad) < list.GetNumByCategory(-1))
+    if(((totalLoads + 1) * Settings::GetInstance()->nLoad) < list->GetNumByCategory(-1))
         g_forwardButton->PlayAnimation(0, ui::Widget::Animation_Reset);
     else
         g_forwardButton->PlayAnimationReverse(0, ui::Widget::Animation_Reset);
@@ -159,10 +289,6 @@ home::Page::PageBody *home::Page::MakeNewBody()
 				newBody->prev->prev->widget->animationStatus &= ~0x80;
 		}
 
-        auto recents = Utils::GetChildByHash(newBody->widget, Utils::GetHashById("plane_top"));
-        if(recents)
-            common::Utils::WidgetStateTransition(0, recents, ui::Widget::Animation_Reset, SCE_TRUE, SCE_TRUE);
-
         generic::Page::SetBackButtonEvent((generic::Page::BackButtonEventCallback)home::Page::DeleteBody, this);
         g_backButton->PlayAnimation(0, ui::Widget::Animation_Reset);
         
@@ -172,14 +298,87 @@ home::Page::PageBody *home::Page::MakeNewBody()
 	if (newBody->widget->animationStatus & 0x80)
 		newBody->widget->animationStatus &= ~0x80;
 
-    newBody->startNode = list.GetByIndex((totalLoads) * Settings::GetInstance()->nLoad);
+    newBody->startNode = list->GetByCategoryIndex((totalLoads) * Settings::GetInstance()->nLoad, category);
 
     return newBody;
 }
 
-home::Page::~Page()
+SceBool home::Page::SetCategory(int _category)
 {
+    if(_category == category) return SCE_FALSE;
+    category = _category;
 
+    ui::Widget::Color transparent, normal;
+    transparent.r = 1;
+    transparent.g = 1;
+    transparent.b = 1;
+    transparent.a = .4f;
+
+    normal.r = 1;
+    normal.g = 1;
+    normal.b = 1;
+    normal.a = 1;
+
+    ui::Widget *allButton = Utils::GetChildByHash(root, Utils::GetHashById("all_button"));
+    ui::Widget *gamesButton = Utils::GetChildByHash(root, Utils::GetHashById("game_button"));
+    ui::Widget *emuButton = Utils::GetChildByHash(root, Utils::GetHashById("emu_button"));
+    ui::Widget *portsButton = Utils::GetChildByHash(root, Utils::GetHashById("port_button"));
+    ui::Widget *utilButton = Utils::GetChildByHash(root, Utils::GetHashById("util_button"));
+    
+    allButton->SetColor(&transparent);
+    gamesButton->SetColor(&transparent);
+    emuButton->SetColor(&transparent);
+    portsButton->SetColor(&transparent);
+    utilButton->SetColor(&transparent);
+
+    switch(category)
+    {
+    case -1:
+        allButton->SetColor(&normal);
+        break;
+    case parser::HomebrewList::EMULATOR:
+        emuButton->SetColor(&normal);
+        break;
+    case parser::HomebrewList::GAME:
+        gamesButton->SetColor(&normal);
+        break;
+    case parser::HomebrewList::PORT:
+        portsButton->SetColor(&normal);
+        break;
+    case parser::HomebrewList::UTIL:
+        utilButton->SetColor(&normal);
+        break;
+    }
+
+    return SCE_TRUE;
+}
+
+SceVoid home::Page::CategoryButtonCB(SceInt32 eventID, ui::Widget *self, SceInt32 unk, ScePVoid pUserData)
+{
+    if(!db::info[Settings::GetInstance()->source].CategoriesSuppourted) return;
+    home::Page *page = (Page *)pUserData;
+    int targetCategory = 0;
+    switch (self->hash)
+    {
+    case Hash_All:
+        targetCategory = -1;
+        break;
+    case Hash_Util:
+        targetCategory = parser::HomebrewList::UTIL;
+        break;
+    case Hash_Game:
+        targetCategory = parser::HomebrewList::GAME;
+        break;
+    case Hash_Emu:
+        targetCategory = parser::HomebrewList::EMULATOR;
+        break;
+    case Hash_Port:
+        targetCategory = parser::HomebrewList::PORT;
+        break;
+    }
+
+    if(page->SetCategory(targetCategory)) // returns true if there's any change
+        page->Redisplay();
 }
 
 SceVoid home::Page::LoadJob::Finish()
@@ -218,7 +417,7 @@ SceVoid home::Page::PopulateJob::Run()
 	httpParam.SetOpt(4000000, HttpFile::Param::SCE_PAF_HTTP_FILE_PARAM_RESOLVE_TIME_OUT);
 	httpParam.SetOpt(10000000, HttpFile::Param::SCE_PAF_HTTP_FILE_PARAM_CONNECT_TIME_OUT);
 
-    if(((totalLoads + 1) * Settings::GetInstance()->nLoad) <= list.GetNumByCategory(-1))
+    if(((totalLoads + 1) * Settings::GetInstance()->nLoad) <= callingPage->list->GetNumByCategory(callingPage->category))
         g_forwardButton->PlayAnimation(0, ui::Widget::Animation_Reset);
     else
         g_forwardButton->PlayAnimationReverse(0, ui::Widget::Animation_Reset);
@@ -237,6 +436,11 @@ SceVoid home::Page::PopulateJob::Run()
     parser::HomebrewList::node *node = body->startNode;
     for(auto i = 0; i < Settings::GetInstance()->nLoad && node != NULL; i++, node = node->next)
     {
+        if(node->info.type != callingPage->category && callingPage->category != -1)
+        {
+            i--;
+            continue;
+        }
         mainPlugin->TemplateOpen(listBox, &e, &tInit);
         ui::ImageButton *button = (ui::ImageButton *)listBox->GetChildByNum(listBox->childNum - 1);
         button->SetLabel(&node->info.wstrtitle);
@@ -247,22 +451,12 @@ SceVoid home::Page::PopulateJob::Run()
     
     }
 
-    if(db::info[Settings::GetInstance()->source].ScreenshotsSuppourted && callingPage->body->prev == NULL)
-    {
-        //Impliment recent view
-    }
-    else 
-    {
-        auto recents = Utils::GetChildByHash(body->widget, Utils::GetHashById("plane_top"));
-        if(recents)
-            common::Utils::WidgetStateTransition(0, recents, ui::Widget::Animation_Reset, SCE_TRUE, SCE_TRUE);
-    }
-
     thread::s_mainThreadMutex.Unlock();
     g_busyIndicator->Stop();
 
     body->iconThread = new IconLoadThread(SCE_KERNEL_LOWEST_PRIORITY_USER, SCE_KERNEL_8KiB, "BHBB::IconLoadThread");
     body->iconThread->startNode = body->startNode;
+    body->iconThread->callingPage = callingPage;
     body->iconThread->Start();
 }
 
@@ -283,7 +477,7 @@ SceVoid home::Page::Redisplay()
 
 SceVoid home::Page::PopulateJob::Finish()
 {
-
+    
 }
 
 SceVoid home::Page::IconLoadThread::EntryFunction()
@@ -297,7 +491,11 @@ SceVoid home::Page::IconLoadThread::EntryFunction()
     parser::HomebrewList::node *node = startNode;
     for(int i = 0; i < Settings::GetInstance()->nLoad && node != NULL && !IsCanceled(); i++, node = node->next)
     {
-
+        if(node->info.type != callingPage->category && callingPage->category != -1)
+        {
+            i--;
+            continue;
+        }
         if(node->tex != NULL)
         {
             node->button->SetTextureBase(&node->tex);
@@ -309,15 +507,23 @@ SceVoid home::Page::IconLoadThread::EntryFunction()
         if(paf::io::Misc::Exists(node->info.icon0Local.data))
         {
             if(Utils::CreateTextureFromFile(&node->tex, node->info.icon0Local.data))
+            {
                 node->button->SetTextureBase(&node->tex);
+                if(callingPage->mode == PageMode_Search)
+                {
+                    auto parsedNode = callingPage->parsedList.Find(node->info.title.data); //Add it to the original list so it can be deleted / reused later on
+                    parsedNode->tex = node->tex;
+                }
+            }
             else 
                 node->button->SetTextureBase(&BrokenTex);
         }
-        else if(node->info.icon0.data != &string::s_emptyString)
+        else if(node->info.icon0.data != &string::s_emptyString && !tried)
         {
             httpParam.SetUrl(node->info.icon0.data);
-            
-            if(httpFile.Open(&httpParam) == SCE_OK)
+
+            SceInt32 res = SCE_OK;
+            if((res = httpFile.Open(&httpParam)) == SCE_OK)
             {
                 SceInt32 bytesRead = 0;
                 io::File *file = new io::File();
@@ -340,7 +546,7 @@ SceVoid home::Page::IconLoadThread::EntryFunction()
             }
             else 
             {
-                print("HttpFile::Open(%s) -> 0x%X\n", node->info.icon0.data);
+                print("HttpFile::Open(%s) -> 0x%X\n", node->info.icon0.data, res);
                 node->button->SetTextureBase(&BrokenTex);
             }
         }
@@ -358,7 +564,6 @@ SceVoid home::Page::LoadJob::Run()
 
     Utils::MsgDialog::SystemMessage(SCE_MSG_DIALOG_SYSMSG_TYPE_WAIT_SMALL);
 
-    httpParam.userAgent = "Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/101.0.4951.67 Safari/537.36 (PS Vita)";
 	httpParam.SetUrl(db::info[Settings::GetInstance()->source].indexURL);
 	httpParam.SetOpt(4000000, HttpFile::Param::SCE_PAF_HTTP_FILE_PARAM_RESOLVE_TIME_OUT);
 	httpParam.SetOpt(10000000, HttpFile::Param::SCE_PAF_HTTP_FILE_PARAM_CONNECT_TIME_OUT);
@@ -371,7 +576,7 @@ SceVoid home::Page::LoadJob::Run()
         int bytesRead;
         do
         {
-            char buff[257];
+            char buff[257]; //Leave 1 char for '\0'
             sce_paf_memset(buff, 0, sizeof(buff));
 
             bytesRead = httpFile.Read(buff, 256);
@@ -445,6 +650,8 @@ SceVoid home::Page::LoadJob::Run()
 
 LOAD_PAGE:
     sceShellUtilUnlock(SCE_SHELL_UTIL_LOCK_TYPE_PS_BTN);
-
-    db::info[Settings::GetInstance()->source].Parse(callingPage->dbIndex.data, callingPage->dbIndex.length);
+    
+    g_busyIndicator->Start();
+    db::info[Settings::GetInstance()->source].Parse(callingPage->parsedList, callingPage->dbIndex.data, callingPage->dbIndex.length);
+    g_busyIndicator->Stop();
 }

@@ -32,7 +32,7 @@ namespace Utils
     char *strtok(char splitter, char *str);
     void ResetStrtok();
     void ToLowerCase(char *string);
-    bool stringContains(char *string, char *contains);
+    bool StringContains(char *string, char *contains);
     void InitMusic();
     void SetMemoryInfo();
     SceVoid GetStringFromID(const char *id, paf::string *out);

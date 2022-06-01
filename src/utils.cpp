@@ -219,7 +219,7 @@ void Utils::ToLowerCase(char *string)
         if(string[i] > 64 && string[i] < 91) string[i] += 0x20;
 }
 
-bool Utils::stringContains(char *h, char *n)
+bool Utils::StringContains(char *h, char *n)
 {
     int needleLen = sce_paf_strlen(n);
     for(int currMatchLen = 0; *h != '\0'; h++)
