@@ -3,18 +3,51 @@
 
 #include <kernel.h>
 
-#include "parser.hpp"
-
 namespace db
 {
+    typedef enum
+    {
+        GAME = 1,
+        PORT = 2,
+        EMULATOR = 5,
+        UTIL = 4
+    } Category;
+
+    typedef struct
+    {
+        paf::string id;
+        paf::string titleID;
+        paf::string title;
+        paf::string credits;
+        paf::string icon0;
+        paf::string icon0Local;
+        paf::string download_url;
+        paf::string options;
+        paf::string description;
+        
+        paf::string *screenshot_urls;
+        int screenshot_url_num;
+
+        paf::string version;
+        paf::string size;
+
+        paf::ui::ImageButton *button;
+        paf::graphics::Surface *tex;
+
+        int type;
+
+        SceUInt64 hash;
+
+    } entryInfo;
+
     namespace vitadb
     {
-        void Parse(parser::HomebrewList& list, const char *json, int length);
+        void Parse(db::entryInfo **outList, int *outListNum, const char *json, int length);
     };
 
     namespace cbpsdb
     {
-        void Parse(parser::HomebrewList& list, const char *csv, int length);
+        void Parse(db::entryInfo **outList, int *outListNum, const char *csv, int length);
     };
 
     typedef enum // Should match the index in info[]
@@ -25,8 +58,7 @@ namespace db
 
     typedef struct
     {
-        void (*Parse)(parser::HomebrewList& list, const char *data, int length);
-        void (*GetScreenshotURL)(parser::HomebrewList::node *node, paf::string *out);
+        void (*Parse)(db::entryInfo **outList, int *outListNum, const char *data, int length);
         const char *name;
         const char *iconFolderPath;
         const char *iconsURL;
@@ -36,11 +68,13 @@ namespace db
         int id;
     } dbInfo;
 
+    int GetNumByCategory(db::entryInfo *list, int listNum, int category);
+    db::entryInfo *GetByCategoryIndex(db::entryInfo *list, int listNum, int index, int category);
+
     static const dbInfo info[] =
     {
         {   //CBPS DB
             .Parse = cbpsdb::Parse,
-            .GetScreenshotURL = SCE_NULL,
             .name = "CBPS DB",
             .iconFolderPath = "ux0:data/betterHomebrewBrowser/icons/cbpsdb",
             .iconsURL = "https://github.com/Ibrahim778/CBPS-DB-Icon-Downloader/raw/main/icons.zip?raw=true",

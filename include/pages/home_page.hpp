@@ -4,7 +4,7 @@
 #include <paf.h>
 
 #include "page.hpp"
-#include "parser.hpp"
+#include "db.hpp"
 
 namespace home
 {
@@ -41,7 +41,7 @@ namespace home
             
             SceVoid EntryFunction();
 
-            parser::HomebrewList::node *startNode;
+            db::entryInfo *startEntry;
             Page *callingPage;
         };
 
@@ -50,7 +50,7 @@ namespace home
             PageBody *prev;
             paf::ui::Plane *widget;
             IconLoadThread *iconThread;
-            parser::HomebrewList::node *startNode;
+            db::entryInfo *startEntry;
         };
 
         enum PageMode
@@ -81,10 +81,15 @@ namespace home
         paf::thread::JobQueue *loadQueue;
         PageBody *body;
 
-        parser::HomebrewList *list;
-        parser::HomebrewList parsedList;
-        parser::HomebrewList searchList;
-        
+        db::entryInfo *list; //Will point to either home::Page::searchList or home::Page::parsedList
+        int listSize;
+
+        db::entryInfo *parsedList; //Will point to entire parsed db
+        int parsedListSize;
+
+        db::entryInfo *searchList; //Will point to list with matching search elements
+        int searchListSize;
+
     private:
 
         enum

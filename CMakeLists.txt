@@ -37,7 +37,6 @@ add_executable(${PROJECT_NAME}
     src/paf.cpp
     src/bgdl.c
     src/network.cpp
-    src/parser.cpp
     src/csv.c
     src/split.c
     src/settings.cpp

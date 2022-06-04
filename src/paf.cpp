@@ -3,7 +3,6 @@
 #include <paf.h>
 
 #include "paf.hpp"
-#include "parser.hpp"
 #include "common.hpp"
 #include "main.hpp"
 #include "utils.hpp"

@@ -6,7 +6,6 @@
 
 #include "main.hpp"
 #include "paf.hpp"
-#include "parser.hpp"
 #include "common.hpp"
 #include "utils.hpp"
 #include "network.hpp"
@@ -75,6 +74,7 @@ void OnNetworkReady()
 {
     if(Network::GetCurrentStatus() == Network::Online)
     {
+        print("Load()\n");
         g_homePage->Load();
     }
     else 
@@ -95,9 +95,12 @@ void OnReady()
     sceShellUtilInitEvents(0);
     
     generic::Page::Setup();
+    print("Settings...");
     new Settings();
+    print("Done!\n");
+    print("page...");
     g_homePage = new home::Page();
-
+    print("Done!\n");
     Network::Init();
     Network::Check(OnNetworkReady);
 

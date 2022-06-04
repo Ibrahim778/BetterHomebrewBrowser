@@ -4,33 +4,40 @@
 
 char *paf_strdup(const char *s)
 {
-  size_t len = sce_paf_strlen (s) + 1;
-  void *new = sce_paf_malloc (len);
+    size_t len = sce_paf_strlen(s) + 1;
+    void *new = sce_paf_malloc(len);
 
-  if (new == NULL)
-    return NULL;
-  return (char *)sce_paf_memcpy(new, s, len);
+    if (new == NULL)
+        return NULL;
+    return (char *)sce_paf_memcpy(new, s, len);
 }
 
-void free_csv_line( char **parsed ) {
+void free_csv_line(char **parsed)
+{
     char **ptr;
 
-    for ( ptr = parsed; *ptr; ptr++ ) {
-        free( *ptr );
+    for (ptr = parsed; *ptr; ptr++)
+    {
+        free(*ptr);
     }
 
-    free( parsed );
+    free(parsed);
 }
 
-static int count_fields( const char *line ) {
-    
+static int count_fields(const char *line)
+{
+
     const char *ptr;
     int cnt, fQuote;
 
-    for ( cnt = 1, fQuote = 0, ptr = line; *ptr; ptr++ ) {
-        if ( fQuote ) {
-            if ( *ptr == '\"' ) {
-                if ( ptr[1] == '\"' ) {
+    for (cnt = 1, fQuote = 0, ptr = line; *ptr; ptr++)
+    {
+        if (fQuote)
+        {
+            if (*ptr == '\"')
+            {
+                if (ptr[1] == '\"')
+                {
                     ptr++;
                     continue;
                 }
@@ -39,19 +46,21 @@ static int count_fields( const char *line ) {
             continue;
         }
 
-        switch( *ptr ) {
-            case '\"':
-                fQuote = 1;
-                continue;
-            case ',':
-                cnt++;
-                continue;
-            default:
-                continue;
+        switch (*ptr)
+        {
+        case '\"':
+            fQuote = 1;
+            continue;
+        case ',':
+            cnt++;
+            continue;
+        default:
+            continue;
         }
     }
 
-    if ( fQuote ) {
+    if (fQuote)
+    {
         return -1;
     }
 
@@ -63,101 +72,118 @@ static int count_fields( const char *line ) {
  *  which are escaped by "double quotes", extract a NULL-terminated
  *  array of strings, one for every cell in the row.
  */
-char **parse_csv( const char *line ) {
+char **parse_csv(const char *line)
+{
     char **buf, **bptr, *tmp, *tptr;
     const char *ptr;
     int fieldcnt, fQuote, fEnd;
 
-    fieldcnt = count_fields( line );
+    fieldcnt = count_fields(line);
 
-    if ( fieldcnt == -1 ) {
+    if (fieldcnt == -1)
+    {
         return NULL;
     }
 
-    buf = malloc( sizeof(char*) * (fieldcnt+1) );
+    buf = malloc(sizeof(char *) * (fieldcnt + 1));
 
-    if ( !buf ) {
+    if (!buf)
+    {
         return NULL;
     }
 
-    tmp = malloc( strlen(line) + 1 );
+    tmp = malloc(strlen(line) + 1);
 
-    if ( !tmp ) {
-        free( buf );
+    if (!tmp)
+    {
+        free(buf);
         return NULL;
     }
 
     bptr = buf;
 
-    for ( ptr = line, fQuote = 0, *tmp = '\0', tptr = tmp, fEnd = 0; ; ptr++ ) {
-        if ( fQuote ) {
-            if ( !*ptr ) {
+    for (ptr = line, fQuote = 0, *tmp = '\0', tptr = tmp, fEnd = 0;; ptr++)
+    {
+        if (fQuote)
+        {
+            if (!*ptr)
+            {
                 break;
             }
 
-            if ( *ptr == '\"' ) {
-                if ( ptr[1] == '\"' ) {
+            if (*ptr == '\"')
+            {
+                if (ptr[1] == '\"')
+                {
                     *tptr++ = '\"';
                     ptr++;
                     continue;
                 }
                 fQuote = 0;
             }
-            else {
+            else
+            {
                 *tptr++ = *ptr;
             }
 
             continue;
         }
 
-        switch( *ptr ) {
-            case '\"':
-                fQuote = 1;
-                continue;
-            case '\0':
-                fEnd = 1;
-            case ',':
-                *tptr = '\0';
-                *bptr = strdup( tmp );
+        switch (*ptr)
+        {
+        case '\"':
+            fQuote = 1;
+            continue;
+        case '\0':
+            fEnd = 1;
+        case ',':
+            *tptr = '\0';
+            *bptr = strdup(tmp);
 
-                if ( !*bptr ) {
-                    for ( bptr--; bptr >= buf; bptr-- ) {
-                        free( *bptr );
-                    }
-                    free( buf );
-                    free( tmp );
-
-                    return NULL;
+            if (!*bptr)
+            {
+                for (bptr--; bptr >= buf; bptr--)
+                {
+                    free(*bptr);
                 }
+                free(buf);
+                free(tmp);
 
-                bptr++;
-                tptr = tmp;
+                return NULL;
+            }
 
-                if ( fEnd ) {
-                  break;
-                } else {
-                  continue;
-                }
+            bptr++;
+            tptr = tmp;
 
-            default:
-                *tptr++ = *ptr;
+            if (fEnd)
+            {
+                break;
+            }
+            else
+            {
                 continue;
+            }
+
+        default:
+            *tptr++ = *ptr;
+            continue;
         }
 
-        if ( fEnd ) {
+        if (fEnd)
+        {
             break;
         }
     }
 
     *bptr = NULL;
-    free( tmp );
+    free(tmp);
     return buf;
 }
 
 int currentOffset = 0;
 char *getLine(const char *buffer)
 {
-    if(buffer[currentOffset] == 0)
+    if (buffer[currentOffset] == 0)
     {
         currentOffset = 0;
         return NULL;

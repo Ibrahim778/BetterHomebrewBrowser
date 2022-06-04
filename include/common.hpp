@@ -1,7 +1,6 @@
 #ifndef BHBB_COMMON_H
 #define BHBB_COMMON_H
 
-#include "parser.hpp"
 #include "pages/home_page.hpp"
 
 #define PLUGIN_NAME "bhbb_plugin"
@@ -41,8 +40,6 @@
 #define APPS_PER_LOAD 100
 
 #define MUSIC_PATH "pd0:data/systembgm/store.at9"
-
-extern parser::HomebrewList g_mainList;
 
 extern paf::Plugin *mainPlugin;
 
