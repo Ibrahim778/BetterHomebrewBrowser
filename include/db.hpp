@@ -5,14 +5,6 @@
 
 namespace db
 {
-    typedef enum
-    {
-        GAME = 1,
-        PORT = 2,
-        EMULATOR = 5,
-        UTIL = 4
-    } Category;
-
     typedef struct
     {
         paf::string id;
@@ -40,14 +32,41 @@ namespace db
 
     } entryInfo;
 
+    typedef enum
+    {
+        GAME = 1,
+        PORT = 2,
+        EMULATOR = 5,
+        UTIL = 4
+    } Category;
+
+    class List
+    {
+    public:
+        List();
+        ~List();
+
+        void Init(int size);
+        void Clear(bool deleteTextures);
+
+        bool IsValidEntry(entryInfo *pEntry);
+
+        int GetSize(int category = -1);
+        entryInfo *Get(int index = 0, int category = -1);
+
+    private:
+        entryInfo *entries;
+        int size;
+    };
+
     namespace vitadb
     {
-        void Parse(db::entryInfo **outList, int *outListNum, const char *json, int length);
+        void Parse(db::List *outList, paf::string& jsonStr);
     };
 
     namespace cbpsdb
     {
-        void Parse(db::entryInfo **outList, int *outListNum, const char *csv, int length);
+        void Parse(db::List *outList, paf::string& csv);
     };
 
     typedef enum // Should match the index in info[]
@@ -58,7 +77,7 @@ namespace db
 
     typedef struct
     {
-        void (*Parse)(db::entryInfo **outList, int *outListNum, const char *data, int length);
+        void (*Parse)(db::List *outList, paf::string& data);
         const char *name;
         const char *iconFolderPath;
         const char *iconsURL;

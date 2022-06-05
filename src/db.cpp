@@ -13,12 +13,17 @@ using namespace sce;
 using namespace db;
 
 #define SET_STRING(pafString, jsonString) { if(rootval[i][jsonString] != NULL) { pafString = rootval[i][jsonString].getString().c_str(); } } 
-void vitadb::Parse(db::entryInfo **outList, int *outListNum, const char *jsonStr, int length)
+void vitadb::Parse(db::List *outList, paf::string &json)
 {
+    outList->Clear(true);
+
+    int length = json.length;
+    const char *jsonStr = json.data;
+
     PAFAllocator allocator;
     Json::InitParameter initParam((Json::MemAllocator *)&allocator, 0, 512);
     Json::Initializer init;
-    db::entryInfo *entries = new db::entryInfo[length];
+
 
     init.initialize(&initParam);
 
@@ -32,11 +37,12 @@ void vitadb::Parse(db::entryInfo **outList, int *outListNum, const char *jsonStr
         if(ret < 0)
             print("Json::Parser::parse() -> 0x%X\n", ret);
         
-        int length = rootval.count();
-        sce_paf_memset(entries, 0, length * sizeof(db::entryInfo));
+        int entryCount = rootval.count();
+        
+        outList->Init(entryCount);
 
-        db::entryInfo *currentEntry = entries;
-        for(int i = 0; i < length; i++, currentEntry = &entries[i])
+        db::entryInfo *currentEntry = outList->Get();
+        for(int i = 0; i < entryCount; i++, currentEntry++)
         {
             if(rootval[i] == NULL) return;
 
@@ -65,29 +71,32 @@ void vitadb::Parse(db::entryInfo **outList, int *outListNum, const char *jsonStr
             currentEntry->hash = Utils::GetHashById(currentEntry->id.data);
         }
     }
-
-    *outListNum = length;
-    *outList = entries;
 }
 
-void cbpsdb::Parse(db::entryInfo **outList, int *outListNum, const char *csv, int length)
+void cbpsdb::Parse(db::List *outList, paf::string &csvStr)
 {
+    outList->Clear(true);
+
+    const char *csv = csvStr.data;
+    int length = csvStr.length;
+
     char *line;
     int num = 0;
-    while(getLine(csv) != NULL) num++;
+    
+    char *str;
+    while((str = sce_paf_strstr(csv, "VPK")) != NULL) num++;
 
-    db::entryInfo *entries = new db::entryInfo[num];
-    sce_paf_memset(entries, 0, sizeof(db::entryInfo) * num);
+    outList->Init(num);
 
-    db::entryInfo *currentEntry = entries;
-    for (int i = 0; i < num && (line = getLine(csv)) != NULL; i++, currentEntry = &entries[i])
+    db::entryInfo *currentEntry = outList->Get(0);
+    for (int i = 0; i < num && (line = getLine(csv)) != NULL;)
     {
         char **parsed = parse_csv(line);
 
         if(parsed != NULL)
         {
             int dead = 0;
-            for (int i = 0; i < 17 && !dead; i++)
+            for (int x = 0; x < 17 && !dead; x++)
             {
                 dead = parsed[i] == NULL;
             }
@@ -97,6 +106,7 @@ void cbpsdb::Parse(db::entryInfo **outList, int *outListNum, const char *csv, in
                 currentEntry->id = parsed[0];
 
                 currentEntry->title = parsed[1];
+                print("%d. %s (%p)\n", i, currentEntry->title.data, currentEntry);
           
                 currentEntry->credits = parsed[2];
                 if(parsed[3][0] == 'h')
@@ -117,39 +127,81 @@ void cbpsdb::Parse(db::entryInfo **outList, int *outListNum, const char *csv, in
                 currentEntry->version = "";
 
                 currentEntry->hash = Utils::GetHashById(currentEntry->id.data);
+                currentEntry++;
+                i++;
             }
         }
 
         free_csv_line(parsed);
     }
-
-    *outListNum = num;
-    *outList = entries;
 }
 
-int db::GetNumByCategory(db::entryInfo *list, int num, int category)
+db::List::~List()
 {
-    if(category == -1) return num;
-
-    int count = 0;
-
-    db::entryInfo *currEntry = list;
-    for(int i = 0; i < num; i++, currEntry++)
-    {
-        if(currEntry->type == category) count++;
-    }
-
-    return count;
+    Clear(true);
 }
 
-db::entryInfo *db::GetByCategoryIndex(db::entryInfo *list, int listNum, int index, int category)
+db::List::List():size(0),entries(NULL)
 {
 
-    db::entryInfo *currEntry = list;
-    for(int i = 0; i < listNum && i < index; i++, currEntry++)
+}
+
+bool db::List::IsValidEntry(db::entryInfo *pEntry)
+{
+    return entries <= pEntry && pEntry < &entries[size];
+}
+
+void db::List::Init(int size)
+{
+    if(entries) return;
+
+    entries = new db::entryInfo[size];
+    sce_paf_memset(entries, 0, sizeof(db::entryInfo) * size);
+
+    this->size = size; 
+
+    print("List Init complete! size = %d entries = %p\n", size, entries);
+}
+
+void db::List::Clear(bool deleteTexture)
+{
+    if(!entries) return;
+
+    if(deleteTexture)
     {
-        if(currEntry->type != category) i--;
+        db::entryInfo *currentEntry = entries;
+        for(int i = 0; i < size; i++, currentEntry++)
+        {
+            if(currentEntry->tex != NULL)
+                Utils::DeleteTexture(&currentEntry->tex);
+        }
     }
 
-    return currEntry;
+    delete[] entries;
+    entries = NULL;
+    size = 0;
+}
+
+db::entryInfo *db::List::Get(int index, int category)
+{
+    if(index >= size) return &entries[size - 1];
+
+    if(category == -1) return &entries[index];
+
+    db::entryInfo *currentEntry = entries;
+    for(int i = 0; i < index && i < size; i++, currentEntry++)
+        if(currentEntry->type != category) i--;
+    
+    return currentEntry;
+}
+
+int db::List::GetSize(int category)
+{
+    if(category == -1) return size;
+
+    int size = 0;
+    for(int i = 0; i < size; i++)
+        if(entries[i].type == category) size++;
+    
+    return size;
 }
