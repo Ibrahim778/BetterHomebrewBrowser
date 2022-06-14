@@ -8,22 +8,19 @@
 #include <shellsvc.h>
 #include <message_dialog.h>
 
-#include "network.hpp"
-#include "main.hpp"
-#include "utils.hpp"
-#include "common.hpp"
+#include "network.h"
+#include "main.h"
+#include "utils.h"
+#include "common.h"
 
 #define NET_HEAP_SIZE  2 * 1024 * 1024
 #define HTTP_HEAP_SIZE 2 * 1024 * 1024
 #define SSL_HEAP_SIZE  2 * 1024 * 1024
 
-static SceUID moduleID = SCE_UID_INVALID_UID;
-static SceUID cLibID = SCE_UID_INVALID_UID;
-static SceUID fios2ID = SCE_UID_INVALID_UID;
-
 static Network::CheckThread *checkThread = SCE_NULL;
+int Network::lastError = 0;
 
-void (*Network::OnReady)(void) = SCE_NULL;
+void (*Network::CheckComplete)(void) = SCE_NULL;
 Network::Status Network::CurrentStatus = Network::Status::Offline;
 
 void Network::Init()
@@ -45,7 +42,7 @@ void Network::Init()
 	sceHttpInit(HTTP_HEAP_SIZE);
 	sceSslInit(SSL_HEAP_SIZE);
 
-    
+    lastError = 0;
 }
 
 void Network::Term()
@@ -60,19 +57,11 @@ void Network::Term()
 	sceNetCtlTerm();
 	sceNetTerm();
 	sceSysmoduleUnloadModule(SCE_SYSMODULE_NET);
-
-    /* PSP2Compat */
-    if(moduleID > 0)
-        moduleID = sceKernelStopUnloadModule(moduleID, 0, NULL, 0, NULL, NULL) == SCE_OK ? SCE_UID_INVALID_UID : moduleID;
-    if(cLibID > 0)
-        cLibID = sceKernelStopUnloadModule(cLibID, 0, NULL, 0, NULL, NULL) == SCE_OK ? SCE_UID_INVALID_UID : cLibID;
-	if (fios2ID > 0)
-		fios2ID = sceKernelStopUnloadModule(fios2ID, 0, NULL, 0, NULL, NULL) == SCE_OK ? SCE_UID_INVALID_UID : fios2ID;
 }
 
-void Network::Check(void (*onReady)(void))
+void Network::Check(void (*onComplete)(void))
 {
-    Network::OnReady = onReady;
+    Network::CheckComplete = onComplete;
     
     if(checkThread != NULL)
     {
@@ -90,6 +79,11 @@ void Network::Check(void (*onReady)(void))
     checkThread->Start();
 }
 
+SceInt32 Network::GetLastError()
+{
+    return lastError;
+}
+
 Network::Status Network::GetCurrentStatus()
 {
     /*
@@ -102,10 +96,9 @@ Network::Status Network::GetCurrentStatus()
 
 SceVoid Network::CheckThread::EntryFunction()
 {
-	SceInt32                        ret = -1;
-
-    paf::HttpFile                   testFile;
-    paf::HttpFile::Param            testHttp;
+	SceInt32             ret = -1;
+    paf::HttpFile        testFile;
+    paf::HttpFile::Param testHttp;
 
     sceShellUtilLock(SCE_SHELL_UTIL_LOCK_TYPE_PS_BTN);
 
@@ -118,11 +111,12 @@ SceVoid Network::CheckThread::EntryFunction()
 	
     if (ret == SCE_OK)
 		testFile.Close();
+    else lastError = ret;
 
 	sceShellUtilUnlock(SCE_SHELL_UTIL_LOCK_TYPE_PS_BTN);
 
-    if(Network::OnReady)
-        Network::OnReady();
+    if(Network::CheckComplete)
+        Network::CheckComplete();
 
     sceKernelExitDeleteThread(0);
 }

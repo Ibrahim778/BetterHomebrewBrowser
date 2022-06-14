@@ -1,274 +1,224 @@
+//Based of off bgvpk & download_enabler by SKGleba & TheFlow
+
 #include <kernel.h>
-#include <paf.h>
-#include <notification_util.h>
+#include <moduleinfo.h>
+#include <taihen.h>
 #include <libsysmodule.h>
-#include <stdio.h>
-#include <curl/curl.h>
+#include <incoming_dialog.h>
+#include <paf.h>
+#include <ces.h>
 #include <appmgr.h>
+#include <quickmenureborn/qm_reborn.h>
+#include <notification_util.h>
 #include <promoterutil.h>
+#include <shellsvc.h>
+#include <libextractor.h>
 
-#include "main.hpp"
-#include "Archives.hpp"
-#include "notifmgr.hpp"
+#include "main.h"
+#include "print.h"
+#include "offsets.h"
 #include "bhbb_dl.h"
-#include "queue.hpp"
-#include "net.hpp"
-#include "promote.hpp"
 
-extern "C" {
+using namespace paf;
 
-	extern unsigned int	sce_process_preload_disabled = (SCE_PROCESS_PRELOAD_DISABLED_LIBDBG \
-		| SCE_PROCESS_PRELOAD_DISABLED_LIBCDLG | SCE_PROCESS_PRELOAD_DISABLED_LIBPERF);
+SceUID hooks[6];
+tai_hook_ref_t ExportFileRef;
+tai_hook_ref_t GetFileTypeRef;
+const unsigned char nop32[4] = {0xaf, 0xf3, 0x00, 0x80};
 
-	unsigned int sceLibcHeapSize = 2 * 1024 * 1024;
-
-    extern const char			sceUserMainThreadName[] = "BHBB_MAIN_BG";
-    extern const int			sceUserMainThreadPriority = SCE_KERNEL_DEFAULT_PRIORITY_USER;
-    extern const unsigned int	sceUserMainThreadStackSize = SCE_KERNEL_THREAD_STACK_SIZE_DEFAULT_USER_MAIN;
-
-    void __cxa_set_dso_handle_main(void *dso)
-    {
-
-    }
-
-    int _sceLdTlsRegisterModuleInfo()
-    {
-        return 0;
-    }
-
-    int __aeabi_unwind_cpp_pr0()
-    {
-        return 9;
-    }
-
-    int __aeabi_unwind_cpp_pr1()
-    {
-        return 9;
-    }
-
-    int __at_quick_exit()
-    {
-        return 0;
-    }
-}
-
-#define EXTRACT_PATH "ux0:temp/app"
-#define VPK_DOWNLOAD_PATH "ux0:temp/bhbb_dl.vpk"
-
-Queue queue;
-
-SceBool Running = SCE_TRUE;
-SceUID dlThreadID = SCE_UID_INVALID_UID;
-
-int install(const char *file)
+SceBool IsOnLiveArea()
 {
-    print("Update Progress Notif...");
-    NotifMgr::UpdateProgressNotif(0, "Extracting", queue.head->data.name);
-    print("Done!\nDeleting old dirs...");
-    sceIoRemove(EXTRACT_PATH);
-    sceIoRemove("ux0:temp/new");
-    sceIoRemove("ux0:appmeta/new");
-    sceIoRemove("ux0:temp/promote");
-    sceIoRemove("ux0:temp/game");
-
-    sceIoRemove("ur0:temp/new");
-    sceIoRemove("ur0:appmeta/new");
-    sceIoRemove("ur0:temp/promote");
-    sceIoRemove("ur0:temp/game");
-
-    print("Done!\nExtract Files...\n");
-    Zip *zfile;
-    char txt[64];
-	sce_paf_memset(txt, 0, sizeof(txt));
+    SceInt32 result = SCE_OK;
     
-    if(NotifMgr::currDlCanceled)
-        goto END;
-    
-    zfile = ZipOpen(file);
-    ZipExtract(zfile, NULL, EXTRACT_PATH);
-    ZipClose(zfile);
+    SceUID appIDs[20];
+    sce_paf_memset(appIDs, SCE_UID_INVALID_UID, sizeof(appIDs));
 
-    print("Done!\nEnd notif....");
-    NotifMgr::EndNotif(queue.head->data.name, "Promoting");
-    print("Done!\nPromoting...");
-    if(NotifMgr::currDlCanceled) goto END;
-
-    int res = promoteApp(EXTRACT_PATH);
-    if(res == SCE_OK)
-		sce_paf_snprintf(txt, 64, "Installed %s Successfully!", queue.head->data.name);
-    else
-		sce_paf_snprintf(txt, 64, "Error 0x%X", res);
-
-    NotifMgr::SendNotif(txt);
-    print("Done!\n");
-END:
-    print("Removing dirs...\n");
-    sceIoRemove(EXTRACT_PATH);
-    sceIoRemove(file);
-
-    sceIoRemove("ux0:temp/new");
-    sceIoRemove("ux0:appmeta/new");
-    sceIoRemove("ux0:temp/promote");
-    sceIoRemove("ux0:temp/game");
-
-    sceIoRemove("ur0:temp/new");
-    sceIoRemove("ur0:appmeta/new");
-    sceIoRemove("ur0:temp/promote");
-    sceIoRemove("ur0:temp/game");
-    print("Done!\n");
-    return 0;
-}
-
-SceInt32 DownloadThread(SceSize args, void *argp)
-{
-    curlInit();
-    
-    while (Running)
+    SceSize count = result = sceAppMgrGetRunningAppIdListForShell(appIDs, 20);
+    if(result < 0)
     {
-        if(queue.num == 0)
+        print("sceAppMgrGetRunningAppIdListForShell() -> 0x%X\n", result);
+        return false;
+    }
+
+    for(int i = 0; i < count; i++)
+    {
+        char name[0x10];
+        sce_paf_memset(name, 0, sizeof(name));
+
+        result = sceAppMgrGetNameById(sceAppMgrGetProcessIdByAppIdForShell(appIDs[i]), name);
+        if(result != SCE_OK)
         {
-            sceKernelDelayThread(100000);
+            print("sceAppMgrGetNameById (0x%X) -> 0x%X\n", appIDs[i], result);
             continue;
         }
-        
-        print("Init NotifMgr...");
-        NotifMgr::Init();
-        print("Done!\nMakeing Progress Notif...");
-        NotifMgr::MakeProgressNotif(queue.head->data.name, "Installing", "Are you sure you want to cancel the install?");
-        print("Done!\ndlFile()....");
-        int r = dlFile(queue.head->data.url, VPK_DOWNLOAD_PATH);
-        print("Done!\n");
-        if(!NotifMgr::currDlCanceled && r == CURLE_OK)    
-        {
-            print("Install...\n");
-            install(VPK_DOWNLOAD_PATH);
-            print("Done!\n");
-        }
-        else
-        {
-            sceIoRemove(VPK_DOWNLOAD_PATH);
-            if(r > 0) NotifMgr::EndNotif("CURL Error while downloading",curl_easy_strerror((CURLcode)r));
-            else
-            {
-                char txt[64];
-                sce_paf_memset(txt, 0, 64);
-                sce_paf_snprintf(txt, 64, "0x%X", r);
-                NotifMgr::EndNotif("An error ocourred before downloading", txt);
-            }
-        }
-        queue.dequeue();
-    };
 
-    curlEnd();
-    return sceKernelExitDeleteThread(0);
+        SceAppMgrAppStatus status;
+        result = sceAppMgrGetStatusByName(name, &status); 
+        if(result < 0)
+        {
+            print("sceAppMgrGetStatusByName() -> 0x%X\n", result);
+            continue;
+        }
+
+        if(status.isShellProcess)
+            return false;
+    } 
+
+    return true;
 }
 
-int initPaf()
+//From BGFTP, too lazy to rewrite if it works lol
+//Send a notification with formatting :D
+void sendNotification(const char *text, ...)
 {
-    SceInt32 res = -1, load_res;
+	SceNotificationUtilSendParam param;
+	uint32_t inSize, outSize;
 
-    ScePafInit initParam;
-    SceSysmoduleOpt opt;
+	char buf[SCE_NOTIFICATION_UTIL_TEXT_MAX * 2];
+	va_list argptr;
+	va_start(argptr, text);
+	sceClibVsnprintf(buf, sizeof(buf), text, argptr); //oh no
+	va_end(argptr);
 
-    initParam.global_heap_size = 6 * 1024 * 1024;
+	sce_paf_memset(&param, 0, sizeof(SceNotificationUtilSendParam));
 
-    initParam.a2 = 0x0000EA60;
-    initParam.a3 = 0x00040000;
+	SceCesUcsContext context;
+	sceCesUcsContextInit(&context);
+	sceCesUtf8StrToUtf16Str(
+		&context,
+		(uint8_t *)buf,
+		SCE_NOTIFICATION_UTIL_TEXT_MAX * 2,
+		&inSize,
+		(uint16_t *)param.text,
+		SCE_NOTIFICATION_UTIL_TEXT_MAX,
+		&outSize);
 
-    initParam.cdlg_mode = SCE_FALSE;
+	sceNotificationUtilSendNotification(&param);
+}
 
-    initParam.heap_opt_param1 = 0;
-    initParam.heap_opt_param2 = 0;
+int ExportFilePatched(uint32_t *data)
+{
+    int res = TAI_NEXT(ExportFilePatched, ExportFileRef, data);
 
-    //Specify that we will pass some arguments
-    opt.flags = 0;
-    opt.result = &load_res;
-
-    res = _sceSysmoduleLoadModuleInternalWithArg(SCE_SYSMODULE_INTERNAL_PAF, sizeof(initParam), &initParam, &opt);
-
-    if(res < 0 || load_res < 0)
+    if(res == 0x80101A09) // Unsuppourted file
     {
-        LOG_ERROR("INIT_PAF", res);
-        LOG_ERROR("INIT_PAF", load_res);
+        SceUInt32 bgdlID = *(SceUInt32 *)data[0];
+        SceUInt16 urlLength = 0;
+        string paramPath;
+        string pdbPath;
+        string filePath;
+
+        char fileName[0x100];
+
+        paramPath.Setf("ux0:bgdl/t/%08x/install_param.ini", bgdlID);
+        
+        if(!paf::io::Misc::Exists(paramPath.data)) //Not a file from bhbb 
+            return res;
+    
+        pdbPath.Setf("ux0:bgdl/t/%08x/d0.pdb", bgdlID);
+        
+        SceUID fd = sceIoOpen(pdbPath.data, SCE_O_RDONLY, 0);
+        if(fd < 0)
+            return fd;
+        
+        sceIoPread(fd, &urlLength, sizeof(SceUInt16), 0xD6);
+		sceIoPread(fd, fileName, sizeof(fileName), 0xF7 + urlLength);
+		sceIoClose(fd);
+
+        filePath.Setf("ux0:bgdl/t/%08x/%s", bgdlID, fileName);
+        
+        BGDLParam param;
+        sce_paf_memset(&param, 0, sizeof(param));
+
+        fd = sceIoOpen(paramPath.data, SCE_O_RDONLY, 0);
+        if(fd < 0)
+            return fd;
+        
+        sceIoRead(fd, &param, sizeof(param));
+        sceIoClose(fd);
+
+        SceUID moduleID = sceKernelLoadStartModule("ux0:app/BHBB00001/module/libextractor.suprx", 0, NULL, 0, NULL, NULL);
+        if(moduleID < 0)
+        {
+            print("sceKernelLoadStartModule(\"ux0:app/BHBB00001/module/libextractor.suprx\", 0, NULL, 0, NULL, NULL) -> 0x%X\n", moduleID);
+            return moduleID;
+        }
+        else print("Module started with ID 0x%X\n", moduleID);
+
+        if(param.type) //App
+        {
+        
+        }
+        else //Data
+        {
+            Zipfile zFile = Zipfile(filePath.data);
+            SceInt32 result = zFile.Unzip(param.path);
+            if(result < 0)
+                print("Error extracting %s to %s -> %d\n", filePath, param.path, result);
+        }
+
+        moduleID = sceKernelStopUnloadModule(moduleID, 0, NULL, 0, NULL, NULL);
+        if(moduleID != SCE_OK)
+        {
+            print("Error unloading module -> 0x%X\n", moduleID);
+            return moduleID;
+        }
+
+        return 0;
     }
 
     return res;
 }
 
-void endPaf()
+int GetFileTypePatched(int unk, int *type, char **filename, char **mime_type)
 {
-    uint32_t buf = 0;
-    _sceSysmoduleUnloadModuleInternalWithArg(SCE_SYSMODULE_INTERNAL_PAF, 0, NULL, &buf);
+    int res = TAI_NEXT(GetFileTypePatched, GetFileTypeRef, unk, type, filename, mime_type);
+
+    if (res == 0x80103A21)
+    {
+        *type = 1; // Type photo
+        return 0;
+    }
+
+    return res;
 }
 
-int main()
+SceInt32 module_start(SceSize args, void *argp)
 {
-    print("Loaded bhbb_dl\n");
-    if(sceKernelOpenMsgPipe(BHBB_DL_PIPE_NAME) > 0) //Pipe already exists... a different instance in running!
-        return -1;
+    sceSysmoduleLoadModule(SCE_SYSMODULE_NOTIFICATION_UTIL);
 
-    if(sceSysmoduleLoadModule(SCE_SYSMODULE_NOTIFICATION_UTIL) != SCE_OK)
-        return -1;
+    tai_module_info_t info;
+    info.size = sizeof(info);
+
+    SceUInt32 get_off, exp_off, rec_off, lock_off;
+    if (taiGetModuleInfo("SceShell", &info) < 0 || GetShellOffsets(info.module_nid, &get_off, &exp_off, &rec_off, &lock_off) < 0)
+        return SCE_KERNEL_START_FAILED;
     
-    sceNotificationUtilBgAppInitialize();
-    if(initPaf() < 0)
-        return -1;
+    hooks[0] = taiInjectData(info.modid, 0, get_off, "GET", 4);
 
-    Running = SCE_TRUE;
+    hooks[1] = taiHookFunctionOffset(&ExportFileRef, info.modid, 0, exp_off, 1, ExportFilePatched);
+    hooks[2] = taiHookFunctionOffset(&GetFileTypeRef, info.modid, 0, rec_off, 1, GetFileTypePatched);
+    hooks[3] = taiInjectData(info.modid, 0, lock_off, nop32, 4);
+    hooks[4] = taiInjectData(info.modid, 0, lock_off + 8, nop32, 4);
+    hooks[5] = taiInjectData(info.modid, 0, lock_off + 16, nop32, 4);
+    
+    return SCE_KERNEL_START_SUCCESS;
+}
 
-    sceKernelStartThread(dlThreadID = sceKernelCreateThread("bhbb_dl_thread", DownloadThread, SCE_KERNEL_COMMON_QUEUE_LOWEST_PRIORITY, SCE_KERNEL_128KiB, 0, SCE_KERNEL_THREAD_CPU_AFFINITY_MASK_DEFAULT, NULL), 0, NULL);
+SceInt32 module_stop(SceSize args, void *argp)
+{
+    if (hooks[5] >= 0)
+        taiInjectRelease(hooks[5]);
+    if (hooks[4] >= 0)
+        taiInjectRelease(hooks[4]);
+    if (hooks[3] >= 0)
+        taiInjectRelease(hooks[3]);
+    if (hooks[2] >= 0)
+        taiHookRelease(hooks[2], GetFileTypeRef);
+    if (hooks[1] >= 0)
+        taiHookRelease(hooks[1], ExportFileRef);
+    if (hooks[0] >= 0)
+        taiInjectRelease(hooks[0]);
 
-    if(dlThreadID < 0)
-    {
-        Running = SCE_FALSE; //Just in case one of them succeeded it will shut down.
-        return sceAppMgrDestroyAppByAppId(-2);
-    }
-
-    SceUID pipeID = sceKernelCreateMsgPipe(BHBB_DL_PIPE_NAME, SCE_KERNEL_MSG_PIPE_TYPE_USER_MAIN, SCE_KERNEL_ATTR_OPENABLE, SCE_KERNEL_4KiB, NULL);
-    if(pipeID < 0)
-    {
-        Running = SCE_FALSE;
-        return sceAppMgrDestroyAppByAppId(-2);
-    }
-
-    while (Running)
-    {
-        SceSize size = 0;
-        bhbbPacket pkt;
-
-        int receiveResult = sceKernelReceiveMsgPipe(pipeID, &pkt, sizeof(pkt), SCE_KERNEL_MSG_PIPE_MODE_WAIT | SCE_KERNEL_MSG_PIPE_MODE_FULL, &size, NULL);
-        if(receiveResult != SCE_OK)
-            print("[Error] Recieve data function has returned error 0x%X\n", receiveResult);
-
-        if(size != sizeof(pkt))
-            print("[Warning] Could not recieve all data!\n");
-        
-        if(size > 0)
-        {
-            switch (pkt.cmd)
-            {
-            case INSTALL:
-                if(queue.Find(pkt.name) == NULL) //Avoid duplicates
-                    queue.enqueue(&pkt, size);
-                break;
-            case CANCEL:
-                queue.remove(pkt.url);
-                break;
-            case SHUTDOWN:
-                Running = SCE_FALSE;
-                sceKernelWaitThreadEnd(dlThreadID, NULL, NULL);
-                break;
-            default:
-                print("[Error] Unknown Command!\n");
-                break;
-            }
-        }
-        print("Successfully Received Packet!\n");
-        sceKernelDelayThread(1000);
-    }
-
-    endPaf();
-    sceKernelDeleteMsgPipe(pipeID);    
-
-    return sceAppMgrDestroyAppByAppId(-2);
+    return SCE_KERNEL_STOP_SUCCESS; 
 }

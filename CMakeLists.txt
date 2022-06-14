@@ -10,14 +10,6 @@ set(CMAKE_CXX_STANDARD 11)
 add_subdirectory(bhbb_dl)
 add_subdirectory(libScePafPreload)
 
-include_directories(
-  ${CMAKE_SOURCE_DIR}/include
-  ${VDSUITE_USER_INCLUDE_DIRECTORIES}
-  ${VDSUITE_STANDARD_INCLUDE_DIRECTORIES}
-  $ENV{SCE_PSP2_SDK_DIR}/target/include
-  $ENV{SCE_PSP2_SDK_DIR}/target/include_common
-)
-
 link_directories(
   ${VDSUITE_LIBRARY_DIRECTORIES}
 )
@@ -34,7 +26,6 @@ add_link_options(
 add_executable(${PROJECT_NAME}
     src/main.cpp
     src/utils.cpp
-    src/paf.cpp
     src/bgdl.c
     src/network.cpp
     src/csv.c
@@ -44,8 +35,9 @@ add_executable(${PROJECT_NAME}
     src/db.cpp
     src/pages/page.cpp
     src/pages/text_page.cpp
-    src/pages/home_page.cpp
+    src/pages/apps_page.cpp
     src/json.cpp
+    src/dialog.cpp
 )
 
 target_link_libraries(${PROJECT_NAME}
@@ -72,13 +64,22 @@ target_link_libraries(${PROJECT_NAME}
     SceRtcUser_stub
     SceIpmi_stub
     SceShellUtil_stub
-    SceCommonDialog_stub
     SceDeflt
     SceAppSettings_stub
     SceAppSettings2_stub
     SceJson_stub
+    SceCommonGuiDialog_stub
+    taihenUnsafe_stub
 )
 
+target_include_directories(${PROJECT_NAME} PRIVATE
+  ${CMAKE_SOURCE_DIR}/include
+  ${CMAKE_SOURCE_DIR}/common
+  ${VDSUITE_USER_INCLUDE_DIRECTORIES}
+  ${VDSUITE_STANDARD_INCLUDE_DIRECTORIES}
+  $ENV{SCE_PSP2_SDK_DIR}/target/include
+  $ENV{SCE_PSP2_SDK_DIR}/target/include_common
+)
 
 VDSuiteCreateSfo(${PROJECT_NAME}.sfo param.sfx)
 VDSuiteSignElf(${PROJECT_NAME}.self $<TARGET_FILE:${PROJECT_NAME}> BOOT_PARAM bootparam.yml)
@@ -91,7 +92,7 @@ VDSuitePackage(${PROJECT_NAME}.vpk
     resource/rco/src/texture/bg.png sce_sys/pic0.png
     resource/bhbb_settings.xml resource/bhbb_settings.xml
     ${CMAKE_BINARY_DIR}/libScePafPreload/libScePafPreload.suprx module/libScePafPreload.suprx
-    ${CMAKE_BINARY_DIR}/bhbb_dl/bhbb_dl.sfo sce_sys/param2.sfo
-    ${CMAKE_BINARY_DIR}/bhbb_dl/bhbb_dl.self eboot2.bin
+    ${CMAKE_BINARY_DIR}/bhbb_dl/bhbb_dl.suprx module/bhbb_dl.suprx
+    module/libextractor.suprx module/libextractor.suprx
     sce_sys sce_sys
 )

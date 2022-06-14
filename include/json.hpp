@@ -1,5 +1,5 @@
-#ifndef JSON_HPP
-#define JSON_HPP
+#ifndef JSON_H
+#define JSON_H
 
 #include <paf/stdc.h>
 #include <json.h>

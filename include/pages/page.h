@@ -1,11 +1,14 @@
-#ifndef BHBB_PAGE_HPP
-#define BHBB_PAGE_HPP
+#ifndef BHBB_PAGE_H
+#define BHBB_PAGE_H
+
+#include <paf.h>
+
 namespace generic
 {
     class Page
     {
     public:
-        typedef void(*BackButtonEventCallback)(void *pUserData);
+        typedef void(*BackButtonEventCallback)(SceInt32 eventID, paf::ui::Widget *self, SceInt32 unk, ScePVoid pUserData);
 
     	paf::ui::Plane *root;
 

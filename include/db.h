@@ -1,5 +1,5 @@
-#ifndef DB_HPP
-#define DB_HPP
+#ifndef DB_H
+#define DB_H
 
 #include <kernel.h>
 
@@ -11,11 +11,14 @@ namespace db
         paf::string titleID;
         paf::string title;
         paf::string credits;
-        paf::string icon0;
-        paf::string icon0Local;
+        paf::string icon;
+        paf::string icon_mirror;
+        paf::string iconLocal;
         paf::string download_url;
-        paf::string options;
         paf::string description;
+        
+        paf::string dataURL;
+        paf::string dataPath;
         
         paf::string *screenshot_urls;
         int screenshot_url_num;

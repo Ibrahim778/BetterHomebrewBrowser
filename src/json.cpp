@@ -2,7 +2,7 @@
 #include <paf/stdc.h>
 
 #include "json.hpp"
-#include "main.hpp"
+#include "print.h"
 
 using namespace sce;
 

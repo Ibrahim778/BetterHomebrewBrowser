@@ -1,7 +1,7 @@
-#ifndef TEXT_PAGE_HPP
-#define TEXT_PAGE_HPP
+#ifndef TEXT_PAGE_H
+#define TEXT_PAGE_H
 
-#include "page.hpp"
+#include "page.h"
 
 namespace text
 {

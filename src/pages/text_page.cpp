@@ -1,8 +1,8 @@
 #include <paf.h>
 
-#include "utils.hpp"
-#include "pages/page.hpp"
-#include "pages/text_page.hpp"
+#include "utils.h"
+#include "pages/page.h"
+#include "pages/text_page.h"
 
 text::Page::Page(const char *text):generic::Page::Page("text_page_template")
 {

@@ -16,8 +16,9 @@ public:
 
     static SceVoid Init();
     static SceVoid Term();
-    static SceVoid Check(void (*OnReady)(void));
+    static SceVoid Check(void (*CheckComplete)(void));
     static Status GetCurrentStatus();
+    static SceInt32 GetLastError();
 
     class CheckThread : public paf::thread::Thread
     {
@@ -26,8 +27,9 @@ public:
         SceVoid EntryFunction();
     };
 private:
+    static SceInt32 lastError;
     static Status CurrentStatus;
-    static void (*OnReady)(void);
+    static void (*CheckComplete)(void);
 };
 
 

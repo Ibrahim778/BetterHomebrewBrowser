@@ -2,12 +2,12 @@
 #include <libsysmodule.h>
 #include <taihen.h>
 
-#include "settings.hpp"
-#include "common.hpp"
-#include "utils.hpp"
-#include "main.hpp"
-#include "db.hpp"
-#include "pages/text_page.hpp"
+#include "settings.h"
+#include "common.h"
+#include "utils.h"
+#include "print.h"
+#include "db.h"
+#include "pages/text_page.h"
 
 using namespace paf;
 using namespace sce;
@@ -58,7 +58,7 @@ Settings::Settings()
 
 	ret = -1;
 	appSettings->GetInt("settings_version", &ret, 0);
-	if (ret != d_settingsVersion || 1) //Need to setup default values
+	if (ret != d_settingsVersion) //Need to setup default values
 	{
         ret = appSettings->Initialize();
 
@@ -97,16 +97,17 @@ SceVoid Settings::Close()
 
     auto plugin = paf::Plugin::Find("app_settings_plugin");
     ui::Widget *root = plugin->GetPageByHash(&e);
-    
+    if(!root) return;
     e.hash = 0x8211F03F;
     ui::Widget *exitButton = root->GetChildByHash(&e, 0);
+    if(!exitButton) return;
     exitButton->SendEvent(ui::Widget::EventMain_Decide, 0);
 }
 
 SceVoid Settings::Open()
 {
-    g_homePage->root->SetAlpha(0.39f);
-    g_homePage->root->PlayAnimationReverse(10, ui::Widget::Animation_Fadein1);
+    g_appsPage->root->SetAlpha(0.39f);
+    g_appsPage->root->PlayAnimationReverse(10, ui::Widget::Animation_Fadein1);
 
 	AppSettings::InterfaceCallbacks ifCb;
 
@@ -177,26 +178,17 @@ SceInt32 Settings::CBValueChange(const char *elementId, const char *newValue)
     
     case Hash_nLoad:
         GetInstance()->nLoad = value;
-        g_homePage->Redisplay();
+        g_appsPage->Redisplay();
         break;
 
     case Hash_Source:
         GetInstance()->source = (db::Id)value;
     
     case Hash_Refresh:
-        g_homePage->SetCategory(-1);
-        g_homePage->Load();
+        g_appsPage->SetCategory(-1);
+        g_appsPage->Load();
         GetInstance()->Close();
         break;
-
-    case Hash_Info:
-        {
-            paf::string str;
-            Utils::GetfStringFromID("msg_version_info", &str);
-            new text::Page(str.data);
-            GetInstance()->Close();
-            break;
-        }
 
 	default:
 		break;
@@ -212,26 +204,19 @@ SceInt32 Settings::CBValueChange2(const char *elementId, const char *newValue)
 
 SceVoid Settings::CBTerm()
 {    
-    g_homePage->root->PlayAnimation(-100, ui::Widget::Animation_Fadein1);
-    g_homePage->root->SetAlpha(1.0f);
+    g_appsPage->root->PlayAnimation(-100, ui::Widget::Animation_Fadein1);
+    g_appsPage->root->SetAlpha(1.0f);
 }
 
 SceWChar16 *Settings::CBGetString(const char *elementId)
 {
-    if(sce_paf_strncmp(elementId, "db", 2) == 0)
-    {
-        int index = sce_paf_strtol(&elementId[3], NULL, 10);
-        wstring wstr;
-        wstring::CharToNewWString(db::info[index].name, &wstr);
-        return (SceWChar16 *)wstr.data;
-    }
-    else
-    {
-        Resource::Element searchParam;
-        searchParam.hash = Utils::GetHashById(elementId);
+    if(sce_paf_strncmp(elementId, "msg_version_info", 16) == 0)
+        return g_versionInfo;
 
-        return mainPlugin->GetString(&searchParam);
-    }
+    Resource::Element searchParam;
+    searchParam.hash = Utils::GetHashById(elementId);
+
+    return mainPlugin->GetString(&searchParam);
 }
 
 SceInt32 Settings::CBGetTex(graphics::Surface **tex, const char *elementId)

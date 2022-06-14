@@ -4,10 +4,12 @@
 #include <ipmi.h>
 #include <download_service.h>
 
-#include "downloader.hpp"
-#include "utils.hpp"
-#include "common.hpp"
-#include "main.hpp"
+#include "downloader.h"
+#include "utils.h"
+#include "common.h"
+#include "print.h"
+
+using namespace paf;
 
 Downloader::Downloader()
 {
@@ -58,7 +60,7 @@ Downloader::~Downloader()
     sce_paf_free(dw.bufMem);    
 }
 
-SceInt32 Downloader::Enqueue(const char *url, const char *name)
+SceInt32 Downloader::Enqueue(const char *url, const char *name, BGDLParam *param)
 {
 	IPMI::DataInfo dtInfo;
 	IPMI::BufferInfo bfInfo;
@@ -100,7 +102,7 @@ SceInt32 Downloader::Enqueue(const char *url, const char *name)
 	sce_paf_memset(&minfo.name, 0, sizeof(minfo.name));
 	sce_paf_strcpy((char *)minfo.name, name);
 
-    sceClibPrintf("name: %s\nsize: 0x%X\nmimeType: 0x%X\ncreationDateString: 0x%X\nunk_00: 0x%X\nunk_141: 0x%X\nunk_3C: 0x%X\n", minfo.name, minfo.size, minfo.mimeType, minfo.creationDateString, minfo.unk_00, minfo.unk_141, minfo.unk_3C);
+    print("name: %s\nsize: 0x%X\nmimeType: 0x%X\ncreationDateString: 0x%X\nunk_00: 0x%X\nunk_141: 0x%X\nunk_3C: 0x%X\n", minfo.name, minfo.size, minfo.mimeType, minfo.creationDateString, minfo.unk_00, minfo.unk_141, minfo.unk_3C);
 
 	dparam.unk_00 = 1;
 	sce_paf_strcpy((char *)dparam.url, url);
@@ -117,7 +119,8 @@ SceInt32 Downloader::Enqueue(const char *url, const char *name)
 
 	ret2 = SCE_OK;
 	ret = dw.client->invokeSyncMethod(0x12340011, &dtInfo, 3, &ret2, &bfInfo, 1);
-	if (ret2 != SCE_OK) {
+	if (ret2 != SCE_OK) 
+    {
 		//invalid filename?
 		sce_paf_memset(&minfo.name, 0, sizeof(minfo.name));
 		char *ext = sce_paf_strrchr(name, '.');
@@ -129,15 +132,35 @@ SceInt32 Downloader::Enqueue(const char *url, const char *name)
 			return ret2;
 	}
 
+    if(param != NULL && param->magic != -1)
+    {
+        shared_ptr<LocalFile> openResult;
+        string paramPath;
+        
+        paramPath.Setf("ux0:bgdl/t/%08x/install_param.ini", dwRes);
+
+        SceInt32 result = SCE_OK;
+        LocalFile::Open(&openResult, paramPath.data, SCE_O_WRONLY | SCE_O_CREAT | SCE_O_TRUNC, 0666, &result);
+        if(result < 0)
+        {
+            print("open %s -> 0x%X\n", paramPath.data, result);
+            return result;
+        }
+
+        openResult.get()->Write(param, sizeof(BGDLParam));
+    }
 	return ret;
 }
 
-SceInt32 Downloader::EnqueueAsync(const char *url, const char *name)
+SceInt32 Downloader::EnqueueAsync(const char *url, const char *name, BGDLParam *param)
 {
 	AsyncEnqueue *dwJob = new AsyncEnqueue("BHBB::AsyncEnqueue");
 	dwJob->downloader = this;
 	dwJob->url8 = url;
 	dwJob->name8 = name;
+    if(param)
+        dwJob->param = *param;
+    else dwJob->param.magic = -1;
 
 	return paf::thread::s_defaultJobQueue->Enqueue(&paf::shared_ptr<paf::thread::JobQueue::Item>(dwJob));
 }

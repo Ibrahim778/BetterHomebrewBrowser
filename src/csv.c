@@ -180,16 +180,15 @@ char **parse_csv(const char *line)
     return buf;
 }
 
-int currentOffset = 0;
-char *getLine(const char *buffer)
+char *getLine(const char *buffer, int *currentOffset)
 {
-    if (buffer[currentOffset] == 0)
+    if (buffer[*currentOffset] == 0)
     {
-        currentOffset = 0;
+        *currentOffset = 0;
         return NULL;
     }
 
-    char *beginning = &buffer[currentOffset];
+    char *beginning = &buffer[*currentOffset];
     char *newLineChar = sce_paf_strchr(beginning, '\n');
 
     char *line = sce_paf_malloc((newLineChar - beginning) + 1);
@@ -197,7 +196,7 @@ char *getLine(const char *buffer)
 
     sce_paf_strncpy(line, beginning, newLineChar - beginning);
 
-    currentOffset += newLineChar - beginning + 1;
+    *currentOffset += newLineChar - beginning + 1;
 
     return line;
 }

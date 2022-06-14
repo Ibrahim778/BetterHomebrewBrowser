@@ -1,12 +1,13 @@
-#ifndef HOME_PAGE_HPP
-#define HOME_PAGE_HPP
+#ifndef HOME_PAGE_H
+#define HOME_PAGE_H
 
 #include <paf.h>
 
-#include "page.hpp"
-#include "db.hpp"
+#include "page.h"
+#include "db.h"
+#include "dialog.h"
 
-namespace home
+namespace apps
 {
     class Page : public generic::Page
     {
@@ -34,7 +35,15 @@ namespace home
             Page *callingPage;
         };
 
-        class IconLoadThread : public::paf::thread::Thread
+        class IconZipThread : public paf::thread::Thread
+        {
+        public:
+            using paf::thread::Thread::Thread;
+
+            SceVoid EntryFunction();
+        };
+
+        class IconLoadThread : public paf::thread::Thread
         {
         public:
             using paf::thread::Thread::Thread;
@@ -71,24 +80,23 @@ namespace home
 
         SceVoid SetMode(PageMode mode);
 
-        static SceVoid DeleteBody(void *body);
+        static SceVoid DeleteBodyCB(SceInt32 eventID, paf::ui::Widget *self, SceInt32 unk, ScePVoid pUserData);
         static SceVoid ForwardButtonCB(SceInt32 eventID, paf::ui::Widget *self, SceInt32 unk, ScePVoid pUserData);
         static SceVoid SearchCB(SceInt32 eventID, paf::ui::Widget *self, SceInt32 unk, ScePVoid pUserData);
         static SceVoid CategoryButtonCB(SceInt32 eventID, paf::ui::Widget *self, SceInt32 unk, ScePVoid pUserData);
+        static SceVoid ErrorRetryCB(SceInt32 eventID, paf::ui::Widget *self, SceInt32 unk, ScePVoid pUserData);
+        static SceVoid IconDownloadDecideCB(Dialog::ButtonCode buttonResult, ScePVoid userDat);
 
+        SceVoid DeleteBody();
         PageBody *MakeNewBody();
 
         paf::thread::JobQueue *loadQueue;
         PageBody *body;
 
-        db::entryInfo *list; //Will point to either home::Page::searchList or home::Page::parsedList
-        int listSize;
+        db::List *list; //Will point to either apps::Page::searchList or apps::Page::parsedList
 
-        db::entryInfo *parsedList; //Will point to entire parsed db
-        int parsedListSize;
-
-        db::entryInfo *searchList; //Will point to list with matching search elements
-        int searchListSize;
+        db::List parsedList; //Will point to entire parsed db
+        db::List searchList; //Will point to list with matching search elements
 
     private:
 

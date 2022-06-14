@@ -111,6 +111,13 @@
             </plane>
         </template>
 
+        <template fast_open="1" id="entry_page_template">
+            <plane style="_common_style_plane_transparent" id="page_root">
+                <layout_hint size="960, 544"/>
+
+            </plane>
+        </template>
+
         <template fast_open="1" id="homebrew_button">
             <image_button sound="_common_sound_image_button" style="list_button_style" enable_long_press_text_auto_scroll="1" id="list_button">
                 <layout_hint size="960, 80" adjust="0, 0" pos="0, 0" />

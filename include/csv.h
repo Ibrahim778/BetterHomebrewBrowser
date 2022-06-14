@@ -24,7 +24,7 @@ char **parse_csv( const char *line );
 void free_csv_line( char **parsed );
 char **split_on_unescaped_newlines(const char *txt);
 char *fread_csv_line(FILE *fp, int max_line_size, int *done, int *err);
-char *getLine(const char *buffer);
+char *getLine(const char *buffer, int *currentSeek);
 #ifdef __cplusplus
 }
 #endif

@@ -2,18 +2,19 @@
 #include <json.h>
 #include <libsysmodule.h>
 
-#include "common.hpp"
-#include "db.hpp"
+#include "common.h"
+#include "db.h"
 #include "csv.h"
-#include "main.hpp"
+#include "print.h"
 #include "json.hpp"
-#include "utils.hpp"
+#include "utils.h"
 
 using namespace sce;
 using namespace db;
+using namespace paf;
 
 #define SET_STRING(pafString, jsonString) { if(rootval[i][jsonString] != NULL) { pafString = rootval[i][jsonString].getString().c_str(); } } 
-void vitadb::Parse(db::List *outList, paf::string &json)
+void vitadb::Parse(db::List *outList, string &json)
 {
     outList->Clear(true);
 
@@ -51,15 +52,17 @@ void vitadb::Parse(db::List *outList, paf::string &json)
 
             if(rootval[i]["icon"] != NULL)
             {
-                currentEntry->icon0.Setf("https://rinnegatamante.it/vitadb/icons/%s", rootval[i]["icon"].getString().c_str());
-                currentEntry->icon0Local.Setf(VITADB_ICON_SAVE_PATH "/%s", rootval[i]["icon"].getString().c_str());
+                currentEntry->icon.Setf("https://bhbb-wrapper.herokuapp.com/icon?id=%s", rootval[i]["icon"].getString().c_str());
+                currentEntry->icon_mirror = currentEntry->icon;
+                currentEntry->iconLocal.Setf("%s/%s", db::info[VITADB].iconFolderPath, rootval[i]["icon"].getString().c_str());
             }
 
             SET_STRING(currentEntry->title, "name");
 
             SET_STRING(currentEntry->download_url, "url");
             SET_STRING(currentEntry->credits, "author");
-            SET_STRING(currentEntry->options, "data");
+            SET_STRING(currentEntry->dataURL, "data");
+            currentEntry->dataPath = "ux0:data/";
             SET_STRING(currentEntry->description, "long_description");
             SET_STRING(currentEntry->version, "version");        
 
@@ -73,67 +76,95 @@ void vitadb::Parse(db::List *outList, paf::string &json)
     }
 }
 
-void cbpsdb::Parse(db::List *outList, paf::string &csvStr)
+void cbpsdb::Parse(db::List *outList, string &csvStr)
 {
+    //Parse one time to get data files and add to an array, parse entire db to add files with data.
+    
     outList->Clear(true);
 
     const char *csv = csvStr.data;
     int length = csvStr.length;
 
-    char *line;
-    int num = 0;
-    
-    char *str;
-    while((str = sce_paf_strstr(csv, "VPK")) != NULL) num++;
+    char *line = (char *)csv - 6;
+    int dataEntryNum = 0;
+    while((line = sce_paf_strstr(line + 6, ",DATA,")) != NULL) dataEntryNum++;
 
-    outList->Init(num);
+    string *dataLines = new string[dataEntryNum];
 
-    db::entryInfo *currentEntry = outList->Get(0);
-    for (int i = 0; i < num && (line = getLine(csv)) != NULL;)
+    int currentEntriesAdded = 0;
+    int offset = 0; 
+    while((line = getLine(csv, &offset)) != NULL && currentEntriesAdded < dataEntryNum)
     {
+        if(sce_paf_strstr(line, ",DATA,") == NULL) continue;
+
+        dataLines[currentEntriesAdded] = line;
+
+        free(line);
+        currentEntriesAdded++;
+    }
+
+    line = (char *)csv - 5;
+    int entryNum = 0;
+    while((line = sce_paf_strstr(line + 5, ",VPK,")) != NULL) entryNum++;
+
+    outList->Init(entryNum);
+
+    currentEntriesAdded = 0;
+    offset = 0;
+    db::entryInfo *currentEntry = outList->Get();
+        
+    while((line = getLine(csv, &offset)) != NULL && currentEntriesAdded < entryNum)
+    {
+        if(sce_paf_strstr(line, ",VPK,") == NULL) continue;
+
         char **parsed = parse_csv(line);
 
-        if(parsed != NULL)
+        currentEntry->id = parsed[0];
+        currentEntry->title = parsed[1];
+        
+        char titleIDBuff[10];
+        sce_paf_memset(titleIDBuff, 0, sizeof(titleIDBuff));
+        sce_paf_strncpy(titleIDBuff, parsed[0], 9);
+
+        currentEntry->titleID = titleIDBuff;
+        currentEntry->credits = parsed[2];
+        if(parsed[3][0] == 'h')
+            currentEntry->icon = parsed[3];
+        else currentEntry->icon.Clear();
+        if(parsed[4][0] == 'h')
+            currentEntry->icon = parsed[4];
+        else currentEntry->icon_mirror.Clear();
+        currentEntry->download_url = parsed[5];
+        currentEntry->type = -1;
+
+        currentEntry->hash = Utils::GetHashById(currentEntry->id.data);
+        currentEntry->size = "0";
+        
+        currentEntry->iconLocal.Setf("%s/%s.png", db::info[CBPSDB].iconFolderPath, currentEntry->id.data);
+        
+        currentEntry->dataPath = "None";
+        currentEntry->dataURL = "None";
+
+        if(sce_paf_strncmp(parsed[15], "None", 4) != 0)
         {
-            int dead = 0;
-            for (int x = 0; x < 17 && !dead; x++)
+            for(int i = 0; i < dataEntryNum; i++)
             {
-                dead = parsed[i] == NULL;
-            }
-            
-            if(!dead && sce_paf_strncmp(parsed[14], "VPK", 3) == 0)
-            {
-                currentEntry->id = parsed[0];
-
-                currentEntry->title = parsed[1];
-                print("%d. %s (%p)\n", i, currentEntry->title.data, currentEntry);
-          
-                currentEntry->credits = parsed[2];
-                if(parsed[3][0] == 'h')
-                    currentEntry->icon0 = parsed[3];
-                else currentEntry->icon0.Clear();
-                currentEntry->download_url = parsed[5];
-                currentEntry->options = parsed[13];
-                currentEntry->description = parsed[0];
-                currentEntry->type = -1;
-
-                //In CBPS DB titleID is used for id, so if any contradict _n is added, this is done to get just the id
-                char titleID[10];
-                sce_paf_memset(titleID, 0, sizeof(titleID));
-                sce_paf_strncpy(titleID, parsed[0], 10);
-
-                currentEntry->titleID = titleID;
-                currentEntry->icon0Local.Setf(CBPSDB_ICON_SAVE_PATH "/%s.png",  currentEntry->id.data);
-                currentEntry->version = "";
-
-                currentEntry->hash = Utils::GetHashById(currentEntry->id.data);
-                currentEntry++;
-                i++;
+                if(sce_paf_strstr(dataLines[i].data, parsed[15]) != NULL)
+                {
+                    char **parsedData = parse_csv(dataLines[i].data);
+                    currentEntry->dataURL = parsedData[5];
+                    currentEntry->dataPath = parsedData[13];
+                    break;
+                }
             }
         }
 
-        free_csv_line(parsed);
+        free(line);
+        currentEntry++;
+        currentEntriesAdded++;
     }
+
+    delete[] dataLines;
 }
 
 db::List::~List()
@@ -199,9 +230,9 @@ int db::List::GetSize(int category)
 {
     if(category == -1) return size;
 
-    int size = 0;
+    int out = 0;
     for(int i = 0; i < size; i++)
-        if(entries[i].type == category) size++;
-    
-    return size;
+        if(entries[i].type == category) out++;
+
+    return out;
 }

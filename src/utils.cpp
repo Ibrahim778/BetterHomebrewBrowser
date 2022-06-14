@@ -7,12 +7,14 @@
 #include <appmgr.h>
 #include <message_dialog.h>
 #include <libdeflt.h>
+#include <taihen.h>
 
-#include "utils.hpp"
-#include "main.hpp"
-#include "common.hpp"
-#include "network.hpp"
-#include "..\bhbb_dl\src\bhbb_dl.h"
+#include "utils.h"
+#include "print.h"
+#include "common.h"
+#include "main.h"
+#include "network.h"
+#include "bhbb_dl.h"
 
 using namespace paf;
 
@@ -46,7 +48,7 @@ paf::Resource::Element Utils::GetParamWithHashFromId(const char *id)
     return search;
 }
 
-paf::ui::Widget * Utils::GetChildByHash(paf::ui::Widget *parent, SceUInt32 hash)
+paf::ui::Widget *Utils::GetChildByHash(paf::ui::Widget *parent, SceUInt32 hash)
 {
     paf::Resource::Element search = GetParamWithHash(hash);
     return parent->GetChildByHash(&search, 0);
@@ -126,28 +128,6 @@ SceVoid Utils::GetfStringFromID(const char *id, paf::string *out)
     delete[] buff;
 }
 
-SceBool Utils::TestTexture(const char *path)
-{
-    /*
-    SceBool ret = true;
-    Misc::OpenResult res;
-    SceInt32 err;
-    Misc::OpenFile(&res, path, SCE_O_RDONLY, 0666, &err);
-    print("%d\n", res.localFile->GetSize());
-    if(err < 0) return SCE_FALSE;
-
-    graphics::Texture tex;
-    graphics::Texture::CreateFromFile(&tex, mainPlugin->memoryPool, &res);
-    if(tex.texSurface == NULL) ret = false;
-
-    Utils::DeleteTexture(&tex, false);
-
-    delete res.localFile;
-    sce_paf_free(res.unk_04);
-    return ret;
-    */
-}
-
 SceInt32 Utils::SetWidgetLabel(paf::ui::Widget *widget, const char *text)
 {
     paf::wstring wstr;
@@ -155,60 +135,20 @@ SceInt32 Utils::SetWidgetLabel(paf::ui::Widget *widget, const char *text)
     return widget->SetLabel(&wstr);
 }
 
-SceInt32 Utils::SetWidgetLabel(paf::ui::Widget *widget, paf::string *text)
+SceInt32 Utils::SetWidgetLabel(paf::ui::Widget *widget, paf::string &text)
 {
     paf::wstring wstr;
-    text->ToWString(&wstr);
+    text.ToWString(&wstr);
 
     return widget->SetLabel(&wstr);
 }
 
-void Utils::ResetStrtok()
+wchar_t *Utils::GetStringPFromID(const char *id)
 {
-    currStok = 0;
-}
+    Resource::Element e;
+    e.hash = Utils::GetHashById(id);
 
-int Utils::getStrtokNum(char splitter, char *str)
-{
-    int ret = 0; 
-    for (int i = 0; i < sce_paf_strlen(str); i++)
-    {
-        if(str[i] == splitter)
-            ret++;
-    }
-
-    return ret + 1;
-}
-
-char *Utils::strtok(char splitter, char *str)
-{
-    int len = sce_paf_strlen(str);
-    for (int i = currStok; i <= len; i++)
-    {
-        if(str[i] == splitter || str[i] == '\0')
-        {
-            char *s = (char *)sce_paf_malloc((i - currStok) + 1);
-            sce_paf_memset(s, 0, (i - currStok) + 1 );
-
-            sce_paf_memcpy(s, str + sizeof(char) * currStok, (i - currStok));
-            currStok = i + 1; 
-            return s;
-        }
-    }
-
-    return NULL;
-}
-
-void Utils::MakeDataDirs()
-{
-    
-    if(!paf::io::Misc::Exists(DATA_PATH))
-    	paf::io::Misc::Mkdir(DATA_PATH, 0666);
-    if(!paf::io::Misc::Exists(ICON_SAVE_PATH))
-		paf::io::Misc::Mkdir(ICON_SAVE_PATH, 0666);
-    if(!paf::io::Misc::Exists(SCREENSHOT_SAVE_PATH))
-		paf::io::Misc::Mkdir(SCREENSHOT_SAVE_PATH, 0666);
-    
+    return (wchar_t *)mainPlugin->GetString(&e);
 }
 
 void Utils::ToLowerCase(char *string)
@@ -218,42 +158,29 @@ void Utils::ToLowerCase(char *string)
         if(string[i] > 64 && string[i] < 91) string[i] += 0x20;
 }
 
-bool Utils::StringContains(char *h, char *n)
-{
-    int needleLen = sce_paf_strlen(n);
-    for(int currMatchLen = 0; *h != '\0'; h++)
-    {
-        if(*h == n[currMatchLen]) currMatchLen++;
-        else currMatchLen = 0;
-        if(currMatchLen == needleLen) return true;
-    }
-
-    return false;
-}
-
 void Utils::InitMusic()
 {
     SceInt32 ret = -1;
 
     ret = sceMusicInternalAppInitialize(0);
-    if(ret < 0) LOG_ERROR("AUDIO_INIT", ret);
+    if(ret < 0) print("[AUDIO_INIT] Error! 0x%X", ret);
 
     SceMusicOpt optParams;
     sce_paf_memset(&optParams, 0, 0x10);
 
     optParams.flag = -1;
 
-    ret = sceMusicInternalAppSetUri((char *)MUSIC_PATH, &optParams);
-    if(ret < 0) LOG_ERROR("CORE_OPEN", ret);
+    ret = sceMusicInternalAppSetUri((char *)"pd0:data/systembgm/store.at9", &optParams);
+    if(ret < 0) print("[CORE_OPEN] Error! 0x%X", ret);
 
     ret = sceMusicInternalAppSetVolume(SCE_AUDIO_VOLUME_0DB);
-    if(ret < 0) LOG_ERROR("SET_VOL", ret);
+    if(ret < 0) print("[SET_VOL] Error! 0x%X", ret);
 
     ret = sceMusicInternalAppSetRepeatMode(SCE_MUSIC_REPEAT_ONE);
-    if(ret < 0) LOG_ERROR("SET_REPEAT_MODE", ret);
+    if(ret < 0) print("[SET_REPEAT_MODE] Error! 0x%X", ret);
 
     ret = sceMusicInternalAppSetPlaybackCommand(SCE_MUSIC_EVENTID_DEFAULT, 0);
-    if(ret < 0) LOG_ERROR("SEND_EVENT_PLAY", ret);
+    if(ret < 0) print("[SEND_EVENT_PLAY] Error! 0x%X", ret);
 }
 
 void Utils::SetMemoryInfo()
@@ -318,6 +245,7 @@ SceBool Utils::CreateTextureFromFile(paf::graphics::Surface **tex, const char *f
     paf::graphics::Surface::CreateFromFile(tex, mainPlugin->memoryPool, &openResult);
 
     if(*tex == NULL) print("Utils::CreateTexureFromFile() Create texture failed!\n");
+    openResult.get()->Close();
     return *tex != NULL;
 }
 
@@ -332,159 +260,51 @@ SceVoid Utils::DeleteTexture(paf::graphics::Surface **tex)
             *tex = SCE_NULL;
             delete s;
         }
-        
     }
 }
 
-SceVoid Utils::DeleteWidget(paf::ui::Widget *w)
+SceVoid Utils::StartBGDL()
 {
-    paf::common::Utils::WidgetStateTransition(0, w, paf::ui::Widget::Animation_Reset, SCE_TRUE, SCE_TRUE);
-}
+    SceInt32 res = SCE_OK;
+    SceUID moduleID = SCE_UID_INVALID_UID;
+    SceUID sceShellID = SCE_UID_INVALID_UID;
+    SceUID pipeID = SCE_UID_INVALID_UID;
 
-int Utils::MsgDialog::MessagePopup(const char *message, SceMsgDialogButtonType buttonType)
-{
-    if(sceMsgDialogGetStatus() == SCE_COMMON_DIALOG_STATUS_RUNNING) return;
+    res = sceAppMgrGetIdByName(&sceShellID, "NPXS19999");
+    if(res != SCE_OK)
+    {
+        print("Unable to get SceShell ID! 0x%X\n", res);
+        return;
+    }
 
-    SceMsgDialogParam               msgParam;
-    SceMsgDialogUserMessageParam    userParam;
-    SceMsgDialogResult              result;
+    if(io::Misc::Exists("ux0:data/bgdlid"))
+    {
+        SceUID id;
+        shared_ptr<LocalFile> openResult;
+        
+        LocalFile::Open(&openResult, "ux0:data/bgdlid", SCE_O_RDONLY, 0, NULL);
+        openResult.get()->Read(&id, sizeof(SceUID));
+        taiStopUnloadModuleForPid(sceShellID, id, 0, NULL, 0, NULL, NULL);
+    }
 
-    sceMsgDialogParamInit(&msgParam);
-    msgParam.mode = SCE_MSG_DIALOG_MODE_USER_MSG;
-    msgParam.userMsgParam = &userParam;
+    res = taiLoadStartModuleForPid(sceShellID, "ux0:app/BHBB00001/module/bhbb_dl.suprx", 0, NULL, 0);
+    if(res < 0)
+    {
+        print("Unable to start BGDL! (Already Running?) 0x%X\n", res);
+        return;
+    }
 
-    sce_paf_memset(&userParam, 0, sizeof(userParam));
-    msgParam.userMsgParam->msg = (const SceChar8 *)message;
-    msgParam.userMsgParam->buttonType = buttonType;
+    moduleID = res;
     
-    sceMsgDialogInit(&msgParam);
+    print("BGDL started with ID 0x%X\n", moduleID);
 
-    while(sceMsgDialogGetStatus() != SCE_COMMON_DIALOG_STATUS_FINISHED)
-        paf::thread::Sleep(100);
+    shared_ptr<LocalFile> openResult;
+    LocalFile::Open(&openResult, "ux0:data/bgdlid", SCE_O_WRONLY | SCE_O_CREAT | SCE_O_TRUNC, 0666, NULL);
+    openResult.get()->Write(&moduleID, sizeof(SceUID));
 
-    sce_paf_memset(&result, 0, sizeof(result));
-    sceMsgDialogGetResult(&result);
-    sceMsgDialogTerm();
-
-    return result.buttonId;
 }
 
-int Utils::MsgDialog::MessagePopupFromID(const char *messageID, SceMsgDialogButtonType buttonType)
-{
-    if(sceMsgDialogGetStatus() == SCE_COMMON_DIALOG_STATUS_RUNNING) return;
-
-    SceMsgDialogParam               msgParam;
-    SceMsgDialogUserMessageParam    userParam;
-    SceMsgDialogResult           result;
-
-    sceMsgDialogParamInit(&msgParam);
-    msgParam.mode = SCE_MSG_DIALOG_MODE_USER_MSG;
-    msgParam.sysMsgParam = SCE_NULL;
-    
-    sce_paf_memset(&userParam, 0, sizeof(userParam));
-
-    msgParam.userMsgParam = &userParam;
-
-    paf::string message;
-    Utils::GetfStringFromID(messageID, &message);
-
-    msgParam.userMsgParam->msg = (const SceChar8 *)message.data;
-    msgParam.userMsgParam->buttonType = buttonType;
-    
-    sceMsgDialogInit(&msgParam);
-
-    while(sceMsgDialogGetStatus() != SCE_COMMON_DIALOG_STATUS_FINISHED)
-        paf::thread::Sleep(100);
-
-    sce_paf_memset(&result, 0, sizeof(result));
-    sceMsgDialogGetResult(&result);
-    sceMsgDialogTerm();
-
-    return result.buttonId;
-}
-
-void Utils::MsgDialog::SystemMessage(SceMsgDialogSystemMessageType type)
-{
-    if(sceMsgDialogGetStatus() == SCE_COMMON_DIALOG_STATUS_RUNNING) return;
-
-    SceMsgDialogParam                 msgParam;
-    SceMsgDialogSystemMessageParam    sysParam;
-
-    sceMsgDialogParamInit(&msgParam);
-    msgParam.mode = SCE_MSG_DIALOG_MODE_SYSTEM_MSG;
-    msgParam.sysMsgParam = &sysParam;
-
-    sce_paf_memset(&sysParam, 0, sizeof(sysParam));
-    sysParam.sysMsgType = type;
-    
-    sceMsgDialogInit(&msgParam);
-}
-
-void Utils::MsgDialog::EndMessage()
-{
-    while(sceMsgDialogGetStatus() != SCE_COMMON_DIALOG_STATUS_RUNNING)
-        paf::thread::Sleep(100);
-    
-    sceMsgDialogClose();
-
-    while(sceMsgDialogGetStatus() != SCE_COMMON_DIALOG_STATUS_FINISHED)
-        paf::thread::Sleep(100);
-    
-    sceMsgDialogTerm();
-}
-
-void Utils::MsgDialog::InitProgress(const char *text)
-{
-    if(sceMsgDialogGetStatus() == SCE_COMMON_DIALOG_STATUS_RUNNING) return;
-
-    SceMsgDialogParam               msgParam;
-    SceMsgDialogProgressBarParam    progParam;
-
-    sceMsgDialogParamInit(&msgParam);
-    msgParam.mode = SCE_MSG_DIALOG_MODE_PROGRESS_BAR;
-    msgParam.progBarParam = &progParam;
-
-    sce_paf_memset(&progParam, 0, sizeof(progParam));
-    msgParam.progBarParam->msg = (const SceChar8 *)text;
-    msgParam.progBarParam->barType = SCE_MSG_DIALOG_PROGRESSBAR_TYPE_PERCENTAGE;
-
-    sceMsgDialogInit(&msgParam);
-
-    sceMsgDialogTerm();
-}
-
-void Utils::MsgDialog::UpdateProgress(float progress)
-{
-    if(sceMsgDialogGetStatus() != SCE_COMMON_DIALOG_STATUS_RUNNING) return;
-    
-    sceMsgDialogProgressBarSetValue(SCE_MSG_DIALOG_PROGRESSBAR_TARGET_BAR_DEFAULT, progress);
-}
-
-void Utils::MsgDialog::SetProgressMsg(const char *txt)
-{
-    sceMsgDialogProgressBarSetMsg(SCE_MSG_DIALOG_PROGRESSBAR_TARGET_BAR_DEFAULT, (const SceChar8 *)txt);
-}
-
-paf::ui::Widget *Utils::TemplateOpen(paf::ui::Widget *root, SceInt32 hash)
-{
-    paf::Resource::Element e;
-    paf::Plugin::TemplateInitParam tInit;
-
-    e.hash = hash;
-
-    SceBool isMainThread = paf::thread::IsMainThread();
-
-    if (!isMainThread)
-            paf::thread::s_mainThreadMutex.Lock();
-
-    mainPlugin->TemplateOpen(root, &e, &tInit);
-    if(!isMainThread)
-        paf::thread::s_mainThreadMutex.Unlock();
-
-    return root->GetChildByNum(root->childNum - 1);
-}
-
-void Utils::ExtractZipFromMemory(uint8_t *buff, size_t archiveSize, const char *outDir, bool logProgress)
+SceVoid Utils::ExtractZipFromMemory(SceUInt8 *buff, SceSize archiveSize, const char *outDir)
 {   
     if(!io::Misc::Exists(outDir)) io::Misc::CreateRecursive(outDir, 0666);
 
@@ -556,9 +376,13 @@ void Utils::ExtractZipFromMemory(uint8_t *buff, size_t archiveSize, const char *
             res = sceDeflateDecompress(outBuff, header->uncompsize, pData, NULL);
             
             if(res < 0)
-                print("sceDeflateDecompress() -> 0x%X\n", res);
+            {
+               print("sceDeflateDecompress() -> 0x%X\n", res);
+            }
             else if (res != header->uncompsize)
+            {
                 print("Only %d out of %d bytes were extracted!\n", res, header->uncompsize);
+            }
             else if(crc == sceGzipCrc32(0, (const unsigned char *)outBuff, res)) //Extraction successful
             {
                 io::File *file = new io::File();
@@ -584,8 +408,6 @@ void Utils::ExtractZipFromMemory(uint8_t *buff, size_t archiveSize, const char *
 
         pCurrIn = (const uint8_t *)((uintptr_t)pData + header->compsize);
         processedEntries ++;
-
-        if(logProgress) Utils::MsgDialog::UpdateProgress(((float)processedEntries / (float)totalCount) * 100.0f);
     }
 }
 
@@ -595,11 +417,12 @@ SceVoid Utils::PrintAllChildren(paf::ui::Widget *widget, int offset)
 {
     for (int i = 0; i < widget->childNum; i++)
     {
-        for (int i = 0; i < offset; i++) print("-");
-        print(" %d 0x%X\n", i, widget->GetChildByNum(i)->hash);
+        for (int i = 0; i < offset; i++) print(" ");
+        wstring wstr;
+        widget->GetChildByNum(i)->GetLabel(&wstr);
+        print(" %d 0x%X (%s, \"%ls\")\n", i, widget->GetChildByNum(i)->hash, widget->GetChildByNum(i)->GetType(), wstr.data);
         Utils::PrintAllChildren(widget->GetChildByNum(i), offset + 4);
     }
-    if(widget->childNum == 0) print("No Children to Print!\n");
 }
 
 #endif

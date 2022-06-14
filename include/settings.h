@@ -1,11 +1,11 @@
-#ifndef SETTINGS_MGR_HPP
-#define SETTINGS_MGR_HPP
+#ifndef SETTINGS_MGR_H
+#define SETTINGS_MGR_H
 
 #include <kernel.h>
 #include <app_settings.h>
 #include <paf.h>
 
-#include "db.hpp"
+#include "db.h"
 
 class Settings
 {
@@ -15,7 +15,6 @@ public:
         Hash_Refresh = 0xDF43DB7A,
         Hash_nLoad = 0xA7E3A711,
         Hash_Source = 0x92EFFF4E,
-        Hash_Info = 0x484C7041,
     };
 
     Settings();

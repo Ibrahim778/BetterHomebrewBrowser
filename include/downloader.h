@@ -1,9 +1,11 @@
-#ifndef DOWNLOADER_HPP
-#define DOWNLOADER_HPP
+#ifndef DOWNLOADER_H
+#define DOWNLOADER_H
 
 #include <paf.h>
 #include <ipmi.h>
 #include <download_service.h>
+
+#include "bhbb_dl.h"
 
 class Downloader
 {
@@ -11,8 +13,8 @@ public:
     Downloader();
     ~Downloader();
 
-    SceInt32 Enqueue(const char *url, const char *name);
-    SceInt32 EnqueueAsync(const char *url, const char *name);
+    SceInt32 Enqueue(const char *url, const char *name, BGDLParam* param = SCE_NULL);
+    SceInt32 EnqueueAsync(const char *url, const char *name, BGDLParam* param = SCE_NULL);
 
 	class AsyncEnqueue : public paf::thread::JobQueue::Item
 	{
@@ -25,7 +27,7 @@ public:
 		SceVoid Run()
 		{
 			Downloader *pdownloader = (Downloader *)downloader;
-			pdownloader->Enqueue(url8.data, name8.data);
+			pdownloader->Enqueue(url8.data, name8.data, &param);
 		}
 
 		SceVoid Finish() {}
@@ -39,6 +41,7 @@ public:
 		paf::string url8;
 		paf::string name8;
 		ScePVoid downloader;
+        BGDLParam param;
 	};
 
     ScePVoid downloader;
