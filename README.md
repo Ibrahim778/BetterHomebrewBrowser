@@ -20,5 +20,5 @@ This *is* an open beta. So don't be surprised if it crashes. Bug reports are gre
 
 ## Credits
 1. Thanks to [GrapheneCt](https://github.com/GrapheneCt) for ScePaf reversing and EMPVA (Reference) and his CXML Compiler (Not Released)
-2. Thanks to SomeonPC (RIP) for Livearea:tm: assets and beta testing
+2. Thanks to SomeonPC (RIP) for Livearea™ assets and beta testing
 3. Thanks to SparklingPheonix for beta testing
