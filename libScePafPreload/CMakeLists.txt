@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.12)
 set(CMAKE_TOOLCHAIN_FILE "$ENV{SCE_PSP2_SDK_DIR}/host_tools/build/cmake/psp2-snc-toolchain.cmake")
 
-project(libScePafPreload)
+project(libScePafPreload.suprx)
 
 include(VitaDevelopmentSuite)
 set(CMAKE_C_STANDARD 99)
@@ -38,4 +38,4 @@ target_link_libraries(${PROJECT_NAME}
     SceSysmodule_stub
 )
 
-VDSuiteSignElf(${PROJECT_NAME}.suprx $<TARGET_FILE:${PROJECT_NAME}>)
+VDSuiteSignElf(${PROJECT_NAME} $<TARGET_FILE:${PROJECT_NAME}>)

@@ -120,6 +120,77 @@ SceVoid apps::Page::SearchCB(SceInt32 eventID, ui::Widget *self, SceInt32 unk, S
         break;
 
     case Hash_SearchEnterButton:
+        page->list = &page->parsedList;
+        paf::wstring keystring;
+        
+        ui::Widget *textBox = Utils::GetChildByHash(page->root, Utils::GetHashById("search_box"));
+        textBox->GetLabel(&keystring);
+
+        if(keystring.length == 0) break;
+
+        paf::string key;
+        keystring.ToString(&key);
+
+        //page->searchList.Clear(false);
+
+        Utils::ToLowerCase(key.data);
+
+        //Get rid of trailing space char
+        for(int i = key.length - 1; i > 0; i--)
+        {
+            if(key.data[i] == ' ')
+            {
+                key.data[i] = 0; //Shouldn't really do this with a paf::string but w/e
+                break;
+            } else break;
+        }
+
+        db::entryInfo *parsedInfo = page->parsedList.Get();
+        int matchNum = 0;
+        for(int i = 0; i < page->parsedList.GetSize() && parsedInfo != NULL; i++, parsedInfo++)
+        {
+            string titleID;
+            string title;
+
+            titleID = parsedInfo->titleID.data;
+            title = parsedInfo->title.data;
+
+            Utils::ToLowerCase(titleID.data);
+            Utils::ToLowerCase(title.data);
+
+            if(sce_paf_strstr(title.data, key.data) != NULL || sce_paf_strstr(titleID.data, key.data) != NULL)
+                matchNum++;
+        }
+
+        page->searchList.Init(matchNum);
+
+        db::entryInfo *searchInfo = page->searchList.Get();
+        parsedInfo = page->parsedList.Get();
+        for(int i = 0; i < page->parsedList.GetSize() && parsedInfo != NULL && page->searchList.IsValidEntry(searchInfo); i++, parsedInfo++)
+        {
+            string titleID;
+            string title;
+
+            titleID = parsedInfo->titleID.data;
+            title = parsedInfo->title.data;
+
+            Utils::ToLowerCase(titleID.data);
+            Utils::ToLowerCase(title.data);
+
+            if(sce_paf_strstr(title.data, key.data) != NULL || sce_paf_strstr(titleID.data, key.data) != NULL)
+            {
+                sce_paf_memcpy(searchInfo, parsedInfo, sizeof(db::entryInfo));
+                searchInfo++;
+            }
+        }
+
+        print("Search with keystring %s result (%d):\n", key.data, page->searchList.GetSize());
+
+        page->list = &page->searchList;
+        
+        page->SetCategory(-1);
+        page->Redisplay();
+
         break;
     }
 }
@@ -190,19 +261,39 @@ SceVoid apps::Page::DeleteBody()
         g_forwardButton->PlayAnimationReverse(0, ui::Widget::Animation_Reset);
 }
 
+SceVoid apps::Page::IconZipJob::Run()
+{
+    Dialog::OpenPleaseWait(mainPlugin, SCE_NULL, Utils::GetStringPFromID("msg_wait"));
+
+    BGDLParam param;
+    sce_paf_memset(&param, 0, sizeof(param));
+    param.magic = (BHBB_DL_CFG_VER | BHBB_DL_MAGIC);
+    param.type = 0;
+    sce_paf_strncpy(param.path, db::info[Settings::GetInstance()->source].iconFolderPath, sizeof(param.path));
+
+    string titleTemplate;
+    Utils::GetStringFromID("icons_dl_name", &titleTemplate);
+    
+    string title;
+    title.Setf(titleTemplate.data, db::info[Settings::GetInstance()->source].name);
+    
+    g_downloader->Enqueue(db::info[Settings::GetInstance()->source].iconsURL, title.data, &param);
+    Dialog::Close();
+
+    Dialog::OpenOk(mainPlugin, NULL, Utils::GetStringPFromID("msg_download_queued"));
+}
+
+SceVoid apps::Page::IconZipJob::Finish()
+{
+
+}
+
 SceVoid apps::Page::IconDownloadDecideCB(Dialog::ButtonCode buttonResult, ScePVoid userDat)
 {
     if(buttonResult == Dialog::ButtonCode::ButtonCode_Yes)
     {
-        BGDLParam param;
-        sce_paf_memset(&param, 0, sizeof(param));
-        param.magic = (BHBB_DL_CFG_VER | BHBB_DL_MAGIC);
-        param.type = 0;
-        sce_paf_strncpy(param.path, db::info[Settings::GetInstance()->source].iconFolderPath, sizeof(param.path));
-
-        string str;
-        str.Setf("%s Icons", db::info[Settings::GetInstance()->source].name);
-        g_downloader->EnqueueAsync(db::info[Settings::GetInstance()->source].iconsURL, str.data, &param);
+        paf::shared_ptr<thread::JobQueue::Item> ptr = paf::shared_ptr<thread::JobQueue::Item>(new IconZipJob("BHBB::IconZipJob"));
+        thread::s_defaultJobQueue->Enqueue(&ptr);
     }
 }
 
@@ -352,10 +443,7 @@ SceVoid apps::Page::LoadJob::Finish()
 
 SceVoid apps::Page::Load()
 {
-    while(body)
-    {
-        Page::DeleteBody();
-    }
+    Clear();
 
     totalLoads = 0;
 
@@ -371,6 +459,41 @@ SceVoid apps::Page::Load()
     auto populatePtr = shared_ptr<thread::JobQueue::Item>(populateJob);
     loadQueue->Enqueue(&populatePtr);
     
+}
+
+extern "C" SceUID sceKernelGetModuleIdByAddr(void*);
+
+SceInt32 sceKernelGetModuleInfoByAddr(void* addr, SceKernelModuleInfo* pInfo) {
+  SceUID modid = sceKernelGetModuleIdByAddr(addr);
+  if (modid < 0)
+    return modid;
+  return sceKernelGetModuleInfo(modid, pInfo);  
+}
+
+SceInt32 print_address_location(void* addr) {
+  SceKernelModuleInfo info;
+  info.size = sizeof(info);
+
+  SceInt32 status = sceKernelGetModuleInfoByAddr(addr, &info);
+  if (status < 0)
+    return status;
+
+  SceUIntPtr target = (SceUIntPtr)(addr);
+  SceInt segment = -1;
+  SceUInt offset = 0;
+  for (unsigned i = 0; i < (sizeof(info.segments)/sizeof(info.segments[0])); i++) {
+    SceUIntPtr segBase = (SceUIntPtr)(info.segments[i].vaddr);
+    SceUIntPtr segMax = segBase + info.segments[i].memsz;
+    if ((segBase <= target) && (target < segMax)) {
+      segment = i;
+      offset = target - segBase;
+      break;
+    }
+  }
+  if (segment == -1)
+    return -1;
+
+  sceClibPrintf("%p -> [%s:%d + 0x%08X]\n", addr, info.module_name, segment, offset);
 }
 
 SceVoid apps::Page::PopulateJob::Run()
@@ -406,7 +529,7 @@ SceVoid apps::Page::PopulateJob::Run()
         Utils::SetWidgetLabel(button, currentEntry->title);
 
         currentEntry->button = button;
-
+        
         if(currentEntry->icon.data == &string::s_emptyString && currentEntry->icon_mirror.data == &string::s_emptyString)
             button->SetTextureBase(&BrokenTex);
         else if(currentEntry->tex != SCE_NULL)
@@ -422,15 +545,17 @@ SceVoid apps::Page::PopulateJob::Run()
     body->iconThread->Start();
 }
 
+SceVoid apps::Page::Clear()
+{
+    while(body) DeleteBody();
+}
+
 SceVoid apps::Page::Redisplay()
 {
     if(loadQueue->GetSize() > 0)
         return; //Wait for it to finish loading ffs
 
-    while(body)
-    {
-        Page::DeleteBody();
-    }
+    Clear();
 
     totalLoads = 0;
 
@@ -464,16 +589,6 @@ SceVoid apps::Page::IconLoadThread::EntryFunction()
             if(Utils::CreateTextureFromFile(&currentEntry->tex, currentEntry->iconLocal.data))
             {
                 currentEntry->button->SetTextureBase(&currentEntry->tex);
-                if(callingPage->mode == PageMode_Search)
-                {
-                    for(db::entryInfo *parsedListEntry = callingPage->parsedList.Get(); callingPage->parsedList.IsValidEntry(parsedListEntry); currentEntry++)
-                    {
-                        if(parsedListEntry->hash == currentEntry->hash)
-                        {
-                            parsedListEntry->tex = currentEntry->tex;
-                        }
-                    }
-                }
             }
             else
             {
@@ -589,7 +704,6 @@ SceVoid apps::Page::LoadJob::Run()
     } while(bytesRead > 0);
 
     httpFile.Close();
-
     Dialog::Close();
 
     sceShellUtilUnlock(SCE_SHELL_UTIL_LOCK_TYPE_PS_BTN);
@@ -607,5 +721,4 @@ SceVoid apps::Page::LoadJob::Run()
     g_busyIndicator->Start();
 
     db::info[Settings::GetInstance()->source].Parse(&callingPage->parsedList, callingPage->dbIndex);
-
 }

@@ -35,12 +35,13 @@ namespace apps
             Page *callingPage;
         };
 
-        class IconZipThread : public paf::thread::Thread
+        class IconZipJob : public paf::thread::JobQueue::Item
         {
         public:
-            using paf::thread::Thread::Thread;
+            using paf::thread::JobQueue::Item::Item;
 
-            SceVoid EntryFunction();
+            SceVoid Run();
+            SceVoid Finish();
         };
 
         class IconLoadThread : public paf::thread::Thread
@@ -75,6 +76,7 @@ namespace apps
 
         SceVoid Load();
         SceVoid Redisplay();
+        SceVoid Clear();
 
         SceBool SetCategory(int category);
 

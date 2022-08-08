@@ -173,10 +173,10 @@ int ExportFilePatched(uint32_t *data)
 int GetFileTypePatched(int unk, int *type, char **filename, char **mime_type)
 {
     int res = TAI_NEXT(GetFileTypePatched, GetFileTypeRef, unk, type, filename, mime_type);
-
+    print("Type = %d res = 0x%X %s %s\n", *type, res, *filename, *mime_type);
     if (res == 0x80103A21)
     {
-        *type = 1; // Type photo
+        *type = 1; // Type pkg lol
         return 0;
     }
 

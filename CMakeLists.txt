@@ -69,6 +69,7 @@ target_link_libraries(${PROJECT_NAME}
     SceAppSettings2_stub
     SceJson_stub
     SceCommonGuiDialog_stub
+    SceModulemgr_stub
     taihenUnsafe_stub
 )
 
@@ -83,6 +84,11 @@ target_include_directories(${PROJECT_NAME} PRIVATE
 
 VDSuiteCreateSfo(${PROJECT_NAME}.sfo param.sfx)
 VDSuiteSignElf(${PROJECT_NAME}.self $<TARGET_FILE:${PROJECT_NAME}> BOOT_PARAM bootparam.yml)
+
+add_dependencies(${PROJECT_NAME}
+    bhbb_dl.suprx
+    libScePafPreload.suprx
+)
 
 VDSuitePackage(${PROJECT_NAME}.vpk
   FILES

@@ -3,6 +3,7 @@
 #include <paf.h>
 #include <shellsvc.h>
 #include <libsysmodule.h>
+#include <apputil.h>
 
 #include "print.h"
 #include "main.h"
@@ -94,7 +95,7 @@ void OnNetworkChecked()
 
 SceVoid onPluginReady(Plugin *plugin)
 {
-    if(plugin == NULL)
+    if(plugin == SCE_NULL)
     {
         print("[MAIN_BHBB] Error Plugin load failed!\n");
         return;
@@ -125,8 +126,21 @@ SceVoid onPluginReady(Plugin *plugin)
     g_versionInfo = (SceWChar16 *)infoString->data;
 
     sceShellUtilInitEvents(0);
-    
     generic::Page::Setup();
+    /*
+    auto page = new generic::Page("blank_page_template");
+    
+    Resource::Element e2;
+    e.hash = Utils::GetHashById("byslidebar");
+    e2.hash = Utils::GetHashById("_common_default_style_slidebar");
+
+    ui::SlideBar *bar = (ui::SlideBar *)mainPlugin->CreateWidgetWithStyle(page->root, "slidebar", &e, &e2);
+    ((int (*)(void *, int, int))(*(int *)(*((int *)(bar)) + 0x188)))(bar, 100, 0);
+
+    Utils::SetWidgetSize(bar, 300, 50);
+    Utils::SetWidgetPosition(bar, 0, 0);
+    Utils::SetWidgetColor(bar, 1,1,1,1);
+*/
 
     new Settings();
     g_appsPage = new apps::Page();
@@ -162,7 +176,7 @@ int main()
     SceAppUtilInitParam init;
     SceAppUtilBootParam boot;
 
-    //Can use sce_paf_... because paf is now loaded
+    //Can use sce_paf_... because paf is preloaded
     sce_paf_memset(&init, 0, sizeof(SceAppUtilInitParam));
     sce_paf_memset(&boot, 0, sizeof(SceAppUtilBootParam));
     

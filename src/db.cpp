@@ -186,7 +186,7 @@ void db::List::Init(int size)
 {
     if(entries) return;
 
-    entries = new db::entryInfo[size];
+    entries = (db::entryInfo *)sce_paf_malloc(sizeof(db::entryInfo) * size);
     sce_paf_memset(entries, 0, sizeof(db::entryInfo) * size);
 
     this->size = size; 
@@ -208,7 +208,8 @@ void db::List::Clear(bool deleteTexture)
         }
     }
 
-    delete[] entries;
+    print("Deleting %p\n", entries);
+    sce_paf_free(entries);
     entries = NULL;
     size = 0;
 }

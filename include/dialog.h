@@ -29,6 +29,8 @@ public:
 
 	static SceVoid OpenPleaseWait(Plugin *workPlugin, wchar_t *titleText, wchar_t *messageText, SceBool withCancel = SCE_FALSE, EventHandler eventHandler= SCE_NULL, ScePVoid userArg = SCE_NULL);
 
+    static SceVoid OpenOk(Plugin *workPlugin, wchar_t *titleText, wchar_t *messageText, EventHandler eventHandler = SCE_NULL, ScePVoid userArg = SCE_NULL);
+
 	static SceVoid OpenYesNo(Plugin *workPlugin, wchar_t *titleText, wchar_t *messageText, EventHandler eventHandler = SCE_NULL, ScePVoid userArg = SCE_NULL);
 
 	static SceVoid OpenError(Plugin *workPlugin, SceInt32 errorCode, wchar_t *messageText = SCE_NULL, EventHandler eventHandler = SCE_NULL, ScePVoid userArg = SCE_NULL);

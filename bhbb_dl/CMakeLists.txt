@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.12)
 set(CMAKE_TOOLCHAIN_FILE "$ENV{SCE_PSP2_SDK_DIR}/host_tools/build/cmake/psp2-snc-toolchain.cmake")
-project(bhbb_dl)
+project(bhbb_dl.suprx)
 
 include(VitaDevelopmentSuite)
 enable_language(EMD)
@@ -24,7 +24,7 @@ add_link_options(
 add_library(${PROJECT_NAME} MODULE
     src/main.cpp
     src/offsets.c
-    ${PROJECT_NAME}.emd
+    bhbb_dl.emd
 )
 
 target_link_libraries(${PROJECT_NAME}
@@ -58,4 +58,4 @@ target_include_directories(${PROJECT_NAME} PRIVATE
     $ENV{SCE_PSP2_SDK_DIR}/target/include_common
 )
 
-VDSuiteSignElf(${PROJECT_NAME}.suprx $<TARGET_FILE:${PROJECT_NAME}>)
+VDSuiteSignElf(${PROJECT_NAME} $<TARGET_FILE:${PROJECT_NAME}>)

@@ -170,34 +170,34 @@
 	</styletable>
 
     <stringtable>
-	    <locale src="locale\en.rcs" id="en-gb" />
-	    <locale src="locale\en.rcs" id="en" />
-        <locale src="locale\ja.rcs" id="ja" />
-	    <locale src="locale\en.rcs" id="fr" />
-	    <locale src="locale\es.rcs" id="es" />        
-	    <locale src="locale\en.rcs" id="de" />
-	    <locale src="locale\en.rcs" id="it" />
-	    <locale src="locale\en.rcs" id="nl" />
-	    <locale src="locale\en.rcs" id="pt" />
-        <locale src="locale\en.rcs" id="pt-br" />
-	    <locale src="locale\en.rcs" id="ru" />
-	    <locale src="locale\en.rcs" id="ko" />
-	    <locale src="locale\en.rcs" id="zh-t" />
-	    <locale src="locale\en.rcs" id="zh-s" />
-	    <locale src="locale\en.rcs" id="fi" />
-	    <locale src="locale\en.rcs" id="sv" />
-	    <locale src="locale\en.rcs" id="da" />
-	    <locale src="locale\en.rcs" id="no" />
-	    <locale src="locale\en.rcs" id="pl" />
-	    <locale src="locale\en.rcs" id="tr" />
+	    <locale src="locale/en.rcs" id="en-gb" />
+	    <locale src="locale/en.rcs" id="en" />
+        <locale src="locale/ja.rcs" id="ja" />
+	    <locale src="locale/en.rcs" id="fr" />
+	    <locale src="locale/es.rcs" id="es" />        
+	    <locale src="locale/en.rcs" id="de" />
+	    <locale src="locale/en.rcs" id="it" />
+	    <locale src="locale/en.rcs" id="nl" />
+	    <locale src="locale/en.rcs" id="pt" />
+        <locale src="locale/en.rcs" id="pt-br" />
+	    <locale src="locale/en.rcs" id="ru" />
+	    <locale src="locale/en.rcs" id="ko" />
+	    <locale src="locale/en.rcs" id="zh-t" />
+	    <locale src="locale/en.rcs" id="zh-s" />
+	    <locale src="locale/en.rcs" id="fi" />
+	    <locale src="locale/en.rcs" id="sv" />
+	    <locale src="locale/en.rcs" id="da" />
+	    <locale src="locale/en.rcs" id="no" />
+	    <locale src="locale/en.rcs" id="pl" />
+	    <locale src="locale/en.rcs" id="tr" />
     </stringtable>
 
 	<texturetable>
-		<texture src="texture\bg.png" type="texture/png" id="tex_main_bg" />
-        <texture src="texture\missing_image.png" type="texture/png" id="tex_missing_icon" />
-        <texture src="texture\search_icon.png" type="texture/png" id="search_icon" />
-        <texture src="texture\arrow_forward.png" type="texture/png" id="tex_forward_arrow" />
-        <texture src="texture\options_button.png" type="texture/png" id="tex_options_button"/>
-        <texture src="texture\search_back_button.png" type="texture/png" id="tex_search_back_button"/>
+		<texture src="texture/bg.png" type="texture/png" id="tex_main_bg" />
+        <texture src="texture/missing_image.png" type="texture/png" id="tex_missing_icon" />
+        <texture src="texture/search_icon.png" type="texture/png" id="search_icon" />
+        <texture src="texture/arrow_forward.png" type="texture/png" id="tex_forward_arrow" />
+        <texture src="texture/options_button.png" type="texture/png" id="tex_options_button"/>
+        <texture src="texture/search_back_button.png" type="texture/png" id="tex_search_back_button"/>
 	</texturetable>
 </resource>  
