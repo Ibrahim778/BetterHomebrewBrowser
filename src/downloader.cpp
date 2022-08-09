@@ -77,9 +77,9 @@ SceInt32 Downloader::Enqueue(const char *url, const char *name, BGDLParam *param
 	sce_paf_memset(&dparam, 0, sizeof(sce::Download::DownloadParam));
 	sce_paf_memset(&minfo, 0, sizeof(sce::Download::MetadataInfo));
 
-	hparam.paramType1 = paf::HttpFile::Param::SCE_PAF_HTTP_FILE_PARAM_RESOLVE_TIME_OUT;
+	hparam.paramType1 = paf::HttpFile::OpenArg::Opt::Opt_ResolveTimeOut;
 	hparam.paramVal1 = 4000000;
-	hparam.paramType2 = paf::HttpFile::Param::SCE_PAF_HTTP_FILE_PARAM_CONNECT_TIME_OUT;
+	hparam.paramType2 = paf::HttpFile::OpenArg::Opt::Opt_ConnectTimeOut;
 	hparam.paramVal2 = 30000000;
 	hparam.paramType2 = 0;
 	hparam.paramVal2 = 30000000;
@@ -134,13 +134,10 @@ SceInt32 Downloader::Enqueue(const char *url, const char *name, BGDLParam *param
 
     if(param != NULL && param->magic != -1)
     {
-        shared_ptr<LocalFile> openResult;
-        string paramPath;
-        
-        paramPath.Setf("ux0:bgdl/t/%08x/install_param.ini", dwRes);
+        string paramPath = ccc::Sprintf("ux0:bgdl/t/%08x/install_param.ini", dwRes);
 
         SceInt32 result = SCE_OK;
-        LocalFile::Open(&openResult, paramPath.data, SCE_O_WRONLY | SCE_O_CREAT | SCE_O_TRUNC, 0666, &result);
+        SharedPtr<LocalFile> openResult = LocalFile::Open(paramPath.data(), SCE_O_WRONLY | SCE_O_CREAT | SCE_O_TRUNC, 0666, &result);
         if(result < 0)
         {
             print("open %s -> 0x%X\n", paramPath.data, result);
@@ -162,5 +159,5 @@ SceInt32 Downloader::EnqueueAsync(const char *url, const char *name, BGDLParam *
         dwJob->param = *param;
     else dwJob->param.magic = -1;
 
-	return paf::thread::s_defaultJobQueue->Enqueue(&paf::shared_ptr<paf::thread::JobQueue::Item>(dwJob));
+	return job::s_defaultJobQueue->Enqueue(&SharedPtr<job::JobItem>(dwJob));
 }

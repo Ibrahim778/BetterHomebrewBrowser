@@ -22,26 +22,26 @@ static SceInt32 currStok = 0;
 
 SceUInt32 Utils::GetHashById(const char *id)
 {
-    paf::Resource::Element searchReq;
-    paf::Resource::Element searchRes;
+    rco::Element searchReq;
+    rco::Element searchRes;
     
     searchReq.id = id;
-    searchRes.hash = searchRes.GetHashById(&searchReq);
+    searchRes.hash = searchRes.GetHash(&searchReq.id);
 
     return searchRes.hash;
 }
 
-paf::Resource::Element Utils::GetParamWithHash(SceUInt32 hash)
+rco::Element Utils::GetParamWithHash(SceUInt32 hash)
 {
-    paf::Resource::Element search;
+    rco::Element search;
     search.hash = hash;
 
     return search;
 }
 
-paf::Resource::Element Utils::GetParamWithHashFromId(const char *id)
+rco::Element Utils::GetParamWithHashFromId(const char *id)
 {
-    paf::Resource::Element search;
+    rco::Element search;
 
     search.hash = Utils::GetHashById(id);
 
@@ -50,15 +50,16 @@ paf::Resource::Element Utils::GetParamWithHashFromId(const char *id)
 
 paf::ui::Widget *Utils::GetChildByHash(paf::ui::Widget *parent, SceUInt32 hash)
 {
-    paf::Resource::Element search = GetParamWithHash(hash);
-    return parent->GetChildByHash(&search, 0);
+    rco::Element search = GetParamWithHash(hash);
+    return parent->GetChild(&search, 0);
 }
 
 SceVoid Utils::GetStringFromID(const char *id, paf::string *out)
 {
-    paf::Resource::Element e = Utils::GetParamWithHashFromId(id);
-    SceWChar16 *wstr = mainPlugin->GetString(&e);
-    paf::string::WCharToNewString((const wchar_t *)wstr, out);
+    rco::Element e = Utils::GetParamWithHashFromId(id);
+    
+    wchar_t *wstr = mainPlugin->GetWString(&e);
+    ccc::UTF16toUTF8((const wchar_t *)wstr, out);
 }
 
 SceVoid Utils::GetfStringFromID(const char *id, paf::string *out)
@@ -67,14 +68,16 @@ SceVoid Utils::GetfStringFromID(const char *id, paf::string *out)
     Utils::GetStringFromID(id, str);
 
     int slashNum = 0;
-    for(int i = 0; i < str->length + 1 && str->data[i] != '\0'; i++)
-        if(str->data[i] == '\\') slashNum++;
+    int strlen = str->length();
+    const char *strptr = str->data();
+    for(int i = 0; i < strlen + 1 && strptr[i] != '\0'; i++)
+        if(strptr[i] == '\\') slashNum++;
 
-    int buffSize = (str->length + 1) - slashNum;
+    int buffSize = (strlen + 1) - slashNum;
     char *buff = new char[buffSize];
     sce_paf_memset(buff, 0, buffSize);
 
-    for(char *buffPtr = buff, *strPtr = str->data; *strPtr != '\0'; strPtr++, buffPtr++)
+    for(char *buffPtr = buff, *strPtr = (char *)strptr; *strPtr != '\0'; strPtr++, buffPtr++)
     {
         if(*strPtr == '\\')
         {
@@ -131,24 +134,25 @@ SceVoid Utils::GetfStringFromID(const char *id, paf::string *out)
 SceInt32 Utils::SetWidgetLabel(paf::ui::Widget *widget, const char *text)
 {
     paf::wstring wstr;
-    paf::wstring::CharToNewWString(text, &wstr);    
+    ccc::UTF8toUTF16(text, &wstr);    
     return widget->SetLabel(&wstr);
 }
 
-SceInt32 Utils::SetWidgetLabel(paf::ui::Widget *widget, paf::string &text)
+SceInt32 Utils::SetWidgetLabel(paf::ui::Widget *widget, paf::string *text)
 {
     paf::wstring wstr;
-    text.ToWString(&wstr);
+
+    ccc::UTF8toUTF16(text, &wstr);
 
     return widget->SetLabel(&wstr);
 }
 
 wchar_t *Utils::GetStringPFromID(const char *id)
 {
-    Resource::Element e;
+    rco::Element e;
     e.hash = Utils::GetHashById(id);
 
-    return (wchar_t *)mainPlugin->GetString(&e);
+    return mainPlugin->GetWString(&e);
 }
 
 void Utils::ToLowerCase(char *string)
@@ -196,44 +200,43 @@ void Utils::SetMemoryInfo()
 
 SceInt32 Utils::SetWidgetSize(paf::ui::Widget *widget, SceFloat x, SceFloat y, SceFloat z, SceFloat w)
 {
-    SceFVector4 v;
+    paf::Vector4 v;
     v.x = x;
     v.y = y;
     v.z = z;
     v.w = w;
 
-    return widget->SetSize(&v);
+    return widget->SetSize((const Vector4 *)&v);
 }
 
 SceInt32 Utils::SetWidgetPosition(paf::ui::Widget *widget, SceFloat x, SceFloat y, SceFloat z, SceFloat w)
 {
-    SceFVector4 v;
+    paf::Vector4 v;
     v.x = x;
     v.y = y;
     v.z = z;
     v.w = w;
 
-    return widget->SetPosition(&v);
+    return widget->SetPosition((const Vector4 *)&v);
 }
 
 SceInt32 Utils::SetWidgetColor(paf::ui::Widget *widget, SceFloat r, SceFloat g, SceFloat b, SceFloat a)
 {
-    paf::ui::Widget::Color col;
+    paf::Rgba col;
     col.r = r;
     col.g = g;
     col.b = b;
     col.a = a;
-
-    return widget->SetColor(&col);
+    
+    return widget->SetColor((const paf::Rgba *)&col);
 }
 
-SceBool Utils::CreateTextureFromFile(paf::graphics::Surface **tex, const char *file)
+SceBool Utils::CreateTextureFromFile(paf::graph::Surface **tex, const char *file)
 {
     if(tex == NULL) return SCE_FALSE;
-
-    paf::shared_ptr<paf::LocalFile> openResult;
+    
     SceInt32 err;
-    paf::LocalFile::Open(&openResult, file, SCE_O_RDONLY, 0666, &err);
+    SharedPtr<LocalFile> ptr = paf::LocalFile::Open(file, SCE_O_RDONLY, 0666, &err);
 
     if(err < 0)
     {
@@ -242,23 +245,23 @@ SceBool Utils::CreateTextureFromFile(paf::graphics::Surface **tex, const char *f
     }
     
 
-    paf::graphics::Surface::CreateFromFile(tex, mainPlugin->memoryPool, &openResult);
+    paf::graph::Surface::Create(tex, mainPlugin->memoryPool, (SharedPtr<File> *)&ptr);
 
     if(*tex == NULL) print("Utils::CreateTexureFromFile() Create texture failed!\n");
-    openResult.get()->Close();
+    ptr.get()->Close();
     return *tex != NULL;
 }
 
-SceVoid Utils::DeleteTexture(paf::graphics::Surface **tex)
+SceVoid Utils::DeleteTexture(paf::graph::Surface **tex)
 {
     if(tex != NULL)
     {
         if(*tex == TransparentTex) return;
         if(*tex != NULL)
         {
-            paf::graphics::Surface *s = *tex;
+            (*tex)->Release();
+            delete *tex;
             *tex = SCE_NULL;
-            delete s;
         }
     }
 }
@@ -277,12 +280,11 @@ SceVoid Utils::StartBGDL()
         return;
     }
 
-    if(io::Misc::Exists("ux0:data/bgdlid"))
+    if(LocalFile::Exists("ux0:data/bgdlid"))
     {
         SceUID id;
-        shared_ptr<LocalFile> openResult;
         
-        LocalFile::Open(&openResult, "ux0:data/bgdlid", SCE_O_RDONLY, 0, NULL);
+        SharedPtr<LocalFile> openResult = LocalFile::Open("ux0:data/bgdlid", SCE_O_RDONLY, 0, NULL);
         openResult.get()->Read(&id, sizeof(SceUID));
         taiStopUnloadModuleForPid(sceShellID, id, 0, NULL, 0, NULL, NULL);
     }
@@ -298,117 +300,119 @@ SceVoid Utils::StartBGDL()
     
     print("BGDL started with ID 0x%X\n", moduleID);
 
-    shared_ptr<LocalFile> openResult;
-    LocalFile::Open(&openResult, "ux0:data/bgdlid", SCE_O_WRONLY | SCE_O_CREAT | SCE_O_TRUNC, 0666, NULL);
+    SharedPtr<LocalFile> openResult = LocalFile::Open("ux0:data/bgdlid", SCE_O_WRONLY | SCE_O_CREAT | SCE_O_TRUNC, 0666, NULL);
     openResult.get()->Write(&moduleID, sizeof(SceUID));
 
 }
 
 SceVoid Utils::ExtractZipFromMemory(SceUInt8 *buff, SceSize archiveSize, const char *outDir)
 {   
-    if(!io::Misc::Exists(outDir)) io::Misc::CreateRecursive(outDir, 0666);
+    print("[FATAL ERROR] Called Utils::ExtractZipFromMemory! Function has been removed ABORT!\n");
+    *(int *)0 = 0;
 
-    const uint8_t *pCurrIn = buff, *pZipEnd = buff + archiveSize;
+    // if(!LocalFile::Exists(outDir)) Dir::CreateRecursive(outDir, 0666);
 
-    int totalCount = 0;
+    // const uint8_t *pCurrIn = buff, *pZipEnd = buff + archiveSize;
+
+    // int totalCount = 0;
     
-    void *pData;
-    while(sceZipGetInfo(pCurrIn, NULL, NULL, &pData) == SCE_OK)
-    {
-        totalCount++;
-        pCurrIn = (const uint8_t *)((uintptr_t)pData + ((SceZipHeaderPK0304 *)pCurrIn)->compsize);
-    }
+    // void *pData;
+    // while(sceZipGetInfo(pCurrIn, NULL, NULL, &pData) == SCE_OK)
+    // {
+    //     totalCount++;
+    //     pCurrIn = (const uint8_t *)((uintptr_t)pData + ((SceZipHeaderPK0304 *)pCurrIn)->compsize);
+    // }
 
-    if(totalCount == 0) io::Misc::RemoveRecursive(outDir);
+    // if(totalCount == 0) Dir::RemoveRecursive(outDir);
 
-    pCurrIn = buff;
-    pZipEnd = buff + archiveSize;
-    int processedEntries = 0;
-    while(pCurrIn < pZipEnd)
-    {
-        const void *pData;
-        char *fileName = SCE_NULL; //File names in headers aren't null terminated, we will extract and terminate it later
+    // pCurrIn = buff;
+    // pZipEnd = buff + archiveSize;
+    // int processedEntries = 0;
+    // while(pCurrIn < pZipEnd)
+    // {
+    //     const void *pData;
+    //     char *fileName = SCE_NULL; //File names in headers aren't null terminated, we will extract and terminate it later
 
-        unsigned int crc;
+    //     unsigned int crc;
 
-        SceInt32 res = SCE_OK;
+    //     SceInt32 res = SCE_OK;
 
-        SceZipHeaderPK0304 *header = (SceZipHeaderPK0304 *)pCurrIn;
+    //     SceZipHeaderPK0304 *header = (SceZipHeaderPK0304 *)pCurrIn;
         
-        res = sceZipGetInfo(pCurrIn, NULL, &crc, &pData);
-        if(res < 0)
-        {
-            print("Error sceZipGetInfo() -> 0x%X\n", res);
-            break;
-        }
+    //     res = sceZipGetInfo(pCurrIn, NULL, &crc, &pData);
+    //     if(res < 0)
+    //     {
+    //         print("Error sceZipGetInfo() -> 0x%X\n", res);
+    //         break;
+    //     }
 
-        fileName = new char[header->fnamelen + 1];
+    //     fileName = new char[header->fnamelen + 1];
 
-        sce_paf_strncpy(fileName, header->filename, header->fnamelen);
-        fileName[header->fnamelen] = 0;
+    //     sce_paf_strncpy(fileName, header->filename, header->fnamelen);
+    //     fileName[header->fnamelen] = 0;
 
-        string outPath;
-        outPath = outDir;
-        outPath += "/";
-        outPath += fileName;
+    //     string outPath;
+    //     outPath = outDir;
+    //     outPath += "/";
+    //     outPath += fileName;
 
-        delete[] fileName;
+    //     delete[] fileName;
 
-        if(header->cm == 0) //Not compressed
-        {
-            io::File *file = new io::File();
-            SceInt32 res = file->Open(outPath.data, SCE_O_WRONLY | SCE_O_CREAT | SCE_O_TRUNC, 0666);
-            if(res == SCE_OK)
-            {
-                int bytesWritten = file->Write((void *)pData, header->uncompsize);
-                if(bytesWritten < 0)
-                    print("Only wrote %d bytes out of %d!\n", bytesWritten, header->uncompsize);
-                file->Close();
-            }
-            else print("Unable to open file %s for writing! (0x%X)\n", outPath.data, res);
-            delete file;
-        }
-        else if(header->cm == 8) //Compressed
-        {
-            char *outBuff = new char[header->uncompsize];
-            sce_paf_memset(outBuff, 0, header->uncompsize);
+    //     if(header->cm == 0) //Not compressed
+    //     {
+    //         io::File *file = new io::File();
+    //         SceInt32 res = file->Open(outPath.data, SCE_O_WRONLY | SCE_O_CREAT | SCE_O_TRUNC, 0666);
+    //         if(res == SCE_OK)
+    //         {
+    //             int bytesWritten = file->Write((void *)pData, header->uncompsize);
+    //             if(bytesWritten < 0)
+    //                 print("Only wrote %d bytes out of %d!\n", bytesWritten, header->uncompsize);
+    //             file->Close();
+    //         }
+    //         else print("Unable to open file %s for writing! (0x%X)\n", outPath.data, res);
+    //         delete file;
+    //     }
+    //     else if(header->cm == 8) //Compressed
+    //     {
+    //         char *outBuff = new char[header->uncompsize];
+    //         sce_paf_memset(outBuff, 0, header->uncompsize);
 
-            res = sceDeflateDecompress(outBuff, header->uncompsize, pData, NULL);
+    //         res = sceDeflateDecompress(outBuff, header->uncompsize, pData, NULL);
             
-            if(res < 0)
-            {
-               print("sceDeflateDecompress() -> 0x%X\n", res);
-            }
-            else if (res != header->uncompsize)
-            {
-                print("Only %d out of %d bytes were extracted!\n", res, header->uncompsize);
-            }
-            else if(crc == sceGzipCrc32(0, (const unsigned char *)outBuff, res)) //Extraction successful
-            {
-                io::File *file = new io::File();
+    //         if(res < 0)
+    //         {
+    //            print("sceDeflateDecompress() -> 0x%X\n", res);
+    //         }
+    //         else if (res != header->uncompsize)
+    //         {
+    //             print("Only %d out of %d bytes were extracted!\n", res, header->uncompsize);
+    //         }
+    //         else if(crc == sceGzipCrc32(0, (const unsigned char *)outBuff, res)) //Extraction successful
+    //         {
+    //             io::File *file = new io::File();
 
-                SceInt32 res = file->Open(outPath.data, SCE_O_WRONLY | SCE_O_CREAT | SCE_O_TRUNC, 0666);
-                if(res == SCE_OK)
-                {
-                    int bytesWritten = file->Write(outBuff, header->uncompsize);
-                    if(bytesWritten != header->uncompsize)
-                        print("Only able to write %d out of %d bytes!\n", bytesWritten);
-                    file->Close();
-                }
-                else print("Unable to open file %s for writing! (0x%X)\n", outPath.data, res);
-                delete file;
-            }
+    //             SceInt32 res = file->Open(outPath.data, SCE_O_WRONLY | SCE_O_CREAT | SCE_O_TRUNC, 0666);
+    //             if(res == SCE_OK)
+    //             {
+    //                 int bytesWritten = file->Write(outBuff, header->uncompsize);
+    //                 if(bytesWritten != header->uncompsize)
+    //                     print("Only able to write %d out of %d bytes!\n", bytesWritten);
+    //                 file->Close();
+    //             }
+    //             else print("Unable to open file %s for writing! (0x%X)\n", outPath.data, res);
+    //             delete file;
+    //         }
 
-            delete[] outBuff;
-        }
-        else 
-            print("Cannot extract (%s)\n", fileName);
+    //         delete[] outBuff;
+    //     }
+    //     else 
+    //         print("Cannot extract (%s)\n", fileName);
 
-        print("Extractor: %s\n", outPath.data);
+    //     print("Extractor: %s\n", outPath.data);
 
-        pCurrIn = (const uint8_t *)((uintptr_t)pData + header->compsize);
-        processedEntries ++;
-    }
+    //     pCurrIn = (const uint8_t *)((uintptr_t)pData + header->compsize);
+    //     processedEntries ++;
+    // }
 }
 
 #ifdef _DEBUG
@@ -419,9 +423,9 @@ SceVoid Utils::PrintAllChildren(paf::ui::Widget *widget, int offset)
     {
         for (int i = 0; i < offset; i++) print(" ");
         wstring wstr;
-        widget->GetChildByNum(i)->GetLabel(&wstr);
-        print(" %d 0x%X (%s, \"%ls\")\n", i, widget->GetChildByNum(i)->hash, widget->GetChildByNum(i)->GetType(), wstr.data);
-        Utils::PrintAllChildren(widget->GetChildByNum(i), offset + 4);
+        widget->GetChild(i)->GetLabel(&wstr);
+        print(" %d 0x%X (%s, \"%ls\")\n", i, widget->GetChild(i)->hash, widget->GetChild(i)->GetType(), wstr.data);
+        Utils::PrintAllChildren(widget->GetChild(i), offset + 4);
     }
 }
 

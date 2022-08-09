@@ -98,13 +98,13 @@ SceVoid Network::CheckThread::EntryFunction()
 {
 	SceInt32             ret = -1;
     paf::HttpFile        testFile;
-    paf::HttpFile::Param testHttp;
+    paf::HttpFile::OpenArg testHttp;
 
     sceShellUtilLock(SCE_SHELL_UTIL_LOCK_TYPE_PS_BTN);
-
+    
 	testHttp.SetUrl("https://www.google.com/index.html");
-	testHttp.SetOpt(10000000, paf::HttpFile::Param::SCE_PAF_HTTP_FILE_PARAM_RESOLVE_TIME_OUT);
-	testHttp.SetOpt(10000000, paf::HttpFile::Param::SCE_PAF_HTTP_FILE_PARAM_CONNECT_TIME_OUT);
+	testHttp.SetOpt(10000000, paf::HttpFile::OpenArg::Opt::Opt_ResolveTimeOut);
+	testHttp.SetOpt(10000000, paf::HttpFile::OpenArg::Opt::Opt_ConnectTimeOut);
 
 	ret = testFile.Open(&testHttp);
     Network::CurrentStatus = ret == SCE_OK ? Online : Offline;

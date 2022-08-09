@@ -104,20 +104,17 @@ int ExportFilePatched(uint32_t *data)
     {
         SceUInt32 bgdlID = *(SceUInt32 *)data[0];
         SceUInt16 urlLength = 0;
-        string paramPath;
-        string pdbPath;
-        string filePath;
 
         char fileName[0x100];
-
-        paramPath.Setf("ux0:bgdl/t/%08x/install_param.ini", bgdlID);
         
-        if(!paf::io::Misc::Exists(paramPath.data)) //Not a file from bhbb 
+        string paramPath = ccc::Sprintf("ux0:bgdl/t/%08x/install_param.ini", bgdlID);
+        
+        if(!paf::LocalFile::Exists(paramPath.data())) //Not a file from bhbb 
             return res;
     
-        pdbPath.Setf("ux0:bgdl/t/%08x/d0.pdb", bgdlID);
+        string pdbPath = ccc::Sprintf("ux0:bgdl/t/%08x/d0.pdb", bgdlID);
         
-        SceUID fd = sceIoOpen(pdbPath.data, SCE_O_RDONLY, 0);
+        SceUID fd = sceIoOpen(pdbPath.data(), SCE_O_RDONLY, 0);
         if(fd < 0)
             return fd;
         
@@ -125,22 +122,22 @@ int ExportFilePatched(uint32_t *data)
 		sceIoPread(fd, fileName, sizeof(fileName), 0xF7 + urlLength);
 		sceIoClose(fd);
 
-        filePath.Setf("ux0:bgdl/t/%08x/%s", bgdlID, fileName);
+        string filePath = ccc::Sprintf("ux0:bgdl/t/%08x/%s", bgdlID, fileName);
         
         BGDLParam param;
         sce_paf_memset(&param, 0, sizeof(param));
 
-        fd = sceIoOpen(paramPath.data, SCE_O_RDONLY, 0);
+        fd = sceIoOpen(paramPath.data(), SCE_O_RDONLY, 0);
         if(fd < 0)
             return fd;
         
         sceIoRead(fd, &param, sizeof(param));
         sceIoClose(fd);
 
-        SceUID moduleID = sceKernelLoadStartModule("ux0:app/BHBB00001/module/libextractor.suprx", 0, NULL, 0, NULL, NULL);
+        SceUID moduleID = sceKernelLoadStartModule("ux0:app/BHBB00001/module/libextractor.suprx", 0, SCE_NULL, 0, SCE_NULL, SCE_NULL);
         if(moduleID < 0)
         {
-            print("sceKernelLoadStartModule(\"ux0:app/BHBB00001/module/libextractor.suprx\", 0, NULL, 0, NULL, NULL) -> 0x%X\n", moduleID);
+            print("sceKernelLoadStartModule(\"ux0:app/BHBB00001/module/libextractor.suprx\", 0, SCE_NULL, 0, SCE_NULL, SCE_NULL) -> 0x%X\n", moduleID);
             return moduleID;
         }
         else print("Module started with ID 0x%X\n", moduleID);
@@ -151,13 +148,13 @@ int ExportFilePatched(uint32_t *data)
         }
         else //Data
         {
-            Zipfile zFile = Zipfile(filePath.data);
+            Zipfile zFile = Zipfile(filePath.data());
             SceInt32 result = zFile.Unzip(param.path);
             if(result < 0)
                 print("Error extracting %s to %s -> %d\n", filePath, param.path, result);
         }
 
-        moduleID = sceKernelStopUnloadModule(moduleID, 0, NULL, 0, NULL, NULL);
+        moduleID = sceKernelStopUnloadModule(moduleID, 0, SCE_NULL, 0, SCE_NULL, SCE_NULL);
         if(moduleID != SCE_OK)
         {
             print("Error unloading module -> 0x%X\n", moduleID);
@@ -176,7 +173,7 @@ int GetFileTypePatched(int unk, int *type, char **filename, char **mime_type)
     print("Type = %d res = 0x%X %s %s\n", *type, res, *filename, *mime_type);
     if (res == 0x80103A21)
     {
-        *type = 1; // Type pkg lol
+        *type = 1; //Type photo
         return 0;
     }
 

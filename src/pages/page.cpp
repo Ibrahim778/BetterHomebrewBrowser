@@ -24,7 +24,7 @@ generic::Page::Page(const char *pageName)
     currPage = this;
 
     Plugin::TemplateInitParam tInit;
-    Resource::Element e;
+    rco::Element e;
 
     e.hash = Utils::GetHashById(pageName);
     
@@ -33,29 +33,29 @@ generic::Page::Page(const char *pageName)
     //    thread::s_mainThreadMutex.Lock();
 
     mainPlugin->TemplateOpen(templateRoot, &e, &tInit);
-    root = (ui::Plane *)templateRoot->GetChildByNum(templateRoot->childNum - 1);
+    root = (ui::Plane *)templateRoot->GetChild(templateRoot->childNum - 1);
 
 	if (currPage->prev != NULL)
 	{
-		currPage->prev->root->PlayAnimation(0, ui::Widget::Animation_3D_SlideToBack1);
+		currPage->prev->root->PlayEffect(0, effect::EffectType_3D_SlideToBack1);
 		if (prev->root->animationStatus & 0x80)
 			prev->root->animationStatus &= ~0x80;
 
-		g_backButton->PlayAnimation(0, ui::Widget::Animation_Reset);
+		g_backButton->PlayEffect(0, effect::EffectType_Reset);
         Page::SetBackButtonEvent(NULL, NULL);
 
 		if (currPage->prev->prev != SCE_NULL)
 		{
-			currPage->prev->prev->root->PlayAnimationReverse(0, ui::Widget::Animation_Reset);
+			currPage->prev->prev->root->PlayEffectReverse(0, effect::EffectType_Reset);
 			if (prev->prev->root->animationStatus & 0x80)
 				prev->prev->root->animationStatus &= ~0x80;
 		}
 	}
-	else g_backButton->PlayAnimationReverse(0, ui::Widget::Animation_Reset);
+	else g_backButton->PlayEffectReverse(0, effect::EffectType_Reset);
 	
-    g_forwardButton->PlayAnimationReverse(0, ui::Widget::Animation_Reset);
+    g_forwardButton->PlayEffectReverse(0, effect::EffectType_Reset);
 
-    root->PlayAnimation(-50000, ui::Widget::Animation_3D_SlideFromFront);
+    root->PlayEffect(-50000, effect::EffectType_3D_SlideFromFront);
 	if (root->animationStatus & 0x80)
 		root->animationStatus &= ~0x80;
 
@@ -75,16 +75,17 @@ SceVoid generic::Page::OnDelete()
 
 generic::Page::~Page()
 {
-	common::Utils::WidgetStateTransition(-100, this->root, ui::Widget::Animation_3D_SlideFromFront, SCE_TRUE, SCE_TRUE);
+    
+	effect::Play(-100, this->root, effect::EffectType_3D_SlideFromFront, SCE_TRUE, SCE_TRUE);
 	if (prev != SCE_NULL)
 	{
-		prev->root->PlayAnimationReverse(0.0f, ui::Widget::Animation_3D_SlideToBack1);
-		prev->root->PlayAnimation(0.0f, ui::Widget::Animation_Reset);
+		prev->root->PlayEffectReverse(0.0f, effect::EffectType_3D_SlideToBack1);
+		prev->root->PlayEffect(0.0f, effect::EffectType_Reset);
 		if (prev->root->animationStatus & 0x80)
 			prev->root->animationStatus &= ~0x80;
 
 		if (prev->prev != SCE_NULL) {
-			prev->prev->root->PlayAnimation(0.0f, ui::Widget::Animation_Reset);
+			prev->prev->root->PlayEffect(0.0f, effect::EffectType_Reset);
 			if (prev->prev->root->animationStatus & 0x80)
 				prev->prev->root->animationStatus &= ~0x80;
 		}
@@ -92,8 +93,8 @@ generic::Page::~Page()
 	currPage = this->prev;
 
     if (currPage != NULL && currPage->prev != SCE_NULL)
-        g_backButton->PlayAnimation(0, ui::Widget::Animation_Reset);
-    else g_backButton->PlayAnimationReverse(0, ui::Widget::Animation_Reset);
+        g_backButton->PlayEffect(0, effect::EffectType_Reset);
+    else g_backButton->PlayEffectReverse(0, effect::EffectType_Reset);
 
     if(currPage != SCE_NULL) currPage->OnRedisplay(); 
 }
@@ -102,36 +103,36 @@ void generic::Page::Setup()
 {
     if(templateRoot) return; //Already Initialised
 
-    Resource::Element e;
+    rco::Element e;
     Plugin::PageInitParam pInit;
     
     e.hash = Utils::GetHashById("page_main");
     ui::Widget *page =  mainPlugin->PageOpen(&e, &pInit);
     
     e.hash = Utils::GetHashById("template_plane");
-    templateRoot = (ui::Plane *)page->GetChildByHash(&e, 0);
+    templateRoot = (ui::Plane *)page->GetChild(&e, 0);
 
     currPage = SCE_NULL;
 
     e.hash = Utils::GetHashById("back_button");
-    g_backButton = (ui::CornerButton *)page->GetChildByHash(&e, 0);
+    g_backButton = (ui::CornerButton *)page->GetChild(&e, 0);
 
     backCallback = NULL;
     backData = NULL;
 
-    g_backButton->PlayAnimationReverse(0, ui::Widget::Animation::Animation_Reset);
+    g_backButton->PlayEffectReverse(0, effect::EffectType::EffectType_Reset);
 
-    ui::Widget::EventCallback *backButtonEventCallback = new ui::Widget::EventCallback();
+    ui::EventCallback *backButtonEventCallback = new ui::EventCallback();
     backButtonEventCallback->eventHandler = generic::Page::BackButtonEventHandler;
-    g_backButton->RegisterEventCallback(ui::Widget::EventMain_Decide, backButtonEventCallback, 0);
+    g_backButton->RegisterEventCallback(ui::EventMain_Decide, backButtonEventCallback, 0);
 
     e.hash = Utils::GetHashById("main_busy");
-    g_busyIndicator = (ui::BusyIndicator *)page->GetChildByHash(&e, 0);
+    g_busyIndicator = (ui::BusyIndicator *)page->GetChild(&e, 0);
     g_busyIndicator->Stop();
 
     e.hash = Utils::GetHashById("forward_button");
-    g_forwardButton = (ui::CornerButton *)page->GetChildByHash(&e, 0);
-    g_forwardButton->PlayAnimationReverse(0, ui::Widget::Animation_Reset);
+    g_forwardButton = (ui::CornerButton *)page->GetChild(&e, 0);
+    g_forwardButton->PlayEffectReverse(0, effect::EffectType_Reset);
 }
 
 void generic::Page::SetBackButtonEvent(BackButtonEventCallback callback, void *data)

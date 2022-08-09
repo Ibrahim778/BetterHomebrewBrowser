@@ -35,7 +35,6 @@ add_executable(${PROJECT_NAME}
     src/db.cpp
     src/pages/page.cpp
     src/pages/text_page.cpp
-    src/pages/apps_page.cpp
     src/json.cpp
     src/dialog.cpp
 )
@@ -96,7 +95,6 @@ VDSuitePackage(${PROJECT_NAME}.vpk
     ${CMAKE_BINARY_DIR}/${PROJECT_NAME}.sfo sce_sys/param.sfo
     resource/bhbb_plugin.rco resource/bhbb_plugin.rco
     resource/rco/src/texture/bg.png sce_sys/pic0.png
-    resource/bhbb_settings.xml resource/bhbb_settings.xml
     ${CMAKE_BINARY_DIR}/libScePafPreload/libScePafPreload.suprx module/libScePafPreload.suprx
     ${CMAKE_BINARY_DIR}/bhbb_dl/bhbb_dl.suprx module/bhbb_dl.suprx
     module/libextractor.suprx module/libextractor.suprx

@@ -200,4 +200,8 @@
         <texture src="texture/options_button.png" type="texture/png" id="tex_options_button"/>
         <texture src="texture/search_back_button.png" type="texture/png" id="tex_search_back_button"/>
 	</texturetable>
+
+    <filetable>
+        <file src="file/bhbb_settings.xml" type="application/xml" id="file_bhbb_settings" compress="off" />
+    </filetable>
 </resource>  

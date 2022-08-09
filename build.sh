@@ -1,3 +1,9 @@
+if [ ! -d build ];
+then
+    echo "Making build directory"
+    mkdir build
+fi
+
 cd resource
 cd rco
 cd src
@@ -18,14 +24,4 @@ cd ..
 cd build
 
 cmake ..
-cmake --build . --target all --config debug
-exit 1
-move BetterHomebrewBrowser.vpk BetterHomebrewBrowser.zip
-rmdir /S /Q BHBB00001
-powershell -Command "Expand-Archive -Path ./BetterHomebrewBrowser.zip -DestinationPath ./BHBB00001 -Force
-del BetterHomebrewBrowser.zip
-cd ..
-
-<NUL set /p=destroy| nc 192.168.137.27 1338
-ncftpput -P 1337 -p b0ss -u Anonymous -R 192.168.137.27 /ux0:/app/ build\BHBB00001\
-<NUL set /p=launch BHBB00001| nc 192.168.137.27 1338
+echo cmake --build . --target all --config $1

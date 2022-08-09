@@ -27,7 +27,7 @@ namespace db
         paf::string size;
 
         paf::ui::ImageButton *button;
-        paf::graphics::Surface *tex;
+        paf::graph::Surface *tex;
 
         int type;
 

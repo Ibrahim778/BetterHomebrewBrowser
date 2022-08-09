@@ -16,23 +16,23 @@ public:
     SceInt32 Enqueue(const char *url, const char *name, BGDLParam* param = SCE_NULL);
     SceInt32 EnqueueAsync(const char *url, const char *name, BGDLParam* param = SCE_NULL);
 
-	class AsyncEnqueue : public paf::thread::JobQueue::Item
+	class AsyncEnqueue : public paf::job::JobItem
 	{
 	public:
 
-		using paf::thread::JobQueue::Item::Item;
+		using paf::job::JobItem::JobItem;
 
 		~AsyncEnqueue() {}
 
 		SceVoid Run()
 		{
 			Downloader *pdownloader = (Downloader *)downloader;
-			pdownloader->Enqueue(url8.data, name8.data, &param);
+			pdownloader->Enqueue(url8.data(), name8.data(), &param);
 		}
 
 		SceVoid Finish() {}
 
-		static SceVoid JobKiller(paf::thread::JobQueue::Item *job)
+		static SceVoid JobKiller(paf::job::JobItem *job)
 		{
 			if (job)
 				delete job;

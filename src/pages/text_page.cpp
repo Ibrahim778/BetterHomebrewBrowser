@@ -7,7 +7,7 @@
 text::Page::Page(const char *text):generic::Page::Page("text_page_template")
 {
     paf::wstring wstr;
-    paf::wstring::CharToNewWString(text, &wstr);
+    paf::ccc::UTF8toUTF16(text, &wstr);
     Utils::GetChildByHash(root, Utils::GetHashById("page_text"))->SetLabel(&wstr);
 }
 

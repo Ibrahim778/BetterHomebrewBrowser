@@ -51,9 +51,9 @@ private:
 
     static SceVoid CBTerm();
 
-    static SceWChar16 *CBGetString(const char *elementId);
+    static wchar_t *CBGetString(const char *elementId);
 
-    static SceInt32 CBGetTex(paf::graphics::Surface **tex, const char *elementId);
+    static SceInt32 CBGetTex(paf::graph::Surface **tex, const char *elementId);
 
 
     const int d_settingsVersion = 1;

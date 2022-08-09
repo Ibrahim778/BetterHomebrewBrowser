@@ -24,7 +24,9 @@ Settings::Settings()
 	}
 
 	SceInt32 ret = 0;
-	Framework::PluginInitParam pInit;
+    SceSize fileSize = 0;
+    const char *mimeType = SCE_NULL;
+	Plugin::InitParam pInit;
 	AppSettings::InitParam sInit;
 
 	sceSysmoduleLoadModuleInternal(SCE_SYSMODULE_INTERNAL_BXCE);
@@ -43,9 +45,9 @@ Settings::Settings()
 	pInit.pluginPath = "vs0:vsh/common/app_settings.suprx";
 	pInit.unk_58 = 0x96;
 
-	Framework::s_frameworkInstance->LoadPlugin(&pInit);
-
-	LocalFile::Open(&sInit.xmlFile, "app0:resource/bhbb_settings.xml", SCE_O_RDONLY, 0, &ret);
+	Framework::GetInstance()->LoadPlugin(&pInit);
+    
+	sInit.xmlFile = mainPlugin->resource->GetFile(Utils::GetHashById("file_bhbb_settings"), &fileSize, &mimeType);
 
 	sInit.allocCB = sce_paf_malloc;
 	sInit.freeCB = sce_paf_free;
@@ -92,22 +94,22 @@ sce::AppSettings *Settings::GetAppSettings()
 
 SceVoid Settings::Close()
 {
-    Resource::Element e;
+    rco::Element e;
     e.hash = 0xF6C9D4C0;
 
     auto plugin = paf::Plugin::Find("app_settings_plugin");
     ui::Widget *root = plugin->GetPageByHash(&e);
     if(!root) return;
     e.hash = 0x8211F03F;
-    ui::Widget *exitButton = root->GetChildByHash(&e, 0);
+    ui::Widget *exitButton = root->GetChild(&e, 0);
     if(!exitButton) return;
-    exitButton->SendEvent(ui::Widget::EventMain_Decide, 0);
+    exitButton->SendEvent(ui::EventMain::EventMain_Decide, 0);
 }
 
 SceVoid Settings::Open()
 {
-    g_appsPage->root->SetAlpha(0.39f);
-    g_appsPage->root->PlayAnimationReverse(10, ui::Widget::Animation_Fadein1);
+    // g_appsPage->root->SetAlpha(0.39f);
+    // g_appsPage->root->PlayEffectReverse(10, effect::EffectType_Fadein1);
 
 	AppSettings::InterfaceCallbacks ifCb;
 
@@ -178,15 +180,15 @@ SceInt32 Settings::CBValueChange(const char *elementId, const char *newValue)
     
     case Hash_nLoad:
         GetInstance()->nLoad = value;
-        g_appsPage->Redisplay();
+        // g_appsPage->Redisplay();
         break;
 
     case Hash_Source:
         GetInstance()->source = (db::Id)value;
     
     case Hash_Refresh:
-        g_appsPage->SetCategory(-1);
-        g_appsPage->Load();
+        // g_appsPage->SetCategory(-1);
+        // g_appsPage->Load();
         GetInstance()->Close();
         break;
 
@@ -204,22 +206,22 @@ SceInt32 Settings::CBValueChange2(const char *elementId, const char *newValue)
 
 SceVoid Settings::CBTerm()
 {    
-    g_appsPage->root->PlayAnimation(-100, ui::Widget::Animation_Fadein1);
-    g_appsPage->root->SetAlpha(1.0f);
+    // g_appsPage->root->PlayEffect(-100, effect::EffectType_Fadein1);
+    // g_appsPage->root->SetAlpha(1.0f);
 }
 
-SceWChar16 *Settings::CBGetString(const char *elementId)
+wchar_t *Settings::CBGetString(const char *elementId)
 {
     if(sce_paf_strncmp(elementId, "msg_version_info", 16) == 0)
         return g_versionInfo;
 
-    Resource::Element searchParam;
+    rco::Element searchParam;
     searchParam.hash = Utils::GetHashById(elementId);
 
-    return mainPlugin->GetString(&searchParam);
+    return mainPlugin->GetWString(&searchParam);
 }
 
-SceInt32 Settings::CBGetTex(graphics::Surface **tex, const char *elementId)
+SceInt32 Settings::CBGetTex(graph::Surface **tex, const char *elementId)
 {
 	return SCE_OK;
 }

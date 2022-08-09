@@ -13,7 +13,6 @@
 #include "network.h"
 #include "downloader.h"
 #include "settings.h"
-#include "pages/apps_page.h"
 #include "pages/text_page.h"
 #include "dialog.h"
 
@@ -62,34 +61,31 @@ int loadFlags = 0;
 ui::Widget *g_mainPage;
 ui::Widget *g_errorPage;
 
-apps::Page *g_appsPage = SCE_NULL;
-
 Plugin *mainPlugin = SCE_NULL;
 
-graphics::Surface *BrokenTex = SCE_NULL;
-graphics::Surface *TransparentTex = SCE_NULL;
+graph::Surface *BrokenTex = SCE_NULL;
+graph::Surface *TransparentTex = SCE_NULL;
 
 Downloader *g_downloader = SCE_NULL;
 
-SceWChar16 *g_versionInfo = SCE_NULL;
+wchar_t *g_versionInfo = SCE_NULL;
 
 void OnNetworkChecked()
 {
     if(Network::GetCurrentStatus() == Network::Online)
     {
-        g_appsPage->Load();
+        
     }
     else 
     {
         string msgTemplate;
         Utils::GetfStringFromID("msg_net_fix", &msgTemplate);
 
-        string errorMsg;
-        errorMsg.Setf(msgTemplate.data, Network::GetLastError());
+        string errorMsg = ccc::Sprintf(msgTemplate.data(), Network::GetLastError());
 
-        new text::Page(errorMsg.data);
+        new text::Page(errorMsg.data());
 
-        generic::Page::SetBackButtonEvent(apps::Page::ErrorRetryCB, g_appsPage);
+        //generic::Page::SetBackButtonEvent(apps::Page::ErrorRetryCB, g_appsPage);
     }
 }
 
@@ -103,11 +99,11 @@ SceVoid onPluginReady(Plugin *plugin)
 
     mainPlugin = plugin;
 
-    Resource::Element e = Utils::GetParamWithHashFromId("tex_missing_icon");
-    mainPlugin->LoadTexture(&BrokenTex, mainPlugin, &e);
+    rco::Element e = Utils::GetParamWithHashFromId("tex_missing_icon");
+    mainPlugin->GetTexture(&BrokenTex, mainPlugin, &e);
 
 	e.hash = Utils::GetHashById("_common_texture_transparent");
-	Plugin::LoadTexture(&TransparentTex, Plugin::Find("__system__common_resource"), &e);
+	Plugin::GetTexture(&TransparentTex, Plugin::Find("__system__common_resource"), &e);
 
     //Thanks Graphene
     auto infoString = new wstring;
@@ -121,16 +117,16 @@ SceVoid onPluginReady(Plugin *plugin)
     *infoString += L"Date: " WIDE(__DATE__) L"\n";
     *infoString += L"Version: 1.0\nBGDL Version: 2.0";
 
-    print("%ls\n", infoString->data);
+    print("%ls\n", infoString->data());
 
-    g_versionInfo = (SceWChar16 *)infoString->data;
+    g_versionInfo = (wchar_t *)infoString->data();
 
     sceShellUtilInitEvents(0);
     generic::Page::Setup();
     /*
     auto page = new generic::Page("blank_page_template");
     
-    Resource::Element e2;
+    rco::Element e2;
     e.hash = Utils::GetHashById("byslidebar");
     e2.hash = Utils::GetHashById("_common_default_style_slidebar");
 
@@ -143,8 +139,8 @@ SceVoid onPluginReady(Plugin *plugin)
 */
 
     new Settings();
-    g_appsPage = new apps::Page();
-
+    new text::Page("Hello World!");
+    Settings::GetInstance()->Open();
     Network::Init();
 
     g_downloader = new Downloader();
@@ -169,7 +165,7 @@ int main()
     if(loadFlags & LOAD_FLAGS_SCREENSHOTS) fwParam.defaultSurfacePoolSize += 5 * 1024 * 1024;
     fwParam.textSurfaceCacheSize = 2621440; //2.5MB
 
-    Framework *fw = new Framework(&fwParam);
+    Framework *fw = new Framework(fwParam);
 
     fw->LoadCommonResource();
 
@@ -182,7 +178,7 @@ int main()
     
     sceAppUtilInit(&init, &boot);
 
-    Framework::PluginInitParam piParam;
+    Plugin::InitParam piParam;
 
     piParam.pluginName = "bhbb_plugin";
     piParam.resourcePath = "app0:resource/bhbb_plugin.rco";
