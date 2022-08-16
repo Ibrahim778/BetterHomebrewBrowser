@@ -2,6 +2,8 @@
 /.vs
 /build
 /build.bat
+/build.sh
+/run.sh
 /resource/rco/cxml
 /resource/*.rco
 /resource/rco/src/locale/*.rcs

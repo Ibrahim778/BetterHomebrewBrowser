@@ -35,6 +35,7 @@ add_executable(${PROJECT_NAME}
     src/db.cpp
     src/pages/page.cpp
     src/pages/text_page.cpp
+    src/pages/apps_page.cpp
     src/json.cpp
     src/dialog.cpp
 )

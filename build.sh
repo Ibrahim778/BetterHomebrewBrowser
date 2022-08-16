@@ -23,5 +23,5 @@ cd ..
 
 cd build
 
-cmake ..
-echo cmake --build . --target all --config $1
+cmake -DCMAKE_BUILD_TYPE=$1 ..
+cmake --build . --target all

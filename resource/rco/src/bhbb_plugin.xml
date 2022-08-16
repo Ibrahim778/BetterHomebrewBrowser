@@ -97,6 +97,46 @@
                     <layout_hint align="0, 1" anchor="0, 1" size="960, 484" pos="0, 0"/>
                     <box id="list_scroll_box">
                         <layout_box anchor="0, 2" align="0,2" layout_type="1" bottom_margin="-180" top_margin="212" right_margin="0" left_margin="0" />
+                        <image_button sound="_common_sound_image_button" style="list_button_style" enable_long_press_text_auto_scroll="1" id="list_button">
+                            <layout_hint size="960, 80" adjust="0, 0" pos="0, 0" />
+                            <focus_hint focus_shape="3" focus_size="960, 80" />
+                        </image_button>
+                        <image_button sound="_common_sound_image_button" style="list_button_style" enable_long_press_text_auto_scroll="1" id="list_button">
+                            <layout_hint size="960, 80" adjust="0, 0" pos="0, 0" />
+                            <focus_hint focus_shape="3" focus_size="960, 80" />
+                        </image_button>
+                        <image_button sound="_common_sound_image_button" style="list_button_style" enable_long_press_text_auto_scroll="1" id="list_button">
+                            <layout_hint size="960, 80" adjust="0, 0" pos="0, 0" />
+                            <focus_hint focus_shape="3" focus_size="960, 80" />
+                        </image_button>
+                        <image_button sound="_common_sound_image_button" style="list_button_style" enable_long_press_text_auto_scroll="1" id="list_button">
+                            <layout_hint size="960, 80" adjust="0, 0" pos="0, 0" />
+                            <focus_hint focus_shape="3" focus_size="960, 80" />
+                        </image_button>
+                        <image_button sound="_common_sound_image_button" style="list_button_style" enable_long_press_text_auto_scroll="1" id="list_button">
+                            <layout_hint size="960, 80" adjust="0, 0" pos="0, 0" />
+                            <focus_hint focus_shape="3" focus_size="960, 80" />
+                        </image_button>
+                        <image_button sound="_common_sound_image_button" style="list_button_style" enable_long_press_text_auto_scroll="1" id="list_button">
+                            <layout_hint size="960, 80" adjust="0, 0" pos="0, 0" />
+                            <focus_hint focus_shape="3" focus_size="960, 80" />
+                        </image_button>
+                        <image_button sound="_common_sound_image_button" style="list_button_style" enable_long_press_text_auto_scroll="1" id="list_button">
+                            <layout_hint size="960, 80" adjust="0, 0" pos="0, 0" />
+                            <focus_hint focus_shape="3" focus_size="960, 80" />
+                        </image_button>
+                        <image_button sound="_common_sound_image_button" style="list_button_style" enable_long_press_text_auto_scroll="1" id="list_button">
+                            <layout_hint size="960, 80" adjust="0, 0" pos="0, 0" />
+                            <focus_hint focus_shape="3" focus_size="960, 80" />
+                        </image_button>
+                        <image_button sound="_common_sound_image_button" style="list_button_style" enable_long_press_text_auto_scroll="1" id="list_button">
+                            <layout_hint size="960, 80" adjust="0, 0" pos="0, 0" />
+                            <focus_hint focus_shape="3" focus_size="960, 80" />
+                        </image_button>
+                        <image_button sound="_common_sound_image_button" style="list_button_style" enable_long_press_text_auto_scroll="1" id="list_button">
+                            <layout_hint size="960, 80" adjust="0, 0" pos="0, 0" />
+                            <focus_hint focus_shape="3" focus_size="960, 80" />
+                        </image_button>
                     </box>
                 </scroll_view>
             </plane>

@@ -140,7 +140,7 @@ SceInt32 Downloader::Enqueue(const char *url, const char *name, BGDLParam *param
         SharedPtr<LocalFile> openResult = LocalFile::Open(paramPath.data(), SCE_O_WRONLY | SCE_O_CREAT | SCE_O_TRUNC, 0666, &result);
         if(result < 0)
         {
-            print("open %s -> 0x%X\n", paramPath.data, result);
+            print("open %s -> 0x%X\n", paramPath.data(), result);
             return result;
         }
 

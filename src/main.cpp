@@ -15,6 +15,7 @@
 #include "settings.h"
 #include "pages/text_page.h"
 #include "dialog.h"
+#include "pages/apps_page.h"
 
 #define WIDE2(x) L##x
 #define WIDE(x) WIDE2(x)
@@ -67,6 +68,7 @@ graph::Surface *BrokenTex = SCE_NULL;
 graph::Surface *TransparentTex = SCE_NULL;
 
 Downloader *g_downloader = SCE_NULL;
+apps::Page *g_appsPage = SCE_NULL;
 
 wchar_t *g_versionInfo = SCE_NULL;
 
@@ -74,7 +76,9 @@ void OnNetworkChecked()
 {
     if(Network::GetCurrentStatus() == Network::Online)
     {
+        g_appsPage->Load();
         
+        for(int i = 0; i < 3; i ++) g_appsPage->NewPage();
     }
     else 
     {
@@ -123,27 +127,13 @@ SceVoid onPluginReady(Plugin *plugin)
 
     sceShellUtilInitEvents(0);
     generic::Page::Setup();
-    /*
-    auto page = new generic::Page("blank_page_template");
-    
-    rco::Element e2;
-    e.hash = Utils::GetHashById("byslidebar");
-    e2.hash = Utils::GetHashById("_common_default_style_slidebar");
-
-    ui::SlideBar *bar = (ui::SlideBar *)mainPlugin->CreateWidgetWithStyle(page->root, "slidebar", &e, &e2);
-    ((int (*)(void *, int, int))(*(int *)(*((int *)(bar)) + 0x188)))(bar, 100, 0);
-
-    Utils::SetWidgetSize(bar, 300, 50);
-    Utils::SetWidgetPosition(bar, 0, 0);
-    Utils::SetWidgetColor(bar, 1,1,1,1);
-*/
 
     new Settings();
-    new text::Page("Hello World!");
-    Settings::GetInstance()->Open();
+    
     Network::Init();
 
     g_downloader = new Downloader();
+    g_appsPage = new apps::Page();
     
     Network::Check(OnNetworkChecked);
 

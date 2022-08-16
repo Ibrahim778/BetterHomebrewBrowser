@@ -424,7 +424,7 @@ SceVoid Utils::PrintAllChildren(paf::ui::Widget *widget, int offset)
         for (int i = 0; i < offset; i++) print(" ");
         wstring wstr;
         widget->GetChild(i)->GetLabel(&wstr);
-        print(" %d 0x%X (%s, \"%ls\")\n", i, widget->GetChild(i)->hash, widget->GetChild(i)->GetType(), wstr.data);
+        print(" %d 0x%X (%s, \"%ls\")\n", i, widget->GetChild(i)->hash, widget->GetChild(i)->name(), wstr.data());
         Utils::PrintAllChildren(widget->GetChild(i), offset + 4);
     }
 }
