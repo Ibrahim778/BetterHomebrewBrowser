@@ -77,8 +77,6 @@ void OnNetworkChecked()
     if(Network::GetCurrentStatus() == Network::Online)
     {
         g_appsPage->Load();
-        
-        for(int i = 0; i < 3; i ++) g_appsPage->NewPage();
     }
     else 
     {

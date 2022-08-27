@@ -9,3 +9,4 @@
 /resource/rco/src/locale/*.rcs
 /resource/bhbb_plugin.rco
 /resource/libScePafPreload.suprx
+/build_mac.sh

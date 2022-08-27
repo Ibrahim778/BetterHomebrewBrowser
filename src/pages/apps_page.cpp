@@ -9,7 +9,7 @@
 
 using namespace paf;
 
-apps::Page::Page():generic::Page::Page("home_page_template"),body(SCE_NULL)
+apps::Page::Page():generic::Page::Page("home_page_template")
 {
     ui::EventCallback *searchCallback = new ui::EventCallback();
     searchCallback->pUserData = this;
@@ -26,11 +26,18 @@ apps::Page::Page():generic::Page::Page("home_page_template"),body(SCE_NULL)
     optionsCallback->eventHandler = Settings::OpenCB;
 
     optionsButton->RegisterEventCallback(ui::EventMain_Decide, optionsCallback, 0);
+
+    ResetList();
 }
 
 apps::Page::~Page()
 {
     
+}
+
+SceVoid apps::Page::ResetList()
+{
+
 }
 
 SceVoid apps::Page::SetMode(PageMode targetMode)
@@ -73,77 +80,6 @@ SceVoid apps::Page::SearchCB(SceInt32 eventID, ui::Widget *self, SceInt32 unk, S
     case Hash_SearchEnterButton:
         break;
     }
-}
-
-apps::Page::Body::Body(Page *_page):prev(SCE_NULL),next(SCE_NULL):page(_page)
-{
-    Plugin::TemplateInitParam tInit;
-    rco::Element e = Utils::GetParamWithHashFromId("home_page_list_template");
-
-    mainPlugin->TemplateOpen(_page->root, &e, &tInit);
-
-    widget = (ui::Plane *)_page->root->GetChild(_page->root->childNum - 1);
-
-    if(_page->body == SCE_NULL)
-    {
-        _page->body = this;
-
-        widget->PlayEffect(-50000, effect::EffectType_3D_SlideFromFront);
-        if (widget->animationStatus & 0x80)
-            widget->animationStatus &= ~0x80;
-        
-        return;
-    }
-
-
-    Body *last = _page->body;
-    while(last->next != SCE_NULL)
-        last = last->next;
-
-    last->next = this;
-    prev = last;
-
-    if(prev != SCE_NULL)
-    {
-        if(prev->prev != SCE_NULL)
-        {
-            widget->PlayEffectReverse(0, effect::EffectType_Reset);
-            if (widget->animationStatus & 0x80)
-                widget->animationStatus &= ~0x80;
-        }
-        else 
-        {
-            widget->PlayEffect(0, effect::EffectType_3D_SlideToBack1);
-            if(widget->animationStatus & 0x80)
-                widget->animationStatus &= ~0x80;
-        }
-    }
-}
-
-apps::Page::Body::~Body()
-{
-    page->body = next;
-    next->prev = prev;
-
-    if(page->body == this)
-    {
-        widget->PlayEffectReverse(0, effect::EffectType_Reset);
-        if(widget->animationStatus & 0x80)
-            widget->animationStatus &= ~0x80;
-        
-        
-        return;
-    }
-}
-
-SceVoid apps::Page::NewPage()
-{
-    new Body(this);
-}
-
-ui::Plane *apps::Page::Body::GetBody()
-{
-    return widget;
 }
 
 SceVoid apps::Page::Load()

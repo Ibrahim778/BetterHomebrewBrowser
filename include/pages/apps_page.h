@@ -19,25 +19,12 @@ namespace apps
             PageMode_Search
         };
 
-        class Body 
-        {
-        public:
-            Body(Page *page);
-            ~Body();
-
-            paf::ui::Plane *GetBody();
-
-        private:
-            Body *prev, *next;
-            paf::ui::Plane *widget;
-            Page *page;
-        };
-
         static SceVoid SearchCB(SceInt32 eventID, paf::ui::Widget *self, SceInt32 unk, ScePVoid pUserData);
 
-        SceVoid NewPage();
         SceVoid SetMode(PageMode mode);
         SceVoid Load();
+
+        SceVoid ResetList();
 
         Page();
         virtual ~Page();
@@ -59,8 +46,6 @@ namespace apps
         PageMode mode;
 
         db::List appList;
-
-        Body *body;
     };
 }
 
