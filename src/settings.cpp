@@ -108,8 +108,8 @@ SceVoid Settings::Close()
 
 SceVoid Settings::Open()
 {
-    // g_appsPage->root->SetAlpha(0.39f);
-    // g_appsPage->root->PlayEffectReverse(10, effect::EffectType_Fadein1);
+    g_appsPage->root->SetAlpha(0.39f);
+    g_appsPage->root->PlayEffectReverse(10, effect::EffectType_Fadein1);
 
 	AppSettings::InterfaceCallbacks ifCb;
 
@@ -180,15 +180,15 @@ SceInt32 Settings::CBValueChange(const char *elementId, const char *newValue)
     
     case Hash_nLoad:
         GetInstance()->nLoad = value;
-        // g_appsPage->Redisplay();
+        g_appsPage->Redisplay();
         break;
 
     case Hash_Source:
         GetInstance()->source = (db::Id)value;
     
     case Hash_Refresh:
-        // g_appsPage->SetCategory(-1);
-        // g_appsPage->Load();
+        g_appsPage->SetCategory(-1);
+        g_appsPage->Load();
         GetInstance()->Close();
         break;
 
@@ -206,8 +206,8 @@ SceInt32 Settings::CBValueChange2(const char *elementId, const char *newValue)
 
 SceVoid Settings::CBTerm()
 {    
-    // g_appsPage->root->PlayEffect(-100, effect::EffectType_Fadein1);
-    // g_appsPage->root->SetAlpha(1.0f);
+    g_appsPage->root->PlayEffect(-100, effect::EffectType_Fadein1);
+    g_appsPage->root->SetAlpha(1.0f);
 }
 
 wchar_t *Settings::CBGetString(const char *elementId)

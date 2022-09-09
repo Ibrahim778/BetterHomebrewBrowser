@@ -219,7 +219,7 @@ db::entryInfo *db::List::Get(int index, int category)
     if(index >= size) return &entries[size - 1];
 
     if(category == -1) return &entries[index];
-
+    print("Get, index: %d\n", index);
     db::entryInfo *currentEntry = entries;
     for(int i = 0; i < index && i < size; i++, currentEntry++)
         if(currentEntry->type != category) i--;

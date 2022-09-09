@@ -14,13 +14,18 @@ link_directories(
   ${VDSUITE_LIBRARY_DIRECTORIES}
 )
 
-add_compile_options(
-    -D_SCE_TARGET_OS_PSP2=1 -Xdiag=0 -Xquit=2 -Od
-)
+if(${CMAKE_BUILD_TYPE} STREQUAL Debug)
+    add_compile_options(
+        -D_SCE_TARGET_OS_PSP2=1 -Xdiag=0 -Xquit=2 -Od -g
+    )
+else()
+    add_compile_options(
+        -D_SCE_TARGET_OS_PSP2=1 -Xdiag=0 -Xquit=2 -O3
+    )
+endif()
 
 add_link_options(
-  --no-standard-libraries
-  -Map -sn-full-map
+  --no-standard-libraries -Map -sn-full-map
 )
 
 add_executable(${PROJECT_NAME}

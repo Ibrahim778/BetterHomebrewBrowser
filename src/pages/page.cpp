@@ -15,8 +15,10 @@ ui::CornerButton *g_backButton;
 ui::CornerButton *g_forwardButton;
 ui::BusyIndicator *g_busyIndicator;
 
-generic::Page::BackButtonEventCallback generic::Page::backCallback;
+generic::Page::ButtonEventCallback generic::Page::backCallback;
+generic::Page::ButtonEventCallback generic::Page::forwardCallback;
 void *generic::Page::backData;
+void *generic::Page::forwardData;
 
 generic::Page::Page(const char *pageName)
 {
@@ -117,8 +119,11 @@ void generic::Page::Setup()
     e.hash = Utils::GetHashById("back_button");
     g_backButton = (ui::CornerButton *)page->GetChild(&e, 0);
 
-    backCallback = NULL;
-    backData = NULL;
+    backCallback = SCE_NULL;
+    backData = SCE_NULL;
+
+    forwardCallback = SCE_NULL;
+    forwardData = SCE_NULL;
 
     g_backButton->PlayEffectReverse(0, effect::EffectType::EffectType_Reset);
 
@@ -133,12 +138,31 @@ void generic::Page::Setup()
     e.hash = Utils::GetHashById("forward_button");
     g_forwardButton = (ui::CornerButton *)page->GetChild(&e, 0);
     g_forwardButton->PlayEffectReverse(0, effect::EffectType_Reset);
+
+    ui::EventCallback *forwardButtonEventCallback = new ui::EventCallback;
+    forwardButtonEventCallback->eventHandler = generic::Page::ForwardButtonEventHandler;
+    g_forwardButton->RegisterEventCallback(ui::EventMain_Decide, forwardButtonEventCallback, 0);
 }
 
-void generic::Page::SetBackButtonEvent(BackButtonEventCallback callback, void *data)
+void generic::Page::ResetBackButton()
+{
+    SetBackButtonEvent(SCE_NULL, SCE_NULL);
+
+    if (currPage != NULL && currPage->prev != SCE_NULL)
+        g_backButton->PlayEffect(0, effect::EffectType_Reset);
+    else g_backButton->PlayEffectReverse(0, effect::EffectType_Reset);
+}
+
+void generic::Page::SetBackButtonEvent(ButtonEventCallback callback, void *data)
 {
     backCallback = callback;
     backData = data;
+}
+
+void generic::Page::SetForwardButtonEvent(ButtonEventCallback callback, void *data)
+{
+    forwardCallback = callback;
+    forwardData = data;
 }
 
 void generic::Page::BackButtonEventHandler(SceInt32 eventID, ui::Widget *self, SceInt32 unk, ScePVoid)
@@ -147,6 +171,12 @@ void generic::Page::BackButtonEventHandler(SceInt32 eventID, ui::Widget *self, S
         backCallback(eventID, self, unk, backData);
     else    
         generic::Page::DeleteCurrentPage();
+}
+
+void generic::Page::ForwardButtonEventHandler(SceInt32 eventID, ui::Widget *self, SceInt32 unk, ScePVoid)
+{
+    if(forwardCallback)
+        forwardCallback(eventID, self, unk, forwardData);
 }
 
 void generic::Page::DeleteCurrentPage()

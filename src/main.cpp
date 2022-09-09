@@ -87,7 +87,7 @@ void OnNetworkChecked()
 
         new text::Page(errorMsg.data());
 
-        //generic::Page::SetBackButtonEvent(apps::Page::ErrorRetryCB, g_appsPage);
+        generic::Page::SetBackButtonEvent(apps::Page::ErrorRetryCB, g_appsPage);
     }
 }
 

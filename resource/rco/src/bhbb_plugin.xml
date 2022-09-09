@@ -40,6 +40,10 @@
             <plane style="_common_style_plane_transparent" id="page_root">
                 <layout_hint size="960,544"/>
 
+                <plane style="_common_style_plane_transparent" id="plane_list_root">
+                    <layout_hint size="960,544" pos="0,0"/>
+                </plane>
+
                 <plane style="_common_style_plane_transparent" id="plane_categories">
                     <layout_hint align="0,2" anchor="0,2" size="960, 60"/>
 
@@ -87,72 +91,16 @@
                         <layout_hint size="842, 58" pos="0, 0" />
                     </text_box>
                 </plane>
-                <template_ref template="home_page_list_template" />
-            </plane>
-        </template>
-
-        <template fast_open="1" id="home_page_list_item_template">
-            <plane style="_common_style_plane_transparent" id="item_plane">
-                <layout_hint size="960,484" pos="0,0" />
-                <scroll_view style="list_style_scroll_view" id="list_item_scroll_view">
-                    <layout_hint align="0, 1" anchor="0, 1" size="960, 484" pos="0, 0"/>
-                    <box id="list_item_scroll_box">
-                        <layout_box anchor="0, 2" align="0,2" layout_type="1" bottom_margin="0" top_margin="0" right_margin="0" left_margin="0" />
-                        <image_button sound="_common_sound_image_button" style="list_button_style" enable_long_press_text_auto_scroll="1" id="list_button">
-                            <layout_hint size="960, 80" adjust="0, 0" pos="0, 0" />
-                            <focus_hint focus_shape="3" focus_size="960, 80" />
-                        </image_button>
-                        <image_button sound="_common_sound_image_button" style="list_button_style" enable_long_press_text_auto_scroll="1" id="list_button">
-                            <layout_hint size="960, 80" adjust="0, 0" pos="0, 0" />
-                            <focus_hint focus_shape="3" focus_size="960, 80" />
-                        </image_button>
-                        <image_button sound="_common_sound_image_button" style="list_button_style" enable_long_press_text_auto_scroll="1" id="list_button">
-                            <layout_hint size="960, 80" adjust="0, 0" pos="0, 0" />
-                            <focus_hint focus_shape="3" focus_size="960, 80" />
-                        </image_button>
-                        <image_button sound="_common_sound_image_button" style="list_button_style" enable_long_press_text_auto_scroll="1" id="list_button">
-                            <layout_hint size="960, 80" adjust="0, 0" pos="0, 0" />
-                            <focus_hint focus_shape="3" focus_size="960, 80" />
-                        </image_button>
-                        <image_button sound="_common_sound_image_button" style="list_button_style" enable_long_press_text_auto_scroll="1" id="list_button">
-                            <layout_hint size="960, 80" adjust="0, 0" pos="0, 0" />
-                            <focus_hint focus_shape="3" focus_size="960, 80" />
-                        </image_button>
-                        <image_button sound="_common_sound_image_button" style="list_button_style" enable_long_press_text_auto_scroll="1" id="list_button">
-                            <layout_hint size="960, 80" adjust="0, 0" pos="0, 0" />
-                            <focus_hint focus_shape="3" focus_size="960, 80" />
-                        </image_button>
-                        <image_button sound="_common_sound_image_button" style="list_button_style" enable_long_press_text_auto_scroll="1" id="list_button">
-                            <layout_hint size="960, 80" adjust="0, 0" pos="0, 0" />
-                            <focus_hint focus_shape="3" focus_size="960, 80" />
-                        </image_button>
-                        <image_button sound="_common_sound_image_button" style="list_button_style" enable_long_press_text_auto_scroll="1" id="list_button">
-                            <layout_hint size="960, 80" adjust="0, 0" pos="0, 0" />
-                            <focus_hint focus_shape="3" focus_size="960, 80" />
-                        </image_button>
-                        <image_button sound="_common_sound_image_button" style="list_button_style" enable_long_press_text_auto_scroll="1" id="list_button">
-                            <layout_hint size="960, 80" adjust="0, 0" pos="0, 0" />
-                            <focus_hint focus_shape="3" focus_size="960, 80" />
-                        </image_button>
-                        <image_button sound="_common_sound_image_button" style="list_button_style" enable_long_press_text_auto_scroll="1" id="list_button">
-                            <layout_hint size="960, 80" adjust="0, 0" pos="0, 0" />
-                            <focus_hint focus_shape="3" focus_size="960, 80" />
-                        </image_button>
-                    </box>
-                </scroll_view>
             </plane>
         </template>
 
         <template fast_open="1" id="home_page_list_template">
-            <plane style="_common_style_plane_transparent" id="list_plane">
-                <layout_hint size="960, 484" pos="0, -60"/>
-                <scroll_view snap_power="25" auto_snap="1" style="list_style_scroll_view" id="list_scroll_view">
+            <plane style="_common_default_style_plane" id="list_plane">
+                <layout_hint size="960,484" pos="0, -60" />
+                <scroll_view style="list_style_scroll_view" id="list_scroll_view">
                     <layout_hint align="0, 1" anchor="0, 1" size="960, 484" pos="0, 0"/>
                     <box id="list_scroll_box">
-                        <layout_box anchor="0, 2" align="0,2" layout_type="2" bottom_margin="-180" top_margin="212" right_margin="0" left_margin="0" />
-                        <template_ref template="home_page_list_item_template" />
-                        <template_ref template="home_page_list_item_template" />
-                        <template_ref template="home_page_list_item_template" />
+                        <layout_box anchor="0, 2" align="0,2" layout_type="1" bottom_margin="-180" top_margin="212" />
                     </box>
                 </scroll_view>
             </plane>

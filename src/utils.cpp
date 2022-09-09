@@ -259,7 +259,7 @@ SceVoid Utils::DeleteTexture(paf::graph::Surface **tex)
         if(*tex == TransparentTex) return;
         if(*tex != NULL)
         {
-            (*tex)->Release();
+            //(*tex)->Release();
             delete *tex;
             *tex = SCE_NULL;
         }
@@ -271,7 +271,6 @@ SceVoid Utils::StartBGDL()
     SceInt32 res = SCE_OK;
     SceUID moduleID = SCE_UID_INVALID_UID;
     SceUID sceShellID = SCE_UID_INVALID_UID;
-    SceUID pipeID = SCE_UID_INVALID_UID;
 
     res = sceAppMgrGetIdByName(&sceShellID, "NPXS19999");
     if(res != SCE_OK)
@@ -415,6 +414,19 @@ SceVoid Utils::ExtractZipFromMemory(SceUInt8 *buff, SceSize archiveSize, const c
     // }
 }
 
+SceInt32 Utils::PlayEffect(paf::ui::Widget *widget, SceFloat32 param, paf::effect::EffectType type, paf::ui::EventCallback::EventHandler animCB, ScePVoid pUserData)
+{
+    widget->PlayEffect(param, type, animCB, pUserData);
+    if(widget->animationStatus & 0x80)
+        widget->animationStatus &= ~0x80;
+}
+
+SceInt32 Utils::PlayEffectReverse(paf::ui::Widget *widget, SceFloat32 param, paf::effect::EffectType type, paf::ui::EventCallback::EventHandler animCB, ScePVoid pUserData)
+{
+    widget->PlayEffectReverse(param, type, animCB, pUserData);
+    if(widget->animationStatus & 0x80)
+        widget->animationStatus &= ~0x80;
+}
 #ifdef _DEBUG
 
 SceVoid Utils::PrintAllChildren(paf::ui::Widget *widget, int offset)
