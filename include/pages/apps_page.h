@@ -33,7 +33,7 @@ namespace apps
             using paf::job::JobItem::JobItem;
 
             SceVoid Run();
-            SceVoid Finish();
+            SceVoid Finish(){}
 
             Page *callingPage;
             Param taskParam;
@@ -57,12 +57,24 @@ namespace apps
             using paf::job::JobItem::JobItem;
 
             SceVoid Run();
-            SceVoid Finish();
+            SceVoid Finish(){}
 
             Page *callingPage;
             Param taskParam;
 
             IconDownloadJob(const char *name, Page *caller, Param param):job::JobItem(name),callingPage(caller),taskParam(param){}
+        };
+
+        class IconDownloadThread : public paf::thread::Thread
+        {
+        private:
+            Page *callingPage;
+        public:
+            paf::thread::Thread::Thread;
+
+            SceVoid EntryFunction();
+
+            IconDownloadThread(Page *callingPage, SceInt32 initPriority = SCE_KERNEL_DEFAULT_PRIORITY_USER, SceSize stackSize = SCE_KERNEL_4KiB, const char *name = "apps::Page::IconDownloadThread"):paf::thread::Thread::Thread(initPriority, stackSize, name),callingPage(callingPage){}
         };
 
         class IconZipJob : public paf::job::JobItem
@@ -72,6 +84,18 @@ namespace apps
 
             SceVoid Run();
             SceVoid Finish();
+        };
+
+        class RedisplayJob : public paf::job::JobItem
+        {
+        public:
+            using paf::job::JobItem::JobItem;
+
+            SceVoid Run();
+            SceVoid Finish(){}
+
+            Page *callingPage;
+            RedisplayJob(const char *name, Page *caller):job::JobItem(name),callingPage(caller){}
         };
 
         class LoadJob : public paf::job::JobItem
@@ -113,18 +137,21 @@ namespace apps
         paf::ui::Widget *GetCurrentPage();
         //Clears all lists
         SceVoid ClearPages();
-        //Creates a new empty list page
-        SceVoid NewPage(SceUInt32 entryNum = 0);
+
+        //Creates a new empty page
+        template<class OnCompleteFunc>
+        SceVoid NewPage(const OnCompleteFunc& onComplete);
         //Deletes the current list page
         SceVoid DeletePage(SceBool animate = SCE_TRUE);
-        //Returns current number of list pages (Starts from 1)
-        SceUInt32 GetPageCount();
-
-        //Creates a new list page with NewPage and populates from appList
+        //Creates a new page and populates with buttons
         SceVoid CreatePopulatedPage();
+
 
         //Cancels current icon downloads and assignments, DO NOT CALL FROM MAIN THREAD
         SceVoid CancelIconJobs();
+
+        //Returns the number of pages in the list, calculated using the page list (currBody)
+        SceUInt32 GetPageCount();
 
         //Called whenever this page becomes the main page on screen. Handles forward button
         void OnRedisplay() override;
@@ -153,18 +180,25 @@ namespace apps
         } ButtonHash;
 
         SceVoid HandleForwardButton();
+        SceVoid CreateListWrapper();
+        SceVoid RedisplayInternal();
+        //Starts adding new icon download *jobs*
+        SceVoid StartIconDownloads();
+        //Stops adding any new icon download *jobs* to cancel current jobs use CancelIconJobs()
+        SceVoid CancelIconDownloads();
 
         PageMode mode;
 
         db::List appList;
 
-        SceUInt32 listNum;
         Body *currBody;
 
+        paf::ui::Plane *listWrapperPlane;
         paf::ui::Plane *listRootPlane;
 
         paf::job::JobQueue *loadQueue;
 
+        IconDownloadThread *iconDownloadThread;
         paf::job::JobQueue *iconDownloadQueue;
         paf::job::JobQueue *iconAssignQueue;
         SceUID iconFlags;

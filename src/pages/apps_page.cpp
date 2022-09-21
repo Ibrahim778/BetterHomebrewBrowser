@@ -13,7 +13,7 @@
 
 using namespace paf;
 
-apps::Page::Page():generic::Page::Page("home_page_template"),listRootPlane(SCE_NULL),listNum(0),currBody(SCE_NULL)
+apps::Page::Page():generic::Page::Page("home_page_template"),listRootPlane(SCE_NULL),currBody(SCE_NULL),iconDownloadThread(SCE_NULL)
 {
     ui::EventCallback *categoryCallback = new ui::EventCallback;
     categoryCallback->pUserData = this;
@@ -44,6 +44,7 @@ apps::Page::Page():generic::Page::Page("home_page_template"),listRootPlane(SCE_N
     optionsButton->RegisterEventCallback(ui::EventMain_Decide, optionsCallback, 0);
 
     listRootPlane = (ui::Plane *)Utils::GetChildByHash(root, Utils::GetHashById("plane_list_root"));
+    CreateListWrapper();
 
     job::JobQueue::Option opt;
     opt.workerNum = 1;
@@ -54,7 +55,7 @@ apps::Page::Page():generic::Page::Page("home_page_template"),listRootPlane(SCE_N
 
 
     job::JobQueue::Option iconAssignOpt;
-    opt.workerNum = 30;
+    opt.workerNum = 10;
     opt.workerOpt = NULL;
     opt.workerPriority = SCE_KERNEL_DEFAULT_PRIORITY_USER - 10;
     opt.workerStackSize = SCE_KERNEL_16KiB;
@@ -71,6 +72,8 @@ apps::Page::Page():generic::Page::Page("home_page_template"),listRootPlane(SCE_N
     string iconEventFlagName = ccc::Sprintf("BHBB_IconEventFlag_0x%X", this); //Just to make it unique. Not ideal but works?
     iconFlags = sceKernelCreateEventFlag(iconEventFlagName.data(), SCE_KERNEL_ATTR_MULTI, 0, SCE_NULL);
     print("apps::Page::iconFlags = 0x%X\n", iconFlags);
+
+    print("On Init done: %d\n", listRootPlane->childNum);
 }
 
 apps::Page::~Page()
@@ -106,18 +109,36 @@ SceVoid apps::Page::CategoryButtonCB(SceInt32 eventID, ui::Widget *self, SceInt3
         page->Redisplay();
 }
 
+SceVoid apps::Page::RedisplayJob::Run()
+{
+    callingPage->RedisplayInternal();
+}
+
 SceVoid apps::Page::Redisplay()
+{
+    auto jobPtr = SharedPtr<job::JobItem>(new RedisplayJob("BHBB::apps::Page::RedisplayJob", this));
+    loadQueue->Enqueue(&jobPtr);
+}
+
+SceVoid apps::Page::RedisplayInternal()
 {
     print("Redisplay!\n");
 
-    if(loadQueue->GetSize() > 0)
-        return; //Wait for it to finish loading ffs
-
+    sceKernelClearEventFlag(iconFlags, ~FLAG_ICON_ASSIGN_TEXTURE);
     ClearPages();
     CreatePopulatedPage();
+    sceKernelSetEventFlag(iconFlags, FLAG_ICON_ASSIGN_TEXTURE);
     HandleForwardButton();
+
+    sceKernelDelayThread(100); //Just to stabalise a little
 }
 
+SceVoid apps::Page::CreateListWrapper()
+{
+    listWrapperPlane = (ui::Plane *)Utils::CreateWidget("plane_list_wrapper", "plane", "_common_style_plane_transparent", listRootPlane);
+    Utils::SetWidgetSize(listWrapperPlane, 960, 544);
+    Utils::SetWidgetPosition(listWrapperPlane, 0, 0);
+}
 
 SceBool apps::Page::SetCategory(int _category)
 {
@@ -252,14 +273,32 @@ SceVoid apps::Page::ErrorRetryCB(SceInt32 eventID, paf::ui::Widget *self, SceInt
     ((Page *)pUserData)->Load();
 }
 
+SceUInt32 apps::Page::GetPageCount()
+{
+    SceUInt32 num = 0;
+    Body *b = currBody; 
+    while(b != SCE_NULL)
+    {
+        b = b->prev;
+        num++;
+    }
+
+    return num;
+}
+
 SceVoid apps::Page::ClearPages()
 {
-    if(listNum == 0) return;
- 
-    while(listNum != 0)
-        DeletePage(SCE_FALSE);
+    while(currBody)
+    {
+        apps::Page::Body *prev = currBody->prev;
+        delete currBody;
+        currBody = prev;
+    }
 
-    print("Listnum after deleted: %d\n", listNum);
+    effect::Play(-100, listWrapperPlane, effect::EffectType_3D_SlideFromFront, SCE_TRUE, SCE_FALSE);
+    CreateListWrapper();
+
+    generic::Page::ResetBackButton();
 }
 
 SceVoid apps::Page::CancelIconJobs()
@@ -288,8 +327,7 @@ SceVoid apps::Page::ForwardButtonCB(SceInt32 eventID, paf::ui::Widget *self, Sce
 
 SceVoid apps::Page::HandleForwardButton()
 {
-    print("%d %d\n", appList.GetSize(category), Settings::GetInstance()->nLoad * (listNum - 1));
-    if(appList.GetSize() <= (listNum * Settings::GetInstance()->nLoad))
+    if(appList.GetSize(category) <= (GetPageCount() * Settings::GetInstance()->nLoad))
     {
         generic::Page::SetForwardButtonEvent(SCE_NULL, SCE_NULL);
         g_forwardButton->PlayEffectReverse(0, effect::EffectType_Reset);
@@ -308,42 +346,53 @@ SceVoid apps::Page::OnRedisplay()
 
 SceVoid apps::Page::CreatePopulatedPage()
 {
-    NewPage();
-    print("Loading page: %d\n", listNum);
-    rco::Element e = Utils::GetParamWithHashFromId("homebrew_button");
-    Plugin::TemplateInitParam tInit;
-    print("listNum - 1 = %d\n", listNum - 1);
-    auto ScrollBox = Utils::GetChildByHash(listRootPlane->GetChild(listNum), Utils::GetHashById("list_scroll_box"));
-    print("Scrollbox: %p %s\n", ScrollBox, ScrollBox->name());
+    SceUInt32 pageCountBeforeCreation = GetPageCount();
 
-    db::entryInfo *info = appList.Get((listNum - 1) * Settings::GetInstance()->nLoad, category);
-    for(int i = 0; i < Settings::GetInstance()->nLoad && appList.IsValidEntry(info); i++, info++)
-    {
-        if(info->type != category && category != -1)
-        {
-            i--;
-            continue;
-        }
-        print("%s\n", info->title.data());
+    NewPage([=](ui::Widget *ScrollBox) {
 
-        mainPlugin->TemplateOpen(ScrollBox, &e, &tInit);
+        ScrollBox->SetAlpha(0);
+
+        rco::Element e = Utils::GetParamWithHashFromId("homebrew_button");
+        Plugin::TemplateInitParam tInit;
+
+        SceUInt32 loadNum = (appList.GetSize(category) - (pageCountBeforeCreation * Settings::GetInstance()->nLoad)) < Settings::GetInstance()->nLoad ? (appList.GetSize(category) - (pageCountBeforeCreation * Settings::GetInstance()->nLoad)) : Settings::GetInstance()->nLoad;
+        db::entryInfo *info = appList.Get(pageCountBeforeCreation * Settings::GetInstance()->nLoad, category);
         
-        ui::Widget *createdWidget = ScrollBox->GetChild(ScrollBox->childNum - 1);
-        print("createdWidget: %p\n", createdWidget);
-        createdWidget->hash = info->hash;
-        Utils::SetWidgetLabel(createdWidget, &info->title);
+        for(int i = 0; i < Settings::GetInstance()->nLoad && appList.IsValidEntry(info) && i < loadNum; i++, info++)
+        {
+            if(info->type != category && category != -1)
+            {
+                i--;
+                continue;
+            }
 
-        auto jobPtr = SharedPtr<job::JobItem>(
-            new IconAssignJob("BHBB::apps::Page::IconDownloadJob", 
-                        this, 
-                        IconAssignJob::Param(
-                            info->hash, 
-                            &info->tex, 
-                            info->iconLocal)));
-                
-        iconAssignQueue->Enqueue(&jobPtr);
+            mainPlugin->TemplateOpen(ScrollBox, &e, &tInit);
 
-    }
+            ui::Widget *createdWidget = ScrollBox->GetChild(ScrollBox->childNum - 1);
+            createdWidget->hash = info->hash;
+            Utils::SetWidgetLabel(createdWidget, &info->title);
+
+            if(info->tex != SCE_NULL)
+            {
+                createdWidget->SetSurfaceBase(&info->tex); 
+            }
+            else 
+            {
+                auto jobPtr = SharedPtr<job::JobItem>(
+                    new IconAssignJob("BHBB::apps::Page::IconAssignJob", 
+                                this, 
+                                IconAssignJob::Param(
+                                    info->hash, 
+                                    &info->tex, 
+                                    info->iconLocal)));
+                        
+                iconAssignQueue->Enqueue(&jobPtr);
+
+            }
+        } 
+
+        ScrollBox->SetAlpha(1);
+    });
 }
 
 SceVoid apps::Page::LoadJob::Run()
@@ -355,8 +404,10 @@ SceVoid apps::Page::LoadJob::Run()
 
     Dialog::OpenPleaseWait(mainPlugin, SCE_NULL, Utils::GetStringPFromID("msg_wait"));
     Settings::GetInstance()->Close();
+    callingPage->CancelIconDownloads();
     callingPage->CancelIconJobs();
     callingPage->ClearPages();
+    g_forwardButton->PlayEffectReverse(0, effect::EffectType_Reset);
 
     openArg.SetUrl(db::info[Settings::GetInstance()->source].indexURL);
     openArg.SetOpt(4000000, HttpFile::OpenArg::Opt_ResolveTimeOut);
@@ -423,22 +474,9 @@ SceVoid apps::Page::LoadJob::Run()
     callingPage->HandleForwardButton();
     g_busyIndicator->Stop();
 
-    db::entryInfo *info = callingPage->appList.Get(0);
-    for(int i = 0; i < callingPage->appList.GetSize() && callingPage->appList.IsValidEntry(info); i++, info++)
-    {
-        if(LocalFile::Exists(info->iconLocal.data())) continue;
+    callingPage->StartIconDownloads();
 
-        auto jobPtr = SharedPtr<job::JobItem>(
-            new IconDownloadJob("BHBB::apps::Page::IconDownloadJob", 
-                        callingPage, 
-                        IconDownloadJob::Param(
-                            info->hash, 
-                            &info->tex, 
-                            info->icon, 
-                            info->iconLocal)));
-
-        callingPage->iconDownloadQueue->Enqueue(&jobPtr);
-    }
+    print("LoadJob finished!\n");
 }
 
 SceVoid apps::Page::LoadJob::Finish()
@@ -561,18 +599,20 @@ EXIT:
 
 SceVoid apps::Page::IconAssignJob::Run()
 {
-    // print("Icon Assign Job:\n\tPath: %s\n\tTexture: %p\n\tWidget: %p\n", taskParam.path.data(), taskParam.texture, taskParam.widgetHash);
-
+    print("Icon Assign Job:\n\tPath: %s\n\tTexture: %p\n\tWidget: %p\n", taskParam.path.data(), taskParam.texture, taskParam.widgetHash);
+    //wstring str;
+    //Utils::GetChildByHash(callingPage->root, taskParam.widgetHash)->GetLabel(&str);
+    //print("\tTitle: %ls\n", str.data());
 LOAD_SURF:
     if(sceKernelPollEventFlag(callingPage->iconFlags, FLAG_ICON_LOAD_SURF, SCE_NULL, SCE_NULL) < 0 /* Surface loading disabled */)
     {
-        // print("\tSurface Loading aborted\n");
+        print("\tSurface Loading aborted\n");
         goto ASSIGN_TEX;
     }
 
     if(*taskParam.texture != SCE_NULL /* Already loaded */)
     {
-        // print("\tSurface already loaded\n");
+        print("\tSurface already loaded\n");
         goto ASSIGN_TEX;
     }
 
@@ -582,7 +622,7 @@ LOAD_SURF:
         SharedPtr<LocalFile> file = LocalFile::Open(taskParam.path.data(), SCE_O_RDONLY, 0, &ret);
         if(ret != SCE_OK)
         {
-            // print("\t[Error] Open %s failed -> 0x%X\n", taskParam.path.data(), ret);
+            print("\t[Error] Open %s failed -> 0x%X\n", taskParam.path.data(), ret);
             goto ASSIGN_TEX;
         }
 
@@ -595,7 +635,7 @@ LOAD_SURF:
 ASSIGN_TEX:
     if(sceKernelPollEventFlag(callingPage->iconFlags, FLAG_ICON_ASSIGN_TEXTURE, SCE_NULL, SCE_NULL) < 0)
     {
-        // print("\tSurface assignment aborted.\n");
+        print("\tSurface assignment aborted.\n");
         goto EXIT;
     }
 
@@ -604,29 +644,24 @@ ASSIGN_TEX:
         ui::Widget *widget = Utils::GetChildByHash(callingPage->root, taskParam.widgetHash);
         if(widget == SCE_NULL)
         {
-            // print("\t[Skip] Widget 0x%X not found\n", taskParam.widgetHash);
+            print("\t[Skip] Widget 0x%X not found\n", taskParam.widgetHash);
             goto EXIT;
         }
 
+        thread::s_mainThreadMutex.Lock();
         if(*taskParam.texture == SCE_NULL)
         {
             widget->SetSurfaceBase(&BrokenTex);
+            thread::s_mainThreadMutex.Unlock();
             goto EXIT;
         }
 
         widget->SetSurfaceBase(taskParam.texture);
+        thread::s_mainThreadMutex.Unlock();
     }
 EXIT:
-    // print("\tTask Completed\n");
+    print("\tTask Completed\n");
     return;
-}
-
-SceVoid apps::Page::IconDownloadJob::Finish(){}
-SceVoid apps::Page::IconAssignJob::Finish(){}
-
-SceUInt32 apps::Page::GetPageCount()
-{
-    return listNum;
 }
 
 SceVoid apps::Page::BackCB(SceInt32 eventID, paf::ui::Widget *self, SceInt32 unk, ScePVoid pUserData)
@@ -635,7 +670,53 @@ SceVoid apps::Page::BackCB(SceInt32 eventID, paf::ui::Widget *self, SceInt32 unk
     ((apps::Page *)pUserData)->HandleForwardButton();
 }
 
-SceVoid apps::Page::NewPage(SceUInt32 entryNum)
+SceVoid apps::Page::CancelIconDownloads()
+{
+    if(iconDownloadThread)
+    {
+        if(iconDownloadThread->IsAlive())
+        {
+            iconDownloadThread->Cancel();
+            iconDownloadThread->Join();
+        }
+        delete iconDownloadThread;
+        iconDownloadThread = SCE_NULL;
+    }
+}
+
+SceVoid apps::Page::StartIconDownloads()
+{
+    iconDownloadThread = new IconDownloadThread(this, SCE_KERNEL_DEFAULT_PRIORITY_USER, SCE_KERNEL_16KiB);
+    iconDownloadThread->Start();
+}
+
+SceVoid apps::Page::IconDownloadThread::EntryFunction()
+{
+    //This is apparently a LOT faster in a thread?
+    print("apps::Page::IconDownloadThread START\n"); 
+
+    db::entryInfo *info = callingPage->appList.Get(0);
+    for(int i = 0; i < callingPage->appList.GetSize() && callingPage->appList.IsValidEntry(info) && !IsCanceled(); i++, info++)
+    {
+        if(LocalFile::Exists(info->iconLocal.data())) continue;
+
+        auto jobPtr = SharedPtr<job::JobItem>(
+            new IconDownloadJob("BHBB::apps::Page::IconDownloadJob", 
+                        callingPage, 
+                        IconDownloadJob::Param(
+                            info->hash, 
+                            &info->tex, 
+                            info->icon, 
+                            info->iconLocal)));
+
+        callingPage->iconDownloadQueue->Enqueue(&jobPtr);
+    }
+
+    print("apps::Page::IconDownloadThread END\n");
+}
+
+template<class OnCompleteFunc>
+SceVoid apps::Page::NewPage(const OnCompleteFunc& onComplete)
 {
     Plugin::TemplateInitParam tInit;
     rco::Element e = Utils::GetParamWithHashFromId("home_page_list_template");
@@ -644,12 +725,8 @@ SceVoid apps::Page::NewPage(SceUInt32 entryNum)
 
     ui::Widget *widget = SCE_NULL;
     
-    mainPlugin->TemplateOpen(listRootPlane, &e, &tInit);
-    currBody->widget = widget = listRootPlane->GetChild(listRootPlane->childNum - 1);
-
-    widget->hash = listRootPlane->childNum;
-
-    sceAtomicIncrement32Release((int32_t *)&listNum);
+    mainPlugin->TemplateOpen(listWrapperPlane, &e, &tInit);
+    currBody->widget = widget = listWrapperPlane->GetChild(listWrapperPlane->childNum - 1);
 
     if(currBody->prev != SCE_NULL)
     {
@@ -664,29 +741,23 @@ SceVoid apps::Page::NewPage(SceUInt32 entryNum)
         }
     }
 
-    if(listNum == 1)
+    if(listWrapperPlane->childNum == 1)
         generic::Page::ResetBackButton();
     
     auto scrollBox = Utils::GetChildByHash(widget, Utils::GetHashById("list_scroll_box"));
     e.hash = Utils::GetHashById("homebrew_button");
 
-    for(int i = 0; i < entryNum; i++)
-        mainPlugin->TemplateOpen(scrollBox, &e, &tInit);
-    
+    onComplete(scrollBox);
+
     Utils::PlayEffect(widget, -5000, effect::EffectType_3D_SlideFromFront);
 }
 
 SceVoid apps::Page::DeletePage(SceBool animate)
-{
-    if(listNum == 0)
-        return;
-    
+{   
+    if(currBody == SCE_NULL) return;
+
     effect::Play(animate ? -100 : 0, currBody->widget, effect::EffectType_3D_SlideFromFront, SCE_TRUE, !animate);
     
-    //listNum--;
-    sceAtomicDecrement32Acquire((int32_t *)&listNum);
-
-
     if(currBody->prev != SCE_NULL)
     {
         currBody->prev->widget->PlayEffectReverse(0, effect::EffectType_3D_SlideToBack1);
@@ -694,8 +765,7 @@ SceVoid apps::Page::DeletePage(SceBool animate)
 
         if(currBody->prev->prev != SCE_NULL)
             Utils::PlayEffect(currBody->prev->prev->widget, 0, effect::EffectType_Reset);
-        
-        if(listNum == 1)
+        else 
             generic::Page::ResetBackButton();
     }
 

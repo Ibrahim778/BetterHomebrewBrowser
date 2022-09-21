@@ -304,6 +304,14 @@ SceVoid Utils::StartBGDL()
 
 }
 
+ui::Widget *Utils::CreateWidget(const char *id, const char *type, const char *style, ui::Widget *parent)
+{
+    rco::Element styleInfo = Utils::GetParamWithHashFromId(style);
+    rco::Element widgetInfo = Utils::GetParamWithHashFromId(id);
+
+    return mainPlugin->CreateWidgetWithStyle(parent, type, &widgetInfo, &styleInfo);
+}
+
 SceVoid Utils::ExtractZipFromMemory(SceUInt8 *buff, SceSize archiveSize, const char *outDir)
 {   
     print("[FATAL ERROR] Called Utils::ExtractZipFromMemory! Function has been removed ABORT!\n");

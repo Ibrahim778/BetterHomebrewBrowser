@@ -95,7 +95,7 @@
         </template>
 
         <template fast_open="1" id="home_page_list_template">
-            <plane style="_common_default_style_plane" id="list_plane">
+            <plane style="_common_style_plane_transparent" id="list_plane">
                 <layout_hint size="960,484" pos="0, -60" />
                 <scroll_view style="list_style_scroll_view" id="list_scroll_view">
                     <layout_hint align="0, 1" anchor="0, 1" size="960, 484" pos="0, 0"/>
