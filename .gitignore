@@ -11,3 +11,4 @@
 /resource/libScePafPreload.suprx
 /build_mac.sh
 /.DS_Store
+/clean.sh

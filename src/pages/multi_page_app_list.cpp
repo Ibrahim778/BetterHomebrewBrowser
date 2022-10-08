@@ -66,14 +66,11 @@ SceVoid generic::MultiPageAppList::BackCB(SceInt32 eventID, paf::ui::Widget *sel
     ((apps::Page *)pUserData)->HandleForwardButton();
 }
 
-SceVoid generic::MultiPageAppList::RedisplayInternal()
+SceVoid generic::MultiPageAppList::ClearInternal()
 {
     print("Redisplay!\n");
 
     ClearPages();
-    NewPage();
-
-    HandleForwardButton();
 }
 
 SceVoid generic::MultiPageAppList::CreateListWrapper()
@@ -116,16 +113,23 @@ SceVoid generic::MultiPageAppList::ClearPages()
         currBody = prev;
     }
 
-    effect::Play(-100, listWrapperPlane, effect::EffectType_3D_SlideFromFront, SCE_TRUE, SCE_FALSE);
+    SceBool isMainThread = thread::IsMainThread();
+    if(!isMainThread)
+        thread::s_mainThreadMutex.Lock();
+
+    effect::Play(-100, listWrapperPlane, effect::EffectType_3D_SlideFromFront, SCE_TRUE, SCE_TRUE);
     CreateListWrapper();
+
+    if(!isMainThread)
+        thread::s_mainThreadMutex.Unlock();
 
     generic::Page::ResetBackButton();
     OnCleared();
 }
 
-SceVoid generic::MultiPageAppList::RedisplayJob::Run()
+SceVoid generic::MultiPageAppList::ClearJob::Run()
 {
-    callingPage->RedisplayInternal();
+    callingPage->ClearInternal();
 }
 
 SceVoid generic::MultiPageAppList::ForwardButtonCB(SceInt32 eventID, paf::ui::Widget *self, SceInt32 unk, ScePVoid pUserData)
@@ -137,8 +141,8 @@ SceVoid generic::MultiPageAppList::ForwardButtonCB(SceInt32 eventID, paf::ui::Wi
 
 SceVoid generic::MultiPageAppList::Redisplay()
 {
-    auto jobPtr = SharedPtr<job::JobItem>(new RedisplayJob("BHBB::apps::Page::RedisplayJob", this));
-    job::s_defaultJobQueue->Enqueue(&jobPtr);
+    job::s_defaultJobQueue->Enqueue(&SharedPtr<job::JobItem>(new ClearJob("BHBB::apps::Page::ClearJob", this)));
+    job::s_defaultJobQueue->Enqueue(&SharedPtr<job::JobItem>(new NewPageJob("MPAL::NewPageJob", this, SCE_TRUE)));
 }
 
 SceVoid generic::MultiPageAppList::HandleForwardButton()

@@ -345,9 +345,6 @@ SceVoid apps::Page::PopulatePage(ui::Widget *ScrollBox)
         if(!isMainThread)
             thread::s_mainThreadMutex.Unlock();
         
-        print("Surface Loading %s\n", sceKernelPollEventFlag(iconFlags, FLAG_ICON_LOAD_SURF, SCE_NULL, SCE_NULL) == SCE_OK ? "Enabled" : "Disabled");
-        print("Surface Assignment %s\n", sceKernelPollEventFlag(iconFlags, FLAG_ICON_ASSIGN_TEXTURE, SCE_NULL, SCE_NULL) == SCE_OK ? "Enabled" : "Disabled");
-
         if(((ui::ImageButton *)createdWidget)->imageSurf == SCE_NULL && std::find(textureJobs.begin(), textureJobs.end(), info->hash) == textureJobs.end())
         {
             textureJobs.push_back(info->hash);

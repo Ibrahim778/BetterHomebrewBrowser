@@ -12,7 +12,7 @@ namespace generic
     class MultiPageAppList : public generic::Page
     {
     public:
-        class RedisplayJob : public paf::job::JobItem
+        class ClearJob : public paf::job::JobItem
         {
         public:
             using paf::job::JobItem::JobItem;
@@ -21,7 +21,7 @@ namespace generic
             SceVoid Finish(){}
 
             MultiPageAppList *callingPage;
-            RedisplayJob(const char *name, MultiPageAppList *caller):paf::job::JobItem(name),callingPage(caller){}
+            ClearJob(const char *name, MultiPageAppList *caller):paf::job::JobItem(name),callingPage(caller){}
         };
 
         class NewPageJob : public paf::job::JobItem
@@ -96,7 +96,7 @@ namespace generic
             Body(Body *_prev = SCE_NULL):prev(_prev){}
         };
 
-        SceVoid RedisplayInternal();
+        SceVoid ClearInternal();
         SceVoid HandleForwardButton();
         SceVoid CreateListWrapper();
 
