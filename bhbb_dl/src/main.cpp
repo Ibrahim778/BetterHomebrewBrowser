@@ -142,11 +142,11 @@ int ExportFilePatched(uint32_t *data)
         }
         else print("Module started with ID 0x%X\n", moduleID);
 
-        if(param.type) //App
+        if(param.type == BGDLParam::Target::App) //App
         {
         
         }
-        else //Data
+        else if(param.type == BGDLParam::Target::CustomPath) //Data
         {
             Zipfile zFile = Zipfile(filePath.data());
             SceInt32 result = zFile.Unzip(param.path);

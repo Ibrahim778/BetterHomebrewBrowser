@@ -2,10 +2,11 @@
 #define DB_H
 
 #include <kernel.h>
+#include <vector>
 
 namespace db
 {
-    typedef struct
+    typedef struct entryInfo
     {
         paf::string id;
         paf::string titleID;
@@ -27,12 +28,12 @@ namespace db
         paf::string size;
 
         paf::ui::ImageButton *button;
-        paf::graph::Surface *tex;
 
         int type;
 
         SceUInt64 hash;
 
+        entryInfo():hash(0xDEADBEEF){}
     } entryInfo;
 
     typedef enum
@@ -49,17 +50,16 @@ namespace db
         List();
         ~List();
 
-        void Init(int size);
-        void Clear(bool deleteTextures);
+        //void Init(int size);
+        void Clear();
+        void Add(db::entryInfo &entry);
 
-        bool IsValidEntry(entryInfo *pEntry);
-
-        int GetSize(int category = -1);
-        entryInfo *Get(int index = 0, int category = -1);
-
-    private:
-        entryInfo *entries;
-        int size;
+        size_t GetSize(int category = -1);
+        entryInfo &Get(int index);
+        std::vector<db::entryInfo>::iterator Get(int index, int category);
+        entryInfo &Get(SceUInt64 hash);
+        
+        std::vector<db::entryInfo> entries;
     };
 
     namespace vitadb

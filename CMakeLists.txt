@@ -16,16 +16,19 @@ link_directories(
 
 if(${CMAKE_BUILD_TYPE} STREQUAL Debug)
     add_compile_options(
-        -D_SCE_TARGET_OS_PSP2=1 -Xdiag=0 -Xquit=2 -Od -g
+        -D_SCE_TARGET_OS_PSP2=1 -Xdiag=0 -Xquit=2 -Od -g -noex
     )
 else()
     add_compile_options(
-        -D_SCE_TARGET_OS_PSP2=1 -Xdiag=0 -Xquit=2 -O3
+        -D_SCE_TARGET_OS_PSP2=1 -Xdiag=0 -Xquit=2 -O3 -noex
     )
 endif()
 
+add_custom_target(file_toucher 
+        COMMAND ${CMAKE_COMMAND} -E touch_nocreate ${CMAKE_CURRENT_SOURCE_DIR}/src/main.cpp)
+
 add_link_options(
-  --no-standard-libraries -Map -sn-full-map
+  --no-standard-libraries -Map=${CMAKE_BINARY_DIR}/mapfile -sn-full-map
 )
 
 add_executable(${PROJECT_NAME}
@@ -41,8 +44,27 @@ add_executable(${PROJECT_NAME}
     src/pages/page.cpp
     src/pages/text_page.cpp
     src/pages/apps_page.cpp
+    src/pages/multi_page_app_list.cpp
     src/json.cpp
     src/dialog.cpp
+    src/xthrow.cpp
+    src/paf_runtime.c
+
+    common/bhbb_dl.h
+    
+    include/main.h
+    include/utils.h
+    include/network.h
+    include/csv.h
+    include/settings.h
+    include/downloader.h
+    include/db.h
+    include/pages/page.h
+    include/pages/text_page.h
+    include/pages/apps_page.h
+    include/pages/multi_page_app_list.h
+    include/json.hpp
+    include/dialog.h
 )
 
 target_link_libraries(${PROJECT_NAME}
@@ -75,6 +97,7 @@ target_link_libraries(${PROJECT_NAME}
     SceJson_stub
     SceCommonGuiDialog_stub
     SceModulemgr_stub
+    SceVshBridge_stub
     taihenUnsafe_stub
 )
 
@@ -93,6 +116,7 @@ VDSuiteSignElf(${PROJECT_NAME}.self $<TARGET_FILE:${PROJECT_NAME}> BOOT_PARAM bo
 add_dependencies(${PROJECT_NAME}
     bhbb_dl.suprx
     libScePafPreload.suprx
+    file_toucher    
 )
 
 VDSuitePackage(${PROJECT_NAME}.vpk

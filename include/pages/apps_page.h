@@ -3,8 +3,10 @@
 
 #include <kernel.h>
 #include <paf.h>
+#include <vector>
+#include <unordered_map>
 
-#include "page.h"
+#include "multi_page_app_list.h"
 #include "db.h"
 #include "dialog.h"
 
@@ -14,7 +16,7 @@
 
 namespace apps
 {
-    class Page : public generic::Page
+    class Page : public generic::MultiPageAppList
     {
     public:
         class IconAssignJob : public paf::job::JobItem 
@@ -23,11 +25,10 @@ namespace apps
             
             struct Param {
                 SceUInt32 widgetHash;
-                paf::graph::Surface **texture;
                 paf::string path;
 
-                Param(SceUInt32 targetWidget, paf::graph::Surface **pTex, paf::string dPath):
-                    widgetHash(targetWidget),texture(pTex),path(dPath){}
+                Param(SceUInt32 targetWidget, paf::string dPath):
+                    widgetHash(targetWidget),path(dPath){}
             };
 
             using paf::job::JobItem::JobItem;
@@ -47,11 +48,10 @@ namespace apps
             
             struct Param {
                 SceUInt32 widgetHash;
-                paf::graph::Surface **texture;
                 paf::string url, dest;
 
-                Param(SceUInt32 targetWidget, paf::graph::Surface **pTex, paf::string sUrl, paf::string dPath):
-                    widgetHash(targetWidget),texture(pTex),url(sUrl),dest(dPath){}
+                Param(SceUInt32 targetWidget, paf::string sUrl, paf::string dPath):
+                    widgetHash(targetWidget),url(sUrl),dest(dPath){}
             };
 
             using paf::job::JobItem::JobItem;
@@ -86,18 +86,6 @@ namespace apps
             SceVoid Finish();
         };
 
-        class RedisplayJob : public paf::job::JobItem
-        {
-        public:
-            using paf::job::JobItem::JobItem;
-
-            SceVoid Run();
-            SceVoid Finish(){}
-
-            Page *callingPage;
-            RedisplayJob(const char *name, Page *caller):job::JobItem(name),callingPage(caller){}
-        };
-
         class LoadJob : public paf::job::JobItem
         {
         public:
@@ -111,61 +99,51 @@ namespace apps
             LoadJob(const char *name, Page *caller):job::JobItem(name),callingPage(caller){}
         };
 
+        class TextureList
+        {
+        public:
+            SceBool Contains(SceUInt64 hash);
+            SceVoid Clear(SceBool deleteTextures = SCE_TRUE);
+            paf::graph::Surface *Get(SceUInt64 hash);
+            SceVoid Add(SceUInt64 hash, paf::graph::Surface *surf);
+        private:
+            struct Node
+            {
+                paf::graph::Surface *surf;
+                SceUInt64 hash;
+                Node(SceUInt64 _hash, paf::graph::Surface *_surf):hash(_hash),surf(_surf){}
+            };
+
+            std::vector<Node> list;
+        };
+
         enum PageMode
         {
             PageMode_Browse,
             PageMode_Search
         };
 
-        static SceVoid ForwardButtonCB(SceInt32 eventID, paf::ui::Widget *self, SceInt32 unk, ScePVoid pUserData);
         static SceVoid IconDownloadDecideCB(Dialog::ButtonCode buttonResult, ScePVoid userDat);
         static SceVoid ErrorRetryCB(SceInt32 eventID, paf::ui::Widget *self, SceInt32 unk, ScePVoid pUserData);
-        static SceVoid BackCB(SceInt32 eventID, paf::ui::Widget *self, SceInt32 unk, ScePVoid pUserData);
         static SceVoid SearchCB(SceInt32 eventID, paf::ui::Widget *self, SceInt32 unk, ScePVoid pUserData);
         static SceVoid CategoryButtonCB(SceInt32 eventID, paf::ui::Widget *self, SceInt32 unk, ScePVoid pUserData);
 
-        //Sets the category and updates button colour
-        SceBool SetCategory(int category);
         //Sets page mode: Search or Browse
         SceVoid SetMode(PageMode mode);
         //Cancels any icon download jobs, Redownloads and parses index and calls Redisplay()
         SceVoid Load();
-        //Redisplays the elements in the parsed db list according to category, also resets the current page number to 0 (1)
-        SceVoid Redisplay();
 
-        //Gets the current list widget
-        paf::ui::Widget *GetCurrentPage();
-        //Clears all lists
-        SceVoid ClearPages();
-
-        //Creates a new empty page
-        template<class OnCompleteFunc>
-        SceVoid NewPage(const OnCompleteFunc& onComplete);
-        //Deletes the current list page
-        SceVoid DeletePage(SceBool animate = SCE_TRUE);
         //Creates a new page and populates with buttons
-        SceVoid CreatePopulatedPage();
-
+        SceVoid PopulatePage(paf::ui::Widget *scrollBox) override;
 
         //Cancels current icon downloads and assignments, DO NOT CALL FROM MAIN THREAD
         SceVoid CancelIconJobs();
-
-        //Returns the number of pages in the list, calculated using the page list (currBody)
-        SceUInt32 GetPageCount();
-
-        //Called whenever this page becomes the main page on screen. Handles forward button
-        void OnRedisplay() override;
 
         Page();
         virtual ~Page();
     
     private:
-        struct Body {
-            paf::ui::Widget *widget;
-            Body *prev;
 
-            Body(Body *_prev = SCE_NULL):prev(_prev){}
-        };
 
         enum {
             Hash_All = 0x59E75663,
@@ -179,31 +157,27 @@ namespace apps
             Hash_SearchBackButton = 0x6A2C094C,
         } ButtonHash;
 
-        SceVoid HandleForwardButton();
-        SceVoid CreateListWrapper();
-        SceVoid RedisplayInternal();
         //Starts adding new icon download *jobs*
         SceVoid StartIconDownloads();
         //Stops adding any new icon download *jobs* to cancel current jobs use CancelIconJobs()
         SceVoid CancelIconDownloads();
+        
+        SceVoid OnClear() override;
+        SceVoid OnCleared() override;
+
+        void OnCategoryChanged(int prev, int curr) override;
 
         PageMode mode;
-
+        
         db::List appList;
+        db::List searchList;
+        TextureList loadedTextures;
 
-        Body *currBody;
-
-        paf::ui::Plane *listWrapperPlane;
-        paf::ui::Plane *listRootPlane;
-
-        paf::job::JobQueue *loadQueue;
-
-        IconDownloadThread *iconDownloadThread;
-        paf::job::JobQueue *iconDownloadQueue;
-        paf::job::JobQueue *iconAssignQueue;
+        IconDownloadThread *iconDownloadThread; //Enqueues downloads
+        paf::job::JobQueue *iconDownloadQueue; //Performs downloads
+        paf::job::JobQueue *iconAssignQueue; //Performs texture loading and assignments
         SceUID iconFlags;
-
-        SceInt32 category;
+        std::vector<SceUInt64> textureJobs;
     };
 }
 

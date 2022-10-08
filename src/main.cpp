@@ -4,6 +4,7 @@
 #include <shellsvc.h>
 #include <libsysmodule.h>
 #include <apputil.h>
+#include <taihen.h>
 
 #include "print.h"
 #include "main.h"
@@ -27,7 +28,7 @@ extern "C" {
     extern const char			sceUserMainThreadName[] = "BHBB_MAIN";
     extern const int			sceUserMainThreadPriority = SCE_KERNEL_DEFAULT_PRIORITY_USER;
     extern const unsigned int	sceUserMainThreadStackSize = SCE_KERNEL_THREAD_STACK_SIZE_DEFAULT_USER_MAIN;
-    extern const unsigned int   sceLibcHeapSize = 0x180000;
+    extern unsigned int         sceLibcHeapSize = 0x180000;
 
     void __cxa_set_dso_handle_main(void *dso)
     {
@@ -53,6 +54,8 @@ extern "C" {
     {
         return 0;
     }
+
+    SceUID _vshKernelSearchModuleByName(const char *name, SceUInt64 *unk);
 }
 
 using namespace paf;
@@ -126,6 +129,18 @@ SceVoid onPluginReady(Plugin *plugin)
     sceShellUtilInitEvents(0);
     generic::Page::Setup();
 
+    SceUInt64 unk = 0;
+    SceUID itlsID = _vshKernelSearchModuleByName("itlsKernel", &unk);
+
+    print("iTLS-Enso: 0x%X\n", itlsID);
+    if(itlsID < 0)
+    {
+        string err;
+        Utils::GetfStringFromID("msg_no_itls", &err);
+        new text::Page(err.data());
+        return;
+    }
+
     new Settings();
     
     Network::Init();
@@ -140,6 +155,7 @@ SceVoid onPluginReady(Plugin *plugin)
 
 int main()
 {
+    
     Utils::StartBGDL();
     Utils::InitMusic();
     Utils::SetMemoryInfo();

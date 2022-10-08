@@ -113,7 +113,7 @@ SceVoid Utils::GetfStringFromID(const char *id, paf::string *out)
                 case '\"':
                     *buffPtr = '\"';
                     break;
-                case '\?':
+                case '?':
                     *buffPtr = '\?';
                     break;
                 case 't':
@@ -444,7 +444,7 @@ SceVoid Utils::PrintAllChildren(paf::ui::Widget *widget, int offset)
         for (int i = 0; i < offset; i++) print(" ");
         wstring wstr;
         widget->GetChild(i)->GetLabel(&wstr);
-        print(" %d 0x%X (%s, \"%ls\")\n", i, widget->GetChild(i)->hash, widget->GetChild(i)->name(), wstr.data());
+        print(" %d 0x%X (%s, \"%ls\")\n", i, widget->GetChild(i)->elem.hash, widget->GetChild(i)->name(), wstr.data());
         Utils::PrintAllChildren(widget->GetChild(i), offset + 4);
     }
 }

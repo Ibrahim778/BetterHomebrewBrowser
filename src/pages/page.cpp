@@ -30,11 +30,15 @@ generic::Page::Page(const char *pageName)
 
     e.hash = Utils::GetHashById(pageName);
     
-    //SceBool isMainThread = thread::IsMainThread();
-    //if(!isMainThread && !thread::s_mainThreadMutex.TryLock())
-    //    thread::s_mainThreadMutex.Lock();
+    SceBool isMainThread = thread::IsMainThread();
+    if(!isMainThread)
+       thread::s_mainThreadMutex.Lock();
 
     mainPlugin->TemplateOpen(templateRoot, &e, &tInit);
+    
+    if(!isMainThread)
+       thread::s_mainThreadMutex.Unlock();
+
     root = (ui::Plane *)templateRoot->GetChild(templateRoot->childNum - 1);
 
 	if (currPage->prev != NULL)
@@ -61,8 +65,6 @@ generic::Page::Page(const char *pageName)
 	if (root->animationStatus & 0x80)
 		root->animationStatus &= ~0x80;
 
-    //if(!isMainThread)
-    //    thread::s_mainThreadMutex.Lock();
 }
 
 SceVoid generic::Page::OnRedisplay()

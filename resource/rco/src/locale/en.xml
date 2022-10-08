@@ -10,6 +10,7 @@
     <string src="SSL Error Occurred\n\nPlease Ensure You Have iTLS-Enso Installed" id="msg_error_ssl"/>
     <string src="Network Connection Error" id="msg_error_net"/>
     <string src="Network Error: 0x%X\nEnsure your device is connected to the internet and retry" id="msg_net_fix"/>
+    <string src="iTLS-Enso is not running\nEnsure iTLS-Enso is installed correctly before running this application" id="msg_no_itls"/>
 
     <string src="Error Reading Index" id="msg_error_index" />
     <string src="Connection to the server failed\nPlease Try Again Later" id="msg_fix_index"/>
