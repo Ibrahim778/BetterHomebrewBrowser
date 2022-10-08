@@ -46,7 +46,7 @@ apps::Page::Page():generic::MultiPageAppList::MultiPageAppList(&appList, "home_p
     optionsButton->RegisterEventCallback(ui::EventMain_Decide, optionsCallback, 0);
 
     job::JobQueue::Option iconAssignOpt;
-    iconAssignOpt.workerNum = 15;
+    iconAssignOpt.workerNum = 10;
     iconAssignOpt.workerOpt = NULL;
     iconAssignOpt.workerPriority = SCE_KERNEL_DEFAULT_PRIORITY_USER - 10;
     iconAssignOpt.workerStackSize = SCE_KERNEL_16KiB;
@@ -587,7 +587,7 @@ SceVoid apps::Page::IconAssignJob::Run()
     //print("Icon Assign Job:\n\tPath: %s\n\tWidget: %p\n", taskParam.path.data(), taskParam.widgetHash);
 
     graph::Surface *surf = callingPage->loadedTextures.Get(taskParam.widgetHash);//*taskParam.texture; //temporary variable to store surface    
-    //print("0x%X\n", surf);
+
 LOAD_SURF:
     if(sceKernelPollEventFlag(callingPage->iconFlags, FLAG_ICON_LOAD_SURF, SCE_NULL, SCE_NULL) < 0 /* Surface loading disabled */)
     {
@@ -607,7 +607,7 @@ LOAD_SURF:
         SharedPtr<LocalFile> file = LocalFile::Open(taskParam.path.data(), SCE_O_RDONLY, 0, &ret);
         if(ret != SCE_OK)
         {
-            //print("\t[Error] Open %s failed -> 0x%X\n", taskParam.path.data(), ret);
+            print("\t[Error] Open %s failed -> 0x%X\n", taskParam.path.data(), ret);
             goto ASSIGN_TEX;
         }
 

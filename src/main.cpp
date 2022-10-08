@@ -155,7 +155,10 @@ SceVoid onPluginReady(Plugin *plugin)
 
 int main()
 {
-    
+#ifdef _DEBUG
+    //SCE_PAF_AUTO_TEST_SET_DEFAULT_EXTRA_TTY();
+    SCE_PAF_AUTO_TEST_SET_EXTRA_TTY(sceIoOpen("tty0:", SCE_O_WRONLY, 0));
+#endif
     Utils::StartBGDL();
     Utils::InitMusic();
     Utils::SetMemoryInfo();
@@ -187,7 +190,9 @@ int main()
     piParam.pluginName = "bhbb_plugin";
     piParam.resourcePath = "app0:resource/bhbb_plugin.rco";
     piParam.scopeName = "__main__";
-
+#ifdef _DEBUG
+    piParam.pluginFlags = Plugin::InitParam::PluginFlag_UseRcdDebug;
+#endif
     piParam.pluginStartCB = onPluginReady;
 
     fw->LoadPluginAsync(&piParam);

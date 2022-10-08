@@ -15,8 +15,9 @@ link_directories(
 )
 
 if(${CMAKE_BUILD_TYPE} STREQUAL Debug)
+    message(Debug build!)
     add_compile_options(
-        -D_SCE_TARGET_OS_PSP2=1 -Xdiag=0 -Xquit=2 -Od -g -noex
+        -D_SCE_TARGET_OS_PSP2=1 -Xdiag=0 -Xquit=2 -Od -g -noex -DSCE_PAF_TOOL_PRX=1 -D_DEBUG=1
     )
 else()
     add_compile_options(
@@ -129,4 +130,5 @@ VDSuitePackage(${PROJECT_NAME}.vpk
     ${CMAKE_BINARY_DIR}/bhbb_dl/bhbb_dl.suprx module/bhbb_dl.suprx
     module/libextractor.suprx module/libextractor.suprx
     sce_sys sce_sys
+    $<$<CONFIG:Debug>:${CMAKE_SOURCE_DIR}/resource/bhbb_plugin.rcd> $<$<CONFIG:Debug>:resource/bhbb_plugin.rcd>
 )

@@ -8,10 +8,10 @@
             <list_item id="list_source_01" title="db_name_1" value="1" />
         </list>
         <list id="list_nLoad" title="msg_settings_nLoad" key="nLoad" default_value="100">
-            <list_item id="list_nLoad_00" title="50" value="50" />
-            <list_item id="list_nLoad_01" title="100" value="100" />
-            <list_item id="list_nLoad_02" title="200" value="200" />
-            <list_item id="list_nLoad_03" title="500" value="500" />
+            <list_item id="list_nLoad_00" title="20" value="20" />
+            <list_item id="list_nLoad_01" title="50" value="50" />
+            <list_item id="list_nLoad_02" title="100" value="100" />
+            <list_item id="list_nLoad_03" title="150" value="150" />
         </list>
 		<setting_list id="verinfo_setting" title="msg_settings_verinfo" style="edit">
 		    <label id="label_verinfo" title="msg_version_info" style="heading" />
