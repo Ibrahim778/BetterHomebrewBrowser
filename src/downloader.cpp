@@ -131,8 +131,8 @@ SceInt32 Downloader::Enqueue(const char *url, const char *name, BGDLParam *param
 		if (ret2 != SCE_OK)
 			return ret2;
 	}
-
-    if(param != NULL && param->magic != -1)
+    
+    if(param != NULL && param->magic == (BHBB_DL_CFG_VER | BHBB_DL_MAGIC))
     {
         string paramPath = ccc::Sprintf("ux0:bgdl/t/%08x/install_param.ini", dwRes);
 
@@ -155,9 +155,11 @@ SceInt32 Downloader::EnqueueAsync(const char *url, const char *name, BGDLParam *
 	dwJob->downloader = this;
 	dwJob->url8 = url;
 	dwJob->name8 = name;
+
     if(param)
         dwJob->param = *param;
-    else dwJob->param.magic = -1;
+    else
+        dwJob->param.magic = 0;
 
 	return job::s_defaultJobQueue->Enqueue(&SharedPtr<job::JobItem>(dwJob));
 }

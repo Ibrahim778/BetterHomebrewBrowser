@@ -147,7 +147,6 @@ SceVoid onPluginReady(Plugin *plugin)
     Network::Init();
 
     g_downloader = new Downloader();
-    g_downloader->EnqueueAsync("http://bhbb-wrapper.herokuapp.com/index.json", "Test app");
     g_appsPage = new apps::Page();
     
     Network::Check(OnNetworkChecked);
