@@ -128,7 +128,7 @@ VDSuitePackage(${PROJECT_NAME}.vpk
     resource/rco/src/texture/bg.png sce_sys/pic0.png
     ${CMAKE_BINARY_DIR}/libScePafPreload/libScePafPreload.suprx module/libScePafPreload.suprx
     ${CMAKE_BINARY_DIR}/bhbb_dl/bhbb_dl.suprx module/bhbb_dl.suprx
-    module/libextractor.suprx module/libextractor.suprx
+    ${CMAKE_BINARY_DIR}/libextractor/libextractor.suprx module/libextractor.suprx
     sce_sys sce_sys
     $<$<CONFIG:Debug>:${CMAKE_SOURCE_DIR}/resource/bhbb_plugin.rcd> $<$<CONFIG:Debug>:resource/bhbb_plugin.rcd>
 )

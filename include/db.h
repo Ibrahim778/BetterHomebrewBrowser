@@ -6,26 +6,23 @@
 
 namespace db
 {
-    typedef struct entryInfo
+    typedef struct entryInfo //pls go away
     {
         paf::string id;
         paf::string titleID;
         paf::string title;
-        paf::string credits;
-        paf::string icon;
-        paf::string icon_mirror;
-        paf::string iconLocal;
-        paf::string download_url;
+        paf::string author;
+        std::vector<paf::string> iconURL;
+        paf::string iconPath;
+        std::vector<paf::string> downloadURL;
         paf::string description;
         
-        paf::string dataURL;
+        std::vector<paf::string> dataURL;
         paf::string dataPath;
         
-        paf::string *screenshot_urls;
-        int screenshot_url_num;
-
+        std::vector<paf::string> screenshotURL;
+        
         paf::string version;
-        paf::string size;
 
         paf::ui::ImageButton *button;
 
@@ -72,10 +69,16 @@ namespace db
         void Parse(db::List *outList, paf::string& csv);
     };
 
+    namespace vhbdb
+    {
+        void Parse(db::List *outList, paf::string& jsonStr);
+    }
+
     typedef enum // Should match the index in info[]
     {
         CBPSDB = 0,
-        VITADB = 1
+        VITADB = 1,
+        VHBDB = 2,
     } Id;
 
     typedef struct
@@ -114,6 +117,16 @@ namespace db
             .ScreenshotsSuppourted = true,
             .CategoriesSuppourted = true,
             .id = VITADB //index in info[]
+        },
+        {   //Vita Homebrew DB
+            .Parse = vhbdb::Parse,
+            .name = "VHB DB",
+            .iconFolderPath = SCE_NULL,
+            .iconsURL = SCE_NULL,
+            .indexURL = "https://github.com/vhbd/database/releases/download/latest/db_minify.json",
+            .ScreenshotsSuppourted = true,
+            .CategoriesSuppourted = true,
+            .id = VHBDB
         }
     };
 };

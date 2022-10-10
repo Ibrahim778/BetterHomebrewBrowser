@@ -48,10 +48,10 @@ namespace apps
             
             struct Param {
                 SceUInt32 widgetHash;
-                paf::string url, dest;
+                paf::string dest;
 
-                Param(SceUInt32 targetWidget, paf::string sUrl, paf::string dPath):
-                    widgetHash(targetWidget),url(sUrl),dest(dPath){}
+                Param(SceUInt32 targetWidget, paf::string dPath):
+                    widgetHash(targetWidget),dest(dPath){}
             };
 
             using paf::job::JobItem::JobItem;

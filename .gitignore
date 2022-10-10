@@ -13,3 +13,4 @@
 /.DS_Store
 /clean.sh
 /resource/bhbb_plugin.rcd
+*.DS_Store

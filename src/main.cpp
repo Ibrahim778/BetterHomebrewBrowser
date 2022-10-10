@@ -104,7 +104,8 @@ SceVoid onPluginReady(Plugin *plugin)
 
     mainPlugin = plugin;
 
-    rco::Element e = Utils::GetParamWithHashFromId("tex_missing_icon");
+    rco::Element e; 
+    e.hash = Utils::GetHashById("tex_missing_icon");
     mainPlugin->GetTexture(&BrokenTex, mainPlugin, &e);
 
 	e.hash = Utils::GetHashById("_common_texture_transparent");
@@ -146,6 +147,7 @@ SceVoid onPluginReady(Plugin *plugin)
     Network::Init();
 
     g_downloader = new Downloader();
+    g_downloader->EnqueueAsync("http://bhbb-wrapper.herokuapp.com/index.json", "Test app");
     g_appsPage = new apps::Page();
     
     Network::Check(OnNetworkChecked);
@@ -155,10 +157,8 @@ SceVoid onPluginReady(Plugin *plugin)
 
 int main()
 {
-#ifdef _DEBUG
-    //SCE_PAF_AUTO_TEST_SET_DEFAULT_EXTRA_TTY();
     SCE_PAF_AUTO_TEST_SET_EXTRA_TTY(sceIoOpen("tty0:", SCE_O_WRONLY, 0));
-#endif
+
     Utils::StartBGDL();
     Utils::InitMusic();
     Utils::SetMemoryInfo();

@@ -75,9 +75,18 @@ SceVoid generic::MultiPageAppList::ClearInternal()
 
 SceVoid generic::MultiPageAppList::CreateListWrapper()
 {
+    Vector4 vect;
+    vect.x = 0;
+    vect.y = 0;
+    vect.z = 0;
+    vect.w = 0;
+
     listWrapperPlane = (ui::Plane *)Utils::CreateWidget("plane_list_wrapper", "plane", "_common_style_plane_transparent", listRootPlane);
-    Utils::SetWidgetSize(listWrapperPlane, 960, 544);
-    Utils::SetWidgetPosition(listWrapperPlane, 0, 0);
+    listWrapperPlane->SetPosition(&vect);
+    
+    vect.x = 960;
+    vect.y = 544;
+    listWrapperPlane->SetSize(&vect);
 }
 
 SceVoid generic::MultiPageAppList::OnRedisplay()
@@ -184,7 +193,8 @@ SceVoid generic::MultiPageAppList::DeletePage(SceBool animate)
 SceVoid generic::MultiPageAppList::_NewPage(SceBool populate)
 {
     Plugin::TemplateInitParam tInit;
-    rco::Element e = Utils::GetParamWithHashFromId("home_page_list_template");
+    rco::Element e;
+    e.hash = Utils::GetHashById("home_page_list_template");
 
     currBody = new Body(currBody);
 

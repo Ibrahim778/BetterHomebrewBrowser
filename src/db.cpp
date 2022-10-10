@@ -53,24 +53,22 @@ void vitadb::Parse(db::List *outList, string &json)
 
             if(rootval[i]["icon"] != NULL)
             {
-                currentEntry.icon = ccc::Sprintf("https://bhbb-wrapper.herokuapp.com/icon?id=%s", rootval[i]["icon"].getString().c_str());
-                currentEntry.icon_mirror = currentEntry.icon;
-                currentEntry.iconLocal = ccc::Sprintf("%s/%s", db::info[VITADB].iconFolderPath, rootval[i]["icon"].getString().c_str());
+                currentEntry.iconURL.push_back(ccc::Sprintf("https://bhbb-wrapper.herokuapp.com/icon?id=%s", rootval[i]["icon"].getString().c_str()));
+                currentEntry.iconPath = ccc::Sprintf("%s/%s", db::info[VITADB].iconFolderPath, rootval[i]["icon"].getString().c_str());
             }
 
             SET_STRING(currentEntry.title, "name");
 
-            SET_STRING(currentEntry.download_url, "url");
-            SET_STRING(currentEntry.credits, "author");
-            SET_STRING(currentEntry.dataURL, "data");
+            currentEntry.downloadURL.push_back(paf::string(rootval[i]["url"].getString().c_str()));
+            currentEntry.dataURL.push_back(paf::string(rootval[i]["data"].getString().c_str()));
+
+            SET_STRING(currentEntry.author, "author");
             currentEntry.dataPath = "ux0:data/";
             SET_STRING(currentEntry.description, "long_description");
             SET_STRING(currentEntry.version, "version");        
 
             if(rootval[i]["type"] != NULL)
                 currentEntry.type = (int)sce_paf_strtoul(rootval[i]["type"].getString().c_str(), NULL, 10);
-
-            SET_STRING(currentEntry.size, "size");
 
             currentEntry.hash = SCE_NULL;
             currentEntry.hash = Utils::GetHashById(currentEntry.id.data());
@@ -130,23 +128,22 @@ void cbpsdb::Parse(db::List *outList, string &csvStr)
         sce_paf_strncpy(titleIDBuff, parsed[0], 9);
 
         currentEntry.titleID = titleIDBuff;
-        currentEntry.credits = parsed[2];
+        currentEntry.author = parsed[2];
+        
         if(parsed[3][0] == 'h')
-            currentEntry.icon = parsed[3];
-        else currentEntry.icon.clear();
+            currentEntry.iconURL.push_back(paf::string(parsed[3]));
+        
         if(parsed[4][0] == 'h')
-            currentEntry.icon = parsed[4];
-        else currentEntry.icon_mirror.clear();
-        currentEntry.download_url = parsed[5];
+            currentEntry.iconURL.push_back(parsed[4]);
+        
+        currentEntry.downloadURL.push_back(paf::string(parsed[5]));
         currentEntry.type = -1;
 
         currentEntry.hash = Utils::GetHashById(currentEntry.id.data());
-        currentEntry.size = "0";
         
-        currentEntry.iconLocal = ccc::Sprintf("%s/%s.png", db::info[CBPSDB].iconFolderPath, currentEntry.id.data());
+        currentEntry.iconPath = ccc::Sprintf("%s/%s.png", db::info[CBPSDB].iconFolderPath, currentEntry.id.data());
         
-        currentEntry.dataPath = "None";
-        currentEntry.dataURL = "None";
+        currentEntry.dataPath.clear();
 
         if(sce_paf_strncmp(parsed[15], "None", 4) != 0)
         {
@@ -155,7 +152,7 @@ void cbpsdb::Parse(db::List *outList, string &csvStr)
                 if(sce_paf_strstr(dataLines[i].data(), parsed[15]) != NULL)
                 {
                     char **parsedData = parse_csv(dataLines[i].data());
-                    currentEntry.dataURL = parsedData[5];
+                    currentEntry.dataURL.push_back(paf::string(parsedData[5]));
                     currentEntry.dataPath = parsedData[13];
                     break;
                 }
@@ -169,6 +166,11 @@ void cbpsdb::Parse(db::List *outList, string &csvStr)
     }
 
     delete[] dataLines;
+}
+
+void vhbdb::Parse(db::List *outList, string& jsonStr)
+{
+
 }
 
 db::List::~List()

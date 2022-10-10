@@ -311,7 +311,8 @@ SceVoid apps::Page::PopulatePage(ui::Widget *ScrollBox)
     SceUInt32 pageCountBeforeCreation = GetPageCount() - 1;
     ScrollBox->SetAlpha(0);
 
-    rco::Element e = Utils::GetParamWithHashFromId("homebrew_button");
+    rco::Element e;
+    e.hash = Utils::GetHashById("homebrew_button");
     Plugin::TemplateInitParam tInit;
     db::List *targetList = GetTargetList();
     int category = GetCategory();
@@ -354,7 +355,7 @@ SceVoid apps::Page::PopulatePage(ui::Widget *ScrollBox)
                     this,
                     IconAssignJob::Param(
                         info->hash,
-                        info->iconLocal.data()
+                        info->iconPath.data()
             ))));
         }
     } 
@@ -458,128 +459,81 @@ SceVoid apps::Page::LoadJob::Finish()
 
 SceVoid apps::Page::IconDownloadJob::Run()
 {   
+    SceBool DownloadSuccess = SCE_FALSE;
     //print("Icon Download Job:\n\tURL: %s\n\tDest: %s\n\tTexture: %p\n\tWidget: %p\n", taskParam.url.data(), taskParam.dest.data(), taskParam.texture, taskParam.widgetHash);
     if(sceKernelPollEventFlag(callingPage->iconFlags, FLAG_ICON_DOWNLOAD, SCE_NULL, SCE_NULL) < 0 /* Downloads disabled */ || LocalFile::Exists(taskParam.dest.data()) /* Already Downloaded */)
     {
         //print("\tDownload aborted\n");
         goto LOAD_SURF;
     }
+
     
     //Downloading
     {
+        auto entry = callingPage->appList.Get((SceUInt64)taskParam.widgetHash);
+        
         HttpFile             http;
         HttpFile::OpenArg    openArg;
         SharedPtr<LocalFile> file;
         SceInt32             ret = SCE_OK;
-        
+
         openArg.SetOpt(4000000, HttpFile::OpenArg::Opt_ResolveTimeOut);
         openArg.SetOpt(10000000, HttpFile::OpenArg::Opt_ConnectTimeOut);
-        openArg.SetUrl(taskParam.url.data());
         
-        ret = http.Open(&openArg);
-        if(ret != SCE_OK)
+        auto end = entry.iconURL.end();
+        for(auto i = entry.iconURL.begin(); i != end; i++)
         {
-            //print("\t[Error] Download Icon %s -> %s failed => 0x%X\n", taskParam.url.data(), taskParam.dest.data(), ret);
-            goto LOAD_SURF;
-        }
-
-        file = LocalFile::Open(taskParam.dest.data(), SCE_O_CREAT | SCE_O_WRONLY | SCE_O_TRUNC, 0666, &ret);
-        if(ret < 0)
-        {
-            //print("\t[Error] Open File %s failed => 0x%X\n", taskParam.dest.data(), ret);
-            http.Close();
-            goto LOAD_SURF;
-        }
-
-        char buff[0x100];
-        do 
-        {
-            if(sceKernelPollEventFlag(callingPage->iconFlags, FLAG_ICON_DOWNLOAD, SCE_NULL, SCE_NULL) < 0)
+            openArg.SetUrl(i->data());
+            
+            ret = http.Open(&openArg);
+            if(ret != SCE_OK)
             {
-                //print("\tJob cancelled\n");
-                break;
+                //print("\t[Error] Download Icon %s -> %s failed => 0x%X\n", taskParam.url.data(), taskParam.dest.data(), ret);
+                continue;    
             }
 
-            sce_paf_memset(buff, 0, sizeof(buff));
-            ret = http.Read(buff, 0x100);
+            file = LocalFile::Open(taskParam.dest.data(), SCE_O_CREAT | SCE_O_WRONLY | SCE_O_TRUNC, 0666, &ret);
+            if(ret < 0)
+            {
+                //print("\t[Error] Open File %s failed => 0x%X\n", taskParam.dest.data(), ret);
+                http.Close();
+                goto LOAD_SURF;
+            }
 
-            file.get()->Write(buff, ret);
-        } while(ret > 0);
+            char buff[0x100];
+            do 
+            {
+                if(sceKernelPollEventFlag(callingPage->iconFlags, FLAG_ICON_DOWNLOAD, SCE_NULL, SCE_NULL) < 0)
+                {
+                    //print("\tJob cancelled\n");
+                    break;
+                }
 
-        file.get()->Close();
-        http.Close();
+                sce_paf_memset(buff, 0, sizeof(buff));
+                ret = http.Read(buff, 0x100);
+
+                file.get()->Write(buff, ret);
+            } while(ret > 0);
+
+            file.get()->Close();
+            http.Close();
+            DownloadSuccess = SCE_TRUE;
+            break;
+        }
     }
 
 LOAD_SURF:
-
-    // callingPage->iconAssignQueue->Enqueue(
-    //     &SharedPtr<paf::job::JobItem>(
-    //         new IconAssignJob(
-    //             "apps::Page::IconAssignJob", 
-    //             callingPage, 
-    //             IconAssignJob::Param(
-    //                 taskParam.widgetHash, 
-    //                 taskParam.url.data(),
-                
-    // ))));
-    return;
-
-//     if(sceKernelPollEventFlag(callingPage->iconFlags, FLAG_ICON_LOAD_SURF, SCE_NULL, SCE_NULL) < 0 /* Surface loading disabled */)
-//     {
-//         //print("\tSurface Loading aborted\n");
-//         goto ASSIGN_TEX;
-//     }
-
-//     if(*taskParam.texture != SCE_NULL /* Already loaded */)
-//     {
-//         //print("\tSurface already loaded\n");
-//         goto ASSIGN_TEX;
-//     }
-
-//     //Surface loading
-//     {
-//         SceInt32 ret = SCE_OK;
-//         SharedPtr<LocalFile> file = LocalFile::Open(taskParam.dest.data(), SCE_O_RDONLY, 0, &ret);
-//         if(ret != SCE_OK)
-//         {
-//             //print("\t[Error] Open %s failed -> 0x%X\n", taskParam.dest.data(), ret);
-//             goto ASSIGN_TEX;
-//         }
-
-//         graph::Surface::Create(taskParam.texture, mainPlugin->memoryPool, (SharedPtr<File> *)&file);
-
-//         file.get()->Close();
-//     }
-
-
-// ASSIGN_TEX:
-//     if(sceKernelPollEventFlag(callingPage->iconFlags, FLAG_ICON_ASSIGN_TEXTURE, SCE_NULL, SCE_NULL) < 0)
-//     {
-//         //print("\tSurface assignment aborted.\n");
-//         goto EXIT;
-//     }
-
-//     //Assigning the appropriate surface to the widget
-//     {
-//         ui::Widget *widget = Utils::GetChildByHash(callingPage->root, taskParam.widgetHash);
-//         if(widget == SCE_NULL)
-//         {
-//             //print("\t[Skip] Widget 0x%X not found\n", taskParam.widgetHash);
-//             goto EXIT;
-//         }
-
-//         if(*taskParam.texture == SCE_NULL)
-//         {
-//             widget->SetSurfaceBase(&BrokenTex);
-//             goto EXIT;
-//         }
-
-//         widget->SetSurfaceBase(taskParam.texture);
-//     }
-
-// EXIT:
-//     //print("\tTask completed\n");
-//     return;
+    if(!DownloadSuccess) return;
+    
+    callingPage->iconAssignQueue->Enqueue(
+        &SharedPtr<paf::job::JobItem>(
+            new IconAssignJob(
+                "apps::Page::IconAssignJob", 
+                callingPage, 
+                IconAssignJob::Param(
+                    taskParam.widgetHash,
+                    taskParam.dest            
+    ))));
 }
 
 SceVoid apps::Page::IconAssignJob::Run()
@@ -682,7 +636,7 @@ SceVoid apps::Page::IconDownloadThread::EntryFunction()
     auto end = targetList->entries.end();
     for(auto info = targetList->entries.begin(); info != end && !IsCanceled(); info++)
     {
-        if(LocalFile::Exists(info->iconLocal.data()) || 
+        if(LocalFile::Exists(info->iconPath.data()) || 
             std::find(callingPage->textureJobs.begin(), callingPage->textureJobs.end(), info->hash) != callingPage->textureJobs.end()) continue;
 
         callingPage->textureJobs.push_back(info->hash);
@@ -691,8 +645,7 @@ SceVoid apps::Page::IconDownloadThread::EntryFunction()
                         callingPage, 
                         IconDownloadJob::Param(
                             info->hash, 
-                            info->icon, 
-                            info->iconLocal)));
+                            info->iconPath)));
 
         callingPage->iconDownloadQueue->Enqueue(&jobPtr);
     }
