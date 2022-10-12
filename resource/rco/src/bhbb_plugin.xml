@@ -36,6 +36,42 @@
             </plane>
         </template>
 
+        <template fast_open="1" id="info_page_template">
+            <plane style="_common_style_plane_transparent" id="page_root">
+                <layout_hint size="960,544"/>
+                <plane id="top_plane" style="_common_style_plane_transparent">
+                    <layout_hint size="960, 100" align="0,2" anchor="0, 2" />
+                    <plane id="icon_plane" style="_common_style_plane_transparent">
+                        <layout_hint anchor="1,2" align="1,2" pos="10,-10" size="80, 80" />
+                    </plane>
+                    <busyindicator id="icon_busy" style="_common_default_style_busyindicator">
+                        <layout_hint anchor="1,2" align="1,2" pos="30,-30" size="40, 40" />
+                    </busyindicator>
+                    <text style="style_text_info_title" id="info_title_text">
+                        <layout_hint anchor="1,2" align="1,2" pos="100,-10" adjust="1,0" size="0,50" />
+                    </text>
+                    <text style="style_text_info_author" id="info_author_text">
+                        <layout_hint anchor="1,1" align="1,1" pos="100,-10" adjust="1,0" size="0,50" />
+                    </text>
+                    <button style="style_button_download" id="download_button" label="download_button_text">
+                        <layout_hint align="2,2" anchor="2,2" size="150,50" pos="-5,-5" />
+                    </button>
+                    <text style="style_text_info_version" id="info_version_text">
+                        <layout_hint align="2,1" anchor="2,1" adjust="1,0" size="0,50" pos="-10,-5" />
+                    </text>
+                    <plane style="_common_default_style_plane" texture="_common_texture_ruled_line" id="plane_seperator">
+                        <layout_hint adjust="1,0" anchor="0,1" align="0,1" size="0,2" />
+                    </plane>
+                </plane>
+                <plane style="_common_style_plane_transparent">
+                    <layout_hint align="1,0" anchor="1,0" size="182,444" pos="0,-50" />
+                </plane>
+                <plane style="_common_default_style_plane">
+                    <layout_hint align="2,0" anchor="1,0" size="362,444" pos="0,-50" />
+                </plane>
+            </plane>
+        </template>
+
         <template fast_open="1" id="home_page_template">
             <plane style="_common_style_plane_transparent" id="page_root">
                 <layout_hint size="960,544"/>
@@ -143,7 +179,25 @@
         <style_text textobj="text_normal_obj" id="text_info_style">
 			<textobj font_size="35" bold="0" color="1, 1, 1, 1" word_wrap="1" align_x="1" align_y="1" ellipsis="1" id="text_normal_obj" />
 		</style_text>
+
+        <style_text textobj="text_obj1" id="style_text_info_title">
+            <textobj font_size="28" bold="1" color="1, 1, 1, 1" word_wrap="1" align_x="0" align_y="0" ellipsis="1" id="text_obj1" />
+        </style_text>
+
+        <style_text textobj="text_obj1" id="style_text_info_author">
+            <textobj font_size="22" bold="0" color="1, 1, 1, 1" word_wrap="1" align_x="0" align_y="0" ellipsis="1" id="text_obj1" />
+        </style_text>
+
+        <style_text textobj="text_obj1" id="style_text_info_version">
+            <textobj font_size="24" bold="0" color="1, 1, 1, 1" word_wrap="1" align_x="2" align_y="0" ellipsis="1" id="text_obj1" />
+        </style_text>
         
+        <style_button sound="sound_download_button" bottom_margin="0" glow_obj="glow_obj" right_margin="12" color="1, 1, 1, 1" top_margin="0" left_margin="12" label_obj="label_obj" bg_obj="bg_obj" adjust_min_size="150, 42" id="style_button_download">
+            <planeobj color="1, 1, 1, 1" texture0="tex_download_button" id="bg_obj" />
+            <planeobj color="1, 1, 1, 1" texture0="_common_texture_button_glow" blend="2" id="glow_obj" />
+            <textobj font_size="24" bold="1" color="1, 1, 1, 1" align_x="1" align_y="1" adjust_x="1" adjust_y="1" emboss="1" id="label_obj" />
+        </style_button>
+
         <style_plane_button image_obj="obj1" glow_obj="obj2" id="plane_button_recent_style">
             <planeobj color="0.50, 0.50, 0.50, 0.40" texture0="_common_texture_transparent" id="obj1" />
             <planeobj texture0="_common_texture_icon_glow" blend="2" id="obj2" />
@@ -203,9 +257,14 @@
         <texture src="texture/arrow_forward.png" type="texture/png" id="tex_forward_arrow" />
         <texture src="texture/options_button.png" type="texture/png" id="tex_options_button"/>
         <texture src="texture/search_back_button.png" type="texture/png" id="tex_search_back_button"/>
-	</texturetable>
+        <texture src="texture/download_button.png" type="texture/png" id="tex_download_button" />
+    </texturetable>
 
     <filetable>
         <file src="file/bhbb_settings.xml" type="application/xml" id="file_bhbb_settings" compress="off" />
     </filetable>
+
+    <soundindextable>
+        <sound_button id="_common_snd01" decide="sound_download_button" />
+    </soundindextable>
 </resource>  

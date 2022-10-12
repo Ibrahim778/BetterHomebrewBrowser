@@ -5,6 +5,7 @@
 #include "utils.h"
 #include "common.h"
 #include "main.h"
+#include "print.h"
 
 using namespace paf;
 
@@ -25,7 +26,7 @@ generic::Page::Page(const char *pageName)
     this->prev = currPage;
     currPage = this;
 
-    Plugin::TemplateInitParam tInit;
+    Plugin::TemplateOpenParam tInit;
     rco::Element e;
 
     e.hash = Utils::GetHashById(pageName);
@@ -42,7 +43,10 @@ generic::Page::Page(const char *pageName)
     root = (ui::Plane *)templateRoot->GetChild(templateRoot->childNum - 1);
 
 	if (currPage->prev != NULL)
-	{
+	{        
+        if (prev->root->animationStatus & 0x80)
+			prev->root->animationStatus &= ~0x80;
+            
 		currPage->prev->root->PlayEffect(0, effect::EffectType_3D_SlideToBack1);
 		if (prev->root->animationStatus & 0x80)
 			prev->root->animationStatus &= ~0x80;
@@ -80,7 +84,7 @@ SceVoid generic::Page::OnDelete()
 generic::Page::~Page()
 {
     
-	effect::Play(-100, this->root, effect::EffectType_3D_SlideFromFront, SCE_TRUE, SCE_TRUE);
+	effect::Play(-100, this->root, effect::EffectType_3D_SlideFromFront, SCE_TRUE, SCE_FALSE);
 	if (prev != SCE_NULL)
 	{
 		prev->root->PlayEffectReverse(0.0f, effect::EffectType_3D_SlideToBack1);
@@ -108,7 +112,7 @@ void generic::Page::Setup()
     if(templateRoot) return; //Already Initialised
 
     rco::Element e;
-    Plugin::PageInitParam pInit;
+    Plugin::PageOpenParam pInit;
     
     e.hash = Utils::GetHashById("page_main");
     ui::Widget *page =  mainPlugin->PageOpen(&e, &pInit);

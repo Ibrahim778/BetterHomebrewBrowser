@@ -7,6 +7,7 @@
 
 #include "pages/apps_page.h"
 #include "pages/text_page.h"
+#include "pages/apps_info_page.h"
 #include "print.h"
 #include "utils.h"
 #include "settings.h"
@@ -36,6 +37,7 @@ apps::Page::Page():generic::MultiPageAppList::MultiPageAppList(&appList, "home_p
     Utils::GetChildByHash(root, Utils::GetHashById("search_button"))->RegisterEventCallback(ui::EventMain_Decide, searchCallback, 0);
     Utils::GetChildByHash(root, Utils::GetHashById("search_enter_button"))->RegisterEventCallback(ui::EventMain_Decide, searchCallback, 0);
     Utils::GetChildByHash(root, Utils::GetHashById("search_back_button"))->RegisterEventCallback(ui::EventMain_Decide, searchCallback, 0);
+    Utils::GetChildByHash(root, Utils::GetHashById("search_box"))->RegisterEventCallback(0x1000000B, searchCallback, 0); //Enter button on IME keyboard
 
     SetMode(PageMode_Browse);
 
@@ -186,7 +188,9 @@ SceVoid apps::Page::SearchCB(SceInt32 eventID, ui::Widget *self, SceInt32 unk, S
         }
         break;
 
+    case Hash_SearchBox:
     case Hash_SearchEnterButton:
+    {
         paf::wstring keyString;
         
         ui::Widget *textBox = Utils::GetChildByHash(page->root, Utils::GetHashById("search_box"));
@@ -206,7 +210,6 @@ SceVoid apps::Page::SearchCB(SceInt32 eventID, ui::Widget *self, SceInt32 unk, S
             if(key.data()[i] == ' ')
             {
                 ((char *)key.data())[i] = 0; //Shouldn't really do this with a paf::string but w/e
-                break;
             } else break;
         }
 
@@ -230,7 +233,11 @@ SceVoid apps::Page::SearchCB(SceInt32 eventID, ui::Widget *self, SceInt32 unk, S
         page->SetTargetList(&page->searchList);
         page->SetCategory(-1);
         page->Redisplay();
-
+        
+        break;
+    }
+    default:
+        print("Unknown hash (0x%X)! corrupted widget?\n", self->elem.hash);
         break;
     }
 }
@@ -313,7 +320,7 @@ SceVoid apps::Page::PopulatePage(ui::Widget *ScrollBox)
 
     rco::Element e;
     e.hash = Utils::GetHashById("homebrew_button");
-    Plugin::TemplateInitParam tInit;
+    Plugin::TemplateOpenParam tInit;
     db::List *targetList = GetTargetList();
     int category = GetCategory();
 
@@ -339,14 +346,16 @@ SceVoid apps::Page::PopulatePage(ui::Widget *ScrollBox)
     
         ui::Widget *createdWidget = ScrollBox->GetChild(ScrollBox->childNum - 1);
         createdWidget->elem.hash = info->hash;
-        print("0x%X\n", createdWidget->elem.hash);
 
         Utils::SetWidgetLabel(createdWidget, info->title.data());
-        
+        auto callback = new apps::button::Callback();
+        callback->pUserData = this;
+        createdWidget->RegisterEventCallback(ui::EventMain_Decide, callback, SCE_FALSE);
+
         if(!isMainThread)
             thread::s_mainThreadMutex.Unlock();
         
-        if(((ui::ImageButton *)createdWidget)->imageSurf == SCE_NULL && std::find(textureJobs.begin(), textureJobs.end(), info->hash) == textureJobs.end())
+        if(std::find(textureJobs.begin(), textureJobs.end(), info->hash) == textureJobs.end())
         {
             textureJobs.push_back(info->hash);
             iconAssignQueue->Enqueue(&SharedPtr<job::JobItem>(
@@ -379,9 +388,11 @@ SceVoid apps::Page::LoadJob::Run()
     callingPage->ClearPages();
     callingPage->loadedTextures.Clear();
     g_forwardButton->PlayEffectReverse(0, effect::EffectType_Reset);
+    Utils::GetChildByHash(callingPage->root, Utils::GetHashById("options_button"))->SetAlpha(0.39f);
 
     openArg.SetUrl(db::info[Settings::GetInstance()->source].indexURL);
     print("Opening: %s\n", db::info[Settings::GetInstance()->source].indexURL);
+
     openArg.SetOpt(4000000, HttpFile::OpenArg::Opt_ResolveTimeOut);
 	openArg.SetOpt(10000000, HttpFile::OpenArg::Opt_ConnectTimeOut);
 
@@ -426,13 +437,15 @@ SceVoid apps::Page::LoadJob::Run()
     if(!LocalFile::Exists(db::info[Settings::GetInstance()->source].iconFolderPath))
     {
         Dir::CreateRecursive(db::info[Settings::GetInstance()->source].iconFolderPath); 
+        if(db::info[Settings::GetInstance()->source].iconsURL != SCE_NULL)
+        {
+            string dialogText;
+            wstring wstrText;
+            Utils::GetfStringFromID("msg_icon_pack_missing", &dialogText);
+            ccc::UTF8toUTF16(&dialogText, &wstrText);
 
-        string dialogText;
-        wstring wstrText;
-        Utils::GetfStringFromID("msg_icon_pack_missing", &dialogText);
-        ccc::UTF8toUTF16(&dialogText, &wstrText);
-
-        Dialog::OpenYesNo(mainPlugin, NULL, (wchar_t *)wstrText.data(), IconDownloadDecideCB);
+            Dialog::OpenYesNo(mainPlugin, NULL, (wchar_t *)wstrText.data(), IconDownloadDecideCB);
+        }
     }
 
     g_busyIndicator->Start();
@@ -448,6 +461,7 @@ SceVoid apps::Page::LoadJob::Run()
     g_busyIndicator->Stop();
 
     callingPage->StartIconDownloads();
+    Utils::GetChildByHash(callingPage->root, Utils::GetHashById("options_button"))->SetAlpha(1);
 
     print("LoadJob finished!\n");
 }
@@ -460,10 +474,10 @@ SceVoid apps::Page::LoadJob::Finish()
 SceVoid apps::Page::IconDownloadJob::Run()
 {   
     SceBool DownloadSuccess = SCE_FALSE;
-    //print("Icon Download Job:\n\tURL: %s\n\tDest: %s\n\tTexture: %p\n\tWidget: %p\n", taskParam.url.data(), taskParam.dest.data(), taskParam.texture, taskParam.widgetHash);
+    print("Icon Download Job:\n\tDest: %s\n\tWidget: %p\n", taskParam.dest.data(), taskParam.widgetHash);
     if(sceKernelPollEventFlag(callingPage->iconFlags, FLAG_ICON_DOWNLOAD, SCE_NULL, SCE_NULL) < 0 /* Downloads disabled */ || LocalFile::Exists(taskParam.dest.data()) /* Already Downloaded */)
     {
-        //print("\tDownload aborted\n");
+        print("\tDownload aborted\n");
         goto LOAD_SURF;
     }
 
@@ -488,14 +502,14 @@ SceVoid apps::Page::IconDownloadJob::Run()
             ret = http.Open(&openArg);
             if(ret != SCE_OK)
             {
-                //print("\t[Error] Download Icon %s -> %s failed => 0x%X\n", taskParam.url.data(), taskParam.dest.data(), ret);
+                print("\t[Error] Download Icon %s -> %s failed => 0x%X\n", i->data(), taskParam.dest.data(), ret);
                 continue;    
             }
 
             file = LocalFile::Open(taskParam.dest.data(), SCE_O_CREAT | SCE_O_WRONLY | SCE_O_TRUNC, 0666, &ret);
             if(ret < 0)
             {
-                //print("\t[Error] Open File %s failed => 0x%X\n", taskParam.dest.data(), ret);
+                print("\t[Error] Open File %s failed => 0x%X\n", taskParam.dest.data(), ret);
                 http.Close();
                 goto LOAD_SURF;
             }
@@ -505,7 +519,7 @@ SceVoid apps::Page::IconDownloadJob::Run()
             {
                 if(sceKernelPollEventFlag(callingPage->iconFlags, FLAG_ICON_DOWNLOAD, SCE_NULL, SCE_NULL) < 0)
                 {
-                    //print("\tJob cancelled\n");
+                    print("\tJob cancelled\n");
                     break;
                 }
 
@@ -524,7 +538,7 @@ SceVoid apps::Page::IconDownloadJob::Run()
 
 LOAD_SURF:
     if(!DownloadSuccess) return;
-    
+
     callingPage->iconAssignQueue->Enqueue(
         &SharedPtr<paf::job::JobItem>(
             new IconAssignJob(
@@ -587,17 +601,16 @@ ASSIGN_TEX:
             //print("\t[Skip] Widget 0x%X not found\n", taskParam.widgetHash);
             goto EXIT;
         }
-        thread::s_mainThreadMutex.Lock();
+        //thread::s_mainThreadMutex.Lock();
         if(surf == SCE_NULL)
         {
             widget->SetSurfaceBase(&BrokenTex);
-            thread::s_mainThreadMutex.Unlock();
+            //thread::s_mainThreadMutex.Unlock();
             goto EXIT;
         }
-        print("%d\n", surf->base.refCount);
 
         widget->SetSurfaceBase(&surf);
-        thread::s_mainThreadMutex.Unlock();
+        //thread::s_mainThreadMutex.Unlock();
     }
 EXIT:
     //print("Removing: 0x%X\n", taskParam.widgetHash);
@@ -647,10 +660,12 @@ SceVoid apps::Page::IconDownloadThread::EntryFunction()
                             info->hash, 
                             info->iconPath)));
 
+        callingPage->textureJobs.push_back(info->hash);
         callingPage->iconDownloadQueue->Enqueue(&jobPtr);
     }
 
     print("apps::Page::IconDownloadThread END\n");
+    sceKernelExitDeleteThread(0);
 }
 
 SceVoid apps::Page::TextureList::Add(SceUInt64 hash, graph::Surface *tex)
@@ -688,4 +703,17 @@ graph::Surface *apps::Page::TextureList::Get(SceUInt64 hash)
         if(entry->hash == hash) return entry->surf;
 
     return SCE_NULL;
+}
+
+apps::button::Callback::Callback()
+{
+    eventHandler = OnGet;   
+}
+
+SceVoid apps::button::Callback::OnGet(SceInt32 eventId, ui::Widget *self, SceInt32 unk, ScePVoid pUserData)
+{
+    if(self->elem.hash != 0x0)
+    {
+        new apps::info::Page(((apps::Page *)pUserData)->GetTargetList()->Get((SceUInt64)self->elem.hash));
+    }
 }

@@ -121,11 +121,11 @@ namespace db
         {   //Vita Homebrew DB
             .Parse = vhbdb::Parse,
             .name = "VHB DB",
-            .iconFolderPath = SCE_NULL,
+            .iconFolderPath = "ux0:/data/betterHomebrewBrowser/icons/vhbdb",
             .iconsURL = SCE_NULL,
             .indexURL = "https://github.com/vhbd/database/releases/download/latest/db_minify.json",
             .ScreenshotsSuppourted = true,
-            .CategoriesSuppourted = true,
+            .CategoriesSuppourted = false,
             .id = VHBDB
         }
     };

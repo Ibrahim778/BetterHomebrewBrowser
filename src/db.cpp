@@ -58,19 +58,31 @@ void vitadb::Parse(db::List *outList, string &json)
             }
 
             SET_STRING(currentEntry.title, "name");
-
             currentEntry.downloadURL.push_back(paf::string(rootval[i]["url"].getString().c_str()));
-            currentEntry.dataURL.push_back(paf::string(rootval[i]["data"].getString().c_str()));
+            if(rootval[i]["data"] != NULL)
+                currentEntry.dataURL.push_back(paf::string(rootval[i]["data"].getString().c_str()));
 
             SET_STRING(currentEntry.author, "author");
             currentEntry.dataPath = "ux0:data/";
             SET_STRING(currentEntry.description, "long_description");
             SET_STRING(currentEntry.version, "version");        
 
+            auto screenshotStr = rootval[i]["screenshots"].getString().c_str();
+            char *token = sce_paf_strtok((char *)screenshotStr, ";");
+            
+            while(token != SCE_NULL) 
+            {
+                char fileName[sce_paf_strlen(token) - 11];
+                sce_paf_memset(fileName, 0, sizeof(fileName));
+                sce_paf_strncpy(fileName, token + 12, sizeof(fileName));
+
+                currentEntry.screenshotURL.push_back(ccc::Sprintf("https://rinnegatamante.it/vitadb/%s", fileName));
+                token = sce_paf_strtok(SCE_NULL, ";");
+            }   
+
             if(rootval[i]["type"] != NULL)
                 currentEntry.type = (int)sce_paf_strtoul(rootval[i]["type"].getString().c_str(), NULL, 10);
 
-            currentEntry.hash = SCE_NULL;
             currentEntry.hash = Utils::GetHashById(currentEntry.id.data());
 
             outList->Add(currentEntry);
@@ -168,9 +180,78 @@ void cbpsdb::Parse(db::List *outList, string &csvStr)
     delete[] dataLines;
 }
 
-void vhbdb::Parse(db::List *outList, string& jsonStr)
+void vhbdb::Parse(db::List *outList, string &json)
 {
+    outList->Clear();
 
+    int length = json.length();
+    const char *jsonStr = json.data();
+
+    PAFAllocator allocator;
+    Json::InitParameter initParam((Json::MemAllocator *)&allocator, 0, 512);
+    Json::Initializer init;
+
+    init.initialize(&initParam);
+
+    {
+        Json::Value rootVal;
+
+        rootVal.clear();
+        
+
+        SceInt32 ret = Json::Parser::parse(rootVal, jsonStr, length);
+        if(ret < 0)
+            print("Json::Parser::parse() -> 0x%X\n", ret);
+        
+        int entryCount = rootVal["homebrew"].count();
+        auto rootval = rootVal["homebrew"];
+
+        for(int i = 0; i < entryCount; i++)
+        {
+            db::entryInfo currentEntry;
+
+            if(rootval[i] == NULL) return;
+
+            SET_STRING(currentEntry.titleID, "title_id");
+            SET_STRING(currentEntry.title, "name");
+
+            currentEntry.id = ccc::Sprintf("%X%X", Utils::GetHashById(currentEntry.titleID.data()), Utils::GetHashById(currentEntry.title.data()));
+
+            if(rootval[i]["icons"] != NULL)
+                for(int x = 0; x < rootval[i]["icons"].count(); x++)
+                    currentEntry.iconURL.push_back(paf::string(rootval[i]["icons"][x].getString().c_str()));
+            
+            currentEntry.iconPath = ccc::Sprintf("%s/%s.png", db::info[VHBDB].iconFolderPath, currentEntry.id.data());
+
+            if(rootval[i]["downloads"] != NULL)
+                for(int x = 0; x < rootval[i]["downloads"].count(); x++)
+                    currentEntry.downloadURL.push_back(paf::string(rootval[i]["downloads"][x].getString().c_str()));
+
+            if(rootval[i]["data"] != NULL)
+                currentEntry.dataURL.push_back(paf::string(rootval[i]["data"].getString().c_str()));
+
+            currentEntry.author = "";
+            if(rootval[i]["authors"] != NULL)
+                for(int x = 0; x < rootval[i]["authors"].count(); x++)
+                {
+                    currentEntry.author += rootval[i]["authors"][x]["name"].getString().c_str();
+                    if(x != (rootval[i]["authors"].count() - 1)) currentEntry.author += " & ";
+                }
+            
+
+            SET_STRING(currentEntry.dataPath, "data_path")
+            SET_STRING(currentEntry.description, "description");
+            SET_STRING(currentEntry.version, "version"); 
+  
+
+            //if(rootval[i]["type"] != NULL)
+            //    currentEntry.type = (int)sce_paf_strtoul(rootval[i]["type"].getString().c_str(), NULL, 10);
+
+            currentEntry.hash = Utils::GetHashById(currentEntry.id.data());
+
+            outList->Add(currentEntry);
+        }
+    }
 }
 
 db::List::~List()

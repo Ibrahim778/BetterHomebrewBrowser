@@ -28,13 +28,6 @@ SceUInt32 Utils::GetHashById(const char *id)
     return searchRes.hash;
 }
 
-paf::ui::Widget *Utils::GetChildByHash(paf::ui::Widget *parent, SceUInt32 hash)
-{
-    rco::Element search;
-    search.hash = hash;
-    return parent->GetChild(&search, 0);
-}
-
 SceVoid Utils::GetStringFromID(const char *id, paf::string *out)
 {
     rco::Element e;

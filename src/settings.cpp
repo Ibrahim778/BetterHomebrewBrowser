@@ -37,7 +37,7 @@ Settings::Settings()
 	pInit.resourcePath = "vs0:vsh/common/app_settings_plugin.rco";
 	pInit.scopeName = "__main__";
 
-	pInit.pluginCreateCB = AppSettings::PluginCreateCB;
+	pInit.pluginSetParamCB = AppSettings::PluginCreateCB;
 	pInit.pluginInitCB = AppSettings::PluginInitCB;
 	pInit.pluginStartCB = AppSettings::PluginStartCB;
 	pInit.pluginStopCB = AppSettings::PluginStopCB;

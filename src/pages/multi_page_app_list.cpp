@@ -92,6 +92,12 @@ SceVoid generic::MultiPageAppList::CreateListWrapper()
 SceVoid generic::MultiPageAppList::OnRedisplay()
 {
     HandleForwardButton();
+
+    if(currBody->prev != SCE_NULL)
+    {
+        generic::Page::SetBackButtonEvent(generic::MultiPageAppList::BackCB, this);
+        g_backButton->PlayEffect(0, effect::EffectType_Reset);
+    }
 }
 
 int generic::MultiPageAppList::GetCategory()
@@ -192,7 +198,7 @@ SceVoid generic::MultiPageAppList::DeletePage(SceBool animate)
 
 SceVoid generic::MultiPageAppList::_NewPage(SceBool populate)
 {
-    Plugin::TemplateInitParam tInit;
+    Plugin::TemplateOpenParam tInit;
     rco::Element e;
     e.hash = Utils::GetHashById("home_page_list_template");
 
@@ -213,7 +219,7 @@ SceVoid generic::MultiPageAppList::_NewPage(SceBool populate)
         Utils::PlayEffect(currBody->prev->widget, 0, effect::EffectType_3D_SlideToBack1);
 
         g_backButton->PlayEffect(0, effect::EffectType_Reset);
-        generic::Page::SetBackButtonEvent(apps::Page::BackCB, this);
+        generic::Page::SetBackButtonEvent(generic::MultiPageAppList::BackCB, this);
 
         if(currBody->prev->prev != SCE_NULL)
         {

@@ -45,6 +45,7 @@ add_executable(${PROJECT_NAME}
     src/pages/page.cpp
     src/pages/text_page.cpp
     src/pages/apps_page.cpp
+    src/pages/apps_info_page.cpp
     src/pages/multi_page_app_list.cpp
     src/json.cpp
     src/dialog.cpp
@@ -63,6 +64,7 @@ add_executable(${PROJECT_NAME}
     include/pages/page.h
     include/pages/text_page.h
     include/pages/apps_page.h
+    include/pages/apps_info_page.h
     include/pages/multi_page_app_list.h
     include/json.hpp
     include/dialog.h

@@ -24,6 +24,7 @@
 
     <string src="CBPS DB" id="db_name_0"/>    
     <string src="Vita DB" id="db_name_1"/>
+    <string src="VHB DB" id="db_name_2"/>
 
     <string src="Please Wait..." id="msg_wait"/>
 

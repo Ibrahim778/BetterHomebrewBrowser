@@ -155,6 +155,7 @@ namespace apps
             Hash_SearchButton = 0xCCCE2527,
             Hash_SearchEnterButton = 0xAB8CB65E,
             Hash_SearchBackButton = 0x6A2C094C,
+            Hash_SearchBox = 0x7BB7D799,
         } ButtonHash;
 
         //Starts adding new icon download *jobs*
@@ -178,6 +179,17 @@ namespace apps
         paf::job::JobQueue *iconAssignQueue; //Performs texture loading and assignments
         SceUID iconFlags;
         std::vector<SceUInt64> textureJobs;
+    };
+
+    namespace button
+    {
+        class Callback : public paf::ui::EventCallback
+        {
+        public:
+            Callback();
+
+            static void OnGet(SceInt32 eventID, paf::ui::Widget *self, SceInt32 unk, ScePVoid pUserData);
+        };
     };
 }
 
