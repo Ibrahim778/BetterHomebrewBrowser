@@ -10,6 +10,14 @@
 class Settings
 {
 public:
+    class OpenCallback : public paf::ui::EventCallback
+    {
+    public:
+        OpenCallback();
+
+        static SceVoid OnGet(SceInt32 id, paf::ui::Widget *widget, SceInt32 unk, ScePVoid data);
+    };
+
     enum Hash
     {
         Hash_Refresh = 0xDF43DB7A,
@@ -25,7 +33,6 @@ public:
     SceVoid Open();
     SceVoid Close();
 
-    static SceVoid OpenCB(SceInt32 id, paf::ui::Widget *widget, SceInt32 unk, ScePVoid data);
 
     db::Id source;
     int nLoad;

@@ -1,24 +1,26 @@
 #ifndef BHBB_NETWORK_CPP
 #define BHBB_NETWORK_CPP
 
-#define MODULE_PATH "vs0:data/external/webcore/ScePsp2Compat.suprx"
-#define LIBC_PATH "vs0:sys/external/libc.suprx"
-#define FIOS2_PATH "vs0:sys/external/libfios2.suprx"
+#define cURL_PATH "app0:module/libcurl.suprx"
 
-class Network
+typedef void*(*curl_malloc)(unsigned int size);
+typedef void(*curl_free)(void *ptr);
+typedef void*(*curl_realloc)(void *ptr, unsigned int new_size);
+
+extern "C" int curl_global_memmanager_set_np(curl_malloc allocate, curl_free deallocate, curl_realloc reallocate);
+
+namespace Network
 {
-public:
-
     enum Status {
         Offline,
         Online
     };
 
-    static SceVoid Init();
-    static SceVoid Term();
-    static SceVoid Check(void (*CheckComplete)(void));
-    static Status GetCurrentStatus();
-    static SceInt32 GetLastError();
+    SceVoid Init();
+    SceVoid Term();
+    SceVoid Check(void (*CheckComplete)(void));
+    Status GetCurrentStatus();
+    SceInt32 GetLastError();
 
     class CheckThread : public paf::thread::Thread
     {
@@ -26,10 +28,6 @@ public:
 
         SceVoid EntryFunction();
     };
-private:
-    static SceInt32 lastError;
-    static Status CurrentStatus;
-    static void (*CheckComplete)(void);
 };
 
 

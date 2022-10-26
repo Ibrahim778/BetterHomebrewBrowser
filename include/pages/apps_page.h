@@ -63,6 +63,7 @@ namespace apps
             Param taskParam;
 
             IconDownloadJob(const char *name, Page *caller, Param param):job::JobItem(name),callingPage(caller),taskParam(param){}
+        
         };
 
         class IconDownloadThread : public paf::thread::Thread
@@ -117,6 +118,27 @@ namespace apps
             std::vector<Node> list;
         };
 
+        class SearchCB : public paf::ui::EventCallback
+        {
+        public:
+            SearchCB(Page *page) {
+                pUserData = page;
+                eventHandler = OnGet;
+            }
+
+            static SceVoid OnGet(SceInt32 eventID, paf::ui::Widget *self, SceInt32 unk, ScePVoid pUserData);
+        };
+
+        class CategoryCB : public paf::ui::EventCallback
+        {
+        public:
+            CategoryCB(Page *page) {
+                pUserData = page;
+                eventHandler = OnGet;
+            }
+            static SceVoid OnGet(SceInt32 eventID, paf::ui::Widget *self, SceInt32 unk, ScePVoid pUserData);
+        };
+
         enum PageMode
         {
             PageMode_Browse,
@@ -125,8 +147,6 @@ namespace apps
 
         static SceVoid IconDownloadDecideCB(Dialog::ButtonCode buttonResult, ScePVoid userDat);
         static SceVoid ErrorRetryCB(SceInt32 eventID, paf::ui::Widget *self, SceInt32 unk, ScePVoid pUserData);
-        static SceVoid SearchCB(SceInt32 eventID, paf::ui::Widget *self, SceInt32 unk, ScePVoid pUserData);
-        static SceVoid CategoryButtonCB(SceInt32 eventID, paf::ui::Widget *self, SceInt32 unk, ScePVoid pUserData);
 
         //Sets page mode: Search or Browse
         SceVoid SetMode(PageMode mode);

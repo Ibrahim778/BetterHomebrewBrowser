@@ -20,6 +20,7 @@ namespace db
         std::vector<paf::string> dataURL;
         paf::string dataPath;
         
+        std::vector<paf::string> thumbnailURL;
         std::vector<paf::string> screenshotURL;
         
         paf::string version;
@@ -62,16 +63,19 @@ namespace db
     namespace vitadb
     {
         void Parse(db::List *outList, paf::string& jsonStr);
+        SceInt32 GetDescription(db::entryInfo &entry, paf::string &out);
     };
 
     namespace cbpsdb
     {
         void Parse(db::List *outList, paf::string& csv);
+        SceInt32 GetDescription(db::entryInfo &entry, paf::string &out);
     };
 
     namespace vhbdb
     {
         void Parse(db::List *outList, paf::string& jsonStr);
+        SceInt32 GetDescription(db::entryInfo &entry, paf::string &out);
     }
 
     typedef enum // Should match the index in info[]
@@ -84,6 +88,7 @@ namespace db
     typedef struct
     {
         void (*Parse)(db::List *outList, paf::string& data);
+        SceInt32 (*GetDescription)(db::entryInfo& entry, paf::string& out);
         const char *name;
         const char *iconFolderPath;
         const char *iconsURL;
@@ -100,6 +105,7 @@ namespace db
     {
         {   //CBPS DB
             .Parse = cbpsdb::Parse,
+            .GetDescription = cbpsdb::GetDescription,
             .name = "CBPS DB",
             .iconFolderPath = "ux0:data/betterHomebrewBrowser/icons/cbpsdb",
             .iconsURL = "https://github.com/Ibrahim778/CBPS-DB-Icon-Downloader/raw/main/icons.zip?raw=true",
@@ -110,24 +116,26 @@ namespace db
         },
         {   //Vita DB
             .Parse = vitadb::Parse, 
+            .GetDescription = vitadb::GetDescription,
             .name = "Vita DB", 
             .iconFolderPath = "ux0:/data/betterHomebrewBrowser/icons/vitadb", 
             .iconsURL = "https://bhbb-wrapper.herokuapp.com/icon_zip", 
-            .indexURL = "https://bhbb-wrapper.herokuapp.com/index.json",
+            .indexURL = "https://rinnegatamante.it/vitadb/list_hbs_json.php",
             .ScreenshotsSuppourted = true,
             .CategoriesSuppourted = true,
             .id = VITADB //index in info[]
         },
-        {   //Vita Homebrew DB
-            .Parse = vhbdb::Parse,
-            .name = "VHB DB",
-            .iconFolderPath = "ux0:/data/betterHomebrewBrowser/icons/vhbdb",
-            .iconsURL = SCE_NULL,
-            .indexURL = "https://github.com/vhbd/database/releases/download/latest/db_minify.json",
-            .ScreenshotsSuppourted = true,
-            .CategoriesSuppourted = false,
-            .id = VHBDB
-        }
+        // {   //Vita Homebrew DB
+        //     .Parse = vhbdb::Parse,
+        //     .GetDescription = vhbdb::GetDescription,
+        //     .name = "VHB DB",
+        //     .iconFolderPath = "ux0:/data/betterHomebrewBrowser/icons/vhbdb",
+        //     .iconsURL = SCE_NULL,
+        //     .indexURL = "https://github.com/vhbd/database/releases/download/latest/db_minify.json",
+        //     .ScreenshotsSuppourted = false,
+        //     .CategoriesSuppourted = false,
+        //     .id = VHBDB
+        // }
     };
 };
 

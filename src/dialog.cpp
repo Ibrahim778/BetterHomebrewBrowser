@@ -10,6 +10,7 @@
 
 #include "main.h"
 #include "dialog.h"
+#include "print.h"
 
 #define CURRENT_DIALOG_NONE -1
 
@@ -70,8 +71,10 @@ SceVoid Dialog::OpenOk(Plugin *workPlugin, wchar_t *titleText, wchar_t *messageT
 
 	if (!isMainThread)
 		thread::s_mainThreadMutex.Lock();
+    print("Running Show()\n");
 	s_currentDialog = CommonGuiDialog::Dialog::Show(workPlugin, &title, &message, &CommonGuiDialog::Param::s_dialogOk, CommonGuiEventHandler, userArg);
-	if (!isMainThread)
+	print("Done!\n");
+    if (!isMainThread)
 		thread::s_mainThreadMutex.Unlock();
 }
 

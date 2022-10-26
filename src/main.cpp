@@ -75,6 +75,8 @@ apps::Page *g_appsPage = SCE_NULL;
 
 wchar_t *g_versionInfo = SCE_NULL;
 
+job::JobQueue *g_mainQueue = SCE_NULL;
+
 void OnNetworkChecked()
 {
     if(Network::GetCurrentStatus() == Network::Online)
@@ -145,7 +147,14 @@ SceVoid onPluginReady(Plugin *plugin)
     new Settings();
     
     Network::Init();
+    
+    job::JobQueue::Option mainOpt;
+    mainOpt.workerNum = 1;
+    mainOpt.workerOpt = SCE_NULL;
+    mainOpt.workerPriority = SCE_KERNEL_DEFAULT_PRIORITY_USER - 5;
+    mainOpt.workerStackSize = SCE_KERNEL_16KiB;
 
+    g_mainQueue = new job::JobQueue("BHBB::MainQueue", &mainOpt);
     g_downloader = new Downloader();
     g_appsPage = new apps::Page();
     
@@ -156,7 +165,9 @@ SceVoid onPluginReady(Plugin *plugin)
 
 int main()
 {
+#ifdef _DEBUG
     SCE_PAF_AUTO_TEST_SET_EXTRA_TTY(sceIoOpen("tty0:", SCE_O_WRONLY, 0));
+#endif
 
     Utils::StartBGDL();
     Utils::InitMusic();

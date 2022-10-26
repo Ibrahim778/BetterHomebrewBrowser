@@ -13,50 +13,40 @@
 #include "settings.h"
 #include "common.h"
 #include "dialog.h"
+#include "curl_file.h"
+#include "cURLFile.h"
 
 using namespace paf;
 
-apps::Page::Page():generic::MultiPageAppList::MultiPageAppList(&appList, "home_page_template"),iconDownloadThread(SCE_NULL)
+apps::Page::Page():generic::MultiPageAppList::MultiPageAppList(&appList, "home_page_template"),iconDownloadThread(SCE_NULL),mode((PageMode)-1)
 {
-    ui::EventCallback *categoryCallback = new ui::EventCallback;
-    categoryCallback->pUserData = this;
-    categoryCallback->eventHandler = Page::CategoryButtonCB;
-
-    Utils::GetChildByHash(root, Utils::GetHashById("game_button"))->RegisterEventCallback(ui::EventMain_Decide, categoryCallback, 0);
-    Utils::GetChildByHash(root, Utils::GetHashById("all_button"))->RegisterEventCallback(ui::EventMain_Decide, categoryCallback, 0);
-    Utils::GetChildByHash(root, Utils::GetHashById("emu_button"))->RegisterEventCallback(ui::EventMain_Decide, categoryCallback, 0);
-    Utils::GetChildByHash(root, Utils::GetHashById("port_button"))->RegisterEventCallback(ui::EventMain_Decide, categoryCallback, 0);
-    Utils::GetChildByHash(root, Utils::GetHashById("util_button"))->RegisterEventCallback(ui::EventMain_Decide, categoryCallback, 0);
+    Utils::GetChildByHash(root, Hash_Game)->RegisterEventCallback(ui::EventMain_Decide, new Page::CategoryCB(this), 0);
+    Utils::GetChildByHash(root, Hash_All)->RegisterEventCallback(ui::EventMain_Decide, new Page::CategoryCB(this), 0);
+    Utils::GetChildByHash(root, Hash_Emu)->RegisterEventCallback(ui::EventMain_Decide, new Page::CategoryCB(this), 0);
+    Utils::GetChildByHash(root, Hash_Port)->RegisterEventCallback(ui::EventMain_Decide, new Page::CategoryCB(this), 0);
+    Utils::GetChildByHash(root, Hash_Util)->RegisterEventCallback(ui::EventMain_Decide, new Page::CategoryCB(this), 0);
 
     SetCategory(-1);
     
-    ui::EventCallback *searchCallback = new ui::EventCallback();
-    searchCallback->pUserData = this;
-    searchCallback->eventHandler = Page::SearchCB;
-
-    Utils::GetChildByHash(root, Utils::GetHashById("search_button"))->RegisterEventCallback(ui::EventMain_Decide, searchCallback, 0);
-    Utils::GetChildByHash(root, Utils::GetHashById("search_enter_button"))->RegisterEventCallback(ui::EventMain_Decide, searchCallback, 0);
-    Utils::GetChildByHash(root, Utils::GetHashById("search_back_button"))->RegisterEventCallback(ui::EventMain_Decide, searchCallback, 0);
-    Utils::GetChildByHash(root, Utils::GetHashById("search_box"))->RegisterEventCallback(0x1000000B, searchCallback, 0); //Enter button on IME keyboard
+    Utils::GetChildByHash(root, Hash_SearchButton)->RegisterEventCallback(ui::EventMain_Decide, new Page::SearchCB(this), 0);
+    Utils::GetChildByHash(root, Hash_SearchEnterButton)->RegisterEventCallback(ui::EventMain_Decide, new Page::SearchCB(this), 0);
+    Utils::GetChildByHash(root, Hash_SearchBackButton)->RegisterEventCallback(ui::EventMain_Decide, new Page::SearchCB(this), 0);
+    Utils::GetChildByHash(root, Hash_SearchBox)->RegisterEventCallback(0x1000000B, new Page::SearchCB(this), 0); //Enter button on IME keyboard
 
     SetMode(PageMode_Browse);
 
-    auto optionsButton = Utils::GetChildByHash(root, Utils::GetHashById("options_button"));
-    auto optionsCallback = new ui::EventCallback();
-    optionsCallback->eventHandler = Settings::OpenCB;
-
-    optionsButton->RegisterEventCallback(ui::EventMain_Decide, optionsCallback, 0);
+    Utils::GetChildByHash(root, Utils::GetHashById("options_button"))->RegisterEventCallback(ui::EventMain_Decide, new Settings::OpenCallback(), 0);
 
     job::JobQueue::Option iconAssignOpt;
     iconAssignOpt.workerNum = 10;
-    iconAssignOpt.workerOpt = NULL;
+    iconAssignOpt.workerOpt = SCE_NULL;
     iconAssignOpt.workerPriority = SCE_KERNEL_DEFAULT_PRIORITY_USER - 10;
     iconAssignOpt.workerStackSize = SCE_KERNEL_16KiB;
     iconAssignQueue = new job::JobQueue("BHBB::apps::Page::iconAssignQueue", &iconAssignOpt);
 
     job::JobQueue::Option iconDownloadOpt;
     iconDownloadOpt.workerNum = 10;
-    iconDownloadOpt.workerOpt = NULL;
+    iconDownloadOpt.workerOpt = SCE_NULL;
     iconDownloadOpt.workerPriority = SCE_KERNEL_DEFAULT_PRIORITY_USER - 20;
     iconDownloadOpt.workerStackSize = SCE_KERNEL_16KiB;
     iconDownloadQueue = new job::JobQueue("BHBB::apps::Page::iconDownloadQueue", &iconDownloadOpt);
@@ -72,7 +62,7 @@ apps::Page::~Page()
     
 }
 
-SceVoid apps::Page::CategoryButtonCB(SceInt32 eventID, ui::Widget *self, SceInt32 unk, ScePVoid pUserData)
+SceVoid apps::Page::CategoryCB::OnGet(SceInt32 eventID, ui::Widget *self, SceInt32 unk, ScePVoid pUserData)
 {
     if(!db::info[Settings::GetInstance()->source].CategoriesSuppourted) return;
     apps::Page *page = (Page *)pUserData;
@@ -149,11 +139,17 @@ SceVoid apps::Page::OnCategoryChanged(int prev, int _category)
 SceVoid apps::Page::SetMode(PageMode targetMode)
 {
     if(mode == targetMode) return;
-
+    
     ui::Widget *categoriesPlane = Utils::GetChildByHash(root, Utils::GetHashById("plane_categories"));
     ui::Widget *searchPlane = Utils::GetChildByHash(root, Utils::GetHashById("plane_search"));
     ui::Widget *searchBox = Utils::GetChildByHash(root, Utils::GetHashById("search_box"));
 
+    if(categoriesPlane->animationStatus & 0x80)
+        categoriesPlane->animationStatus &= ~0x80;
+
+    if(searchPlane->animationStatus & 0x80)
+        searchPlane->animationStatus &= ~0x80;
+        
     switch(targetMode)
     {
     case PageMode_Browse:
@@ -170,7 +166,7 @@ SceVoid apps::Page::SetMode(PageMode targetMode)
     mode = targetMode;
 }
 
-SceVoid apps::Page::SearchCB(SceInt32 eventID, ui::Widget *self, SceInt32 unk, ScePVoid pUserData)
+SceVoid apps::Page::SearchCB::OnGet(SceInt32 eventID, ui::Widget *self, SceInt32 unk, ScePVoid pUserData)
 {
     Page *page = (Page *)pUserData;
     switch(self->elem.hash)
@@ -273,7 +269,7 @@ SceVoid apps::Page::IconDownloadDecideCB(Dialog::ButtonCode buttonResult, ScePVo
     if(buttonResult == Dialog::ButtonCode::ButtonCode_Yes)
     {
         SharedPtr<job::JobItem> ptr = paf::SharedPtr<job::JobItem>(new IconZipJob("BHBB::IconZipJob"));
-        job::s_defaultJobQueue->Enqueue(&ptr);
+        g_mainQueue->Enqueue(&ptr);
     }
 }
 
@@ -298,7 +294,7 @@ SceVoid apps::Page::CancelIconJobs()
 SceVoid apps::Page::Load()
 {
     auto jobPtr = SharedPtr<job::JobItem>(new LoadJob("BHBB::apps::Page::LoadJob", this));
-    job::s_defaultJobQueue->Enqueue(&jobPtr);
+    g_mainQueue->Enqueue(&jobPtr);
 }
 
 SceVoid apps::Page::OnClear()
@@ -314,7 +310,7 @@ SceVoid apps::Page::OnCleared()
 
 SceVoid apps::Page::PopulatePage(ui::Widget *ScrollBox)
 {
-    print("Populating page...\n");
+    print("PopulatePage START\n");
     SceUInt32 pageCountBeforeCreation = GetPageCount() - 1;
     ScrollBox->SetAlpha(0);
 
@@ -324,7 +320,10 @@ SceVoid apps::Page::PopulatePage(ui::Widget *ScrollBox)
     db::List *targetList = GetTargetList();
     int category = GetCategory();
 
-    SceUInt32 loadNum = (targetList->GetSize(category) - (pageCountBeforeCreation * Settings::GetInstance()->nLoad)) < Settings::GetInstance()->nLoad ? (targetList->GetSize(category) - (pageCountBeforeCreation * Settings::GetInstance()->nLoad)) : Settings::GetInstance()->nLoad;
+    SceUInt32 loadNum = (targetList->GetSize(category) - (pageCountBeforeCreation * Settings::GetInstance()->nLoad));
+    if(loadNum > Settings::GetInstance()->nLoad)
+        loadNum = Settings::GetInstance()->nLoad;
+
     auto info = targetList->entries.begin();
     auto end = targetList->entries.end();
     
@@ -355,7 +354,7 @@ SceVoid apps::Page::PopulatePage(ui::Widget *ScrollBox)
         if(!isMainThread)
             thread::s_mainThreadMutex.Unlock();
         
-        if(std::find(textureJobs.begin(), textureJobs.end(), info->hash) == textureJobs.end())
+        if(/* Removing this check speeds it up alot but also makes it a little unstable */ LocalFile::Exists(info->iconPath.data()) && std::find(textureJobs.begin(), textureJobs.end(), info->hash) == textureJobs.end())
         {
             textureJobs.push_back(info->hash);
             iconAssignQueue->Enqueue(&SharedPtr<job::JobItem>(
@@ -369,34 +368,27 @@ SceVoid apps::Page::PopulatePage(ui::Widget *ScrollBox)
         }
     } 
     
-
-    
-    ScrollBox->SetAlpha(1);
+    ScrollBox->SetAlpha(1);    
+    print("PopulatePage END\n");
 }
 
 SceVoid apps::Page::LoadJob::Run()
 {
-    HttpFile            http;
-    HttpFile::OpenArg   openArg;
-
     sceShellUtilLock(SCE_SHELL_UTIL_LOCK_TYPE_PS_BTN);
 
-    Dialog::OpenPleaseWait(mainPlugin, SCE_NULL, Utils::GetStringPFromID("msg_wait"));
     Settings::GetInstance()->Close();
+    Dialog::OpenPleaseWait(mainPlugin, SCE_NULL, Utils::GetStringPFromID("msg_wait"));
     callingPage->CancelIconDownloads();
     callingPage->CancelIconJobs();
     callingPage->ClearPages();
     callingPage->loadedTextures.Clear();
     g_forwardButton->PlayEffectReverse(0, effect::EffectType_Reset);
-    Utils::GetChildByHash(callingPage->root, Utils::GetHashById("options_button"))->SetAlpha(0.39f);
-
-    openArg.SetUrl(db::info[Settings::GetInstance()->source].indexURL);
+    Utils::GetChildByHash(callingPage->root, Utils::GetHashById("options_button"))->Disable(SCE_FALSE);
+   
+    cURLFile file(db::info[Settings::GetInstance()->source].indexURL);
     print("Opening: %s\n", db::info[Settings::GetInstance()->source].indexURL);
 
-    openArg.SetOpt(4000000, HttpFile::OpenArg::Opt_ResolveTimeOut);
-	openArg.SetOpt(10000000, HttpFile::OpenArg::Opt_ConnectTimeOut);
-
-    SceInt32 ret = http.Open(&openArg);
+    SceInt32 ret = file.Read();    
     if(ret != SCE_OK)
     {
         sceShellUtilUnlock(SCE_SHELL_UTIL_LOCK_TYPE_PS_BTN);
@@ -416,24 +408,14 @@ SceVoid apps::Page::LoadJob::Run()
         Page::SetBackButtonEvent(Page::ErrorRetryCB, callingPage);
         return;
     }
-
-    string index;
-    SceInt32 bytesRead;
-    char buff[257]; //Leave 1 char for '\0'
-    do
-    {
-        sce_paf_memset(buff, 0, sizeof(buff));
-
-        bytesRead = http.Read(buff, 256);
-
-        index += buff;
-    } while(bytesRead > 0);
-
-    http.Close();
+    
+    string index = string(file.GetData(), file.GetSize());
+    
     Dialog::Close();
+    print("Dialog::Close()\n");
 
     sceShellUtilUnlock(SCE_SHELL_UTIL_LOCK_TYPE_PS_BTN);
-    
+    print("shell unlocked!\n");
     if(!LocalFile::Exists(db::info[Settings::GetInstance()->source].iconFolderPath))
     {
         Dir::CreateRecursive(db::info[Settings::GetInstance()->source].iconFolderPath); 
@@ -447,8 +429,9 @@ SceVoid apps::Page::LoadJob::Run()
             Dialog::OpenYesNo(mainPlugin, NULL, (wchar_t *)wstrText.data(), IconDownloadDecideCB);
         }
     }
-
+    print("Icon folder checked\n");
     g_busyIndicator->Start();
+    print("busyIndicator->Start()\n");
 
     callingPage->SetTargetList(&callingPage->appList);
     db::info[Settings::GetInstance()->source].Parse(&callingPage->appList, index);
@@ -456,13 +439,16 @@ SceVoid apps::Page::LoadJob::Run()
     print("Parsing complete!\n");
     
     sceKernelSetEventFlag(callingPage->iconFlags, FLAG_ICON_DOWNLOAD | FLAG_ICON_LOAD_SURF | FLAG_ICON_ASSIGN_TEXTURE);
-
+    print("Set Event flag!\n");
+    callingPage->SetCategory(-1);
     callingPage->NewPage();
+    print("Made new page!\n");
     g_busyIndicator->Stop();
+    print("Busyindicator stopped!\n");
 
     callingPage->StartIconDownloads();
-    Utils::GetChildByHash(callingPage->root, Utils::GetHashById("options_button"))->SetAlpha(1);
-
+    Utils::GetChildByHash(callingPage->root, Utils::GetHashById("options_button"))->Enable(SCE_FALSE);
+    print("Settings re-enabled!\n");
     print("LoadJob finished!\n");
 }
 
@@ -486,13 +472,13 @@ SceVoid apps::Page::IconDownloadJob::Run()
     {
         auto entry = callingPage->appList.Get((SceUInt64)taskParam.widgetHash);
         
-        HttpFile             http;
-        HttpFile::OpenArg    openArg;
+        CurlFile             http;
+        CurlFile::OpenArg    openArg;
         SharedPtr<LocalFile> file;
         SceInt32             ret = SCE_OK;
 
-        openArg.SetOpt(4000000, HttpFile::OpenArg::Opt_ResolveTimeOut);
-        openArg.SetOpt(10000000, HttpFile::OpenArg::Opt_ConnectTimeOut);
+        openArg.SetOpt(4000000, CurlFile::OpenArg::Opt_ResolveTimeOut);
+        openArg.SetOpt(10000000, CurlFile::OpenArg::Opt_ConnectTimeOut);
         
         auto end = entry.iconURL.end();
         for(auto i = entry.iconURL.begin(); i != end; i++)
@@ -549,6 +535,7 @@ LOAD_SURF:
                     taskParam.dest            
     ))));
 }
+
 
 SceVoid apps::Page::IconAssignJob::Run()
 {
@@ -624,11 +611,10 @@ SceVoid apps::Page::CancelIconDownloads()
 {
     if(iconDownloadThread)
     {
-        if(iconDownloadThread->IsAlive())
-        {
-            iconDownloadThread->Cancel();
-            iconDownloadThread->Join();
-        }
+        iconDownloadThread->Cancel();
+        //thread::s_mainThreadMutex.Unlock();
+        iconDownloadThread->Join();
+        //thread::s_mainThreadMutex.Lock();
         delete iconDownloadThread;
         iconDownloadThread = SCE_NULL;
     }

@@ -22,5 +22,6 @@ extern apps::Page *g_appsPage;
 
 extern wchar_t *g_versionInfo;
 
+extern job::JobQueue *g_mainQueue;
 
 #endif

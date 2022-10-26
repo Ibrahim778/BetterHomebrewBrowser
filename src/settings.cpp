@@ -131,7 +131,12 @@ SceVoid Settings::Open()
 	appSetIf->Show(&ifCb);
 }
 
-SceVoid Settings::OpenCB(SceInt32, ui::Widget *, SceInt32, ScePVoid)
+Settings::OpenCallback::OpenCallback()
+{
+    eventHandler = OnGet;
+}
+
+SceVoid Settings::OpenCallback::OnGet(SceInt32, ui::Widget *, SceInt32, ScePVoid)
 {
     Settings::GetInstance()->Open();
 }
@@ -187,9 +192,7 @@ SceInt32 Settings::CBValueChange(const char *elementId, const char *newValue)
         GetInstance()->source = (db::Id)value;
     
     case Hash_Refresh:
-        g_appsPage->SetCategory(-1);
         g_appsPage->Load();
-        GetInstance()->Close();
         break;
 
 	default:

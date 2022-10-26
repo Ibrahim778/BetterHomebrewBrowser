@@ -18,10 +18,10 @@
 #define SSL_HEAP_SIZE  2 * 1024 * 1024
 
 static Network::CheckThread *checkThread = SCE_NULL;
-int Network::lastError = 0;
+static int lastError = 0;
 
-void (*Network::CheckComplete)(void) = SCE_NULL;
-Network::Status Network::CurrentStatus = Network::Status::Offline;
+static void (*CheckComplete)(void) = SCE_NULL;
+static Network::Status CurrentStatus = Network::Status::Offline;
 
 void Network::Init()
 {
@@ -42,6 +42,9 @@ void Network::Init()
 	sceHttpInit(HTTP_HEAP_SIZE);
 	sceSslInit(SSL_HEAP_SIZE);
 
+    sceKernelLoadStartModule(cURL_PATH, 0, SCE_NULL, 0, SCE_NULL, SCE_NULL);
+    curl_global_memmanager_set_np(sce_paf_malloc, sce_paf_free, sce_paf_realloc);
+
     lastError = 0;
 }
 
@@ -61,7 +64,7 @@ void Network::Term()
 
 void Network::Check(void (*onComplete)(void))
 {
-    Network::CheckComplete = onComplete;
+    CheckComplete = onComplete;
     
     if(checkThread != NULL)
     {
@@ -91,7 +94,7 @@ Network::Status Network::GetCurrentStatus()
         if(checkThread->IsAlive())
             checkThread->Join();
     */
-    return Network::CurrentStatus;
+    return CurrentStatus;
 }
 
 SceVoid Network::CheckThread::EntryFunction()
@@ -107,7 +110,7 @@ SceVoid Network::CheckThread::EntryFunction()
 	testHttp.SetOpt(10000000, paf::HttpFile::OpenArg::Opt::Opt_ConnectTimeOut);
 
 	ret = testFile.Open(&testHttp);
-    Network::CurrentStatus = ret == SCE_OK ? Online : Offline;
+    CurrentStatus = ret == SCE_OK ? Online : Offline;
 	
     if (ret == SCE_OK)
 		testFile.Close();
@@ -115,8 +118,8 @@ SceVoid Network::CheckThread::EntryFunction()
 
 	sceShellUtilUnlock(SCE_SHELL_UTIL_LOCK_TYPE_PS_BTN);
 
-    if(Network::CheckComplete)
-        Network::CheckComplete();
+    if(CheckComplete)
+        CheckComplete();
 
     sceKernelExitDeleteThread(0);
 }

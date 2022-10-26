@@ -87,7 +87,7 @@ namespace generic
         
         MultiPageAppList(db::List *targetList = SCE_NULL, const char *templateName = "");
         virtual ~MultiPageAppList();
-
+        
     private:
         struct Body {
             paf::ui::Widget *widget;
@@ -110,10 +110,11 @@ namespace generic
 
         paf::ui::Plane *listWrapperPlane;
         paf::ui::Plane *listRootPlane;
-    
+
         db::List *targetList;
 
         SceInt32 category;
+
     };
 }
 

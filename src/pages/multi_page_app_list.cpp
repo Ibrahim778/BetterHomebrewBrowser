@@ -11,7 +11,7 @@
 using namespace paf;
 
 generic::MultiPageAppList::MultiPageAppList(db::List *tList, const char *templateName):generic::Page(templateName),listRootPlane(SCE_NULL),currBody(SCE_NULL),targetList(tList)
-{
+{   
     listRootPlane = (ui::Plane *)Utils::GetChildByHash(root, Utils::GetHashById("plane_list_root"));
     CreateListWrapper();
 }
@@ -156,8 +156,8 @@ SceVoid generic::MultiPageAppList::ForwardButtonCB(SceInt32 eventID, paf::ui::Wi
 
 SceVoid generic::MultiPageAppList::Redisplay()
 {
-    job::s_defaultJobQueue->Enqueue(&SharedPtr<job::JobItem>(new ClearJob("BHBB::apps::Page::ClearJob", this)));
-    job::s_defaultJobQueue->Enqueue(&SharedPtr<job::JobItem>(new NewPageJob("MPAL::NewPageJob", this, SCE_TRUE)));
+    g_mainQueue->Enqueue(&SharedPtr<job::JobItem>(new ClearJob("BHBB::apps::Page::ClearJob", this)));
+    g_mainQueue->Enqueue(&SharedPtr<job::JobItem>(new NewPageJob("MPAL::NewPageJob", this, SCE_TRUE)));
 }
 
 SceVoid generic::MultiPageAppList::HandleForwardButton()
@@ -186,13 +186,13 @@ SceVoid generic::MultiPageAppList::DeletePageJob::Run()
 
 SceVoid generic::MultiPageAppList::NewPage(SceBool populate)
 {
-    //job::s_defaultJobQueue->Enqueue(&SharedPtr<job::JobItem>(new NewPageJob("MPAL::NewPageJob", this, populate)));
+    //g_mainQueue->Enqueue(&SharedPtr<job::JobItem>(new NewPageJob("MPAL::NewPageJob", this, populate)));
     _NewPage(populate);
 }
 
 SceVoid generic::MultiPageAppList::DeletePage(SceBool animate)
 {
-    //job::s_defaultJobQueue->Enqueue(&SharedPtr<job::JobItem>(new DeletePageJob("MPAL::DeletePageJob", this, animate)));
+    //g_mainQueue->Enqueue(&SharedPtr<job::JobItem>(new DeletePageJob("MPAL::DeletePageJob", this, animate)));
     _DeletePage(animate);
 }
 

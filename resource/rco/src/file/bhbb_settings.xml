@@ -6,7 +6,7 @@
         <list id="list_source" title="msg_settings_source" key="source" default_value="0">
             <list_item id="list_source_00" title="db_name_0" value="0" />
             <list_item id="list_source_01" title="db_name_1" value="1" />
-            <list_item id="list_source_02" title="db_name_2" value="2" />
+            <!-- <list_item id="list_source_02" title="db_name_2" value="2" /> -->
         </list>
         <list id="list_nLoad" title="msg_settings_nLoad" key="nLoad" default_value="100">
             <list_item id="list_nLoad_00" title="20" value="20" />

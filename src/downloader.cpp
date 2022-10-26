@@ -161,5 +161,5 @@ SceInt32 Downloader::EnqueueAsync(const char *url, const char *name, BGDLParam *
     else
         dwJob->param.magic = 0;
 
-	return job::s_defaultJobQueue->Enqueue(&SharedPtr<job::JobItem>(dwJob));
+	return g_mainQueue->Enqueue(&SharedPtr<job::JobItem>(dwJob));
 }

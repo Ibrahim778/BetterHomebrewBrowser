@@ -41,6 +41,8 @@ add_executable(${PROJECT_NAME}
     src/split.c
     src/settings.cpp
     src/downloader.cpp
+    src/curl_file.cpp
+    src/cURLFile.cpp
     src/db.cpp
     src/pages/page.cpp
     src/pages/text_page.cpp
@@ -60,6 +62,8 @@ add_executable(${PROJECT_NAME}
     include/csv.h
     include/settings.h
     include/downloader.h
+    include/curl_file.h
+    include/cURLFile.h
     include/db.h
     include/pages/page.h
     include/pages/text_page.h
@@ -102,6 +106,7 @@ target_link_libraries(${PROJECT_NAME}
     SceModulemgr_stub
     SceVshBridge_stub
     taihenUnsafe_stub
+    curl_stub
 )
 
 target_include_directories(${PROJECT_NAME} PRIVATE
@@ -122,15 +127,31 @@ add_dependencies(${PROJECT_NAME}
     file_toucher    
 )
 
-VDSuitePackage(${PROJECT_NAME}.vpk
-  FILES
-    ${PROJECT_NAME}.self eboot.bin
-    ${CMAKE_BINARY_DIR}/${PROJECT_NAME}.sfo sce_sys/param.sfo
-    resource/bhbb_plugin.rco resource/bhbb_plugin.rco
-    resource/rco/src/texture/bg.png sce_sys/pic0.png
-    ${CMAKE_BINARY_DIR}/libScePafPreload/libScePafPreload.suprx module/libScePafPreload.suprx
-    ${CMAKE_BINARY_DIR}/bhbb_dl/bhbb_dl.suprx module/bhbb_dl.suprx
-    ${CMAKE_BINARY_DIR}/libextractor/libextractor.suprx module/libextractor.suprx
-    sce_sys sce_sys
-    $<$<CONFIG:Debug>:${CMAKE_SOURCE_DIR}/resource/bhbb_plugin.rcd> $<$<CONFIG:Debug>:resource/bhbb_plugin.rcd>
-)
+if(${CMAKE_BUILD_TYPE} STREQUAL Debug)
+    VDSuitePackage(${PROJECT_NAME}.vpk
+    FILES
+      ${PROJECT_NAME}.self eboot.bin
+      ${CMAKE_BINARY_DIR}/${PROJECT_NAME}.sfo sce_sys/param.sfo
+      resource/bhbb_plugin.rco resource/bhbb_plugin.rco
+      resource/rco/src/texture/bg.png sce_sys/pic0.png
+      ${CMAKE_BINARY_DIR}/libScePafPreload/libScePafPreload.suprx module/libScePafPreload.suprx
+      ${CMAKE_BINARY_DIR}/bhbb_dl/bhbb_dl.suprx module/bhbb_dl.suprx
+      ${CMAKE_BINARY_DIR}/libextractor/libextractor.suprx module/libextractor.suprx
+      sce_sys sce_sys
+      module module
+      ${CMAKE_SOURCE_DIR}/resource/bhbb_plugin.rcd resource/bhbb_plugin.rcd
+  )  
+else()
+    VDSuitePackage(${PROJECT_NAME}.vpk
+    FILES
+        ${PROJECT_NAME}.self eboot.bin
+        ${CMAKE_BINARY_DIR}/${PROJECT_NAME}.sfo sce_sys/param.sfo
+        resource/bhbb_plugin.rco resource/bhbb_plugin.rco
+        resource/rco/src/texture/bg.png sce_sys/pic0.png
+        ${CMAKE_BINARY_DIR}/libScePafPreload/libScePafPreload.suprx module/libScePafPreload.suprx
+        ${CMAKE_BINARY_DIR}/bhbb_dl/bhbb_dl.suprx module/bhbb_dl.suprx
+        ${CMAKE_BINARY_DIR}/libextractor/libextractor.suprx module/libextractor.suprx
+        sce_sys sce_sys
+        module module
+    )
+endif()

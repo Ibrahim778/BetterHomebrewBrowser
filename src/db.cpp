@@ -9,6 +9,7 @@
 #include "print.h"
 #include "json.hpp"
 #include "utils.h"
+#include "curl_file.h"
 
 using namespace sce;
 using namespace db;
@@ -53,7 +54,7 @@ void vitadb::Parse(db::List *outList, string &json)
 
             if(rootval[i]["icon"] != NULL)
             {
-                currentEntry.iconURL.push_back(ccc::Sprintf("https://bhbb-wrapper.herokuapp.com/icon?id=%s", rootval[i]["icon"].getString().c_str()));
+                currentEntry.iconURL.push_back(ccc::Sprintf("https://rinnegatamante.it/vitadb/icons/%s", rootval[i]["icon"].getString().c_str()));
                 currentEntry.iconPath = ccc::Sprintf("%s/%s", db::info[VITADB].iconFolderPath, rootval[i]["icon"].getString().c_str());
             }
 
@@ -76,7 +77,8 @@ void vitadb::Parse(db::List *outList, string &json)
                 sce_paf_memset(fileName, 0, sizeof(fileName));
                 sce_paf_strncpy(fileName, token + 12, sizeof(fileName));
 
-                currentEntry.screenshotURL.push_back(ccc::Sprintf("https://rinnegatamante.it/vitadb/%s", fileName));
+                currentEntry.screenshotURL.push_back(ccc::Sprintf("https://rinnegatamante.it/vitadb/screenshots/%s", fileName));
+                currentEntry.thumbnailURL.push_back(ccc::Sprintf("https://bhbb-wrapper.herokuapp.com/screenshot?id=%s&compress=true", fileName));
                 token = sce_paf_strtok(SCE_NULL, ";");
             }   
 
@@ -152,7 +154,8 @@ void cbpsdb::Parse(db::List *outList, string &csvStr)
         currentEntry.type = -1;
 
         currentEntry.hash = Utils::GetHashById(currentEntry.id.data());
-        
+        currentEntry.description = parsed[7];
+
         currentEntry.iconPath = ccc::Sprintf("%s/%s.png", db::info[CBPSDB].iconFolderPath, currentEntry.id.data());
         
         currentEntry.dataPath.clear();
@@ -252,6 +255,40 @@ void vhbdb::Parse(db::List *outList, string &json)
             outList->Add(currentEntry);
         }
     }
+}
+
+SceInt32 vitadb::GetDescription(db::entryInfo& entry, paf::string& out) 
+{
+    out = entry.description;
+    return SCE_OK;
+}
+
+SceInt32 cbpsdb::GetDescription(db::entryInfo& entry, paf::string& out)
+{   
+    SceInt32 ret = SCE_OK;
+    //TODO: Get description from cbpsdb
+    print("Opening: %s\n", entry.description.data());
+    auto cFile = CurlFile::Open(entry.description.data(), &ret, SCE_O_RDONLY);
+    if(ret < 0)
+        return ret;
+    print("FILE SIZE: %d <<<<<<\n", cFile.get()->GetFileSize());
+    char buff[0x100 + 1];
+    SceInt32 bytes = 0;
+    do {
+        sce_paf_memset(buff, 0, sizeof(buff));
+        bytes = cFile.get()->Read(buff, sizeof(buff) - 1);
+        if(bytes < 0)
+            return bytes;
+        print("%s", buff);
+        out += buff;
+    } while(bytes > 0);
+    return ret;
+}
+
+SceInt32 vhbdb::GetDescription(db::entryInfo& entry, paf::string& out)
+{
+    out = entry.description;
+    return SCE_OK;
 }
 
 db::List::~List()
