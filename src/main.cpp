@@ -62,9 +62,6 @@ using namespace paf;
 
 int loadFlags = 0;
 
-ui::Widget *g_mainPage;
-ui::Widget *g_errorPage;
-
 Plugin *mainPlugin = SCE_NULL;
 
 graph::Surface *BrokenTex = SCE_NULL;
@@ -123,7 +120,7 @@ SceVoid onPluginReady(Plugin *plugin)
 #endif
 
     *infoString += L"Date: " WIDE(__DATE__) L"\n";
-    *infoString += L"Version: 1.0\nBGDL Version: 2.0";
+    *infoString += L"Version: 1.0\nBGDL Version: 2.0\ncBGDL Version: 1.0";
 
     print("%ls\n", infoString->data());
 

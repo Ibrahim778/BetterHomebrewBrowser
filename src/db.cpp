@@ -78,7 +78,6 @@ void vitadb::Parse(db::List *outList, string &json)
                 sce_paf_strncpy(fileName, token + 12, sizeof(fileName));
 
                 currentEntry.screenshotURL.push_back(ccc::Sprintf("https://rinnegatamante.it/vitadb/screenshots/%s", fileName));
-                currentEntry.thumbnailURL.push_back(ccc::Sprintf("https://bhbb-wrapper.herokuapp.com/screenshot?id=%s&compress=true", fileName));
                 token = sce_paf_strtok(SCE_NULL, ";");
             }   
 
@@ -266,23 +265,24 @@ SceInt32 vitadb::GetDescription(db::entryInfo& entry, paf::string& out)
 SceInt32 cbpsdb::GetDescription(db::entryInfo& entry, paf::string& out)
 {   
     SceInt32 ret = SCE_OK;
-    //TODO: Get description from cbpsdb
-    print("Opening: %s\n", entry.description.data());
+    
     auto cFile = CurlFile::Open(entry.description.data(), &ret, SCE_O_RDONLY);
     if(ret < 0)
         return ret;
-    print("FILE SIZE: %d <<<<<<\n", cFile.get()->GetFileSize());
-    char buff[0x100 + 1];
-    SceInt32 bytes = 0;
-    do {
-        sce_paf_memset(buff, 0, sizeof(buff));
-        bytes = cFile.get()->Read(buff, sizeof(buff) - 1);
-        if(bytes < 0)
-            return bytes;
-        print("%s", buff);
-        out += buff;
-    } while(bytes > 0);
-    return ret;
+
+    auto fileSize = cFile->GetFileSize(); 
+    char *buff = new char[fileSize + 1];
+    sce_paf_memset(buff, 0, fileSize + 1);
+
+    ret = cFile->Read(buff, fileSize);
+    
+    if(ret < 0)
+        return ret;
+
+    out = buff;
+    delete[] buff;
+    
+    return SCE_OK;
 }
 
 SceInt32 vhbdb::GetDescription(db::entryInfo& entry, paf::string& out)
@@ -308,7 +308,6 @@ void db::List::Add(db::entryInfo &entry)
 
 void db::List::Clear()
 {
-    print("Clearing vector...\n");
     entries.clear();
 }
 

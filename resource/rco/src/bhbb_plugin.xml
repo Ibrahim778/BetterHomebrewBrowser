@@ -212,7 +212,7 @@
 		</style_image_button>
 
         <style_image_button glow_obj="list_button_glow" color="1, 1, 1, 1" layout_type_y="0" bg_obj="list_button_bg" id="style_screenshot_button">
-			<planeobj texture0="_common_texture_list_70px" id="list_button_bg" />
+			<planeobj texture0="tex_screensdhot_icon" size="50,50" scale_mode_y="3" scale_mode_x="3" id="list_button_bg" />
 			<planeobj texture0="_common_texture_list_glow_70px" blend="2" id="list_button_glow" />
 		</style_image_button>
 
@@ -309,6 +309,7 @@
         <texture src="texture/search_back_button.png" type="texture/png" id="tex_search_back_button"/>
         <texture src="texture/download_button.png" type="texture/png" id="tex_download_button" />
         <texture src="texture/data_button.png" type="texture/png" id="tex_data_button" />
+        <texture src="texture/screenshot_icon.png" type="texture/png" id="tex_screensdhot_icon" /> 
     </texturetable>
 
     <filetable>

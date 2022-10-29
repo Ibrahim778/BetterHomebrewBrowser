@@ -59,6 +59,8 @@ namespace apps
             SceVoid Run();
             SceVoid Finish(){}
 
+            static SceBool CancelCheck(Page *caller);
+
             Page *callingPage;
             Param taskParam;
 

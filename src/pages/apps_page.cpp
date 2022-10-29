@@ -93,22 +93,13 @@ SceVoid apps::Page::CategoryCB::OnGet(SceInt32 eventID, ui::Widget *self, SceInt
 SceVoid apps::Page::OnCategoryChanged(int prev, int _category)
 {
     print("OnCategory changed...\n");
-    Rgba transparent, normal;
-    transparent.r = 1;
-    transparent.g = 1;
-    transparent.b = 1;
-    transparent.a = .4f;
+    Rgba transparent(1,1,1,.4f), normal(1,1,1,1);
 
-    normal.r = 1;
-    normal.g = 1;
-    normal.b = 1;
-    normal.a = 1;
-
-    ui::Widget *allButton = Utils::GetChildByHash(root, Utils::GetHashById("all_button"));
-    ui::Widget *gamesButton = Utils::GetChildByHash(root, Utils::GetHashById("game_button"));
-    ui::Widget *emuButton = Utils::GetChildByHash(root, Utils::GetHashById("emu_button"));
-    ui::Widget *portsButton = Utils::GetChildByHash(root, Utils::GetHashById("port_button"));
-    ui::Widget *utilButton = Utils::GetChildByHash(root, Utils::GetHashById("util_button"));
+    ui::Widget *allButton = Utils::GetChildByHash(root, Hash_All);
+    ui::Widget *gamesButton = Utils::GetChildByHash(root, Hash_Game);
+    ui::Widget *emuButton = Utils::GetChildByHash(root, Hash_Emu);
+    ui::Widget *portsButton = Utils::GetChildByHash(root, Hash_Port);
+    ui::Widget *utilButton = Utils::GetChildByHash(root, Hash_Util);
     
     allButton->SetColor(&transparent);
     gamesButton->SetColor(&transparent);
@@ -457,6 +448,11 @@ SceVoid apps::Page::LoadJob::Finish()
 
 }
 
+SceBool apps::Page::IconDownloadJob::CancelCheck(apps::Page *caller)
+{
+    return sceKernelPollEventFlag(caller->iconFlags, FLAG_ICON_DOWNLOAD, SCE_NULL, SCE_NULL) < 0;
+}
+
 SceVoid apps::Page::IconDownloadJob::Run()
 {   
     SceBool DownloadSuccess = SCE_FALSE;
@@ -467,56 +463,21 @@ SceVoid apps::Page::IconDownloadJob::Run()
         goto LOAD_SURF;
     }
 
-    
     //Downloading
     {
         auto entry = callingPage->appList.Get((SceUInt64)taskParam.widgetHash);
         
-        CurlFile             http;
-        CurlFile::OpenArg    openArg;
-        SharedPtr<LocalFile> file;
-        SceInt32             ret = SCE_OK;
+        SceInt32 ret = SCE_OK;
 
-        openArg.SetOpt(4000000, CurlFile::OpenArg::Opt_ResolveTimeOut);
-        openArg.SetOpt(10000000, CurlFile::OpenArg::Opt_ConnectTimeOut);
-        
         auto end = entry.iconURL.end();
         for(auto i = entry.iconURL.begin(); i != end; i++)
         {
-            openArg.SetUrl(i->data());
-            
-            ret = http.Open(&openArg);
+            ret = cURLFile::SaveFile(i->data(), taskParam.dest.data(), (cURLFile::cancelCheck)IconDownloadJob::CancelCheck, callingPage);
             if(ret != SCE_OK)
             {
                 print("\t[Error] Download Icon %s -> %s failed => 0x%X\n", i->data(), taskParam.dest.data(), ret);
                 continue;    
             }
-
-            file = LocalFile::Open(taskParam.dest.data(), SCE_O_CREAT | SCE_O_WRONLY | SCE_O_TRUNC, 0666, &ret);
-            if(ret < 0)
-            {
-                print("\t[Error] Open File %s failed => 0x%X\n", taskParam.dest.data(), ret);
-                http.Close();
-                goto LOAD_SURF;
-            }
-
-            char buff[0x100];
-            do 
-            {
-                if(sceKernelPollEventFlag(callingPage->iconFlags, FLAG_ICON_DOWNLOAD, SCE_NULL, SCE_NULL) < 0)
-                {
-                    print("\tJob cancelled\n");
-                    break;
-                }
-
-                sce_paf_memset(buff, 0, sizeof(buff));
-                ret = http.Read(buff, 0x100);
-
-                file.get()->Write(buff, ret);
-            } while(ret > 0);
-
-            file.get()->Close();
-            http.Close();
             DownloadSuccess = SCE_TRUE;
             break;
         }
@@ -535,7 +496,6 @@ LOAD_SURF:
                     taskParam.dest            
     ))));
 }
-
 
 SceVoid apps::Page::IconAssignJob::Run()
 {
@@ -588,16 +548,16 @@ ASSIGN_TEX:
             //print("\t[Skip] Widget 0x%X not found\n", taskParam.widgetHash);
             goto EXIT;
         }
-        //thread::s_mainThreadMutex.Lock();
+        thread::s_mainThreadMutex.Lock();
         if(surf == SCE_NULL)
         {
             widget->SetSurfaceBase(&BrokenTex);
-            //thread::s_mainThreadMutex.Unlock();
+            thread::s_mainThreadMutex.Unlock();
             goto EXIT;
         }
 
         widget->SetSurfaceBase(&surf);
-        //thread::s_mainThreadMutex.Unlock();
+        thread::s_mainThreadMutex.Unlock();
     }
 EXIT:
     //print("Removing: 0x%X\n", taskParam.widgetHash);

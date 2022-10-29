@@ -41,6 +41,7 @@ public:
 		SceInt32 SetOpt(SceInt32 optValue, Opt optType);
 
 		SceVoid SetUseShare(bool use);
+        SceVoid SetSecondaryHeaderMethod(bool use);
 
 		SceUInt32 fileType;
 		string userAgent;
@@ -52,6 +53,7 @@ public:
 		SceInt32 sendTimeout;
 		SceInt32 recvTimeout;
 		bool useShare;
+        bool getHeadersWithGET;
 	};
 
 	CurlFile();
@@ -83,7 +85,7 @@ public:
 
 	SceInt32 GetResponseCode(SceInt32 *code);
 
-	static SharedPtr<CurlFile> Open(const char *path, SceUInt32 flag, SceUInt32 mode, SceInt32 *error, bool useShare = false);
+	static SharedPtr<CurlFile> Open(const char *path, SceUInt32 flag, SceUInt32 mode, SceInt32 *error, bool useShare = false, bool secondaryHeaders = false);
 
 	static SharedPtr<CurlFile> Open(const SceWChar16 *url, SceInt32 *error, SceUInt32 flag, bool useShare = false);
 
@@ -108,6 +110,7 @@ private:
 	SceUInt32 posInBuf;
 	SceOff pos;
 	bool isOpened;
+    bool isGettingHeaders;
 };
 
 #endif

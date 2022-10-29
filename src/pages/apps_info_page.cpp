@@ -11,7 +11,7 @@
 using namespace paf;
 using namespace apps::info;
 
-Page::Page(db::entryInfo& entry):generic::Page::Page("info_page_template"),info(entry),iconSurf(SCE_NULL),iconLoadThread(SCE_NULL),screenshotLoadThread(SCE_NULL)
+Page::Page(db::entryInfo& entry):generic::Page::Page("info_page_template"),info(entry),iconSurf(SCE_NULL),iconLoadThread(SCE_NULL),descriptionLoadThread(SCE_NULL)
 {
     Utils::SetWidgetLabel(Utils::GetChildByHash(root, Utils::GetHashById("info_title_text")), &info.title);
     Utils::SetWidgetLabel(Utils::GetChildByHash(root, Utils::GetHashById("info_author_text")), &info.author);
@@ -26,8 +26,27 @@ Page::Page(db::entryInfo& entry):generic::Page::Page("info_page_template"),info(
 
     if(db::info[Settings::GetInstance()->source].ScreenshotsSuppourted & info.screenshotURL.size() > 0)
     {
-        screenshotLoadThread = new ScreenshotLoadThread(this);
-        screenshotLoadThread->Start();
+        auto scrollBox = Utils::GetChildByHash(root, Utils::GetHashById("screenshot_box"));
+        Plugin::TemplateOpenParam tOpen;
+        rco::Element e;
+        e.hash = Utils::GetHashById("info_screenshot_button_template");
+        
+        int size = info.screenshotURL.size();
+        for(int i = 0; i < size; i++)
+        {
+            thread::s_mainThreadMutex.Lock();
+            mainPlugin->TemplateOpen(scrollBox, &e, &tOpen);
+            thread::s_mainThreadMutex.Unlock();
+
+            auto widget = scrollBox->GetChild(scrollBox->childNum - 1);
+            auto cb = new screenshot::Callback();
+            cb->pUserData = &info.screenshotURL;
+            
+            widget->elem.hash = i;
+            widget->RegisterEventCallback(ui::EventMain_Decide, cb, SCE_FALSE);
+
+        }
+
     }
     else
     {
@@ -42,7 +61,7 @@ Page::Page(db::entryInfo& entry):generic::Page::Page("info_page_template"),info(
     descriptionLoadThread->Start();
 }
 
-apps::info::Page::~Page()
+Page::~Page()
 {
     if(iconLoadThread)
     {
@@ -53,17 +72,6 @@ apps::info::Page::~Page()
         delete iconLoadThread;
 
         iconLoadThread = SCE_NULL;
-    }
-
-    if(screenshotLoadThread)
-    {
-        screenshotLoadThread->Cancel();
-        thread::s_mainThreadMutex.Unlock();
-        screenshotLoadThread->Join();
-        thread::s_mainThreadMutex.Lock();
-        delete screenshotLoadThread;
-        
-        screenshotLoadThread = SCE_NULL;
     }
 
     if(descriptionLoadThread)
@@ -81,14 +89,6 @@ apps::info::Page::~Page()
     {
         Utils::GetChildByHash<ui::Plane>(root, Utils::GetHashById("icon_plane"))->SetSurface(&TransparentTex, 0);
         Utils::DeleteTexture(&iconSurf);
-    }
-
-    effect::Play(0, Utils::GetChildByHash(root, Utils::GetHashById("screenshot_box")), effect::EffectType_Reset, SCE_TRUE, SCE_TRUE); //Just delete the screenshot buttons
-    for(auto i = screenshotSurfs.begin(); i != screenshotSurfs.end(); i++)
-    {
-        graph::Surface *surf = *i;
-
-        Utils::DeleteTexture(&surf);
     }
 }
 
@@ -111,82 +111,6 @@ SceVoid Page::IconLoadThread::EntryFunction()
 
     busyIndicator->Stop();
     print("apps::info::Page::IconLoadThread FINISH\n");
-    sceKernelExitDeleteThread(0);
-}
-
-SceVoid Page::ScreenshotLoadThread::EntryFunction()
-{
-    print("apps::info::Page::ScreenshotLoadThread START\n");
-    
-    auto scrollBox = Utils::GetChildByHash(callingPage->root, Utils::GetHashById("screenshot_box"));
-    
-    Plugin::TemplateOpenParam tOpen;
-    rco::Element e;
-    e.hash = Utils::GetHashById("info_screenshot_button_template");
-    
-    int x = 0;
-    auto end = callingPage->info.thumbnailURL.end();
-    for(auto i = callingPage->info.thumbnailURL.begin(); i != end && !IsCanceled(); i++, x++)
-    {
-        graph::Surface *currentSurf;
-        SceInt32 fileErr = SCE_OK;
-        
-        SharedPtr<HttpFile> img = HttpFile::Open(i->data(), &fileErr, SCE_O_RDONLY);
-        if(fileErr != SCE_OK)
-        {
-            print("Error opening %s -> 0x%X\n", i->data(), fileErr);
-            continue;
-        }
-        SceSize imgSize = img.get()->GetFileSize();
-        
-        const ScePVoid memBuff = sce_paf_malloc(imgSize);
-        sce_paf_memset(memBuff, 0, imgSize);
-        
-        SceUInt32 offset = 0;
-        SceInt32 bytesRead = 0;
-        do
-        {
-            bytesRead = img.get()->Read(memBuff + offset, 0x100);
-            if(bytesRead < 0)
-                print("Error reading file: 0x%X\n", bytesRead);
-            else offset += bytesRead;
-        } while(bytesRead > 0 && !IsCanceled());
-        
-        if(IsCanceled())
-        {
-            sce_paf_free(memBuff);
-            break;
-        }
-
-        print("Read 0x%X / 0x%X bytes\n", offset, imgSize);
-        
-        graph::Surface::Create(&currentSurf, mainPlugin->memoryPool, memBuff, 0, imgSize);
-        sce_paf_free(memBuff);
-
-        if(currentSurf == SCE_NULL)
-        {
-            print("Error making surf! currentSurf: 0x%X\n", currentSurf);
-            continue;
-        }
-
-        callingPage->screenshotSurfs.push_back(currentSurf);
-
-        thread::s_mainThreadMutex.Lock();
-        mainPlugin->TemplateOpen(scrollBox, &e, &tOpen);
-        thread::s_mainThreadMutex.Unlock();
-
-        auto widget = scrollBox->GetChild(scrollBox->childNum - 1);
-        auto cb = new screenshot::Callback();
-        cb->pUserData = &callingPage->info.screenshotURL;
-        print("Assigning surf: %p\n", currentSurf);
-
-        widget->elem.hash = x;
-        widget->SetSurface(&currentSurf, 0);
-        widget->RegisterEventCallback(ui::EventMain_Decide, cb, SCE_FALSE);
-
-    }
-    
-    print("apps::info::Page::ScreenshotLoadThread FINISH\n");
     sceKernelExitDeleteThread(0);
 }
 
@@ -232,7 +156,10 @@ screenshot::Page::~Page()
     }
 
     if(surface)
+    {
+        effect::Play(0, Utils::GetChildByHash(root, Utils::GetHashById("picture")), effect::EffectType_Reset, SCE_TRUE, SCE_TRUE);
         Utils::DeleteTexture(&surface);
+    }
 }
 
 SceVoid screenshot::Page::LoadThread::EntryFunction()
@@ -247,7 +174,7 @@ SceVoid screenshot::Page::LoadThread::EntryFunction()
 
     print("%s\n", callingPage->url.data());
 
-    graph::Surface::Create(&callingPage->surface, mainPlugin->memoryPool, (SharedPtr<File> *)&CurlFile::Open(callingPage->url.data(), SCE_O_RDONLY, 0, &fileErr));
+    graph::Surface::Create(&callingPage->surface, mainPlugin->memoryPool, (SharedPtr<File> *)&CurlFile::Open(callingPage->url.data(), SCE_O_RDONLY, 0, &fileErr, true, true));
     print("surface created!\n");
     if(callingPage->surface == SCE_NULL || fileErr != SCE_OK)
     {
@@ -275,21 +202,9 @@ SceVoid Page::DescriptionLoadThread::EntryFunction()
     SceInt32 ret = db::info[Settings::GetInstance()->source].GetDescription(callingPage->info, desc);
     auto descText = Utils::GetChildByHash<ui::Text>(callingPage->root, Utils::GetHashById("info_description_text"));
     if(ret == SCE_OK)
-    {
-        print("%s\n", desc.data());
-        Utils::SetWidgetLabel(descText, &desc);
-    }
+        Utils::SetWidgetLabel(descText, &desc);    
     else
-    {
-        string msgTemplate;
-        Utils::GetfStringFromID("msg_net_fix", &msgTemplate);
-
-        string errorMsg = ccc::Sprintf(msgTemplate.data(), ret);
-        
         descText->SetLabel(&wstring(Utils::GetStringPFromID("msg_desc_error")));
-
-
-    }
     busy->Stop();
     sceKernelExitDeleteThread(0);
 }

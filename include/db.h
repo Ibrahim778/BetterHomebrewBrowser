@@ -20,7 +20,6 @@ namespace db
         std::vector<paf::string> dataURL;
         paf::string dataPath;
         
-        std::vector<paf::string> thumbnailURL;
         std::vector<paf::string> screenshotURL;
         
         paf::string version;

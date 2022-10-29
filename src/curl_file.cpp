@@ -22,6 +22,7 @@ CurlFile::OpenArg::OpenArg()
 	sendTimeout = -1;
 	recvTimeout = -1;
 	useShare = false;
+    getHeadersWithGET = false;
 }
 
 CurlFile::OpenArg::~OpenArg()
@@ -32,6 +33,11 @@ CurlFile::OpenArg::~OpenArg()
 SceVoid CurlFile::OpenArg::SetUseShare(bool use)
 {
 	useShare = use;
+}
+
+SceVoid CurlFile::OpenArg::SetSecondaryHeaderMethod(bool use)
+{
+    getHeadersWithGET = use;
 }
 
 SceVoid CurlFile::OpenArg::SetUrl(const char *url)
@@ -79,6 +85,7 @@ CurlFile::CurlFile()
 	pos = 0;
 	contentLength = -1;
 	isOpened = false;
+    isGettingHeaders = false;
 }
 
 CurlFile::~CurlFile()
@@ -146,7 +153,7 @@ SceInt32 CurlFile::Open(const CurlFile::OpenArg *param)
 
 	curl_easy_setopt(curl, CURLOPT_URL, param->url.c_str());
 	curl_easy_setopt(curl, CURLOPT_USERAGENT, param->userAgent.c_str());
-	curl_easy_setopt(curl, CURLOPT_ACCEPT_ENCODING, "");
+	curl_easy_setopt(curl, CURLOPT_ACCEPT_ENCODING, SCE_NULL);
 	curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, 0L);
 	curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 0L);
 	curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1L);
@@ -164,32 +171,57 @@ SceInt32 CurlFile::Open(const CurlFile::OpenArg *param)
 	if (param->recvTimeout != -1) {
 		curl_easy_setopt(curl, CURLOPT_TIMEOUT_MS, param->recvTimeout);
 	}
+    print("option: %s -----------------------------------------\n", param->getHeadersWithGET ? "True" : "False");
+    if(param->getHeadersWithGET)
+	{
+        isGettingHeaders = true;
+        
+        CURLcode ret = curl_easy_perform(curl);
+        if (ret != CURLE_WRITE_ERROR) {
+            print("Aborting open... 0x%X\n", ret);
+            curl_easy_cleanup(curl);
+            lock->Unlock();
+            return 0x80AF5022;
+        }
 
-	curl_easy_setopt(curl, CURLOPT_NOBODY, 1L);
+        ret = curl_easy_getinfo(curl, CURLINFO_CONTENT_LENGTH_DOWNLOAD_T, &contentLength);
+        if (ret != CURLE_OK) {
+            curl_easy_cleanup(curl);
+            lock->Unlock();
+            return 0x80AF5022;
+        }
 
-	CURLcode ret = curl_easy_perform(curl);
-	if (ret != CURLE_OK) {
-		curl_easy_cleanup(curl);
-		lock->Unlock();
-		return 0x80AF5022;
-	}
-
-	ret = curl_easy_getinfo(curl, CURLINFO_CONTENT_LENGTH_DOWNLOAD_T, &contentLength);
-    print("GetInfo %s\n", curl_easy_strerror(ret));
-	if (ret != CURLE_OK) {
-		curl_easy_cleanup(curl);
-		lock->Unlock();
-		return 0x80AF5022;
-	}
-    print("Content Length: %ld\n", contentLength);
-	if (contentLength < 0)
-    {
-        print("Setting it to 0\n");
-		contentLength = 0;
+        if (contentLength < 0)
+            contentLength = 0;
+        
+        isGettingHeaders = false;
+        print("Got content length: 0x%X\n", contentLength);
     }
+    else
+    {
+        curl_easy_setopt(curl, CURLOPT_NOBODY, 1L);
 
-	curl_easy_setopt(curl, CURLOPT_NOBODY, 0L);
-	curl_easy_setopt(curl, CURLOPT_HTTPGET, 1L);
+        CURLcode ret = curl_easy_perform(curl);
+        if (ret != CURLE_OK) {
+            curl_easy_cleanup(curl);
+            lock->Unlock();
+            return 0x80AF5022;
+        }
+
+        ret = curl_easy_getinfo(curl, CURLINFO_CONTENT_LENGTH_DOWNLOAD_T, &contentLength);
+        if (ret != CURLE_OK) {
+            curl_easy_cleanup(curl);
+            lock->Unlock();
+            return 0x80AF5022;
+        }
+
+        if (contentLength < 0)
+            contentLength = 0;
+        
+
+        curl_easy_setopt(curl, CURLOPT_NOBODY, 0L);
+        curl_easy_setopt(curl, CURLOPT_HTTPGET, 1L);
+    }
 
 	isOpened = true;
 
@@ -272,7 +304,7 @@ SceInt32 CurlFile::Read(void *buffer, SceSize nbyte)
 	}
 
 	char range[32];
-	sce_paf_snprintf(range, 31, "%lld-%u", pos, nbyte - 1);
+	sce_paf_snprintf(range, 31, "%lld-%u", pos, pos + nbyte - 1);
 
 	curl_easy_setopt(curl, CURLOPT_RANGE, range);
 
@@ -429,7 +461,7 @@ SceInt32 CurlFile::GetResponseCode(SceInt32 *code)
 	return 0;
 }
 
-SharedPtr<CurlFile> CurlFile::Open(const char *path, SceUInt32 flag, SceUInt32 mode, SceInt32 *error, bool useShare)
+SharedPtr<CurlFile> CurlFile::Open(const char *path, SceUInt32 flag, SceUInt32 mode, SceInt32 *error, bool useShare, bool secondaryHeader)
 {
 	if (!path) {
 		*error = 0x80AF5002;
@@ -439,6 +471,7 @@ SharedPtr<CurlFile> CurlFile::Open(const char *path, SceUInt32 flag, SceUInt32 m
 	CurlFile::OpenArg oarg;
 	oarg.SetUrl(path);
 	oarg.SetUseShare(useShare);
+    oarg.SetSecondaryHeaderMethod(secondaryHeader);
 
 	CurlFile *file = new CurlFile();
 
@@ -523,11 +556,13 @@ SceInt32 CurlFile::GetStat(const char *url, CurlFileStat *stat, bool useShare)
 SceSize CurlFile::DownloadCore(char *buffer, SceSize size, SceSize nitems, ScePVoid userdata)
 {
 	CurlFile *obj = (CurlFile *)userdata;
-	SceSize toCopy = size * nitems;
+    if(obj->isGettingHeaders) return -1;
 
+	SceSize toCopy = size * nitems;
+    
 	if (toCopy != 0) {
-        print("Copying: %d\n", toCopy);
-		sce_paf_memcpy(obj->buf + obj->posInBuf, buffer, toCopy);
+        print("Copying: %ld\n", toCopy);
+		sce_paf_memcpy(obj->buf + obj->posInBuf, buffer, toCopy > obj->contentLength ? obj->contentLength : toCopy);
 		obj->posInBuf += toCopy;
 		return toCopy;
 	}

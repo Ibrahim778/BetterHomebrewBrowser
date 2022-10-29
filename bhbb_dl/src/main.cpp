@@ -26,49 +26,8 @@ tai_hook_ref_t ExportFileRef;
 tai_hook_ref_t GetFileTypeRef;
 const unsigned char nop32[4] = {0xaf, 0xf3, 0x00, 0x80};
 
-SceBool IsOnLiveArea()
-{
-    SceInt32 result = SCE_OK;
-    
-    SceUID appIDs[20];
-    sce_paf_memset(appIDs, SCE_UID_INVALID_UID, sizeof(appIDs));
-
-    SceSize count = result = sceAppMgrGetRunningAppIdListForShell(appIDs, 20);
-    if(result < 0)
-    {
-        print("sceAppMgrGetRunningAppIdListForShell() -> 0x%X\n", result);
-        return false;
-    }
-
-    for(int i = 0; i < count; i++)
-    {
-        char name[0x10];
-        sce_paf_memset(name, 0, sizeof(name));
-
-        result = sceAppMgrGetNameById(sceAppMgrGetProcessIdByAppIdForShell(appIDs[i]), name);
-        if(result != SCE_OK)
-        {
-            print("sceAppMgrGetNameById (0x%X) -> 0x%X\n", appIDs[i], result);
-            continue;
-        }
-
-        SceAppMgrAppStatus status;
-        result = sceAppMgrGetStatusByName(name, &status); 
-        if(result < 0)
-        {
-            print("sceAppMgrGetStatusByName() -> 0x%X\n", result);
-            continue;
-        }
-
-        if(status.isShellProcess)
-            return false;
-    } 
-
-    return true;
-}
-
 //From BGFTP, too lazy to rewrite if it works lol
-//Send a notification with formatting :D
+//Send a notification with formatting
 void sendNotification(const char *text, ...)
 {
 	SceNotificationUtilSendParam param;

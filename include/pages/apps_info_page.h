@@ -26,18 +26,6 @@ namespace apps
                 IconLoadThread(Page *callingPage, SceInt32 initPriority = SCE_KERNEL_DEFAULT_PRIORITY_USER, SceSize stackSize = SCE_KERNEL_16KiB, const char *name = "apps::info::Page::IconLoadThread"):paf::thread::Thread::Thread(initPriority, stackSize, name),callingPage(callingPage){}
             };
 
-            class ScreenshotLoadThread : public paf::thread::Thread
-            {
-            private:
-                Page *callingPage;
-            public:
-                using paf::thread::Thread::Thread;
-
-                SceVoid EntryFunction();
-                
-                ScreenshotLoadThread(Page *callingPage, SceInt32 initPriority = SCE_KERNEL_DEFAULT_PRIORITY_USER, SceSize stackSize = SCE_KERNEL_16KiB, const char *name = "apps::info::Page::ScreenshotLoadThread"):paf::thread::Thread::Thread(initPriority, stackSize, name),callingPage(callingPage){}
-            };
-
             class DescriptionLoadThread : public paf::thread::Thread
             {
             private:
@@ -58,10 +46,8 @@ namespace apps
 
             db::entryInfo &info;
             paf::graph::Surface *iconSurf;
-            std::vector<paf::graph::Surface *> screenshotSurfs;
 
             IconLoadThread *iconLoadThread;
-            ScreenshotLoadThread *screenshotLoadThread;
             DescriptionLoadThread *descriptionLoadThread;
         };
 
