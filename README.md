@@ -23,3 +23,6 @@ Supported language codes can be seen [here](https://github.com/Ibrahim778/Better
 1. Thanks to [GrapheneCt](https://github.com/GrapheneCt) for ScePaf reversing, help, and EMPVA (Reference) and his CXML Compiler (Not Released)
 1. Thanks to SomeonPC (RIP) for Livearea™ assets and beta testing
 1. Thanks to SparklingPheonix for beta testing
+
+## Donations
+If you like my work, you can suppourt me via [PayPal](https://www.paypal.com/paypalme/GloveTekLtd)
