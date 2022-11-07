@@ -280,7 +280,7 @@
     <stringtable>
 	    <locale src="locale/en.rcs" id="en-gb" />
 	    <locale src="locale/en.rcs" id="en" />
-        <locale src="locale/ja.rcs" id="ja" />
+        <locale src="locale/en.rcs" id="ja" />
 	    <locale src="locale/en.rcs" id="fr" />
 	    <locale src="locale/es.rcs" id="es" />        
 	    <locale src="locale/en.rcs" id="de" />
