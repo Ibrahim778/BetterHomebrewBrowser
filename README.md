@@ -25,4 +25,4 @@ Supported language codes can be seen [here](https://github.com/Ibrahim778/Better
 1. Thanks to SparklingPheonix for beta testing
 
 ## Donations
-If you like my work, you can suppourt me via [PayPal](https://www.paypal.com/paypalme/GloveTekLtd)
+If you like my work, you can support me via [PayPal](https://www.paypal.com/paypalme/GloveTekLtd)
