@@ -282,7 +282,7 @@
 	    <locale src="locale/en.rcs" id="en" />
         <locale src="locale/en.rcs" id="ja" />
 	    <locale src="locale/en.rcs" id="fr" />
-	    <locale src="locale/es.rcs" id="es" />        
+	    <locale src="locale/en.rcs" id="es" />        
 	    <locale src="locale/en.rcs" id="de" />
 	    <locale src="locale/en.rcs" id="it" />
 	    <locale src="locale/en.rcs" id="nl" />
