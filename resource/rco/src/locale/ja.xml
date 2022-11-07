@@ -1,9 +1,0 @@
-<?xml version="1.0" encoding="utf-8"?>
-<stringset>
-    <string src="ダウンロード" id="download_button_text"/>
-    <string src="全て" id="all_button_text" />
-    <string src="ユーティリティ" id="util_button_text" />
-    <string src="エミュレーター" id="emu_button_text" />
-    <string src="ポート" id="port_button_text" />
-    <string src="ゲーム" id="games_button_text" />
-</stringset>
