@@ -1,5 +1,6 @@
 #include <kernel.h>
 #include <paf.h>
+#include <shellsvc.h>
 
 #include "pages/apps_info_page.h"
 #include "utils.h"
@@ -17,9 +18,9 @@ Page::Page(db::entryInfo& entry):generic::Page::Page("info_page_template"),info(
     Utils::SetWidgetLabel(Utils::GetChildByHash(root, Utils::GetHashById("info_author_text")), &info.author);
     Utils::SetWidgetLabel(Utils::GetChildByHash(root, Utils::GetHashById("info_version_text")), &info.version);
     
-    Utils::GetChildByHash(root, button::ButtonHash_Download)->RegisterEventCallback(ui::EventMain_Decide,  new button::Callback(), SCE_FALSE);
+    Utils::GetChildByHash(root, button::ButtonHash_Download)->RegisterEventCallback(ui::EventMain_Decide,  new button::Callback(this), SCE_FALSE);
     auto dataButton = Utils::GetChildByHash(root, button::ButtonHash_DataDownload);
-    dataButton->RegisterEventCallback(ui::EventMain_Decide,  new button::Callback(), SCE_FALSE);
+    dataButton->RegisterEventCallback(ui::EventMain_Decide,  new button::Callback(this), SCE_FALSE);
 
     if(info.dataURL.size() == 0)
        Utils::PlayEffectReverse(dataButton, 0, effect::EffectType_Reset);
@@ -44,14 +45,14 @@ Page::Page(db::entryInfo& entry):generic::Page::Page("info_page_template"),info(
             
             widget->elem.hash = i;
             widget->RegisterEventCallback(ui::EventMain_Decide, cb, SCE_FALSE);
-
         }
-
     }
     else
     {
+        thread::s_mainThreadMutex.Lock();
         effect::Play(0, Utils::GetChildByHash(root, Utils::GetHashById("screenshot_plane")), effect::EffectType_Reset, SCE_TRUE, SCE_TRUE);
         Utils::GetChildByHash(root, Utils::GetHashById("description_plane"))->SetSize(&paf::Vector4(960, 444));
+        thread::s_mainThreadMutex.Unlock();
     }
 
     iconLoadThread = new IconLoadThread(this);
@@ -84,12 +85,11 @@ Page::~Page()
         
         descriptionLoadThread = SCE_NULL;
     }
+}
 
-    if(iconSurf)
-    {
-        Utils::GetChildByHash<ui::Plane>(root, Utils::GetHashById("icon_plane"))->SetSurface(&TransparentTex, 0);
-        Utils::DeleteTexture(&iconSurf);
-    }
+db::entryInfo& Page::GetInfo()
+{
+    return info;
 }
 
 SceVoid Page::IconLoadThread::EntryFunction()
@@ -101,17 +101,85 @@ SceVoid Page::IconLoadThread::EntryFunction()
 
     SceInt32 fileErr = SCE_OK;
     graph::Surface::Create(&callingPage->iconSurf, mainPlugin->memoryPool, (SharedPtr<File> *)&LocalFile::Open(callingPage->info.iconPath.data(), SCE_O_RDONLY, 0, &fileErr));
-    
+
     if(fileErr != SCE_OK || callingPage->iconSurf == SCE_NULL)
+    {
+        print("Error creating icon surf: 0x%X (0x%X)\n", fileErr, callingPage->iconSurf);
         iconPlane->SetSurface(&BrokenTex, 0);
+    }
     else
+    {
+        callingPage->iconSurf->UnsafeRelease();
         iconPlane->SetSurface(&callingPage->iconSurf, 0);
-    
+    }
+
     iconPlane->SetColor(&paf::Rgba(1,1,1,1));
 
     busyIndicator->Stop();
     print("apps::info::Page::IconLoadThread FINISH\n");
-    sceKernelExitDeleteThread(0);
+    
+    Cancel();
+}
+
+SceVoid apps::info::button::DataDownloadTask::Run()
+{
+    print("DataDownloadTask START!\n");
+    sceShellUtilLock(SCE_SHELL_UTIL_LOCK_TYPE_PS_BTN);
+    Dialog::OpenPleaseWait(mainPlugin, SCE_NULL, Utils::GetStringPFromID("msg_wait"));
+
+    paf::string out;
+    SceInt32 r = db::info[Settings::GetInstance()->source].GetDataUrl(caller->GetInfo(), out);
+    if(r != SCE_OK)
+    {
+        Dialog::Close();
+        Dialog::OpenOk(mainPlugin, SCE_NULL, Utils::GetStringPFromID("msg_src_err"));
+        return;
+    }   
+    
+    BGDLParam param;
+    param.magic = (BHBB_DL_MAGIC | BHBB_DL_CFG_VER);
+    sce_paf_strncpy(param.path, caller->GetInfo().dataPath.data(), sizeof(param.path));
+    param.type = BGDLTarget::CustomPath;
+
+    string titleTemplate;
+    Utils::GetStringFromID("data_dl_name", &titleTemplate);
+    
+    string title = ccc::Sprintf(titleTemplate.data(), caller->GetInfo().title.data());
+
+    g_downloader->Enqueue(out.data(), title.data(), &param);
+
+    Dialog::Close();
+    Dialog::OpenOk(mainPlugin, SCE_NULL, Utils::GetStringPFromID("msg_download_queued"));
+    sceShellUtilUnlock(SCE_SHELL_UTIL_LOCK_TYPE_PS_BTN);
+    print("DataDownloadTask FINISH!\n");
+}
+
+SceVoid button::AppDownloadTask::Run()
+{
+    print("AppDownloadTask START!\n");
+    sceShellUtilLock(SCE_SHELL_UTIL_LOCK_TYPE_PS_BTN);
+    Dialog::OpenPleaseWait(mainPlugin, SCE_NULL, Utils::GetStringPFromID("msg_wait"));
+
+    paf::string out;
+    SceInt32 r = db::info[Settings::GetInstance()->source].GetDownloadUrl(caller->GetInfo(), out);
+    if(r != SCE_OK)
+    {
+        Dialog::Close();
+        Dialog::OpenOk(mainPlugin, SCE_NULL, Utils::GetStringPFromID("msg_src_err"));
+        return;
+    }   
+    
+    BGDLParam param;
+    sce_paf_memset(&param, 0, sizeof(param));
+    param.magic = (BHBB_DL_MAGIC | BHBB_DL_CFG_VER);
+    param.type = BGDLTarget::App;
+    
+    g_downloader->Enqueue(out.data(), caller->GetInfo().title.data(), &param);
+
+    Dialog::Close();
+    Dialog::OpenOk(mainPlugin, SCE_NULL, Utils::GetStringPFromID("msg_download_queued"));
+    sceShellUtilUnlock(SCE_SHELL_UTIL_LOCK_TYPE_PS_BTN);
+    print("AppDownloadTask FINISH!\n");
 }
 
 SceVoid button::Callback::OnGet(SceInt32 eventID, ui::Widget *self, SceInt32 unk, ScePVoid pUserData)
@@ -119,9 +187,11 @@ SceVoid button::Callback::OnGet(SceInt32 eventID, ui::Widget *self, SceInt32 unk
     switch(self->elem.hash)
     {
     case ButtonHash_Download:
+        g_mainQueue->Enqueue(&SharedPtr<job::JobItem>(new AppDownloadTask((apps::info::Page *)pUserData, "BHBB::AppDownloadTask")));
         break;
 
     case ButtonHash_DataDownload:
+        g_mainQueue->Enqueue(&SharedPtr<job::JobItem>(new DataDownloadTask((apps::info::Page *)pUserData, "BHBB::DataDownloadTask")));
         break;
 
     default:
@@ -154,12 +224,6 @@ screenshot::Page::~Page()
         
         loadThread = SCE_NULL;
     }
-
-    if(surface)
-    {
-        effect::Play(0, Utils::GetChildByHash(root, Utils::GetHashById("picture")), effect::EffectType_Reset, SCE_TRUE, SCE_TRUE);
-        Utils::DeleteTexture(&surface);
-    }
 }
 
 SceVoid screenshot::Page::LoadThread::EntryFunction()
@@ -179,9 +243,14 @@ SceVoid screenshot::Page::LoadThread::EntryFunction()
     if(callingPage->surface == SCE_NULL || fileErr != SCE_OK)
     {
         print("Error making surf! fileErr: 0x%X callingPage->surface: 0x%X\n", fileErr, callingPage->surface);
+        Dialog::OpenOk(mainPlugin, NULL, Utils::GetStringPFromID("msg_download_queued"));
+        Page::DeleteCurrentPage();
+        Cancel();
+        return;
     }
     else
     {
+        callingPage->surface->UnsafeRelease();
         plane->SetSurface(&callingPage->surface, 0);
         plane->SetColor(&paf::Rgba(1,1,1,1));
     }
@@ -189,7 +258,7 @@ SceVoid screenshot::Page::LoadThread::EntryFunction()
     g_busyIndicator->Stop();
     g_backButton->PlayEffect(0, effect::EffectType_Reset);
     print("apps::info::screenshot::Page::LoadThread FINISH\n");
-    sceKernelExitDeleteThread(0);
+    Cancel();
 }
 
 SceVoid Page::DescriptionLoadThread::EntryFunction()
@@ -206,5 +275,5 @@ SceVoid Page::DescriptionLoadThread::EntryFunction()
     else
         descText->SetLabel(&wstring(Utils::GetStringPFromID("msg_desc_error")));
     busy->Stop();
-    sceKernelExitDeleteThread(0);
+    Cancel();
 }

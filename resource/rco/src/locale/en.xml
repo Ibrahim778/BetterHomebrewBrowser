@@ -10,7 +10,7 @@
 
     <string src="SSL Error Occurred\n\nPlease Ensure You Have iTLS-Enso Installed" id="msg_error_ssl"/>
     <string src="Network Connection Error" id="msg_error_net"/>
-    <string src="Network Error: %s\nEnsure your device is connected to the internet and retry" id="msg_net_fix"/>
+    <string src="There was a network error while download the index\nEnsure your device is connected to the internet and retry" id="msg_net_fix"/>
     <string src="iTLS-Enso is not running\nEnsure iTLS-Enso is installed correctly before running this application" id="msg_no_itls"/>
 
     <string src="Error Loading Description" id="msg_desc_error"/>
@@ -31,5 +31,7 @@
     <string src="Please Wait..." id="msg_wait"/>
 
     <string src="The download has been queued in the livearea" id="msg_download_queued"/>
+    <string src="Could not find a valid source for download" id = "msg_src_err"/>
     <string src="%s Icons" id="icons_dl_name"/>
+    <string src="%s (Data)" id="data_dl_name"/>
 </stringset>

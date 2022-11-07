@@ -9,7 +9,7 @@
 
 namespace generic
 {
-    class MultiPageAppList : public generic::Page
+    class MultiPageAppList : public generic::Page //I really should combine this back into apps::Page, I inteded to create another separate multi page list but never ended up needing it
     {
     public:
         class ClearJob : public paf::job::JobItem
@@ -34,7 +34,8 @@ namespace generic
 
             SceBool populate;
             MultiPageAppList *callingPage;
-            NewPageJob(const char *name, MultiPageAppList *caller, SceBool _populate):paf::job::JobItem(name),callingPage(caller),populate(_populate){}
+            void *userDat;
+            NewPageJob(const char *name, MultiPageAppList *caller, void *_userDat, SceBool _populate):paf::job::JobItem(name),userDat(_userDat),callingPage(caller),populate(_populate){}
         };
 
         class DeletePageJob : public paf::job::JobItem
@@ -47,14 +48,22 @@ namespace generic
 
             SceBool animate;
             MultiPageAppList *callingPage;
-            DeletePageJob(const char *name, MultiPageAppList *caller, SceBool _animate):paf::job::JobItem(name),callingPage(caller),animate(_animate){}
+            DeletePageJob(const char *name, MultiPageAppList *caller, void *_userDat, SceBool _animate):paf::job::JobItem(name),callingPage(caller),animate(_animate){}
+        };
+
+        struct Body {
+            paf::ui::Widget *widget;
+            Body *prev;
+            void *userDat;
+
+            Body(Body *_prev = SCE_NULL, void *userDat = SCE_NULL):prev(_prev),userDat(SCE_NULL){}
         };
 
         static SceVoid ForwardButtonCB(SceInt32 eventID, paf::ui::Widget *self, SceInt32 unk, ScePVoid pUserData);
         static SceVoid BackCB(SceInt32 eventID, paf::ui::Widget *self, SceInt32 unk, ScePVoid pUserData);
 
         //Redisplays the elements in the parsed db list according to category, also resets the current page number to 0 (1)
-        SceVoid Redisplay();
+        SceVoid Redisplay(void *userDat = SCE_NULL);
 
         //Gets the current list widget
         paf::ui::Widget *GetCurrentPage();
@@ -65,9 +74,11 @@ namespace generic
         SceBool SetCategory(int category);
 
         //Creates a new empty page
-        SceVoid NewPage(SceBool populate = SCE_TRUE);
+        SceVoid NewPage(void *userDat = SCE_NULL, SceBool populate = SCE_TRUE);
         //Deletes the current list page
         SceVoid DeletePage(SceBool animate = SCE_TRUE);
+        //Shows / hides the forward button as needed
+        SceVoid HandleForwardButton();
         
         SceVoid SetTargetList(db::List *targetList);
         db::List *GetTargetList();
@@ -83,24 +94,20 @@ namespace generic
         //Called whenever the category is changed from SetCategory()
         virtual SceVoid OnCategoryChanged(int prevCategory, int currentCategory);
         //Called to populate pages made with NewPage()
-        virtual SceVoid PopulatePage(paf::ui::Widget *scrollBox);
+        virtual SceVoid PopulatePage(paf::ui::Widget *scrollBox, void *userDat);
+        //Called whenever a page is deleted
+        virtual SceVoid OnPageDeleted(Body *userDat);
+        //Called whenever the forward button is pressed
+        virtual SceVoid OnForwardButtonPressed();
         
         MultiPageAppList(db::List *targetList = SCE_NULL, const char *templateName = "");
         virtual ~MultiPageAppList();
         
     private:
-        struct Body {
-            paf::ui::Widget *widget;
-            Body *prev;
-
-            Body(Body *_prev = SCE_NULL):prev(_prev){}
-        };
-
         SceVoid ClearInternal();
-        SceVoid HandleForwardButton();
         SceVoid CreateListWrapper();
 
-        SceVoid _NewPage(SceBool populate);
+        SceVoid _NewPage(void *userDat, SceBool populate);
         SceVoid _DeletePage(SceBool animate);
 
         //Called whenever this page becomes the main page on screen. Handles forward button

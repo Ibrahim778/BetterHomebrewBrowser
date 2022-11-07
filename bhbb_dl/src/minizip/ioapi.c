@@ -12,6 +12,7 @@
 */
 
 #include "ioapi.h"
+int sce_paf_snprintf(void *, size_t, char *fmt, ...);
 #define snprintf(...) sce_paf_snprintf(__VA_ARGS__)
 
 #include <psp2/io/fcntl.h>

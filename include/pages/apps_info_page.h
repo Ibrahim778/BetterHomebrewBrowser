@@ -14,6 +14,7 @@ namespace apps
         class Page : public generic::Page
         {
         public:
+
             class IconLoadThread : public paf::thread::Thread
             {
             private:
@@ -41,6 +42,8 @@ namespace apps
 
             Page(db::entryInfo& info);
             virtual ~Page();
+
+            db::entryInfo& GetInfo();
 
         private:
 
@@ -95,11 +98,34 @@ namespace apps
                 ButtonHash_Download = 0x1383EA9,
             } ButtonHash;
 
+            class DataDownloadTask : public paf::job::JobItem
+            {
+            private:
+                apps::info::Page *caller;
+            public:
+                using paf::job::JobItem::JobItem;
+                DataDownloadTask(apps::info::Page *call, const char *name):paf::job::JobItem(name),caller(call){}
+                SceVoid Run();
+                SceVoid Finish(){}
+            };
+
+            class AppDownloadTask : public paf::job::JobItem
+            {
+            private:
+                apps::info::Page *caller;
+            public:
+                using paf::job::JobItem::JobItem;
+                AppDownloadTask(apps::info::Page *call, const char *name):paf::job::JobItem(name),caller(call){}
+                SceVoid Run();
+                SceVoid Finish(){}
+            };
+
             class Callback : public paf::ui::EventCallback
             {
             public:
-                Callback(){
+                Callback(void *userDat = SCE_NULL){
                     eventHandler = OnGet;
+                    pUserData = userDat;
                 }
 
                 static SceVoid OnGet(SceInt32 eventID, paf::ui::Widget *self, SceInt32 unk, ScePVoid pUserData);

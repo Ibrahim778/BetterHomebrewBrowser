@@ -1,7 +1,7 @@
 #ifndef BHBB_DL_OFFSETS_H
 #define BHBB_DL_OFFSETS_H
 
-#include <kernel.h>
+#include <psp2/types.h>
 
 #ifdef __cplusplus
 extern "C" {

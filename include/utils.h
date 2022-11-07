@@ -7,14 +7,15 @@ namespace Utils
 {
     void ToLowerCase(char *string);
     void InitMusic();
-    void SetMemoryInfo();
+    SceVoid HttpsToHttp(paf::string &str);
     SceVoid GetStringFromID(const char *id, paf::string *out);
     SceVoid GetfStringFromID(const char *id, paf::string *out);
     wchar_t *GetStringPFromID(const char *id);
     SceUInt32 GetHashById(const char *id);    
     SceInt32 PlayEffect(paf::ui::Widget *widget, SceFloat32 param, paf::effect::EffectType animId, paf::ui::EventCallback::EventHandler animCB = (paf::ui::EventCallback::EventHandler)SCE_NULL, ScePVoid pUserData = SCE_NULL);
     SceInt32 PlayEffectReverse(paf::ui::Widget *widget, SceFloat32 param, paf::effect::EffectType animId, paf::ui::EventCallback::EventHandler animCB = (paf::ui::EventCallback::EventHandler)SCE_NULL, ScePVoid pUserData = SCE_NULL);
-    
+    SceBool IsValidURLSCE(const char *url); //Can this URL be used with SceHttp?
+
     template<class T = paf::ui::Widget>
     T *GetChildByHash(paf::ui::Widget *parent, SceUInt32 hash)
     {

@@ -40,6 +40,11 @@ SceVoid CurlFile::OpenArg::SetSecondaryHeaderMethod(bool use)
     getHeadersWithGET = use;
 }
 
+SceInt32 CurlFile::GetEffectiveURL(char **out)
+{
+    return curl_easy_getinfo(curl, CURLINFO_EFFECTIVE_URL, out);
+}
+
 SceVoid CurlFile::OpenArg::SetUrl(const char *url)
 {
 	this->url = url;

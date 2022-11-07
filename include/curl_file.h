@@ -84,6 +84,7 @@ public:
 	virtual ~CurlFile();
 
 	SceInt32 GetResponseCode(SceInt32 *code);
+    SceInt32 GetEffectiveURL(char **out);
 
 	static SharedPtr<CurlFile> Open(const char *path, SceUInt32 flag, SceUInt32 mode, SceInt32 *error, bool useShare = false, bool secondaryHeaders = false);
 

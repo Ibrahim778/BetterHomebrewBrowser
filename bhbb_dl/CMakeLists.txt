@@ -1,61 +1,77 @@
-cmake_minimum_required(VERSION 3.12)
-set(CMAKE_TOOLCHAIN_FILE "$ENV{SCE_PSP2_SDK_DIR}/host_tools/build/cmake/psp2-snc-toolchain.cmake")
-project(bhbb_dl.suprx)
+cmake_minimum_required(VERSION 3.19)
+if(NOT DEFINED CMAKE_TOOLCHAIN_FILE)
+  if(DEFINED ENV{VITASDK})
+    set(CMAKE_TOOLCHAIN_FILE "$ENV{VITASDK}/share/vita.toolchain.cmake" CACHE PATH "toolchain file")
+  else()
+    message(FATAL_ERROR "Please define VITASDK to point to your SDK path!")
+  endif()
+endif()
 
-include(VitaDevelopmentSuite)
-enable_language(EMD)
+include("$ENV{VITASDK}/share/vita.cmake" REQUIRED)
+
+project(bhbb_dl)
 
 set(CMAKE_C_STANDARD 99)
 set(CMAKE_CXX_STANDARD 11)
 
-link_directories(
-  ${VDSUITE_LIBRARY_DIRECTORIES}
-)
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wl,-q -Wall -O3 -std=gnu99")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -fno-rtti -fno-exceptions -nostdlib")
 
 add_compile_options(
-    -D_SCE_TARGET_OS_PSP2=1 -Xdiag=0 -Xquit=2 -O3 -D__SNC__
+    -D_SCE_TARGET_OS_PSP2=1
 )
 
 add_link_options(
-  --prx-no-runtime-support
-  -Map -sn-full-map
+
 )
 
-add_library(${PROJECT_NAME} MODULE
-    src/main.cpp
+add_executable(${PROJECT_NAME}
+    src/main.c
     src/offsets.c
-    bhbb_dl.emd
+
+    src/minizip/ioapi.c
+    src/minizip/unzip.c
+    src/minizip/unzip.c
+    src/minizip/zip.c
+    src/zip.cpp
+    src/zip.h
+    src/libc2paf.c
+    src/taskmgr.c
+    src/taskmgr.h
+    src/notifmgr.c
+    src/notifmgr.h
+    src/net.c
+    src/net.h
+    src/promote.c
+    src/promote.h
+    src/sha1.c
+    src/sha1.h
+    src/head_bin.h
+
+    bhbb_dl.yml
 )
 
 target_link_libraries(${PROJECT_NAME}
-    SceKernel_stub
-    ScePafStdc_stub
-    ScePafThread_stub
-    ScePafTopLevel_stub
-    ScePafWidget_stub
-    ScePafCommon_stub
-    ScePafGraphics_stub
-    ScePafResource_stub
-    ScePafMisc_stub
-    SceSysmodule_stub
-    SceCes
+    SceLibKernel_stub
+    ScePaf_stub
+    z
+    SceKernelThreadMgr_stub
+    SceIofilemgr_stub
     taihen_stub
-    QuickMenuReborn_stub_weak
-    SceAppMgrUser_stub
-    taihenUnsafe_stub
-    SceAppMgr_Stub
-    SceNotificationUtil_stub_weak
-    SceShellUtil_stub
-    extractor_stub_weak
+    SceSysmodule_stub
+    SceNotificationUtilVDSuite_stub_weak
+    ScePafVDSuite_stub
+    ScePromoterUtil_stub_weak
+    curl_stub_weak
 )
 
 target_include_directories(${PROJECT_NAME} PRIVATE
-    ${CMAKE_SOURCE_DIR}/bhbb_dl/include
-    ${CMAKE_SOURCE_DIR}/common
-    ${VDSUITE_USER_INCLUDE_DIRECTORIES}
-    ${VDSUITE_STANDARD_INCLUDE_DIRECTORIES}
-    $ENV{SCE_PSP2_SDK_DIR}/target/include
-    $ENV{SCE_PSP2_SDK_DIR}/target/include_common
+    ../common
+    include
 )
 
-VDSuiteSignElf(${PROJECT_NAME} $<TARGET_FILE:${PROJECT_NAME}>)
+target_link_directories(${PROJECT_NAME} PRIVATE
+    $ENV{VITASDK}/arm-vita-eabi/lib/vdsuite
+)
+
+vita_create_self(${PROJECT_NAME}.suprx ${PROJECT_NAME} CONFIG ${PROJECT_NAME}.yml UNSAFE)

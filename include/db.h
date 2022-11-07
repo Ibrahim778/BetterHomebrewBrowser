@@ -63,31 +63,39 @@ namespace db
     {
         void Parse(db::List *outList, paf::string& jsonStr);
         SceInt32 GetDescription(db::entryInfo &entry, paf::string &out);
+        SceInt32 GetDownloadUrl(db::entryInfo &entry, paf::string &out);
+        SceInt32 GetDataUrl(db::entryInfo &entry, paf::string &out);
+        SceInt32 GetDownloadUrl(db::entryInfo &entry, paf::string &out);
     };
 
     namespace cbpsdb
     {
         void Parse(db::List *outList, paf::string& csv);
         SceInt32 GetDescription(db::entryInfo &entry, paf::string &out);
+        SceInt32 GetDownloadUrl(db::entryInfo &entry, paf::string &out);
+        SceInt32 GetDownloadUrl(db::entryInfo &entry, paf::string &out);
+        SceInt32 GetDataUrl(db::entryInfo &entry, paf::string &out);
     };
 
-    namespace vhbdb
-    {
-        void Parse(db::List *outList, paf::string& jsonStr);
-        SceInt32 GetDescription(db::entryInfo &entry, paf::string &out);
-    }
+    // namespace vhbdb
+    // {
+    //     void Parse(db::List *outList, paf::string& jsonStr);
+    //     SceInt32 GetDescription(db::entryInfo &entry, paf::string &out);
+    // }
 
     typedef enum // Should match the index in info[]
     {
         CBPSDB = 0,
         VITADB = 1,
-        VHBDB = 2,
+        //VHBDB = 2,
     } Id;
 
     typedef struct
     {
         void (*Parse)(db::List *outList, paf::string& data);
         SceInt32 (*GetDescription)(db::entryInfo& entry, paf::string& out);
+        SceInt32 (*GetDownloadUrl)(db::entryInfo& entry, paf::string& out);
+        SceInt32 (*GetDataUrl)(db::entryInfo& entry, paf::string& out);
         const char *name;
         const char *iconFolderPath;
         const char *iconsURL;
@@ -97,14 +105,13 @@ namespace db
         int id;
     } dbInfo;
 
-    int GetNumByCategory(db::entryInfo *list, int listNum, int category);
-    db::entryInfo *GetByCategoryIndex(db::entryInfo *list, int listNum, int index, int category);
-
     static const dbInfo info[] =
     {
         {   //CBPS DB
             .Parse = cbpsdb::Parse,
             .GetDescription = cbpsdb::GetDescription,
+            .GetDownloadUrl = cbpsdb::GetDownloadUrl,
+            .GetDataUrl = cbpsdb::GetDataUrl,
             .name = "CBPS DB",
             .iconFolderPath = "ux0:data/betterHomebrewBrowser/icons/cbpsdb",
             .iconsURL = "https://github.com/Ibrahim778/CBPS-DB-Icon-Downloader/raw/main/icons.zip?raw=true",
@@ -116,9 +123,11 @@ namespace db
         {   //Vita DB
             .Parse = vitadb::Parse, 
             .GetDescription = vitadb::GetDescription,
+            .GetDownloadUrl = vitadb::GetDownloadUrl,
+            .GetDataUrl = vitadb::GetDataUrl,
             .name = "Vita DB", 
             .iconFolderPath = "ux0:/data/betterHomebrewBrowser/icons/vitadb", 
-            .iconsURL = "https://bhbb-wrapper.herokuapp.com/icon_zip", 
+            .iconsURL = "https://vitadb.rinnegatamante.it/icons_zip.php", 
             .indexURL = "https://rinnegatamante.it/vitadb/list_hbs_json.php",
             .ScreenshotsSuppourted = true,
             .CategoriesSuppourted = true,

@@ -12,7 +12,7 @@ using namespace paf;
 
 generic::MultiPageAppList::MultiPageAppList(db::List *tList, const char *templateName):generic::Page(templateName),listRootPlane(SCE_NULL),currBody(SCE_NULL),targetList(tList)
 {   
-    listRootPlane = (ui::Plane *)Utils::GetChildByHash(root, Utils::GetHashById("plane_list_root"));
+    listRootPlane = Utils::GetChildByHash<ui::Plane>(root, Utils::GetHashById("plane_list_root"));
     CreateListWrapper();
 }
 
@@ -36,9 +36,20 @@ SceVoid generic::MultiPageAppList::OnCategoryChanged(int prev, int curr)
 
 }
 
-SceVoid generic::MultiPageAppList::PopulatePage(ui::Widget *sb)
+SceVoid generic::MultiPageAppList::PopulatePage(ui::Widget *sb, void *userDat)
 {
     
+}
+
+SceVoid generic::MultiPageAppList::OnPageDeleted(Body *userDat)
+{
+
+}
+
+SceVoid generic::MultiPageAppList::OnForwardButtonPressed()
+{
+    NewPage();
+    HandleForwardButton();
 }
 
 SceBool generic::MultiPageAppList::SetCategory(int _category)
@@ -93,7 +104,7 @@ SceVoid generic::MultiPageAppList::OnRedisplay()
 {
     HandleForwardButton();
 
-    if(currBody->prev != SCE_NULL)
+    if(currBody && currBody->prev != SCE_NULL)
     {
         generic::Page::SetBackButtonEvent(generic::MultiPageAppList::BackCB, this);
         g_backButton->PlayEffect(0, effect::EffectType_Reset);
@@ -123,7 +134,8 @@ SceVoid generic::MultiPageAppList::ClearPages()
     OnClear();
     while(currBody)
     {
-        apps::Page::Body *prev = currBody->prev;
+        Body *prev = currBody->prev;
+        OnPageDeleted(prev);
         delete currBody;
         currBody = prev;
     }
@@ -147,17 +159,27 @@ SceVoid generic::MultiPageAppList::ClearJob::Run()
     callingPage->ClearInternal();
 }
 
-SceVoid generic::MultiPageAppList::ForwardButtonCB(SceInt32 eventID, paf::ui::Widget *self, SceInt32 unk, ScePVoid pUserData)
+SceVoid generic::MultiPageAppList::NewPageJob::Run()
 {
-    ((MultiPageAppList *)pUserData)->NewPage();
-    ((MultiPageAppList *)pUserData)->HandleForwardButton();
+    callingPage->_NewPage(userDat, populate);
+}
+
+SceVoid generic::MultiPageAppList::DeletePageJob::Run()
+{
+    callingPage->_DeletePage(animate);
 }
 
 
-SceVoid generic::MultiPageAppList::Redisplay()
+SceVoid generic::MultiPageAppList::ForwardButtonCB(SceInt32 eventID, paf::ui::Widget *self, SceInt32 unk, ScePVoid pUserData)
 {
-    g_mainQueue->Enqueue(&SharedPtr<job::JobItem>(new ClearJob("BHBB::apps::Page::ClearJob", this)));
-    g_mainQueue->Enqueue(&SharedPtr<job::JobItem>(new NewPageJob("MPAL::NewPageJob", this, SCE_TRUE)));
+    ((MultiPageAppList *)pUserData)->OnForwardButtonPressed();
+}
+
+
+SceVoid generic::MultiPageAppList::Redisplay(void *u)
+{
+    g_mainQueue->Enqueue(&SharedPtr<job::JobItem>(new ClearJob("MPAL::ClearJob", this)));
+    g_mainQueue->Enqueue(&SharedPtr<job::JobItem>(new NewPageJob("MPAL::NewPageJob", this, u, SCE_TRUE)));
 }
 
 SceVoid generic::MultiPageAppList::HandleForwardButton()
@@ -174,20 +196,20 @@ SceVoid generic::MultiPageAppList::HandleForwardButton()
     }
 }
 
-SceVoid generic::MultiPageAppList::NewPageJob::Run()
-{
-    callingPage->_NewPage(populate);
-}
+// SceVoid generic::MultiPageAppList::NewPageJob::Run()
+// {
+//     callingPage->_NewPage(populate);
+// }
 
-SceVoid generic::MultiPageAppList::DeletePageJob::Run()
-{
-    callingPage->_DeletePage(animate);
-}
+// SceVoid generic::MultiPageAppList::DeletePageJob::Run()
+// {
+//     callingPage->_DeletePage(animate);
+// }
 
-SceVoid generic::MultiPageAppList::NewPage(SceBool populate)
+SceVoid generic::MultiPageAppList::NewPage(SceVoid *userDat, SceBool populate)
 {
     //g_mainQueue->Enqueue(&SharedPtr<job::JobItem>(new NewPageJob("MPAL::NewPageJob", this, populate)));
-    _NewPage(populate);
+    _NewPage(userDat, populate);
 }
 
 SceVoid generic::MultiPageAppList::DeletePage(SceBool animate)
@@ -196,13 +218,13 @@ SceVoid generic::MultiPageAppList::DeletePage(SceBool animate)
     _DeletePage(animate);
 }
 
-SceVoid generic::MultiPageAppList::_NewPage(SceBool populate)
+SceVoid generic::MultiPageAppList::_NewPage(void *userDat, SceBool populate)
 {
     Plugin::TemplateOpenParam tInit;
     rco::Element e;
     e.hash = Utils::GetHashById("home_page_list_template");
 
-    currBody = new Body(currBody);
+    currBody = new Body(currBody, userDat);
 
     ui::Widget *widget = SCE_NULL;
     
@@ -237,7 +259,7 @@ SceVoid generic::MultiPageAppList::_NewPage(SceBool populate)
     e.hash = Utils::GetHashById("homebrew_button");
     
     if(populate)
-        PopulatePage(scrollBox);
+        PopulatePage(scrollBox, userDat);
 
     Utils::PlayEffect(widget, -5000, effect::EffectType_3D_SlideFromFront);
     HandleForwardButton();
@@ -268,6 +290,7 @@ SceVoid generic::MultiPageAppList::_DeletePage(SceBool animate)
        thread::s_mainThreadMutex.Unlock();
     
     Body *prev = currBody->prev;
+    OnPageDeleted(currBody);
     delete currBody;
     currBody = prev;
 }

@@ -2,7 +2,11 @@
 
 #include <psp2/io/stat.h>
 #include <psp2/paf.h>
+#include <psp2/types.h>
 #include <string.h>
+
+#include "notifmgr.h"
+#include "print.h"
 
 extern "C" int sceClibPrintf(const char*,...);
 
@@ -12,7 +16,7 @@ extern "C" int sceClibPrintf(const char*,...);
 
 #define snprintf(...) sce_paf_snprintf(__VA_ARGS__)
 
-static void mkdir_rec(const char* dir) {
+static void mkdir_rec(const char* dir) { //TODO: ScePaf has a function for this too
 	
 	char tmp[256];
 	char* p = nullptr;
@@ -49,9 +53,23 @@ Zipfile::Zipfile(const char *zip_path) {
 
 SceBool hasTrailingSlash(const char *str)
 {
+#ifndef _DEBUG
 	int i = strlen(str) - 1;
 	if(str[i] == '/' || str[i] == '\\')	return true;
 	else return false;
+#else
+	int i = strlen(str) - 1;
+	if(str[i] == '/' || str[i] == '\\')
+    {
+        print("hasTrailingSlash %s -> true\n", str);
+        return true;
+    }	
+	else 
+    {
+        print("hasTralingSlash %s -> false\n", str);
+        return false;
+    }
+#endif
 }
 
 Zipfile::~Zipfile() {
@@ -59,7 +77,7 @@ Zipfile::~Zipfile() {
 		unzClose(zipfile_);
 }
 
-int Zipfile::Unzip(const char *outpath) {
+int Zipfile::Unzip(const char *outpath, UnzipProgressCallback cb) {
 	
 	if (uncompressed_size_ == 0)
 	{
@@ -112,7 +130,7 @@ int Zipfile::Unzip(const char *outpath) {
 			FILE* out = fopen(fullfilepath, "wb");
 			if (out == nullptr) {
 				unzCloseCurrentFile(zipfile_);
-				sceClibPrintf("Cannot open destination file");
+				sceClibPrintf("Cannot open destination file %s\n", fullfilepath);
 				return -7;
 			}
 
@@ -142,7 +160,13 @@ int Zipfile::Unzip(const char *outpath) {
 					sceClibPrintf("Error getting next zip file");
 					return -5;
 				}
-	}
+        
+        if(cb)
+        {
+            cb(i, global_info_.number_entry);
+            if(NotifMgr_currDlCanceled) break;
+        }
+    }
 
 	return 0;
 }
@@ -158,7 +182,7 @@ int Zipfile::UncompressedSize() {
 	}
 
 	uLong i;
-	for (i = 0; i < global_info_.number_entry; ++i) {
+	for (i = 0; i < global_info_.number_entry && !NotifMgr_currDlCanceled; ++i) {
 		
 		unz_file_info file_info;
 		char filename[MAX_FILENAME];
@@ -180,4 +204,26 @@ int Zipfile::UncompressedSize() {
 	}
 
 	return uncompressed_size_;
+}
+
+int unZipTo(const char *path, const char *dest)
+{   
+    print("File: %s -> %s\n", path, dest);     
+    if(!path || !dest) return -2;
+    
+    Zipfile zFile = Zipfile(path);
+    SceInt32 ret = zFile.Unzip(dest);
+    
+    return ret;
+}
+
+int unZipToWithProgressCB(const char *path, const char *dest, UnzipProgressCallback cb)
+{   
+    print("File: %s -> %s\n", path, dest);     
+    if(!path || !dest) return -2;
+    
+    Zipfile zFile = Zipfile(path);
+    SceInt32 ret = zFile.Unzip(dest, cb);
+    
+    return ret;
 }

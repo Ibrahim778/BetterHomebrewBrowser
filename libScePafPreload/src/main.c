@@ -38,12 +38,8 @@ int __module_start(SceSize argc, void *args)
     ScePafInit initParam;
     SceSysmoduleOpt opt;
 
-    initParam.global_heap_size = 5 * 1024 * 1024;
-    if (sceAppMgrGrowMemory3(16 * 1024 * 1024, 1) >= 0)
-        initParam.global_heap_size += 5 * 1024 * 1024;
-    if (sceAppMgrGrowMemory3(2 * 1024 * 1024, 1) >= 0)
-        initParam.global_heap_size += 2 * 1024 * 1024;
-
+    initParam.global_heap_size = 16 * 1024 * 1024;
+    
     initParam.a2 = 0x0000EA60;
     initParam.a3 = 0x00040000;
 

@@ -7,7 +7,6 @@ include(VitaDevelopmentSuite)
 set(CMAKE_C_STANDARD 99)
 set(CMAKE_CXX_STANDARD 11)
 
-add_subdirectory(bhbb_dl)
 add_subdirectory(libScePafPreload)
 
 link_directories(
@@ -122,7 +121,6 @@ VDSuiteCreateSfo(${PROJECT_NAME}.sfo param.sfx)
 VDSuiteSignElf(${PROJECT_NAME}.self $<TARGET_FILE:${PROJECT_NAME}> BOOT_PARAM bootparam.yml)
 
 add_dependencies(${PROJECT_NAME}
-    bhbb_dl.suprx
     libScePafPreload.suprx
     file_toucher    
 )
@@ -136,7 +134,6 @@ if(${CMAKE_BUILD_TYPE} STREQUAL Debug)
       resource/rco/src/texture/bg.png sce_sys/pic0.png
       ${CMAKE_BINARY_DIR}/libScePafPreload/libScePafPreload.suprx module/libScePafPreload.suprx
       ${CMAKE_BINARY_DIR}/bhbb_dl/bhbb_dl.suprx module/bhbb_dl.suprx
-      ${CMAKE_BINARY_DIR}/libextractor/libextractor.suprx module/libextractor.suprx
       sce_sys sce_sys
       module module
       ${CMAKE_SOURCE_DIR}/resource/bhbb_plugin.rcd resource/bhbb_plugin.rcd
@@ -150,7 +147,6 @@ else()
         resource/rco/src/texture/bg.png sce_sys/pic0.png
         ${CMAKE_BINARY_DIR}/libScePafPreload/libScePafPreload.suprx module/libScePafPreload.suprx
         ${CMAKE_BINARY_DIR}/bhbb_dl/bhbb_dl.suprx module/bhbb_dl.suprx
-        ${CMAKE_BINARY_DIR}/libextractor/libextractor.suprx module/libextractor.suprx
         sce_sys sce_sys
         module module
     )

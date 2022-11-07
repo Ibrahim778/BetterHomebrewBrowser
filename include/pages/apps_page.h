@@ -89,6 +89,22 @@ namespace apps
             SceVoid Finish();
         };
 
+        class IconAssignThread : public paf::thread::Thread
+        {
+        private:
+            Page *callingPage;
+        public:
+            db::List *targetList;
+            int category;
+            int loadNum;
+            int pageCountBeforeCreation;
+            paf::thread::Thread::Thread;
+
+            SceVoid EntryFunction();
+
+            IconAssignThread(Page *callingPage, SceInt32 initPriority = SCE_KERNEL_DEFAULT_PRIORITY_USER - 1, SceSize stackSize = SCE_KERNEL_4KiB, const char *name = "apps::Page::IconAssignThread"):paf::thread::Thread::Thread(initPriority, stackSize, name),callingPage(callingPage){}
+        };
+
         class LoadJob : public paf::job::JobItem
         {
         public:
@@ -156,7 +172,7 @@ namespace apps
         SceVoid Load();
 
         //Creates a new page and populates with buttons
-        SceVoid PopulatePage(paf::ui::Widget *scrollBox) override;
+        SceVoid PopulatePage(paf::ui::Widget *scrollBox, void *userDat) override;
 
         //Cancels current icon downloads and assignments, DO NOT CALL FROM MAIN THREAD
         SceVoid CancelIconJobs();
@@ -187,6 +203,8 @@ namespace apps
         
         SceVoid OnClear() override;
         SceVoid OnCleared() override;
+        SceVoid OnForwardButtonPressed() override;
+        SceVoid OnPageDeleted(generic::MultiPageAppList::Body *body) override;
 
         void OnCategoryChanged(int prev, int curr) override;
 

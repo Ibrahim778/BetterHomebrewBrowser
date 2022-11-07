@@ -28,6 +28,22 @@ SceUInt32 Utils::GetHashById(const char *id)
     return searchRes.hash;
 }
 
+SceVoid Utils::HttpsToHttp(paf::string& url)
+{ 
+    if(sce_paf_strncmp("https", url.data(), 5) != 0)
+        return;
+    
+    int strLen = url.length();
+    
+    char* buff = new char[strLen]; //We don't add +1 bcs we will remove the 's' character anyways
+    sce_paf_memset(buff, 0, strLen);
+
+    sce_paf_snprintf(buff, strLen, "http%s", &url.data()[5]);
+
+    url = buff;
+    delete[] buff;
+}
+
 SceVoid Utils::GetStringFromID(const char *id, paf::string *out)
 {
     rco::Element e;
@@ -35,6 +51,27 @@ SceVoid Utils::GetStringFromID(const char *id, paf::string *out)
     
     wchar_t *wstr = mainPlugin->GetWString(&e);
     ccc::UTF16toUTF8((const wchar_t *)wstr, out);
+}
+
+SceBool Utils::IsValidURLSCE(const char *url)
+{
+    paf::HttpFile file;
+    paf::HttpFile::OpenArg openArg;
+    SceInt32 ret = SCE_OK;
+
+    openArg.SetUrl(url);
+
+    openArg.SetOpt(4000000, HttpFile::OpenArg::Opt_ResolveTimeOut);
+	openArg.SetOpt(10000000, HttpFile::OpenArg::Opt_ConnectTimeOut);
+
+    ret = file.Open(&openArg);
+    if(ret == SCE_OK)
+    {
+        file.Close();
+        return SCE_TRUE;
+    }
+
+    return SCE_FALSE;
 }
 
 SceVoid Utils::GetfStringFromID(const char *id, paf::string *out)
@@ -162,17 +199,6 @@ void Utils::InitMusic()
     if(ret < 0) print("[SEND_EVENT_PLAY] Error! 0x%X", ret);
 }
 
-void Utils::SetMemoryInfo()
-{
-    SceAppMgrBudgetInfo info;
-    sce_paf_memset(&info, 0, sizeof(SceAppMgrBudgetInfo));
-    info.size = sizeof(SceAppMgrBudgetInfo);
-
-    sceAppMgrGetBudgetInfo(&info);
-    if(info.budgetMain >= 0x2800000) loadFlags |= LOAD_FLAGS_ICONS;
-    if(info.budgetMain >= 0x3200000) loadFlags |= LOAD_FLAGS_SCREENSHOTS;
-}
-
 SceVoid Utils::DeleteTexture(paf::graph::Surface **tex)
 {
     if(tex != NULL)
@@ -206,7 +232,9 @@ SceVoid Utils::StartBGDL()
         
         SharedPtr<LocalFile> openResult = LocalFile::Open("ux0:data/bgdlid", SCE_O_RDONLY, 0, NULL);
         openResult.get()->Read(&id, sizeof(SceUID));
+        print("Unloading....\n");
         taiStopUnloadModuleForPid(sceShellID, id, 0, NULL, 0, NULL, NULL);
+        print("Done!\n");
     }
 #endif
     res = taiLoadStartModuleForPid(sceShellID, "ux0:app/BHBB00001/module/bhbb_dl.suprx", 0, NULL, 0);

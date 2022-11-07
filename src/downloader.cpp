@@ -134,6 +134,7 @@ SceInt32 Downloader::Enqueue(const char *url, const char *name, BGDLParam *param
     
     if(param != NULL && param->magic == (BHBB_DL_CFG_VER | BHBB_DL_MAGIC))
     {
+        print("Writing param....\n");
         string paramPath = ccc::Sprintf("ux0:bgdl/t/%08x/install_param.ini", dwRes);
 
         SceInt32 result = SCE_OK;
@@ -143,9 +144,15 @@ SceInt32 Downloader::Enqueue(const char *url, const char *name, BGDLParam *param
             print("open %s -> 0x%X\n", paramPath.data(), result);
             return result;
         }
-
+        print("Writing param.path: %s\n", param->path);
         openResult.get()->Write(param, sizeof(BGDLParam));
     }
+#ifdef _DEBUG
+    if(ret < 0 || ret2 < 0)
+    {
+        print("Downloader::Enqueue FAILED: 0x%X 0x%X\n", ret, ret2);
+    }
+#endif
 	return ret;
 }
 

@@ -121,5 +121,5 @@ SceVoid Network::CheckThread::EntryFunction()
     if(CheckComplete)
         CheckComplete();
 
-    sceKernelExitDeleteThread(0);
+    Cancel();
 }

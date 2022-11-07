@@ -998,7 +998,7 @@ extern int ZEXPORT zipOpenNewFileInZip4_64(
     ZPOS64_T size_needed;
 
 #ifdef NOCRYPT
-    (crcForCrypting);
+    //(crcForCrypting);
     if (password != NULL)
         return ZIP_PARAMERROR;
 #endif

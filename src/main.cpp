@@ -60,8 +60,6 @@ extern "C" {
 
 using namespace paf;
 
-int loadFlags = 0;
-
 Plugin *mainPlugin = SCE_NULL;
 
 graph::Surface *BrokenTex = SCE_NULL;
@@ -148,13 +146,13 @@ SceVoid onPluginReady(Plugin *plugin)
     job::JobQueue::Option mainOpt;
     mainOpt.workerNum = 1;
     mainOpt.workerOpt = SCE_NULL;
-    mainOpt.workerPriority = SCE_KERNEL_DEFAULT_PRIORITY_USER - 5;
+    mainOpt.workerPriority = SCE_KERNEL_DEFAULT_PRIORITY_USER + 5;
     mainOpt.workerStackSize = SCE_KERNEL_16KiB;
 
     g_mainQueue = new job::JobQueue("BHBB::MainQueue", &mainOpt);
     g_downloader = new Downloader();
     g_appsPage = new apps::Page();
-    
+
     Network::Check(OnNetworkChecked);
 
     sceSysmoduleLoadModule(SCE_SYSMODULE_JSON);
@@ -168,15 +166,12 @@ int main()
 
     Utils::StartBGDL();
     Utils::InitMusic();
-    Utils::SetMemoryInfo();
 
     Framework::InitParam fwParam;
     fwParam.LoadDefaultParams();
     fwParam.applicationMode = Framework::ApplicationMode::Mode_Application;
     
-    fwParam.defaultSurfacePoolSize = 5 * 1024 * 1024;
-    if(loadFlags & LOAD_FLAGS_ICONS) fwParam.defaultSurfacePoolSize += 16 * 1024 * 1024;
-    if(loadFlags & LOAD_FLAGS_SCREENSHOTS) fwParam.defaultSurfacePoolSize += 5 * 1024 * 1024;
+    fwParam.defaultSurfacePoolSize = 16 * 1024 * 1024;
     fwParam.textSurfaceCacheSize = 2621440; //2.5MB
 
     Framework *fw = new Framework(fwParam);
