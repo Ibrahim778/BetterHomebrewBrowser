@@ -15,7 +15,7 @@ A good homebrew browser. Massive thanks to [GrapheneCt](https://github.com/Graph
 ## Adding new language:
 (Instructions by [GrapheneCt](https://github.com/GrapheneCt))
 
-- Use [English locale](https://github.com/Ibrahim778/BetterHomebrewBrowser/blob/master/resource/rco/src/locale/en.xml) as base. Name your translation vbackup_locale_XX.xml, where XX is language code.
+- Use [English locale](https://github.com/Ibrahim778/BetterHomebrewBrowser/blob/master/resource/rco/src/locale/en.xml) as base. Name your translation XX.xml, where XX is language code.
 Supported language codes can be seen [here](https://github.com/Ibrahim778/BetterHomebrewBrowser/blob/master/resource/rco/src/bhbb_plugin.xml#L281) (id attribute).
 - Submit your translation as pull request, it will be added in the next release.
 
