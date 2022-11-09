@@ -10,13 +10,12 @@ A good homebrew browser. Massive thanks to [GrapheneCt](https://github.com/Graph
 1. It looks, sounds, and feels almost exactly like the official PlayStation Store App
 1. It can be opened alongside other apps
 1. It has tunes (Yes, I've run out of things now)
-1. It can link to VitaDB and CBPSDB, with both app and data file suppourt
 
 ## Adding new language:
 (Instructions by [GrapheneCt](https://github.com/GrapheneCt))
 
-- Use [English locale](https://github.com/Ibrahim778/BetterHomebrewBrowser/blob/master/resource/rco/src/locale/en.xml) as base. Name your translation XX.xml, where XX is language code.
-Supported language codes can be seen [here](https://github.com/Ibrahim778/BetterHomebrewBrowser/blob/master/resource/rco/src/bhbb_plugin.xml#L281) (id attribute).
+- Use [English locale](https://github.com/Ibrahim778/BetterHomebrewBrowser/blob/InDev/resource/rco/src/locale/en.xml) as base. Name your translation XX.xml, where XX is language code.
+Supported language codes can be seen [here](https://github.com/Ibrahim778/BetterHomebrewBrowser/blob/InDev/resource/rco/src/bhbb_plugin.xml#L281) (id attribute).
 - Submit your translation as pull request, it will be added in the next release.
 
 ## Credits
