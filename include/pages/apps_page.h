@@ -147,15 +147,7 @@ namespace apps
             static SceVoid OnGet(SceInt32 eventID, paf::ui::Widget *self, SceInt32 unk, ScePVoid pUserData);
         };
 
-        class CategoryCB : public paf::ui::EventCallback
-        {
-        public:
-            CategoryCB(Page *page) {
-                pUserData = page;
-                eventHandler = OnGet;
-            }
-            static SceVoid OnGet(SceInt32 eventID, paf::ui::Widget *self, SceInt32 unk, ScePVoid pUserData);
-        };
+
 
         enum PageMode
         {
@@ -181,8 +173,6 @@ namespace apps
         virtual ~Page();
     
     private:
-
-
         enum {
             Hash_All = 0x59E75663,
             Hash_Game = 0x6222A81A,
@@ -206,7 +196,7 @@ namespace apps
         SceVoid OnForwardButtonPressed() override;
         SceVoid OnPageDeleted(generic::MultiPageAppList::Body *body) override;
 
-        void OnCategoryChanged(int prev, int curr) override;
+        ScePVoid DefaultNewPageData() override;
 
         PageMode mode;
         

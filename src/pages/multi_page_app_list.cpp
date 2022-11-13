@@ -14,6 +14,7 @@ generic::MultiPageAppList::MultiPageAppList(db::List *tList, const char *templat
 {   
     listRootPlane = Utils::GetChildByHash<ui::Plane>(root, Utils::GetHashById("plane_list_root"));
     CreateListWrapper();
+    SetCategory(-1);
 }
 
 generic::MultiPageAppList::~MultiPageAppList()
@@ -44,6 +45,11 @@ SceVoid generic::MultiPageAppList::PopulatePage(ui::Widget *sb, void *userDat)
 SceVoid generic::MultiPageAppList::OnPageDeleted(Body *userDat)
 {
 
+}
+
+ScePVoid generic::MultiPageAppList::DefaultNewPageData()
+{
+    
 }
 
 SceVoid generic::MultiPageAppList::OnForwardButtonPressed()
@@ -111,6 +117,37 @@ SceVoid generic::MultiPageAppList::OnRedisplay()
     }
 }
 
+SceVoid generic::MultiPageAppList::SetCategories(const std::vector<db::Category>& categoryList)
+{
+    //Delete all previous buttons
+    thread::s_mainThreadMutex.Lock();
+    auto plane = Utils::GetChildByHash(root, Utils::GetHashById("plane_category_buttons"));
+    for(int i = 0; i < plane->childNum; i++)
+        effect::Play(0, plane->GetChild(i), effect::EffectType_Reset, SCE_TRUE, SCE_TRUE);
+    thread::s_mainThreadMutex.Unlock();
+    
+    Plugin::TemplateOpenParam tOpen;
+    rco::Element e;
+    SceFloat buttonSize = 844.0f / categoryList.size();
+    
+    e.hash = Utils::GetHashById("category_button_template");
+    thread::s_mainThreadMutex.Lock();
+
+    int i = 0;
+    for(const db::Category& category : categoryList)
+    {
+        mainPlugin->TemplateOpen(plane, &e, &tOpen);
+        auto button = plane->GetChild(plane->childNum - 1);
+        button->SetSize(&paf::Vector4(buttonSize, 58));
+        button->SetPosition(&paf::Vector4(i * 168.8f, 1));
+        button->SetAnchor(ui::Anchor_Left, ui::Anchor_None, ui::Anchor_None, ui::Anchor_None);
+        button->SetAlign(ui::Align_Left, ui::Align_None, ui::Align_None, ui::Align_None);
+        button->SetLabel(&paf::wstring(Utils::GetStringPFromID(category.nameID)));
+        i++;
+    }
+    thread::s_mainThreadMutex.Unlock();
+}
+
 int generic::MultiPageAppList::GetCategory()
 {
     return category;
@@ -169,17 +206,15 @@ SceVoid generic::MultiPageAppList::DeletePageJob::Run()
     callingPage->_DeletePage(animate);
 }
 
-
 SceVoid generic::MultiPageAppList::ForwardButtonCB(SceInt32 eventID, paf::ui::Widget *self, SceInt32 unk, ScePVoid pUserData)
 {
     ((MultiPageAppList *)pUserData)->OnForwardButtonPressed();
 }
 
-
 SceVoid generic::MultiPageAppList::Redisplay(void *u)
 {
     g_mainQueue->Enqueue(&SharedPtr<job::JobItem>(new ClearJob("MPAL::ClearJob", this)));
-    g_mainQueue->Enqueue(&SharedPtr<job::JobItem>(new NewPageJob("MPAL::NewPageJob", this, u, SCE_TRUE)));
+    g_mainQueue->Enqueue(&SharedPtr<job::JobItem>(new NewPageJob("MPAL::NewPageJob", this, !u ? DefaultNewPageData() : u, SCE_TRUE)));
 }
 
 SceVoid generic::MultiPageAppList::HandleForwardButton()
@@ -209,7 +244,7 @@ SceVoid generic::MultiPageAppList::HandleForwardButton()
 SceVoid generic::MultiPageAppList::NewPage(SceVoid *userDat, SceBool populate)
 {
     //g_mainQueue->Enqueue(&SharedPtr<job::JobItem>(new NewPageJob("MPAL::NewPageJob", this, populate)));
-    _NewPage(userDat, populate);
+    _NewPage(!userDat ? DefaultNewPageData() : userDat, populate);
 }
 
 SceVoid generic::MultiPageAppList::DeletePage(SceBool animate)
@@ -293,4 +328,34 @@ SceVoid generic::MultiPageAppList::_DeletePage(SceBool animate)
     OnPageDeleted(currBody);
     delete currBody;
     currBody = prev;
+}
+
+SceVoid generic::MultiPageAppList::CategoryCB::OnGet(SceInt32 eventID, ui::Widget *self, SceInt32 unk, ScePVoid pUserData)
+{
+    if(!db::info[Settings::GetInstance()->source].CategoriesSuppourted) return;
+    MultiPageAppList *page = (MultiPageAppList *)pUserData;
+    int targetCategory = 0;
+    // switch (self->elem.hash)
+    // {
+    // case Hash_All:
+    //     targetCategory = -1;
+    //     break;
+    // case Hash_Util:
+    //     targetCategory = db::Category::UTIL;
+    //     break;
+    // case Hash_Game:
+    //     targetCategory = db::Category::GAME;
+    //     break;
+    // case Hash_Emu:
+    //     targetCategory = db::Category::EMULATOR;
+    //     break;
+    // case Hash_Port:
+    //     targetCategory = db::Category::PORT;
+    //     break;
+    // }
+
+    //TODO: FINISH THIS
+
+    if(page->SetCategory(targetCategory)) // returns true if there's any change
+        page->Redisplay();
 }

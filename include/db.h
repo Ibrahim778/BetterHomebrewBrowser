@@ -33,12 +33,10 @@ namespace db
         entryInfo():hash(0xDEADBEEF){}
     } entryInfo;
 
-    typedef enum
+    typedef struct 
     {
-        GAME = 1,
-        PORT = 2,
-        EMULATOR = 5,
-        UTIL = 4
+        int id;
+        const char *nameID;
     } Category;
 
     class List
@@ -61,38 +59,38 @@ namespace db
 
     namespace vitadb
     {
-        void Parse(db::List *outList, paf::string& jsonStr);
+        SceInt32 Parse(db::List *outList, paf::string& jsonStr);
         SceInt32 GetDescription(db::entryInfo &entry, paf::string &out);
         SceInt32 GetDownloadUrl(db::entryInfo &entry, paf::string &out);
         SceInt32 GetDataUrl(db::entryInfo &entry, paf::string &out);
-        SceInt32 GetDownloadUrl(db::entryInfo &entry, paf::string &out);
     };
 
     namespace cbpsdb
     {
-        void Parse(db::List *outList, paf::string& csv);
+        SceInt32 Parse(db::List *outList, paf::string& csv);
         SceInt32 GetDescription(db::entryInfo &entry, paf::string &out);
-        SceInt32 GetDownloadUrl(db::entryInfo &entry, paf::string &out);
         SceInt32 GetDownloadUrl(db::entryInfo &entry, paf::string &out);
         SceInt32 GetDataUrl(db::entryInfo &entry, paf::string &out);
     };
 
-    // namespace vhbdb
-    // {
-    //     void Parse(db::List *outList, paf::string& jsonStr);
-    //     SceInt32 GetDescription(db::entryInfo &entry, paf::string &out);
-    // }
+    namespace vhbdb
+    {
+        SceInt32 Parse(db::List *outList, paf::string& jsonStr);
+        SceInt32 GetDescription(db::entryInfo &entry, paf::string &out);
+        SceInt32 GetDownloadUrl(db::entryInfo &entry, paf::string &out);
+        SceInt32 GetDataUrl(db::entryInfo &entry, paf::string &out);
+    }
 
     typedef enum // Should match the index in info[]
     {
         CBPSDB = 0,
         VITADB = 1,
-        //VHBDB = 2,
+        VHBDB = 2,
     } Id;
 
     typedef struct
     {
-        void (*Parse)(db::List *outList, paf::string& data);
+        SceInt32 (*Parse)(db::List *outList, paf::string& data);
         SceInt32 (*GetDescription)(db::entryInfo& entry, paf::string& out);
         SceInt32 (*GetDownloadUrl)(db::entryInfo& entry, paf::string& out);
         SceInt32 (*GetDataUrl)(db::entryInfo& entry, paf::string& out);
@@ -102,6 +100,7 @@ namespace db
         const char *indexURL;
         bool ScreenshotsSuppourted;
         bool CategoriesSuppourted;
+        std::vector<Category> categories;
         int id;
     } dbInfo;
 
@@ -118,6 +117,28 @@ namespace db
             .indexURL = "https://raw.githubusercontent.com/KuromeSan/cbps-db/master/cbpsdb.csv",
             .ScreenshotsSuppourted = false,
             .CategoriesSuppourted = false,
+            .categories = {
+                {
+                    .id = -1, 
+                    .nameID = "db_category_all"
+                },
+                {
+                    .id = 1,
+                    .nameID = "db_category_game"
+                },
+                {
+                    .id = 2,
+                    .nameID = "db_category_port"
+                },
+                {
+                    .id = 5,
+                    .nameID = "db_category_emu"
+                },
+                {
+                    .id = 4,
+                    .nameID = "db_category_util"
+                }
+            },
             .id = CBPSDB
         },
         {   //Vita DB
@@ -131,19 +152,40 @@ namespace db
             .indexURL = "https://rinnegatamante.it/vitadb/list_hbs_json.php",
             .ScreenshotsSuppourted = true,
             .CategoriesSuppourted = true,
+            .categories = {},
             .id = VITADB //index in info[]
         },
-        // {   //Vita Homebrew DB
-        //     .Parse = vhbdb::Parse,
-        //     .GetDescription = vhbdb::GetDescription,
-        //     .name = "VHB DB",
-        //     .iconFolderPath = "ux0:/data/betterHomebrewBrowser/icons/vhbdb",
-        //     .iconsURL = SCE_NULL,
-        //     .indexURL = "https://github.com/vhbd/database/releases/download/latest/db_minify.json",
-        //     .ScreenshotsSuppourted = false,
-        //     .CategoriesSuppourted = false,
-        //     .id = VHBDB
-        // }
+        {   //Vita Homebrew DB
+            .Parse = vhbdb::Parse,
+            .GetDescription = vhbdb::GetDescription,
+            .GetDownloadUrl = vhbdb::GetDownloadUrl,
+            .GetDataUrl = vhbdb::GetDataUrl,
+            .name = "VHB DB",
+            .iconFolderPath = "ux0:/data/betterHomebrewBrowser/icons/vhbdb",
+            .iconsURL = SCE_NULL,
+            .indexURL = "https://github.com/vhbd/database/releases/download/latest/db_minify.json",
+            .ScreenshotsSuppourted = false,
+            .CategoriesSuppourted = false,
+            .categories = {
+                {
+                    .id = -1,
+                    .nameID = "db_category_all"
+                },
+                {
+                    .id = 0,
+                    .nameID = "db_category_app"
+                },
+                {
+                    .id = 1,
+                    .nameID = "db_category_game"
+                },
+                {
+                    .id = 2,
+                    .nameID = "db_category_emu"
+                }
+            },
+            .id = VHBDB
+        }
     };
 };
 

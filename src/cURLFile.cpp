@@ -11,13 +11,14 @@ cURLFile::cURLFile(const char *url)
     handle = curl_easy_init();
 
     SetCancelCheck(SCE_NULL, SCE_NULL);
-//
+
     curl_easy_setopt(handle, CURLOPT_CONNECTTIMEOUT, 100000L);
     curl_easy_setopt(handle, CURLOPT_HTTPGET, 1L);
     curl_easy_setopt(handle, CURLOPT_USERAGENT, "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.36");
     curl_easy_setopt(handle, CURLOPT_SSL_VERIFYHOST, 0L);
     curl_easy_setopt(handle, CURLOPT_SSL_VERIFYPEER, 0L);
     curl_easy_setopt(handle, CURLOPT_SSLVERSION, CURL_SSLVERSION_TLSv1_2);
+    curl_easy_setopt(handle, CURLOPT_FOLLOWLOCATION, 1L);
 
     curl_easy_setopt(handle, CURLOPT_NOPROGRESS, 1L);
 

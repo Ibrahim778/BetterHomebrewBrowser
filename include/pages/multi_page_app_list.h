@@ -59,6 +59,16 @@ namespace generic
             Body(Body *_prev = SCE_NULL, void *userDat = SCE_NULL):prev(_prev),userDat(SCE_NULL){}
         };
 
+        class CategoryCB : public paf::ui::EventCallback
+        {
+        public:
+            CategoryCB(Page *page) {
+                pUserData = page;
+                eventHandler = OnGet;
+            }
+            static SceVoid OnGet(SceInt32 eventID, paf::ui::Widget *self, SceInt32 unk, ScePVoid pUserData);
+        };
+
         static SceVoid ForwardButtonCB(SceInt32 eventID, paf::ui::Widget *self, SceInt32 unk, ScePVoid pUserData);
         static SceVoid BackCB(SceInt32 eventID, paf::ui::Widget *self, SceInt32 unk, ScePVoid pUserData);
 
@@ -84,6 +94,8 @@ namespace generic
         db::List *GetTargetList();
 
         int GetCategory();
+        SceVoid SetCategories(const std::vector<db::Category>& categoryList);
+
         //Returns the number of pages in the list, calculated using the page list (currBody)
         SceUInt32 GetPageCount();
 
@@ -99,7 +111,9 @@ namespace generic
         virtual SceVoid OnPageDeleted(Body *userDat);
         //Called whenever the forward button is pressed
         virtual SceVoid OnForwardButtonPressed();
-        
+        //Used to set some default data to be passed as the userData for the NewPage and Redisplay functions
+        virtual ScePVoid DefaultNewPageData();
+
         MultiPageAppList(db::List *targetList = SCE_NULL, const char *templateName = "");
         virtual ~MultiPageAppList();
         
@@ -121,7 +135,6 @@ namespace generic
         db::List *targetList;
 
         SceInt32 category;
-
     };
 }
 

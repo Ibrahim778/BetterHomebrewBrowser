@@ -2,11 +2,13 @@
 <stringset>
     <string src="Download" id="download_button_text"/>
     <string src="Data Files" id="data_button_text"/>
-    <string src="All" id="all_button_text" />
-    <string src="Utilities" id="util_button_text" />
-    <string src="Emulators" id="emu_button_text" />
-    <string src="Ports" id="port_button_text" />
-    <string src="Games" id="games_button_text" />
+
+    <string src="All" id="db_category_all" />
+    <string src="Utilities" id="db_category_util" />
+    <string src="Emulators" id="db_category_emu" />
+    <string src="Ports" id="db_category_port" />
+    <string src="Games" id="db_category_game" />
+    <string src="App" id="db_category_app" />
 
     <string src="SSL Error Occurred\n\nPlease Ensure You Have iTLS-Enso Installed" id="msg_error_ssl"/>
     <string src="Network Connection Error" id="msg_error_net"/>
@@ -17,6 +19,8 @@
     <string src="Error Reading Index" id="msg_error_index" />
     <string src="Connection to the server failed\nPlease Try Again Later" id="msg_fix_index"/>
     <string src="Icon directories for this database are missing\nWould you like to download the pack?\n(This will be queued in the livearea and installed automagically)" id="msg_icon_pack_missing"/>
+    <string src="Error parsing index" id="msg_error_parse"/>
+    <string src="There was an error, please try again later" id="msg_wait_fix" />
 
     <string src="Options" id="msg_options"/>
     <string src="Refresh" id="msg_refresh"/>

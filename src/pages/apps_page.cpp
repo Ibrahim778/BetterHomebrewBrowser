@@ -21,12 +21,12 @@ using namespace paf;
 
 apps::Page::Page():generic::MultiPageAppList::MultiPageAppList(&appList, "home_page_template"),iconDownloadThread(SCE_NULL),mode((PageMode)-1)
 {
-    Utils::GetChildByHash(root, Hash_Game)->RegisterEventCallback(ui::EventMain_Decide, new Page::CategoryCB(this), 0);
-    Utils::GetChildByHash(root, Hash_All)->RegisterEventCallback(ui::EventMain_Decide, new Page::CategoryCB(this), 0);
-    Utils::GetChildByHash(root, Hash_Emu)->RegisterEventCallback(ui::EventMain_Decide, new Page::CategoryCB(this), 0);
-    Utils::GetChildByHash(root, Hash_Port)->RegisterEventCallback(ui::EventMain_Decide, new Page::CategoryCB(this), 0);
-    Utils::GetChildByHash(root, Hash_Util)->RegisterEventCallback(ui::EventMain_Decide, new Page::CategoryCB(this), 0);
-
+    // Utils::GetChildByHash(root, Hash_Game)->RegisterEventCallback(ui::EventMain_Decide, new Page::CategoryCB(this), 0);
+    // Utils::GetChildByHash(root, Hash_All)->RegisterEventCallback(ui::EventMain_Decide, new Page::CategoryCB(this), 0);
+    // Utils::GetChildByHash(root, Hash_Emu)->RegisterEventCallback(ui::EventMain_Decide, new Page::CategoryCB(this), 0);
+    // Utils::GetChildByHash(root, Hash_Port)->RegisterEventCallback(ui::EventMain_Decide, new Page::CategoryCB(this), 0);
+    // Utils::GetChildByHash(root, Hash_Util)->RegisterEventCallback(ui::EventMain_Decide, new Page::CategoryCB(this), 0);
+    SetCategories(db::info[Settings::GetInstance()->source].categories);
     SetCategory(-1);
     
     Utils::GetChildByHash(root, Hash_SearchButton)->RegisterEventCallback(ui::EventMain_Decide, new Page::SearchCB(this), 0);
@@ -61,71 +61,6 @@ apps::Page::Page():generic::MultiPageAppList::MultiPageAppList(&appList, "home_p
 apps::Page::~Page()
 {
     
-}
-
-SceVoid apps::Page::CategoryCB::OnGet(SceInt32 eventID, ui::Widget *self, SceInt32 unk, ScePVoid pUserData)
-{
-    if(!db::info[Settings::GetInstance()->source].CategoriesSuppourted) return;
-    apps::Page *page = (Page *)pUserData;
-    int targetCategory = 0;
-    switch (self->elem.hash)
-    {
-    case Hash_All:
-        targetCategory = -1;
-        break;
-    case Hash_Util:
-        targetCategory = db::Category::UTIL;
-        break;
-    case Hash_Game:
-        targetCategory = db::Category::GAME;
-        break;
-    case Hash_Emu:
-        targetCategory = db::Category::EMULATOR;
-        break;
-    case Hash_Port:
-        targetCategory = db::Category::PORT;
-        break;
-    }
-
-    if(page->SetCategory(targetCategory)) // returns true if there's any change
-        page->Redisplay(new apps::Page::IconAssignThread(page));
-}
-
-SceVoid apps::Page::OnCategoryChanged(int prev, int _category)
-{
-    print("OnCategory changed...\n");
-    Rgba transparent(1,1,1,.4f), normal(1,1,1,1);
-
-    ui::Widget *allButton = Utils::GetChildByHash(root, Hash_All);
-    ui::Widget *gamesButton = Utils::GetChildByHash(root, Hash_Game);
-    ui::Widget *emuButton = Utils::GetChildByHash(root, Hash_Emu);
-    ui::Widget *portsButton = Utils::GetChildByHash(root, Hash_Port);
-    ui::Widget *utilButton = Utils::GetChildByHash(root, Hash_Util);
-    
-    allButton->SetColor(&transparent);
-    gamesButton->SetColor(&transparent);
-    emuButton->SetColor(&transparent);
-    portsButton->SetColor(&transparent);
-    utilButton->SetColor(&transparent);
-
-    switch(_category)
-    {
-    case -1:
-        allButton->SetColor(&normal);
-        break;
-    case db::Category::EMULATOR:
-        emuButton->SetColor(&normal);
-        break;
-    case db::Category::GAME:
-        gamesButton->SetColor(&normal);
-        break;
-    case db::Category::PORT:
-        portsButton->SetColor(&normal);
-        break;
-    case db::Category::UTIL:
-        utilButton->SetColor(&normal);
-        break;
-    }
 }
 
 SceVoid apps::Page::SetMode(PageMode targetMode)
@@ -172,7 +107,7 @@ SceVoid apps::Page::SearchCB::OnGet(SceInt32 eventID, ui::Widget *self, SceInt32
         if(page->GetTargetList() != &page->appList)
         {
             page->SetTargetList(&page->appList);
-            page->Redisplay(new apps::Page::IconAssignThread(page));
+            page->Redisplay();
         }
         break;
 
@@ -220,7 +155,7 @@ SceVoid apps::Page::SearchCB::OnGet(SceInt32 eventID, ui::Widget *self, SceInt32
 
         page->SetTargetList(&page->searchList);
         page->SetCategory(-1);
-        page->Redisplay(new apps::Page::IconAssignThread(page));
+        page->Redisplay();
         
         break;
     }
@@ -353,6 +288,11 @@ SceVoid apps::Page::OnPageDeleted(generic::MultiPageAppList::Body *body)
     }
 }
 
+ScePVoid apps::Page::DefaultNewPageData()
+{
+    return new apps::Page::IconAssignThread(this);
+}
+
 SceVoid apps::Page::OnCleared()
 {
     sceKernelSetEventFlag(iconFlags, FLAG_ICON_LOAD_SURF);
@@ -421,7 +361,7 @@ SceVoid apps::Page::PopulatePage(ui::Widget *ScrollBox, void *userDat)
 
 SceVoid apps::Page::OnForwardButtonPressed()
 {
-    NewPage(new IconAssignThread(this));
+    NewPage();
     HandleForwardButton();
 }
 
@@ -448,12 +388,12 @@ SceVoid apps::Page::LoadJob::Run()
     Utils::GetChildByHash(callingPage->root, Utils::GetHashById("options_button"))->Disable(SCE_FALSE);
     print("Disabled settings button\n");
 
-    cURLFile file(db::info[Settings::GetInstance()->source].indexURL);
     print("Opening: %s\n", db::info[Settings::GetInstance()->source].indexURL);
+    cURLFile file(db::info[Settings::GetInstance()->source].indexURL);
 
     SceInt32 ret = file.Read();    
-    print("Read\n");
-    if(ret != SCE_OK)
+    print("Read 0x%X\n", file.GetSize());
+    if(ret != SCE_OK || file.GetSize() == 0)
     {
         sceShellUtilUnlock(SCE_SHELL_UTIL_LOCK_TYPE_PS_BTN);
         
@@ -492,15 +432,27 @@ SceVoid apps::Page::LoadJob::Run()
 
     callingPage->SetTargetList(&callingPage->appList);
     print("Set list!\n");
-    db::info[Settings::GetInstance()->source].Parse(&callingPage->appList, index);
-    
+    ret = db::info[Settings::GetInstance()->source].Parse(&callingPage->appList, index);
+    if(ret != SCE_OK)
+    {
+        sceShellUtilUnlock(SCE_SHELL_UTIL_LOCK_TYPE_PS_BTN);
+        
+        Dialog::Close();
+        Dialog::OpenError(mainPlugin, ret, Utils::GetStringPFromID("msg_error_parse"));
+
+        string errorMsg;
+        Utils::GetfStringFromID("msg_wait_fix", &errorMsg);
+        new text::Page(errorMsg.data());
+        Page::SetBackButtonEvent(Page::ErrorRetryCB, callingPage);
+        return;   
+    }
     print("Parsing complete!\n");
     
     sceKernelSetEventFlag(callingPage->iconFlags, FLAG_ICON_DOWNLOAD | FLAG_ICON_LOAD_SURF | FLAG_ICON_ASSIGN_TEXTURE);
     print("Set IconFlags!\n");
     callingPage->SetCategory(-1);
     print("Set Category!\n");
-    callingPage->NewPage(new apps::Page::IconAssignThread(callingPage));
+    callingPage->NewPage();
     print("Set New Page!\n");
     g_busyIndicator->Stop();
     print("Stopped busy!\n");

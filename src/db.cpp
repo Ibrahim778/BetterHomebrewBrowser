@@ -16,7 +16,7 @@ using namespace db;
 using namespace paf;
 
 #define SET_STRING(pafString, jsonString) { if(rootval[i][jsonString] != NULL) { pafString = rootval[i][jsonString].getString().c_str(); } } 
-void vitadb::Parse(db::List *outList, string &json)
+SceInt32 vitadb::Parse(db::List *outList, string &json)
 {
     outList->Clear();
 
@@ -38,7 +38,10 @@ void vitadb::Parse(db::List *outList, string &json)
 
         SceInt32 ret = Json::Parser::parse(rootval, jsonStr, length);
         if(ret < 0)
+        {
             print("Json::Parser::parse() -> 0x%X\n", ret);
+            return ret;
+        }
         
         int entryCount = rootval.count();
         
@@ -47,7 +50,7 @@ void vitadb::Parse(db::List *outList, string &json)
         {
             db::entryInfo currentEntry;
 
-            if(rootval[i] == NULL) return;
+            if(rootval[i] == NULL) return -1;
 
             SET_STRING(currentEntry.titleID, "titleid");
             SET_STRING(currentEntry.id, "id");
@@ -89,9 +92,10 @@ void vitadb::Parse(db::List *outList, string &json)
             outList->Add(currentEntry);
         }
     }
+    return SCE_OK;
 }
 
-void cbpsdb::Parse(db::List *outList, string &csvStr)
+SceInt32 cbpsdb::Parse(db::List *outList, string &csvStr)
 {
     //Parse one time to get data files and add to an array, parse entire db to add files with data.
     
@@ -180,81 +184,103 @@ void cbpsdb::Parse(db::List *outList, string &csvStr)
     }
 
     delete[] dataLines;
+    return SCE_OK;
 }
 
-// void vhbdb::Parse(db::List *outList, string &json)
-// {
-//     outList->Clear();
+SceInt32 vhbdb::Parse(db::List *outList, string &json)
+{
+    outList->Clear();
 
-//     int length = json.length();
-//     const char *jsonStr = json.data();
+    int length = json.length();
+    const char *jsonStr = json.data();
 
-//     PAFAllocator allocator;
-//     Json::InitParameter initParam((Json::MemAllocator *)&allocator, 0, 512);
-//     Json::Initializer init;
+    PAFAllocator allocator;
+    Json::InitParameter initParam((Json::MemAllocator *)&allocator, 0, 512);
+    Json::Initializer init;
 
-//     init.initialize(&initParam);
+    init.initialize(&initParam);
 
-//     {
-//         Json::Value rootVal;
+    {
+        Json::Value rootVal;
 
-//         rootVal.clear();
+        rootVal.clear();
         
 
-//         SceInt32 ret = Json::Parser::parse(rootVal, jsonStr, length);
-//         if(ret < 0)
-//             print("Json::Parser::parse() -> 0x%X\n", ret);
+        SceInt32 ret = Json::Parser::parse(rootVal, jsonStr, length);
+        if(ret < 0)
+        {
+            print("Json::Parser::parse() -> 0x%X\n", ret);
+            return ret;
+        }
         
-//         int entryCount = rootVal["homebrew"].count();
-//         auto rootval = rootVal["homebrew"];
+        int entryCount = rootVal["homebrew"].count();
+        auto rootval = rootVal["homebrew"];
 
-//         for(int i = 0; i < entryCount; i++)
-//         {
-//             db::entryInfo currentEntry;
+        for(int i = 0; i < entryCount; i++)
+        {
+            db::entryInfo currentEntry;
 
-//             if(rootval[i] == NULL) return;
+            if(rootval[i] == NULL) return -1;
 
-//             SET_STRING(currentEntry.titleID, "title_id");
-//             SET_STRING(currentEntry.title, "name");
+            SET_STRING(currentEntry.titleID, "title_id");
+            SET_STRING(currentEntry.title, "name");
 
-//             currentEntry.id = ccc::Sprintf("%X%X", Utils::GetHashById(currentEntry.titleID.data()), Utils::GetHashById(currentEntry.title.data()));
+            currentEntry.id = ccc::Sprintf("%X%X", Utils::GetHashById(currentEntry.titleID.data()), Utils::GetHashById(currentEntry.title.data()));
 
-//             if(rootval[i]["icons"] != NULL)
-//                 for(int x = 0; x < rootval[i]["icons"].count(); x++)
-//                     currentEntry.iconURL.push_back(paf::string(rootval[i]["icons"][x].getString().c_str()));
+            if(rootval[i]["icons"] != NULL)
+                for(int x = 0; x < rootval[i]["icons"].count(); x++)
+                    currentEntry.iconURL.push_back(paf::string(rootval[i]["icons"][x].getString().c_str()));
             
-//             currentEntry.iconPath = ccc::Sprintf("%s/%s.png", db::info[VHBDB].iconFolderPath, currentEntry.id.data());
+            currentEntry.iconPath = ccc::Sprintf("%s/%s.png", db::info[VHBDB].iconFolderPath, currentEntry.id.data());
 
-//             if(rootval[i]["downloads"] != NULL)
-//                 for(int x = 0; x < rootval[i]["downloads"].count(); x++)
-//                     currentEntry.downloadURL.push_back(paf::string(rootval[i]["downloads"][x].getString().c_str()));
+            if(rootval[i]["downloads"] != NULL)
+                for(int x = 0; x < rootval[i]["downloads"].count(); x++)
+                    currentEntry.downloadURL.push_back(paf::string(rootval[i]["downloads"][x].getString().c_str()));
 
-//             if(rootval[i]["data"] != NULL)
-//                 currentEntry.dataURL.push_back(paf::string(rootval[i]["data"].getString().c_str()));
+            if(rootval[i]["data"] != NULL)
+                currentEntry.dataURL.push_back(paf::string(rootval[i]["data"].getString().c_str()));
 
-//             currentEntry.author = "";
-//             if(rootval[i]["authors"] != NULL)
-//                 for(int x = 0; x < rootval[i]["authors"].count(); x++)
-//                 {
-//                     currentEntry.author += rootval[i]["authors"][x]["name"].getString().c_str();
-//                     if(x != (rootval[i]["authors"].count() - 1)) currentEntry.author += " & ";
-//                 }
+            currentEntry.author = "";
+            if(rootval[i]["authors"] != NULL)
+                for(int x = 0; x < rootval[i]["authors"].count(); x++)
+                {
+                    currentEntry.author += rootval[i]["authors"][x]["name"].getString().c_str();
+                    if(x != (rootval[i]["authors"].count() - 1)) currentEntry.author += " & ";
+                }
             
 
-//             SET_STRING(currentEntry.dataPath, "data_path")
-//             SET_STRING(currentEntry.description, "description");
-//             SET_STRING(currentEntry.version, "version"); 
+            SET_STRING(currentEntry.dataPath, "data_path")
+            SET_STRING(currentEntry.description, "description");
+            SET_STRING(currentEntry.version, "version"); 
   
 
-//             //if(rootval[i]["type"] != NULL)
-//             //    currentEntry.type = (int)sce_paf_strtoul(rootval[i]["type"].getString().c_str(), NULL, 10);
+            // if(rootval[i]["type"] != NULL)
+            //     currentEntry.type = (int)sce_paf_strtoul(rootval[i]["type"].getString().c_str(), NULL, 10);
 
-//             currentEntry.hash = Utils::GetHashById(currentEntry.id.data());
+            if(rootval[i]["type"] != NULL)
+            {
+                const char *typeName = rootval[i]["type"].getString().c_str();
+                if(sce_paf_strncmp(typeName, "app", 3) == 0)
+                {
+                    currentEntry.type = 0;
+                }
+                else if(sce_paf_strncmp(typeName, "emulator", 8) == 0)
+                {
+                    currentEntry.type = 2;
+                }
+                else if(sce_paf_strncmp(typeName, "game", 4) == 0)
+                {
+                    currentEntry.type = 1;
+                }
+            }
 
-//             outList->Add(currentEntry);
-//         }
-//     }
-// }
+            currentEntry.hash = Utils::GetHashById(currentEntry.id.data());
+
+            outList->Add(currentEntry);
+        }
+    }
+    return SCE_OK;
+}
 
 SceInt32 cbpsdb::GetDataUrl(db::entryInfo& entry, paf::string& out)
 {
@@ -366,6 +392,62 @@ SceInt32 vitadb::GetDownloadUrl(db::entryInfo& entry, paf::string& out)
     return -1;
 }
 
+SceInt32 vhbdb::GetDownloadUrl(db::entryInfo &entry, paf::string& out)
+{
+    auto end = entry.downloadURL.end();
+    for(auto i = entry.downloadURL.begin(); i != end; i++)
+    {
+        SceInt32 err = SCE_OK;
+        
+        paf::string buff = i->data();
+        
+        Utils::HttpsToHttp(buff);
+        
+        if(Utils::IsValidURLSCE(buff.data()))
+        {
+            out = buff;
+            return SCE_OK;
+        }
+    }
+    return -1;
+}
+
+SceInt32 vhbdb::GetDataUrl(db::entryInfo& entry, paf::string& out)
+{
+    auto end = entry.dataURL.end();
+    for(auto i = entry.dataURL.begin(); i != end; i++)
+    {
+        //First, use curl to get the redirected URL
+        SceInt32 err = SCE_OK;
+        auto file = CurlFile::Open(i->data(), SCE_O_RDONLY, 0, &err, false, true);
+
+        if(err != SCE_OK)
+        {
+            print("Error opening CurlFile: 0x%X\n", err);
+            continue;
+        }
+        char *url = SCE_NULL;
+        err = file.get()->GetEffectiveURL(&url);
+        
+        if(err != SCE_OK || url == SCE_NULL)
+        {
+            print("Error getting effectiveURL: 0x%X 0x%X\n", url, err);
+            continue;
+        }
+        paf::string buff = url;
+        Utils::HttpsToHttp(buff);
+        print("Got URL: %s\n", buff);
+        if(Utils::IsValidURLSCE(buff.data()))
+        {
+            out = buff;
+            return SCE_OK;
+        }
+    }
+
+    return -1;
+}
+
+
 SceInt32 vitadb::GetDescription(db::entryInfo& entry, paf::string& out) 
 {
     out = entry.description;
@@ -395,11 +477,11 @@ SceInt32 cbpsdb::GetDescription(db::entryInfo& entry, paf::string& out)
     return SCE_OK;
 }
 
-// SceInt32 vhbdb::GetDescription(db::entryInfo& entry, paf::string& out)
-// {
-//     out = entry.description;
-//     return SCE_OK;
-// }
+SceInt32 vhbdb::GetDescription(db::entryInfo& entry, paf::string& out)
+{
+    out = entry.description;
+    return SCE_OK;
+}
 
 db::List::~List()
 {

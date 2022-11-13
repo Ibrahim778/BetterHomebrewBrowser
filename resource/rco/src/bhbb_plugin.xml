@@ -128,25 +128,10 @@
                         <layout_hint size="58, 58" pos="451,1" />
                     </button>
 
-                    <image_button style="category_button" sound="_common_sound_button_enter" id="all_button" label="all_button_text">
-                        <layout_hint size="168.8, 58" pos="-388,1" />
-                    </image_button>
+                    <plane style="_common_default_style_plane" id="plane_category_buttons">
+                        <layout_hint size="844, 60" pos="0,0" anchor="1,0" align="1,0" />
+                    </plane>
 
-                    <image_button style="category_button" sound="_common_sound_button_enter" id="game_button" label="games_button_text">
-                        <layout_hint size="168.8, 58" pos="-219.2,1" />
-                    </image_button>
-
-                    <image_button style="category_button" sound="_common_sound_button_enter" id="emu_button" label="emu_button_text">
-                        <layout_hint size="168.8, 58" pos="-50.4,1" />
-                    </image_button>
-
-                    <image_button style="category_button" sound="_common_sound_button_enter" id="port_button" label="port_button_text">
-                        <layout_hint size="168.8, 58" pos="118.4,1" />
-                    </image_button>
-                
-                    <image_button style="category_button" sound="_common_sound_button_enter" id="util_button" label="util_button_text">
-                        <layout_hint size="168.8, 58" pos="287.2,1" />
-                    </image_button>
                     <plane style="_common_default_style_plane" texture="_common_texture_ruled_line" id="plane_seperator">
                         <layout_hint adjust="1,0" anchor="0,1" align="0,1" size="0,1" />
                     </plane>
@@ -185,6 +170,10 @@
             </plane>
         </template>
 
+        <template id="category_button_template">
+            <image_button style="category_button" sound="_common_sound_button_enter" />
+        </template>
+        
         <template fast_open="1" id="text_page_template">
             <plane style="_common_style_plane_transparent" id="page_root">
                 <layout_hint size="960, 544"/>
