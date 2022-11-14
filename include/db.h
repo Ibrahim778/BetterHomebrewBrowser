@@ -98,10 +98,11 @@ namespace db
         const char *iconFolderPath;
         const char *iconsURL;
         const char *indexURL;
-        bool ScreenshotsSuppourted;
-        bool CategoriesSuppourted;
-        std::vector<Category> categories;
-        int id;
+        bool ScreenshotsSupported;
+        bool CategoriesSupported;
+        const int categoryNum;
+        Category categories[5];
+        const int id;
     } dbInfo;
 
     static const dbInfo info[] =
@@ -115,8 +116,29 @@ namespace db
             .iconFolderPath = "ux0:data/betterHomebrewBrowser/icons/cbpsdb",
             .iconsURL = "https://github.com/Ibrahim778/CBPS-DB-Icon-Downloader/raw/main/icons.zip?raw=true",
             .indexURL = "https://raw.githubusercontent.com/KuromeSan/cbps-db/master/cbpsdb.csv",
-            .ScreenshotsSuppourted = false,
-            .CategoriesSuppourted = false,
+            .ScreenshotsSupported = false,
+            .CategoriesSupported = false,
+            .categoryNum = 1,
+            .categories = {
+                {
+                    .id = -1,
+                    .nameID = "db_category_all"
+                }
+            },
+            .id = CBPSDB
+        },
+        {   //Vita DB
+            .Parse = vitadb::Parse, 
+            .GetDescription = vitadb::GetDescription,
+            .GetDownloadUrl = vitadb::GetDownloadUrl,
+            .GetDataUrl = vitadb::GetDataUrl,
+            .name = "Vita DB", 
+            .iconFolderPath = "ux0:/data/betterHomebrewBrowser/icons/vitadb", 
+            .iconsURL = "https://vitadb.rinnegatamante.it/icons_zip.php", 
+            .indexURL = "https://rinnegatamante.it/vitadb/list_hbs_json.php",
+            .ScreenshotsSupported = true,
+            .CategoriesSupported = true,
+            .categoryNum = 5,
             .categories = {
                 {
                     .id = -1, 
@@ -139,20 +161,6 @@ namespace db
                     .nameID = "db_category_util"
                 }
             },
-            .id = CBPSDB
-        },
-        {   //Vita DB
-            .Parse = vitadb::Parse, 
-            .GetDescription = vitadb::GetDescription,
-            .GetDownloadUrl = vitadb::GetDownloadUrl,
-            .GetDataUrl = vitadb::GetDataUrl,
-            .name = "Vita DB", 
-            .iconFolderPath = "ux0:/data/betterHomebrewBrowser/icons/vitadb", 
-            .iconsURL = "https://vitadb.rinnegatamante.it/icons_zip.php", 
-            .indexURL = "https://rinnegatamante.it/vitadb/list_hbs_json.php",
-            .ScreenshotsSuppourted = true,
-            .CategoriesSuppourted = true,
-            .categories = {},
             .id = VITADB //index in info[]
         },
         {   //Vita Homebrew DB
@@ -164,8 +172,9 @@ namespace db
             .iconFolderPath = "ux0:/data/betterHomebrewBrowser/icons/vhbdb",
             .iconsURL = SCE_NULL,
             .indexURL = "https://github.com/vhbd/database/releases/download/latest/db_minify.json",
-            .ScreenshotsSuppourted = false,
-            .CategoriesSuppourted = false,
+            .ScreenshotsSupported = false,
+            .CategoriesSupported = true,
+            .categoryNum = 4,
             .categories = {
                 {
                     .id = -1,

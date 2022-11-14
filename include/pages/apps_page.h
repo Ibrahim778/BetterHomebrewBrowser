@@ -147,8 +147,6 @@ namespace apps
             static SceVoid OnGet(SceInt32 eventID, paf::ui::Widget *self, SceInt32 unk, ScePVoid pUserData);
         };
 
-
-
         enum PageMode
         {
             PageMode_Browse,
@@ -174,12 +172,6 @@ namespace apps
     
     private:
         enum {
-            Hash_All = 0x59E75663,
-            Hash_Game = 0x6222A81A,
-            Hash_Emu = 0xD1A8D19,
-            Hash_Port = 0xADC6272A,
-            Hash_Util = 0x1EFEFBA6,
-
             Hash_SearchButton = 0xCCCE2527,
             Hash_SearchEnterButton = 0xAB8CB65E,
             Hash_SearchBackButton = 0x6A2C094C,

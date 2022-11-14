@@ -3,12 +3,13 @@
     <string src="Download" id="download_button_text"/>
     <string src="Data Files" id="data_button_text"/>
 
+    <string src="Loading Categories..." id="db_loading_categories" />
     <string src="All" id="db_category_all" />
     <string src="Utilities" id="db_category_util" />
     <string src="Emulators" id="db_category_emu" />
     <string src="Ports" id="db_category_port" />
     <string src="Games" id="db_category_game" />
-    <string src="App" id="db_category_app" />
+    <string src="Apps" id="db_category_app" />
 
     <string src="SSL Error Occurred\n\nPlease Ensure You Have iTLS-Enso Installed" id="msg_error_ssl"/>
     <string src="Network Connection Error" id="msg_error_net"/>

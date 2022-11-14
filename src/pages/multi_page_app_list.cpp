@@ -34,7 +34,22 @@ SceVoid generic::MultiPageAppList::OnCleared()
 
 SceVoid generic::MultiPageAppList::OnCategoryChanged(int prev, int curr)
 {
+    //Delete all previous buttons
+    thread::s_mainThreadMutex.Lock();
+    auto plane = Utils::GetChildByHash(root, Utils::GetHashById("plane_category_buttons"));
+    for(int i = 0; i < plane->childNum; i++)
+        plane->GetChild(i)->SetColor(&paf::Rgba(1,1,1,0.4f));
+    thread::s_mainThreadMutex.Unlock();
 
+    for(int i = 0; i < db::info[Settings::GetInstance()->source].categoryNum; i++)
+    {
+        if(db::info[Settings::GetInstance()->source].categories[i].id == curr)
+        {
+            auto button = Utils::GetChildByHash(root, Utils::GetHashById(db::info[Settings::GetInstance()->source].categories[i].nameID));
+            if(button) button->SetColor(&paf::Rgba(1,1,1,1));
+            break;
+        }
+    }
 }
 
 SceVoid generic::MultiPageAppList::PopulatePage(ui::Widget *sb, void *userDat)
@@ -139,10 +154,14 @@ SceVoid generic::MultiPageAppList::SetCategories(const std::vector<db::Category>
         mainPlugin->TemplateOpen(plane, &e, &tOpen);
         auto button = plane->GetChild(plane->childNum - 1);
         button->SetSize(&paf::Vector4(buttonSize, 58));
-        button->SetPosition(&paf::Vector4(i * 168.8f, 1));
+        button->SetPosition(&paf::Vector4(i * buttonSize, 1));
         button->SetAnchor(ui::Anchor_Left, ui::Anchor_None, ui::Anchor_None, ui::Anchor_None);
         button->SetAlign(ui::Align_Left, ui::Align_None, ui::Align_None, ui::Align_None);
         button->SetLabel(&paf::wstring(Utils::GetStringPFromID(category.nameID)));
+        button->SetColor(this->category == category.id ? &paf::Rgba(1,1,1,1) : &paf::Rgba(1,1,1,0.4f));
+        button->PlayEffect(0, effect::EffectType_Fadein1);
+        button->elem.hash = Utils::GetHashById(category.nameID);
+        button->RegisterEventCallback(ui::EventMain_Decide, new generic::MultiPageAppList::CategoryCB(this), SCE_FALSE);
         i++;
     }
     thread::s_mainThreadMutex.Unlock();
@@ -332,30 +351,16 @@ SceVoid generic::MultiPageAppList::_DeletePage(SceBool animate)
 
 SceVoid generic::MultiPageAppList::CategoryCB::OnGet(SceInt32 eventID, ui::Widget *self, SceInt32 unk, ScePVoid pUserData)
 {
-    if(!db::info[Settings::GetInstance()->source].CategoriesSuppourted) return;
+    if(!db::info[Settings::GetInstance()->source].CategoriesSupported) return;
     MultiPageAppList *page = (MultiPageAppList *)pUserData;
-    int targetCategory = 0;
-    // switch (self->elem.hash)
-    // {
-    // case Hash_All:
-    //     targetCategory = -1;
-    //     break;
-    // case Hash_Util:
-    //     targetCategory = db::Category::UTIL;
-    //     break;
-    // case Hash_Game:
-    //     targetCategory = db::Category::GAME;
-    //     break;
-    // case Hash_Emu:
-    //     targetCategory = db::Category::EMULATOR;
-    //     break;
-    // case Hash_Port:
-    //     targetCategory = db::Category::PORT;
-    //     break;
-    // }
 
-    //TODO: FINISH THIS
-
-    if(page->SetCategory(targetCategory)) // returns true if there's any change
-        page->Redisplay();
+    for(int i = 0; i < db::info[Settings::GetInstance()->source].categoryNum; i++)
+    {
+        if(Utils::GetHashById(db::info[Settings::GetInstance()->source].categories[i].nameID) == self->elem.hash)
+        {
+            if(page->SetCategory(db::info[Settings::GetInstance()->source].categories[i].id)) // returns true if there's any change
+                page->Redisplay();
+            break;
+        }
+    }
 }

@@ -25,7 +25,7 @@ Page::Page(db::entryInfo& entry):generic::Page::Page("info_page_template"),info(
     if(info.dataURL.size() == 0)
        Utils::PlayEffectReverse(dataButton, 0, effect::EffectType_Reset);
 
-    if(db::info[Settings::GetInstance()->source].ScreenshotsSuppourted & info.screenshotURL.size() > 0)
+    if(db::info[Settings::GetInstance()->source].ScreenshotsSupported & info.screenshotURL.size() > 0)
     {
         auto scrollBox = Utils::GetChildByHash(root, Utils::GetHashById("screenshot_box"));
         Plugin::TemplateOpenParam tOpen;

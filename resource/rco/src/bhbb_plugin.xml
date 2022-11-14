@@ -128,8 +128,11 @@
                         <layout_hint size="58, 58" pos="451,1" />
                     </button>
 
-                    <plane style="_common_default_style_plane" id="plane_category_buttons">
+                    <plane style="_common_style_plane_transparent" id="plane_category_buttons">
                         <layout_hint size="844, 60" pos="0,0" anchor="1,0" align="1,0" />
+                        <image_button style="category_button" sound="_common_sound_button_enter" label="db_loading_categories" >
+                            <layout_hint size="844, 58" pos="0,1" />
+                        </image_button>
                     </plane>
 
                     <plane style="_common_default_style_plane" texture="_common_texture_ruled_line" id="plane_seperator">

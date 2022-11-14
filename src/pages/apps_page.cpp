@@ -21,14 +21,6 @@ using namespace paf;
 
 apps::Page::Page():generic::MultiPageAppList::MultiPageAppList(&appList, "home_page_template"),iconDownloadThread(SCE_NULL),mode((PageMode)-1)
 {
-    // Utils::GetChildByHash(root, Hash_Game)->RegisterEventCallback(ui::EventMain_Decide, new Page::CategoryCB(this), 0);
-    // Utils::GetChildByHash(root, Hash_All)->RegisterEventCallback(ui::EventMain_Decide, new Page::CategoryCB(this), 0);
-    // Utils::GetChildByHash(root, Hash_Emu)->RegisterEventCallback(ui::EventMain_Decide, new Page::CategoryCB(this), 0);
-    // Utils::GetChildByHash(root, Hash_Port)->RegisterEventCallback(ui::EventMain_Decide, new Page::CategoryCB(this), 0);
-    // Utils::GetChildByHash(root, Hash_Util)->RegisterEventCallback(ui::EventMain_Decide, new Page::CategoryCB(this), 0);
-    SetCategories(db::info[Settings::GetInstance()->source].categories);
-    SetCategory(-1);
-    
     Utils::GetChildByHash(root, Hash_SearchButton)->RegisterEventCallback(ui::EventMain_Decide, new Page::SearchCB(this), 0);
     Utils::GetChildByHash(root, Hash_SearchEnterButton)->RegisterEventCallback(ui::EventMain_Decide, new Page::SearchCB(this), 0);
     Utils::GetChildByHash(root, Hash_SearchBackButton)->RegisterEventCallback(ui::EventMain_Decide, new Page::SearchCB(this), 0);
@@ -371,6 +363,10 @@ SceVoid apps::Page::LoadJob::Run()
     sceShellUtilLock(SCE_SHELL_UTIL_LOCK_TYPE_PS_BTN);
     print("Locked PS Button");
 
+    callingPage->SetCategories(std::vector<db::Category>(db::info[Settings::GetInstance()->source].categories, db::info[Settings::GetInstance()->source].categories + db::info[Settings::GetInstance()->source].categoryNum));
+    callingPage->SetCategory(-1);
+    print("Set Category!\n");
+    
     Settings::GetInstance()->Close();
     print("Closed settings...\n");
     Dialog::OpenPleaseWait(mainPlugin, SCE_NULL, Utils::GetStringPFromID("msg_wait"));
@@ -450,8 +446,6 @@ SceVoid apps::Page::LoadJob::Run()
     
     sceKernelSetEventFlag(callingPage->iconFlags, FLAG_ICON_DOWNLOAD | FLAG_ICON_LOAD_SURF | FLAG_ICON_ASSIGN_TEXTURE);
     print("Set IconFlags!\n");
-    callingPage->SetCategory(-1);
-    print("Set Category!\n");
     callingPage->NewPage();
     print("Set New Page!\n");
     g_busyIndicator->Stop();
@@ -518,20 +512,20 @@ LOAD_SURF:
 
 SceVoid apps::Page::IconAssignJob::Run()
 {
-    //print("Icon Assign Job:\n\tPath: %s\n\tWidget: %p\n", taskParam.path.data(), taskParam.widgetHash);
+    print("Icon Assign Job:\n\tPath: %s\n\tWidget: %p\n", taskParam.path.data(), taskParam.widgetHash);
 
     graph::Surface *surf = callingPage->loadedTextures.Get(taskParam.widgetHash);//*taskParam.texture; //temporary variable to store surface    
 
 LOAD_SURF:
     if(sceKernelPollEventFlag(callingPage->iconFlags, FLAG_ICON_LOAD_SURF, SCE_NULL, SCE_NULL) < 0 /* Surface loading disabled */)
     {
-        //print("\tSurface Loading aborted\n");
+        print("\tSurface Loading aborted\n");
         goto ASSIGN_TEX;
     }
 
     if(surf != SCE_NULL /* Already loaded */)
     {
-        //print("\tSurface already loaded\n");
+        print("\tSurface already loaded\n");
         goto ASSIGN_TEX;
     }
 
@@ -554,7 +548,7 @@ LOAD_SURF:
 ASSIGN_TEX:
     if(sceKernelPollEventFlag(callingPage->iconFlags, FLAG_ICON_ASSIGN_TEXTURE, SCE_NULL, SCE_NULL) < 0)
     {
-        //print("\tSurface assignment aborted.\n");
+        print("\tSurface assignment aborted.\n");
         goto EXIT;
     }
 
@@ -563,7 +557,7 @@ ASSIGN_TEX:
         ui::Widget *widget = Utils::GetChildByHash(callingPage->root, taskParam.widgetHash);
         if(widget == SCE_NULL)
         {
-            //print("\t[Skip] Widget 0x%X not found\n", taskParam.widgetHash);
+            print("\t[Skip] Widget 0x%X not found\n", taskParam.widgetHash);
             goto EXIT;
         }
         thread::s_mainThreadMutex.Lock();
@@ -578,10 +572,10 @@ ASSIGN_TEX:
         thread::s_mainThreadMutex.Unlock();
     }
 EXIT:
-    print("Removing: 0x%X\n", taskParam.widgetHash);
+    print("\tRemoving: 0x%X\n", taskParam.widgetHash);
     callingPage->textureJobs.erase(std::remove(callingPage->textureJobs.begin(), callingPage->textureJobs.end(), taskParam.widgetHash), callingPage->textureJobs.end());
-    print("Removed!\n");
-    //print("\tTask Completed\n");
+    print("\tRemoved!\n");
+    print("\tTask Completed\n");
     return;
 }
 

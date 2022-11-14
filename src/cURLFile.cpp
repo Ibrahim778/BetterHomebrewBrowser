@@ -104,6 +104,7 @@ size_t cURLFile::WriteCB(char *ptr, size_t size, size_t nmemb, cURLFile *file)
 
     size_t actualSize = size * nmemb;
 
+    print("Allocating: 0x%X, 0x%X\n", file->buff, file->buffSize + actualSize);
     file->buff = (char *)sce_paf_realloc(file->buff, file->buffSize + actualSize);
     if(!file->buff)
         return 0;

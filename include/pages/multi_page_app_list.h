@@ -42,7 +42,7 @@ namespace generic
         {
         public:
             using paf::job::JobItem::JobItem;
-
+ 
             SceVoid Run();
             SceVoid Finish(){}
 
