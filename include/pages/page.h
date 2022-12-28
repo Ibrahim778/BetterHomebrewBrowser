@@ -15,12 +15,15 @@ namespace generic
         static void Setup();
 		static void DeleteCurrentPage();
         static void ResetBackButton();
+        static Page *GetCurrentPage();
 
         static void SetForwardButtonEvent(ButtonEventCallback callback, void *data);
         static void SetBackButtonEvent(ButtonEventCallback callback, void *data);
 
         Page(const char *pageName);
 		virtual ~Page();
+
+        SceUInt64 GetHash();
 
         virtual void OnRedisplay();
         virtual void OnDelete();
@@ -37,6 +40,8 @@ namespace generic
         static ButtonEventCallback forwardCallback;
         static void *backData;
         static void *forwardData;
+
+        SceUInt64 hash;
     };
 }
 

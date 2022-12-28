@@ -9,7 +9,6 @@
 #include <message_dialog.h>
 
 #include "network.h"
-#include "main.h"
 #include "utils.h"
 #include "common.h"
 
@@ -22,6 +21,7 @@ static int lastError = 0;
 
 static void (*CheckComplete)(void) = SCE_NULL;
 static Network::Status CurrentStatus = Network::Status::Offline;
+static SceUID curlID = SCE_UID_INVALID_UID;
 
 void Network::Init()
 {
@@ -42,7 +42,8 @@ void Network::Init()
 	sceHttpInit(HTTP_HEAP_SIZE);
 	sceSslInit(SSL_HEAP_SIZE);
 
-    sceKernelLoadStartModule(cURL_PATH, 0, SCE_NULL, 0, SCE_NULL, SCE_NULL);
+    /* CURL */
+    curlID = sceKernelLoadStartModule(cURL_PATH, 0, SCE_NULL, 0, SCE_NULL, SCE_NULL);
     curl_global_memmanager_set_np(sce_paf_malloc, sce_paf_free, sce_paf_realloc);
 
     lastError = 0;
@@ -50,6 +51,9 @@ void Network::Init()
 
 void Network::Term()
 {
+    /* CURL */
+    sceKernelStopUnloadModule(curlID, 0, SCE_NULL, 0, SCE_NULL, SCE_NULL);
+
     /* HTTPS */
 	sceSslTerm();
 	sceHttpTerm();

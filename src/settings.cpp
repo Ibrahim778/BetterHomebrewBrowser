@@ -11,6 +11,7 @@
 
 using namespace paf;
 using namespace sce;
+using namespace Utils;
 
 static Settings *currentSettingsInstance = SCE_NULL;
 sce::AppSettings *Settings::appSettings = SCE_NULL;
@@ -47,7 +48,7 @@ Settings::Settings()
 
 	Framework::GetInstance()->LoadPlugin(&pInit);
     
-	sInit.xmlFile = mainPlugin->resource->GetFile(Utils::GetHashById("file_bhbb_settings"), &fileSize, &mimeType);
+	sInit.xmlFile = mainPlugin->resource->GetFile(Misc::GetHash("file_bhbb_settings"), &fileSize, &mimeType);
 
 	sInit.allocCB = sce_paf_malloc;
 	sInit.freeCB = sce_paf_free;
@@ -67,11 +68,13 @@ Settings::Settings()
         appSettings->SetInt("settings_version", d_settingsVersion);
         appSettings->SetInt("source", d_source);
         appSettings->SetInt("nLoad", d_nLoad);
+        appSettings->SetInt("downloadInterval", d_downloadInterval);
 	}
 
     //Get values
     appSettings->GetInt("source", (int *)&source, d_source);
     appSettings->GetInt("nLoad", &nLoad, d_nLoad);
+    appSettings->GetInt("downloadInterval", &downloadInterval, d_downloadInterval);
 
 	currentSettingsInstance = this;
 }
@@ -176,13 +179,11 @@ SceInt32 Settings::CBElemAdd(const char *elementId, paf::ui::Widget *widget)
 SceInt32 Settings::CBValueChange(const char *elementId, const char *newValue)
 {
 	SceInt32 ret = SCE_OK;
-	SceUInt32 elementHash = Utils::GetHashById(elementId);
+	SceUInt32 elementHash = Misc::GetHash(elementId);
 	SceInt64 value = sce_paf_strtol(newValue, NULL, 10);
-	print("Element with id: %s (0x%X) called CBValueChange! newValue = %s\n", elementId, elementHash, newValue);
 
 	switch (elementHash)
-	{
-    
+	{   
     case Hash_nLoad:
         GetInstance()->nLoad = value;
         g_appsPage->Redisplay();
@@ -190,12 +191,20 @@ SceInt32 Settings::CBValueChange(const char *elementId, const char *newValue)
 
     case Hash_Source:
         GetInstance()->source = (db::Id)value;
+        g_appsPage->Load();
+        break;
     
     case Hash_Refresh:
+        Time::SetPreviousDLTime(GetInstance()->source, 0); //Force redownload
         g_appsPage->Load();
         break;
 
+    case Hash_DownloadInterval:
+        GetInstance()->downloadInterval = value;
+        break;
+
 	default:
+	    print("Element with id: %s (0x%X) called CBValueChange! newValue = %s\n", elementId, elementHash, newValue);
 		break;
 	}
 
@@ -219,7 +228,7 @@ wchar_t *Settings::CBGetString(const char *elementId)
         return g_versionInfo;
 
     rco::Element searchParam;
-    searchParam.hash = Utils::GetHashById(elementId);
+    searchParam.hash = Misc::GetHash(elementId);
 
     return mainPlugin->GetWString(&searchParam);
 }

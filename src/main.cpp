@@ -7,7 +7,6 @@
 #include <taihen.h>
 
 #include "print.h"
-#include "main.h"
 #include "paf.h"
 #include "common.h"
 #include "utils.h"
@@ -59,18 +58,19 @@ extern "C" {
 }
 
 using namespace paf;
+using namespace Utils;
 
-Plugin *mainPlugin = SCE_NULL;
+Plugin *mainPlugin              = SCE_NULL;
 
-graph::Surface *BrokenTex = SCE_NULL;
-graph::Surface *TransparentTex = SCE_NULL;
+graph::Surface *BrokenTex       = SCE_NULL;
+graph::Surface *TransparentTex  = SCE_NULL;
 
-Downloader *g_downloader = SCE_NULL;
-apps::Page *g_appsPage = SCE_NULL;
+Downloader *g_downloader        = SCE_NULL;
+apps::Page *g_appsPage          = SCE_NULL;
 
-wchar_t *g_versionInfo = SCE_NULL;
+wchar_t *g_versionInfo          = SCE_NULL;
 
-job::JobQueue *g_mainQueue = SCE_NULL;
+job::JobQueue *g_mainQueue      = SCE_NULL;
 
 void OnNetworkChecked()
 {
@@ -81,7 +81,7 @@ void OnNetworkChecked()
     else 
     {
         string msgTemplate;
-        Utils::GetfStringFromID("msg_net_fix", &msgTemplate);
+        String::GetfFromID("msg_net_fix", &msgTemplate);
 
         string errorMsg = ccc::Sprintf(msgTemplate.data(), Network::GetLastError());
 
@@ -102,23 +102,25 @@ SceVoid onPluginReady(Plugin *plugin)
     mainPlugin = plugin;
 
     rco::Element e; 
-    e.hash = Utils::GetHashById("tex_missing_icon");
+    e.hash = Misc::GetHash("tex_missing_icon");
     mainPlugin->GetTexture(&BrokenTex, mainPlugin, &e);
+    BrokenTex->AddRef(); //Prevent Deletion
 
-	e.hash = Utils::GetHashById("_common_texture_transparent");
+	e.hash = Misc::GetHash("_common_texture_transparent");
 	Plugin::GetTexture(&TransparentTex, Plugin::Find("__system__common_resource"), &e);
-
+    TransparentTex->AddRef(); //Prevent Deletion
+    
     //Thanks Graphene
     auto infoString = new wstring;
 
 #ifdef _DEBUG
-    *infoString = L"Type: Private Beta\n";
+    *infoString = L"Private Beta\n";
 #else
-    *infoString = L"Type: Public Release\n";
+    *infoString = L"Public Release\n";
 #endif
 
-    *infoString += L"Date: " WIDE(__DATE__) L"\n";
-    *infoString += L"Version: 1.0\nBGDL Version: 2.0\ncBGDL Version: 1.0";
+    *infoString += WIDE(__DATE__) L"\n";
+    *infoString += L"Version: 1.1\nBGDL Version: 2.0\ncBGDL Version: 1.0";
 
     print("%ls\n", infoString->data());
 
@@ -134,7 +136,7 @@ SceVoid onPluginReady(Plugin *plugin)
     if(itlsID < 0)
     {
         string err;
-        Utils::GetfStringFromID("msg_no_itls", &err);
+        String::GetfFromID("msg_no_itls", &err);
         new text::Page(err.data());
         return;
     }
@@ -161,11 +163,11 @@ SceVoid onPluginReady(Plugin *plugin)
 int main()
 {
 #ifdef _DEBUG
-    SCE_PAF_AUTO_TEST_SET_EXTRA_TTY(sceIoOpen("tty0:", SCE_O_WRONLY, 0));
+    SCE_PAF_AUTO_TEST_SET_EXTRA_TTY(sceIoOpen("tty0:", SCE_O_WRONLY, 0)); //This line will break things if using non devkit libpaf
 #endif
 
-    Utils::StartBGDL();
-    Utils::InitMusic();
+    Misc::StartBGDL();
+    Misc::InitMusic();
 
     Framework::InitParam fwParam;
     fwParam.LoadDefaultParams();
@@ -193,7 +195,7 @@ int main()
     piParam.resourcePath = "app0:resource/bhbb_plugin.rco";
     piParam.scopeName = "__main__";
 #ifdef _DEBUG
-    piParam.pluginFlags = Plugin::InitParam::PluginFlag_UseRcdDebug;
+    piParam.pluginFlags = Plugin::InitParam::PluginFlag_UseRcdDebug; //This line will break things if using non devkit libpaf
 #endif
     piParam.pluginStartCB = onPluginReady;
 

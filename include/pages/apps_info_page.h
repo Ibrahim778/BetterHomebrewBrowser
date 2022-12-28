@@ -6,6 +6,7 @@
 
 #include "pages/page.h"
 #include "db.h"
+#include "dialog.h"
 
 namespace apps 
 {
@@ -75,11 +76,13 @@ namespace apps
                     using paf::thread::Thread::Thread;
                     SceVoid EntryFunction();
 
+
                     LoadThread(Page *caller, SceInt32 initPriority = SCE_KERNEL_DEFAULT_PRIORITY_USER, SceSize stackSize = SCE_KERNEL_16KiB, const char *name = "apps::info::screenshot::Page::LoadThread"):paf::thread::Thread::Thread(initPriority, stackSize, name),callingPage(caller){}
                 private:
                     Page *callingPage;
                 };
 
+                static SceVoid ErrorCB(Dialog::ButtonCode button, ScePVoid pUserData);
                 Page(paf::string &url);
                 virtual ~Page();
 

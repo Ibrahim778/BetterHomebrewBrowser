@@ -2,35 +2,93 @@
 #define BHBB_UTILS_H
 
 #include <paf.h>
+#include <vector>
+
+#include "db.h"
 
 namespace Utils
 {
-    void ToLowerCase(char *string);
-    void InitMusic();
-    SceVoid HttpsToHttp(paf::string &str);
-    SceVoid GetStringFromID(const char *id, paf::string *out);
-    SceVoid GetfStringFromID(const char *id, paf::string *out);
-    wchar_t *GetStringPFromID(const char *id);
-    SceUInt32 GetHashById(const char *id);    
-    SceInt32 PlayEffect(paf::ui::Widget *widget, SceFloat32 param, paf::effect::EffectType animId, paf::ui::EventCallback::EventHandler animCB = (paf::ui::EventCallback::EventHandler)SCE_NULL, ScePVoid pUserData = SCE_NULL);
-    SceInt32 PlayEffectReverse(paf::ui::Widget *widget, SceFloat32 param, paf::effect::EffectType animId, paf::ui::EventCallback::EventHandler animCB = (paf::ui::EventCallback::EventHandler)SCE_NULL, ScePVoid pUserData = SCE_NULL);
-    SceBool IsValidURLSCE(const char *url); //Can this URL be used with SceHttp?
-
-    template<class T = paf::ui::Widget>
-    T *GetChildByHash(paf::ui::Widget *parent, SceUInt32 hash)
+    namespace Misc
     {
-        paf::rco::Element search;
-        search.hash = hash;
-        return (T*)parent->GetChild(&search, 0);
+        void InitMusic();
+        SceVoid StartBGDL();    
+        SceUInt32 GetHash(const char *id);
     }
-    
-    SceInt32 DownloadFile(const char *url, const char *destination, void *callingPage, paf::ui::ProgressBar *progressBar = NULL);
-    SceInt32 SetWidgetLabel(paf::ui::Widget *widget, const char *text);
-    SceInt32 SetWidgetLabel(paf::ui::Widget *widget, paf::string *text);
-    SceVoid DeleteTexture(paf::graph::Surface **tex);
-    paf::ui::Widget *CreateWidget(const char *id, const char *type, const char *style, paf::ui::Widget *parent);
-    SceVoid StartBGDL();
+    namespace String 
+    {
+        void ToLowerCase(char *string);
+        SceVoid GetFromID(const char *id, paf::string *out);
+        SceVoid GetfFromID(const char *id, paf::string *out);
+        wchar_t *GetPFromID(const char *id);
+    };
 
+    namespace Net 
+    {
+        SceVoid HttpsToHttp(paf::string &str);
+        SceBool IsValidURLSCE(const char *url); //Can this URL be used with SceHttp?
+    };
+    
+    namespace Widget
+    {
+        SceInt32 PlayEffect(paf::ui::Widget *widget, SceFloat32 param, paf::effect::EffectType animId, paf::ui::EventCallback::EventHandler animCB = (paf::ui::EventCallback::EventHandler)SCE_NULL, ScePVoid pUserData = SCE_NULL);
+        SceInt32 PlayEffectReverse(paf::ui::Widget *widget, SceFloat32 param, paf::effect::EffectType animId, paf::ui::EventCallback::EventHandler animCB = (paf::ui::EventCallback::EventHandler)SCE_NULL, ScePVoid pUserData = SCE_NULL);
+
+        template<class T = paf::ui::Widget>
+        T *GetChild(paf::ui::Widget *parent, SceUInt32 hash)
+        {
+            paf::rco::Element search;
+            search.hash = hash;
+            return (T*)parent->GetChild(&search, 0);
+        }
+
+        template<class T = paf::ui::Widget>
+        T *Utils::Widget::Create(const char *id, const char *type, const char *style, paf::ui::Widget *parent)
+        {
+            rco::Element styleInfo;
+            styleInfo.hash = Utils::Misc::GetHash(style);
+            rco::Element widgetInfo;
+            widgetInfo.hash = Utils::Misc::GetHash(id);
+
+            return (T*)mainPlugin->CreateWidgetWithStyle(parent, type, &widgetInfo, &styleInfo);
+        }        
+        SceInt32 SetLabel(paf::ui::Widget *widget, const char *text);
+        SceInt32 SetLabel(paf::ui::Widget *widget, paf::string *text);
+        SceVoid DeleteTexture(paf::graph::Surface **tex);
+    };
+    
+    namespace GamePad 
+    {
+        typedef void(*CallbackFunction)(paf::input::GamePad::GamePadData *pData, ScePVoid pUserData);
+        
+        typedef struct GamePadCB
+        {
+            CallbackFunction func;
+            ScePVoid pUserData;
+
+            GamePadCB(CallbackFunction _func, ScePVoid _pUserData):func(_func),pUserData(_pUserData){}
+        };
+
+        static std::vector<GamePadCB> cbList;
+        static void CB(paf::input::GamePad::GamePadData *pData);
+        static SceInt32 buttons = 0;
+
+        SceVoid RegisterButtonUpCB(CallbackFunction cb, ScePVoid pUserData = SCE_NULL);
+    };
+
+    namespace Time
+    {
+        static const char *SavePath = "savedata0:/previous_dl_time";
+
+        void ResetPreviousDLTime();
+        void LoadPreviousDLTime();
+        void SavePreviousDLTime();
+
+        paf::rtc::Tick GetPreviousDLTime(db::Id source);
+        SceVoid SetPreviousDLTime(db::Id source, paf::rtc::Tick time);
+
+        //Should not be directly accessed
+        static paf::rtc::Tick previousDownloadTime[sizeof(db::info) / sizeof(db::dbInfo)];
+    };
 #ifdef _DEBUG
     SceVoid PrintAllChildren(paf::ui::Widget *widget, int offset = 0);
 #endif

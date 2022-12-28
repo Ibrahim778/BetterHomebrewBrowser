@@ -130,7 +130,7 @@
 
                     <plane style="_common_style_plane_transparent" id="plane_category_buttons">
                         <layout_hint size="844, 60" pos="0,0" anchor="1,0" align="1,0" />
-                        <image_button style="category_button" sound="_common_sound_button_enter" label="db_loading_categories" >
+                        <image_button style="category_button" sound="_common_sound_button_enter" label="msg_init" >
                             <layout_hint size="844, 58" pos="0,1" />
                         </image_button>
                     </plane>

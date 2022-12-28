@@ -8,29 +8,32 @@
 #include "common.h"
 #include "settings.h"
 #include "curl_file.h"
+#include "dialog.h"
 
 using namespace paf;
 using namespace apps::info;
+using namespace Utils;
 
 Page::Page(db::entryInfo& entry):generic::Page::Page("info_page_template"),info(entry),iconSurf(SCE_NULL),iconLoadThread(SCE_NULL),descriptionLoadThread(SCE_NULL)
 {
-    Utils::SetWidgetLabel(Utils::GetChildByHash(root, Utils::GetHashById("info_title_text")), &info.title);
-    Utils::SetWidgetLabel(Utils::GetChildByHash(root, Utils::GetHashById("info_author_text")), &info.author);
-    Utils::SetWidgetLabel(Utils::GetChildByHash(root, Utils::GetHashById("info_version_text")), &info.version);
+    print("Got entry with hash: 0x%X (%p)\n", entry.hash, entry.title.data());
+    Widget::SetLabel(Widget::GetChild(root, Misc::GetHash("info_title_text")), &info.title);
+    Widget::SetLabel(Widget::GetChild(root, Misc::GetHash("info_author_text")), &info.author);
+    Widget::SetLabel(Widget::GetChild(root, Misc::GetHash("info_version_text")), &info.version);
     
-    Utils::GetChildByHash(root, button::ButtonHash_Download)->RegisterEventCallback(ui::EventMain_Decide,  new button::Callback(this), SCE_FALSE);
-    auto dataButton = Utils::GetChildByHash(root, button::ButtonHash_DataDownload);
+    Widget::GetChild(root, button::ButtonHash_Download)->RegisterEventCallback(ui::EventMain_Decide,  new button::Callback(this), SCE_FALSE);
+    auto dataButton = Widget::GetChild(root, button::ButtonHash_DataDownload);
     dataButton->RegisterEventCallback(ui::EventMain_Decide,  new button::Callback(this), SCE_FALSE);
 
     if(info.dataURL.size() == 0)
-       Utils::PlayEffectReverse(dataButton, 0, effect::EffectType_Reset);
+       Widget::PlayEffectReverse(dataButton, 0, effect::EffectType_Reset);
 
-    if(db::info[Settings::GetInstance()->source].ScreenshotsSupported & info.screenshotURL.size() > 0)
+    if(db::info[Settings::GetInstance()->source].ScreenshotsSupported && info.screenshotURL.size() > 0)
     {
-        auto scrollBox = Utils::GetChildByHash(root, Utils::GetHashById("screenshot_box"));
+        auto scrollBox = Widget::GetChild(root, Misc::GetHash("screenshot_box"));
         Plugin::TemplateOpenParam tOpen;
         rco::Element e;
-        e.hash = Utils::GetHashById("info_screenshot_button_template");
+        e.hash = Misc::GetHash("info_screenshot_button_template");
         
         int size = info.screenshotURL.size();
         for(int i = 0; i < size; i++)
@@ -50,8 +53,9 @@ Page::Page(db::entryInfo& entry):generic::Page::Page("info_page_template"),info(
     else
     {
         thread::s_mainThreadMutex.Lock();
-        effect::Play(0, Utils::GetChildByHash(root, Utils::GetHashById("screenshot_plane")), effect::EffectType_Reset, SCE_TRUE, SCE_TRUE);
-        Utils::GetChildByHash(root, Utils::GetHashById("description_plane"))->SetSize(&paf::Vector4(960, 444));
+        effect::Play(0, Widget::GetChild(root, Misc::GetHash("screenshot_plane")), effect::EffectType_Reset, SCE_TRUE, SCE_TRUE);
+        Widget::GetChild(root, Misc::GetHash("description_plane"))->SetSize(&paf::Vector4(960, 444));
+        // Widget::GetChild<ui::Text>(root, Misc::GetHash(""))->SetFontSize;
         thread::s_mainThreadMutex.Unlock();
     }
 
@@ -95,8 +99,8 @@ db::entryInfo& Page::GetInfo()
 SceVoid Page::IconLoadThread::EntryFunction()
 {
     print("apps::info::Page::IconLoadThread START\n");
-    auto busyIndicator = Utils::GetChildByHash<ui::BusyIndicator>(callingPage->root, Utils::GetHashById("icon_busy"));
-    auto iconPlane = Utils::GetChildByHash<ui::Plane>(callingPage->root, Utils::GetHashById("icon_plane"));
+    auto busyIndicator = Widget::GetChild<ui::BusyIndicator>(callingPage->root, Misc::GetHash("icon_busy"));
+    auto iconPlane = Widget::GetChild<ui::Plane>(callingPage->root, Misc::GetHash("icon_plane"));
     busyIndicator->Start();
 
     SceInt32 fileErr = SCE_OK;
@@ -121,20 +125,21 @@ SceVoid Page::IconLoadThread::EntryFunction()
     Cancel();
 }
 
-SceVoid apps::info::button::DataDownloadTask::Run()
+SceVoid button::DataDownloadTask::Run()
 {
     print("DataDownloadTask START!\n");
     sceShellUtilLock(SCE_SHELL_UTIL_LOCK_TYPE_PS_BTN);
-    Dialog::OpenPleaseWait(mainPlugin, SCE_NULL, Utils::GetStringPFromID("msg_wait"));
+    Dialog::OpenPleaseWait(mainPlugin, SCE_NULL, String::GetPFromID("msg_wait"));
 
     paf::string out;
     SceInt32 r = db::info[Settings::GetInstance()->source].GetDataUrl(caller->GetInfo(), out);
     if(r != SCE_OK)
     {
         Dialog::Close();
-        Dialog::OpenOk(mainPlugin, SCE_NULL, Utils::GetStringPFromID("msg_src_err"));
+        Dialog::OpenOk(mainPlugin, SCE_NULL, String::GetPFromID("msg_src_err"));
+        sceShellUtilUnlock(SCE_SHELL_UTIL_LOCK_TYPE_PS_BTN);
         return;
-    }   
+    }
     
     BGDLParam param;
     param.magic = (BHBB_DL_MAGIC | BHBB_DL_CFG_VER);
@@ -142,14 +147,14 @@ SceVoid apps::info::button::DataDownloadTask::Run()
     param.type = BGDLTarget::CustomPath;
 
     string titleTemplate;
-    Utils::GetStringFromID("data_dl_name", &titleTemplate);
+    String::GetFromID("data_dl_name", &titleTemplate);
     
     string title = ccc::Sprintf(titleTemplate.data(), caller->GetInfo().title.data());
 
     g_downloader->Enqueue(out.data(), title.data(), &param);
 
     Dialog::Close();
-    Dialog::OpenOk(mainPlugin, SCE_NULL, Utils::GetStringPFromID("msg_download_queued"));
+    Dialog::OpenOk(mainPlugin, SCE_NULL, String::GetPFromID("msg_download_queued"));
     sceShellUtilUnlock(SCE_SHELL_UTIL_LOCK_TYPE_PS_BTN);
     print("DataDownloadTask FINISH!\n");
 }
@@ -158,14 +163,15 @@ SceVoid button::AppDownloadTask::Run()
 {
     print("AppDownloadTask START!\n");
     sceShellUtilLock(SCE_SHELL_UTIL_LOCK_TYPE_PS_BTN);
-    Dialog::OpenPleaseWait(mainPlugin, SCE_NULL, Utils::GetStringPFromID("msg_wait"));
+    Dialog::OpenPleaseWait(mainPlugin, SCE_NULL, String::GetPFromID("msg_wait"));
 
     paf::string out;
     SceInt32 r = db::info[Settings::GetInstance()->source].GetDownloadUrl(caller->GetInfo(), out);
     if(r != SCE_OK)
     {
         Dialog::Close();
-        Dialog::OpenOk(mainPlugin, SCE_NULL, Utils::GetStringPFromID("msg_src_err"));
+        Dialog::OpenOk(mainPlugin, SCE_NULL, String::GetPFromID("msg_src_err"));
+        sceShellUtilUnlock(SCE_SHELL_UTIL_LOCK_TYPE_PS_BTN);
         return;
     }   
     
@@ -177,7 +183,7 @@ SceVoid button::AppDownloadTask::Run()
     g_downloader->Enqueue(out.data(), caller->GetInfo().title.data(), &param);
 
     Dialog::Close();
-    Dialog::OpenOk(mainPlugin, SCE_NULL, Utils::GetStringPFromID("msg_download_queued"));
+    Dialog::OpenOk(mainPlugin, SCE_NULL, String::GetPFromID("msg_download_queued"));
     sceShellUtilUnlock(SCE_SHELL_UTIL_LOCK_TYPE_PS_BTN);
     print("AppDownloadTask FINISH!\n");
 }
@@ -226,13 +232,18 @@ screenshot::Page::~Page()
     }
 }
 
+SceVoid screenshot::Page::ErrorCB(Dialog::ButtonCode button, ScePVoid pUserData)
+{
+    Page::DeleteCurrentPage();
+}
+
 SceVoid screenshot::Page::LoadThread::EntryFunction()
 {
     print("apps::info::screenshot::Page::LoadThread START\n");
     g_busyIndicator->Start();
     g_backButton->PlayEffectReverse(0, effect::EffectType_Reset);
 
-    auto plane = Utils::GetChildByHash(callingPage->root, Utils::GetHashById("picture"));
+    auto plane = Widget::GetChild(callingPage->root, Misc::GetHash("picture"));
     
     SceInt32 fileErr = SCE_OK;
 
@@ -243,8 +254,8 @@ SceVoid screenshot::Page::LoadThread::EntryFunction()
     if(callingPage->surface == SCE_NULL || fileErr != SCE_OK)
     {
         print("Error making surf! fileErr: 0x%X callingPage->surface: 0x%X\n", fileErr, callingPage->surface);
-        Dialog::OpenOk(mainPlugin, NULL, Utils::GetStringPFromID("msg_download_queued"));
-        Page::DeleteCurrentPage();
+        g_busyIndicator->Stop();
+        Dialog::OpenError(mainPlugin, fileErr, String::GetPFromID("msg_screenshot_error"), ErrorCB);
         Cancel();
         return;
     }
@@ -263,17 +274,21 @@ SceVoid screenshot::Page::LoadThread::EntryFunction()
 
 SceVoid Page::DescriptionLoadThread::EntryFunction()
 {
-    auto busy = Utils::GetChildByHash<ui::BusyIndicator>(callingPage->root, Utils::GetHashById("description_busy"));
+    auto busy = Widget::GetChild<ui::BusyIndicator>(callingPage->root, Misc::GetHash("description_busy"));
 
     busy->Start();
     
     string desc;
     SceInt32 ret = db::info[Settings::GetInstance()->source].GetDescription(callingPage->info, desc);
-    auto descText = Utils::GetChildByHash<ui::Text>(callingPage->root, Utils::GetHashById("info_description_text"));
+    auto descText = Widget::GetChild<ui::Text>(callingPage->root, Misc::GetHash("info_description_text"));
     if(ret == SCE_OK)
-        Utils::SetWidgetLabel(descText, &desc);    
+        Widget::SetLabel(descText, &desc);    
     else
-        descText->SetLabel(&wstring(Utils::GetStringPFromID("msg_desc_error")));
+    {
+        Dialog::OpenError(mainPlugin, ret, String::GetPFromID("msg_desc_error"));
+        descText->SetLabel(&wstring(String::GetPFromID("msg_desc_error")));
+    }
+
     busy->Stop();
     Cancel();
 }

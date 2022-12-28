@@ -92,6 +92,7 @@ SceInt32 cURLFile::SaveFile(const char *url, const char *file, cURLFile::cancelC
         localFile.get()->Close();
         paf::LocalFile::RemoveFile(file);
     }    
+    print("SaveFile > 0x%X\n", ret);
     return ret;
 }
 

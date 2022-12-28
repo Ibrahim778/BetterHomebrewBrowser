@@ -8,7 +8,6 @@
 #include <stdlib.h>
 #include <common_gui_dialog.h>
 
-#include "main.h"
 #include "dialog.h"
 #include "print.h"
 

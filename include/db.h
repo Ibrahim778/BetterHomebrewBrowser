@@ -59,7 +59,7 @@ namespace db
 
     namespace vitadb
     {
-        SceInt32 Parse(db::List *outList, paf::string& jsonStr);
+        SceInt32 Parse(db::List *outList, const char *jsonPath);
         SceInt32 GetDescription(db::entryInfo &entry, paf::string &out);
         SceInt32 GetDownloadUrl(db::entryInfo &entry, paf::string &out);
         SceInt32 GetDataUrl(db::entryInfo &entry, paf::string &out);
@@ -67,7 +67,7 @@ namespace db
 
     namespace cbpsdb
     {
-        SceInt32 Parse(db::List *outList, paf::string& csv);
+        SceInt32 Parse(db::List *outList, const char *csvPath);
         SceInt32 GetDescription(db::entryInfo &entry, paf::string &out);
         SceInt32 GetDownloadUrl(db::entryInfo &entry, paf::string &out);
         SceInt32 GetDataUrl(db::entryInfo &entry, paf::string &out);
@@ -75,7 +75,7 @@ namespace db
 
     namespace vhbdb
     {
-        SceInt32 Parse(db::List *outList, paf::string& jsonStr);
+        SceInt32 Parse(db::List *outList, const char *jsonPath);
         SceInt32 GetDescription(db::entryInfo &entry, paf::string &out);
         SceInt32 GetDownloadUrl(db::entryInfo &entry, paf::string &out);
         SceInt32 GetDataUrl(db::entryInfo &entry, paf::string &out);
@@ -90,7 +90,7 @@ namespace db
 
     typedef struct
     {
-        SceInt32 (*Parse)(db::List *outList, paf::string& data);
+        SceInt32 (*Parse)(db::List *outList, const char *path);
         SceInt32 (*GetDescription)(db::entryInfo& entry, paf::string& out);
         SceInt32 (*GetDownloadUrl)(db::entryInfo& entry, paf::string& out);
         SceInt32 (*GetDataUrl)(db::entryInfo& entry, paf::string& out);
@@ -98,12 +98,15 @@ namespace db
         const char *iconFolderPath;
         const char *iconsURL;
         const char *indexURL;
+        const char *indexPath;
         bool ScreenshotsSupported;
         bool CategoriesSupported;
         const int categoryNum;
         Category categories[5];
         const int id;
     } dbInfo;
+
+    static const int CategoryAll = -1;
 
     static const dbInfo info[] =
     {
@@ -116,6 +119,7 @@ namespace db
             .iconFolderPath = "ux0:data/betterHomebrewBrowser/icons/cbpsdb",
             .iconsURL = "https://github.com/Ibrahim778/CBPS-DB-Icon-Downloader/raw/main/icons.zip?raw=true",
             .indexURL = "https://raw.githubusercontent.com/KuromeSan/cbps-db/master/cbpsdb.csv",
+            .indexPath = "ux0:temp/cbpsdb.csv",
             .ScreenshotsSupported = false,
             .CategoriesSupported = false,
             .categoryNum = 1,
@@ -136,6 +140,7 @@ namespace db
             .iconFolderPath = "ux0:/data/betterHomebrewBrowser/icons/vitadb", 
             .iconsURL = "https://vitadb.rinnegatamante.it/icons_zip.php", 
             .indexURL = "https://rinnegatamante.it/vitadb/list_hbs_json.php",
+            .indexPath = "ux0:temp/vitadb.json",
             .ScreenshotsSupported = true,
             .CategoriesSupported = true,
             .categoryNum = 5,
@@ -172,6 +177,7 @@ namespace db
             .iconFolderPath = "ux0:/data/betterHomebrewBrowser/icons/vhbdb",
             .iconsURL = SCE_NULL,
             .indexURL = "https://github.com/vhbd/database/releases/download/latest/db_minify.json",
+            .indexPath = "ux0:temp/vhbdb.json",
             .ScreenshotsSupported = false,
             .CategoriesSupported = true,
             .categoryNum = 4,

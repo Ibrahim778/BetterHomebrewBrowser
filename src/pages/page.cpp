@@ -4,7 +4,6 @@
 #include "pages/page.h"
 #include "utils.h"
 #include "common.h"
-#include "main.h"
 #include "print.h"
 
 using namespace paf;
@@ -23,13 +22,14 @@ void *generic::Page::forwardData;
 
 generic::Page::Page(const char *pageName)
 {
+    hash = Utils::Misc::GetHash(pageName);
     this->prev = currPage;
     currPage = this;
 
     Plugin::TemplateOpenParam tInit;
     rco::Element e;
 
-    e.hash = Utils::GetHashById(pageName);
+    e.hash = Utils::Misc::GetHash(pageName);
     
     SceBool isMainThread = thread::IsMainThread();
     if(!isMainThread)
@@ -69,6 +69,16 @@ generic::Page::Page(const char *pageName)
 	if (root->animationStatus & 0x80)
 		root->animationStatus &= ~0x80;
 
+}
+
+generic::Page *generic::Page::GetCurrentPage()
+{
+    return currPage;
+}
+
+SceUInt64 generic::Page::GetHash()
+{
+    return hash;
 }
 
 SceVoid generic::Page::OnRedisplay()
@@ -114,15 +124,15 @@ void generic::Page::Setup()
     rco::Element e;
     Plugin::PageOpenParam pInit;
     
-    e.hash = Utils::GetHashById("page_main");
+    e.hash = Utils::Misc::GetHash("page_main");
     ui::Widget *page =  mainPlugin->PageOpen(&e, &pInit);
     
-    e.hash = Utils::GetHashById("template_plane");
+    e.hash = Utils::Misc::GetHash("template_plane");
     templateRoot = (ui::Plane *)page->GetChild(&e, 0);
 
     currPage = SCE_NULL;
 
-    e.hash = Utils::GetHashById("back_button");
+    e.hash = Utils::Misc::GetHash("back_button");
     g_backButton = (ui::CornerButton *)page->GetChild(&e, 0);
 
     backCallback = SCE_NULL;
@@ -137,11 +147,11 @@ void generic::Page::Setup()
     backButtonEventCallback->eventHandler = generic::Page::BackButtonEventHandler;
     g_backButton->RegisterEventCallback(ui::EventMain_Decide, backButtonEventCallback, 0);
 
-    e.hash = Utils::GetHashById("main_busy");
+    e.hash = Utils::Misc::GetHash("main_busy");
     g_busyIndicator = (ui::BusyIndicator *)page->GetChild(&e, 0);
     g_busyIndicator->Stop();
 
-    e.hash = Utils::GetHashById("forward_button");
+    e.hash = Utils::Misc::GetHash("forward_button");
     g_forwardButton = (ui::CornerButton *)page->GetChild(&e, 0);
     g_forwardButton->PlayEffectReverse(0, effect::EffectType_Reset);
 

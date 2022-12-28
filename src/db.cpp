@@ -14,17 +14,15 @@
 using namespace sce;
 using namespace db;
 using namespace paf;
+using namespace Utils;
 
 #define SET_STRING(pafString, jsonString) { if(rootval[i][jsonString] != NULL) { pafString = rootval[i][jsonString].getString().c_str(); } } 
-SceInt32 vitadb::Parse(db::List *outList, string &json)
+SceInt32 vitadb::Parse(db::List *outList, const char *jsonPath)
 {
     outList->Clear();
 
-    int length = json.length();
-    const char *jsonStr = json.data();
-
     PAFAllocator allocator;
-    Json::InitParameter initParam((Json::MemAllocator *)&allocator, 0, 512);
+    Json::InitParameter initParam((Json::MemAllocator *)&allocator, 0, 1024);
     Json::Initializer init;
 
 
@@ -36,7 +34,7 @@ SceInt32 vitadb::Parse(db::List *outList, string &json)
         rootval.clear();
         
 
-        SceInt32 ret = Json::Parser::parse(rootval, jsonStr, length);
+        SceInt32 ret = Json::Parser::parse(rootval, jsonPath);
         if(ret < 0)
         {
             print("Json::Parser::parse() -> 0x%X\n", ret);
@@ -87,7 +85,7 @@ SceInt32 vitadb::Parse(db::List *outList, string &json)
             if(rootval[i]["type"] != NULL)
                 currentEntry.type = (int)sce_paf_strtoul(rootval[i]["type"].getString().c_str(), NULL, 10);
 
-            currentEntry.hash = Utils::GetHashById(currentEntry.id.data());
+            currentEntry.hash = Misc::GetHash(currentEntry.id.data());
 
             outList->Add(currentEntry);
         }
@@ -95,48 +93,105 @@ SceInt32 vitadb::Parse(db::List *outList, string &json)
     return SCE_OK;
 }
 
-SceInt32 cbpsdb::Parse(db::List *outList, string &csvStr)
+SceInt32 cbpsdb::Parse(db::List *outList, const char *csvPath)
 {
     //Parse one time to get data files and add to an array, parse entire db to add files with data.
-    
     outList->Clear();
+    
+    FILE *file = sce_paf_fopen(csvPath, "rb");
+    if(file == NULL) return -2;
 
-    const char *csv = csvStr.data();
-    int length = csvStr.length();
+    int dataCount = 0;
 
-    char *line = (char *)csv - 6;
-    int dataEntryNum = 0;
-    while((line = sce_paf_strstr(line + 6, ",DATA,")) != NULL) dataEntryNum++;
+    int done = 0;
+    int err = 0;
+    sce_paf_free(fread_csv_line(file, 1024, &done, &err)); //Skip the first line
 
-    string *dataLines = new string[dataEntryNum];
-
-    int currentEntriesAdded = 0;
-    int offset = 0; 
-    while((line = getLine(csv, &offset)) != NULL && currentEntriesAdded < dataEntryNum)
+    while(done != 1) //Count data files
     {
-        if(sce_paf_strstr(line, ",DATA,") == NULL) continue;
+        char *line = fread_csv_line(file, 1024, &done, &err);
+        if(err != 0)
+        {
+            print("[Error] fread_csv_line -> %d\n", err);
+            sce_paf_free(line);
+            return -4;
+        }
 
-        dataLines[currentEntriesAdded] = line;
-
-        free(line);
-        currentEntriesAdded++;
+        if(!line)
+        {
+            sce_paf_free(line);
+            return -3;
+        }
+        
+        if(sce_paf_strstr(line, ",DATA,") != NULL)
+            dataCount++;
+        
+        sce_paf_free(line);
     }
 
-    line = (char *)csv - 5;
-    int entryNum = 0;
-    while((line = sce_paf_strstr(line + 5, ",VPK,")) != NULL) entryNum++;
+    //Reset the file
+    done = 0;
+    err = 0;
+    sce_paf_fseek(file, 0, SEEK_SET);
 
-    currentEntriesAdded = 0;
-    offset = 0;
+    string *dataLines = new string[dataCount];
+    
+    sce_paf_free(fread_csv_line(file, 1024, &done, &err)); //Skip the first line
+
+    for(int i = 0; i < dataCount; i++)
+    {
+        char *line = fread_csv_line(file, 1024, &done, &err);
+        if(err != 0)
+        {
+            print("[Error] fread_csv_line -> %d\n", err);
+            sce_paf_free(line);
+            return -4;
+        }
+
+        if(!line)
+        {
+            sce_paf_free(line);
+            return -3;
+        }
         
-    while((line = getLine(csv, &offset)) != NULL && currentEntriesAdded < entryNum)
+        if(sce_paf_strstr(line, ",DATA,") == NULL)
+        {
+            sce_paf_free(line);
+            i--;
+            continue;
+        }
+
+        dataLines[i] = line;
+    }
+
+    done = 0;
+    err = 0;
+    sce_paf_fseek(file, 0, SEEK_SET);
+    sce_paf_free(fread_csv_line(file, 1024, &done, &err)); //Skip the first line
+    int num = 0;
+
+    // print("Going to read lines...\n");
+    while(done != 1)
     {
         db::entryInfo currentEntry;
 
-        if(sce_paf_strstr(line, ",VPK,") == NULL) continue;
+        char *line = fread_csv_line(file, 1024, &done, &err);
+        // print("Read line: %s\n", line);
+        if(err != 0)
+        {
+            print("[Error] fread_csv_line -> %d\n", err);
+            sce_paf_free(line);
+            return -4;
+        }
+
+        if(sce_paf_strstr(line, ",VPK,") == NULL)
+        {
+            sce_paf_free(line);
+            continue;
+        }
 
         char **parsed = parse_csv(line);
-
+        // print("parsed csv: %p\n", parsed);
         currentEntry.id = parsed[0];
         currentEntry.title = parsed[1];
         
@@ -156,22 +211,23 @@ SceInt32 cbpsdb::Parse(db::List *outList, string &csvStr)
         currentEntry.downloadURL.push_back(paf::string(parsed[5]));
         currentEntry.type = -1;
 
-        currentEntry.hash = Utils::GetHashById(currentEntry.id.data());
+        currentEntry.hash = Misc::GetHash(currentEntry.id.data());
         currentEntry.description = parsed[7];
 
         currentEntry.iconPath = ccc::Sprintf("%s/%s.png", db::info[CBPSDB].iconFolderPath, currentEntry.id.data());
         
         currentEntry.dataPath.clear();
 
-        if(sce_paf_strncmp(parsed[15], "None", 4) != 0)
+        if(parsed[15] && sce_paf_strncmp(parsed[15], "None", 4) != 0)
         {
-            for(int i = 0; i < dataEntryNum; i++)
+            for(int i = 0; i < dataCount; i++)
             {
                 if(sce_paf_strstr(dataLines[i].data(), parsed[15]) != NULL)
                 {
                     char **parsedData = parse_csv(dataLines[i].data());
-                    currentEntry.dataURL.push_back(paf::string(parsedData[5]));
+                    currentEntry.dataURL.push_back(string(parsedData[5]));
                     currentEntry.dataPath = parsedData[13];
+                    free_csv_line(parsedData);
                     break;
                 }
             }
@@ -179,23 +235,23 @@ SceInt32 cbpsdb::Parse(db::List *outList, string &csvStr)
 
         outList->Add(currentEntry);
 
+        free_csv_line(parsed);
+        // print("freed csv\n");
         free(line);
-        currentEntriesAdded++;
+        // print("freed line\n");
+        num++;
     }
-
     delete[] dataLines;
+
     return SCE_OK;
 }
 
-SceInt32 vhbdb::Parse(db::List *outList, string &json)
+SceInt32 vhbdb::Parse(db::List *outList, const char *jsonPath)
 {
     outList->Clear();
 
-    int length = json.length();
-    const char *jsonStr = json.data();
-
     PAFAllocator allocator;
-    Json::InitParameter initParam((Json::MemAllocator *)&allocator, 0, 512);
+    Json::InitParameter initParam((Json::MemAllocator *)&allocator, 0, 1024);
     Json::Initializer init;
 
     init.initialize(&initParam);
@@ -206,7 +262,7 @@ SceInt32 vhbdb::Parse(db::List *outList, string &json)
         rootVal.clear();
         
 
-        SceInt32 ret = Json::Parser::parse(rootVal, jsonStr, length);
+        SceInt32 ret = Json::Parser::parse(rootVal, jsonPath);
         if(ret < 0)
         {
             print("Json::Parser::parse() -> 0x%X\n", ret);
@@ -225,7 +281,7 @@ SceInt32 vhbdb::Parse(db::List *outList, string &json)
             SET_STRING(currentEntry.titleID, "title_id");
             SET_STRING(currentEntry.title, "name");
 
-            currentEntry.id = ccc::Sprintf("%X%X", Utils::GetHashById(currentEntry.titleID.data()), Utils::GetHashById(currentEntry.title.data()));
+            currentEntry.id = ccc::Sprintf("%X%X", Misc::GetHash(currentEntry.titleID.data()), Misc::GetHash(currentEntry.title.data()));
 
             if(rootval[i]["icons"] != NULL)
                 for(int x = 0; x < rootval[i]["icons"].count(); x++)
@@ -274,7 +330,7 @@ SceInt32 vhbdb::Parse(db::List *outList, string &json)
                 }
             }
 
-            currentEntry.hash = Utils::GetHashById(currentEntry.id.data());
+            currentEntry.hash = Misc::GetHash(currentEntry.id.data());
 
             outList->Add(currentEntry);
         }
@@ -291,9 +347,9 @@ SceInt32 cbpsdb::GetDataUrl(db::entryInfo& entry, paf::string& out)
         
         paf::string buff = i->data();
         
-        Utils::HttpsToHttp(buff);
+        Net::HttpsToHttp(buff);
         
-        if(Utils::IsValidURLSCE(buff.data()))
+        if(Net::IsValidURLSCE(buff.data()))
         {
             out = buff;
             return SCE_OK;
@@ -311,9 +367,9 @@ SceInt32 cbpsdb::GetDownloadUrl(db::entryInfo& entry, paf::string& out)
         
         paf::string buff = i->data();
         
-        Utils::HttpsToHttp(buff);
+        Net::HttpsToHttp(buff);
         
-        if(Utils::IsValidURLSCE(buff.data()))
+        if(Net::IsValidURLSCE(buff.data()))
         {
             out = buff;
             return SCE_OK;
@@ -321,7 +377,6 @@ SceInt32 cbpsdb::GetDownloadUrl(db::entryInfo& entry, paf::string& out)
     }
     return -1;
 }
-
 
 SceInt32 vitadb::GetDataUrl(db::entryInfo& entry, paf::string& out)
 {
@@ -346,9 +401,9 @@ SceInt32 vitadb::GetDataUrl(db::entryInfo& entry, paf::string& out)
             continue;
         }
         paf::string buff = url;
-        Utils::HttpsToHttp(buff);
+        Net::HttpsToHttp(buff);
         print("Got URL: %s\n", buff);
-        if(Utils::IsValidURLSCE(buff.data()))
+        if(Net::IsValidURLSCE(buff.data()))
         {
             out = buff;
             return SCE_OK;
@@ -381,9 +436,9 @@ SceInt32 vitadb::GetDownloadUrl(db::entryInfo& entry, paf::string& out)
             continue;
         }
         paf::string buff = url;
-        Utils::HttpsToHttp(buff);
+        Net::HttpsToHttp(buff);
         print("Got URL: %s\n", buff);
-        if(Utils::IsValidURLSCE(buff.data()))
+        if(Net::IsValidURLSCE(buff.data()))
         {
             out = buff;
             return SCE_OK;
@@ -401,9 +456,9 @@ SceInt32 vhbdb::GetDownloadUrl(db::entryInfo &entry, paf::string& out)
         
         paf::string buff = i->data();
         
-        Utils::HttpsToHttp(buff);
+        Net::HttpsToHttp(buff);
         
-        if(Utils::IsValidURLSCE(buff.data()))
+        if(Net::IsValidURLSCE(buff.data()))
         {
             out = buff;
             return SCE_OK;
@@ -435,9 +490,9 @@ SceInt32 vhbdb::GetDataUrl(db::entryInfo& entry, paf::string& out)
             continue;
         }
         paf::string buff = url;
-        Utils::HttpsToHttp(buff);
+        Net::HttpsToHttp(buff);
         print("Got URL: %s\n", buff);
-        if(Utils::IsValidURLSCE(buff.data()))
+        if(Net::IsValidURLSCE(buff.data()))
         {
             out = buff;
             return SCE_OK;
@@ -446,7 +501,6 @@ SceInt32 vhbdb::GetDataUrl(db::entryInfo& entry, paf::string& out)
 
     return -1;
 }
-
 
 SceInt32 vitadb::GetDescription(db::entryInfo& entry, paf::string& out) 
 {
@@ -457,7 +511,13 @@ SceInt32 vitadb::GetDescription(db::entryInfo& entry, paf::string& out)
 SceInt32 cbpsdb::GetDescription(db::entryInfo& entry, paf::string& out)
 {   
     SceInt32 ret = SCE_OK;
-    
+    if(sce_paf_strncmp(entry.description.data(), "None", 4) == 0)
+    {
+        String::GetFromID("msg_no_desc", &out);
+        return ret;
+    }    
+
+    print("Opening: %s\n", entry.description.data());
     auto cFile = CurlFile::Open(entry.description.data(), &ret, SCE_O_RDONLY);
     if(ret < 0)
         return ret;
@@ -465,7 +525,7 @@ SceInt32 cbpsdb::GetDescription(db::entryInfo& entry, paf::string& out)
     auto fileSize = cFile->GetFileSize(); 
     char *buff = new char[fileSize + 1];
     sce_paf_memset(buff, 0, fileSize + 1);
-
+    
     ret = cFile->Read(buff, fileSize);
     
     if(ret < 0)
@@ -505,9 +565,8 @@ void db::List::Clear()
 
 db::entryInfo &db::List::Get(SceUInt64 hash)
 {   
-    auto end = entries.end();
-    for(auto entry = entries.begin(); entry != end; entry++)
-        if(entry->hash == hash) return *entry;
+    for(db::entryInfo& entry : entries)
+        if(entry.hash == hash) return entry;
 }
 
 db::entryInfo &db::List::Get(int index)
@@ -522,7 +581,7 @@ std::vector<db::entryInfo>::iterator db::List::Get(int index, int category)
     size_t i = 0, size = entries.size();
     auto end = entries.end();
     std::vector<db::entryInfo>::iterator entry;
-    for(entry = entries.begin(); i < index && entry != end; i++, entry++)
+    for(entry = entries.begin(); i < index && entry != end && i < size; i++, entry++)
         if(entry->type != category) i--;
 
     return entry;

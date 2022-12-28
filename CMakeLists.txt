@@ -38,6 +38,7 @@ add_executable(${PROJECT_NAME}
     src/network.cpp
     src/csv.c
     src/split.c
+    src/fread_csv_line.c
     src/settings.cpp
     src/downloader.cpp
     src/curl_file.cpp
@@ -55,7 +56,6 @@ add_executable(${PROJECT_NAME}
 
     common/bhbb_dl.h
     
-    include/main.h
     include/utils.h
     include/network.h
     include/csv.h

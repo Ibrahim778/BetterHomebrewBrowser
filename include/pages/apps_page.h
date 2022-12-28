@@ -86,7 +86,7 @@ namespace apps
             using paf::job::JobItem::JobItem;
 
             SceVoid Run();
-            SceVoid Finish();
+            SceVoid Finish(){}
         };
 
         class IconAssignThread : public paf::thread::Thread
@@ -102,7 +102,7 @@ namespace apps
 
             SceVoid EntryFunction();
 
-            IconAssignThread(Page *callingPage, SceInt32 initPriority = SCE_KERNEL_DEFAULT_PRIORITY_USER - 1, SceSize stackSize = SCE_KERNEL_4KiB, const char *name = "apps::Page::IconAssignThread"):paf::thread::Thread::Thread(initPriority, stackSize, name),callingPage(callingPage){}
+            IconAssignThread(Page *callingPage, SceInt32 initPriority = SCE_KERNEL_DEFAULT_PRIORITY_USER - 1, SceSize stackSize = SCE_KERNEL_8KiB, const char *name = "apps::Page::IconAssignThread"):paf::thread::Thread::Thread(initPriority, stackSize, name),callingPage(callingPage){}
         };
 
         class LoadJob : public paf::job::JobItem
@@ -111,29 +111,11 @@ namespace apps
             using paf::job::JobItem::JobItem;
 
             SceVoid Run();
-            SceVoid Finish();
+            SceVoid Finish(){}
 
             Page *callingPage;
 
             LoadJob(const char *name, Page *caller):job::JobItem(name),callingPage(caller){}
-        };
-
-        class TextureList
-        {
-        public:
-            SceBool Contains(SceUInt64 hash);
-            SceVoid Clear(SceBool deleteTextures = SCE_TRUE);
-            paf::graph::Surface *Get(SceUInt64 hash);
-            SceVoid Add(SceUInt64 hash, paf::graph::Surface *surf);
-        private:
-            struct Node
-            {
-                paf::graph::Surface *surf;
-                SceUInt64 hash;
-                Node(SceUInt64 _hash, paf::graph::Surface *_surf):hash(_hash),surf(_surf){}
-            };
-
-            std::vector<Node> list;
         };
 
         class SearchCB : public paf::ui::EventCallback
@@ -145,6 +127,24 @@ namespace apps
             }
 
             static SceVoid OnGet(SceInt32 eventID, paf::ui::Widget *self, SceInt32 unk, ScePVoid pUserData);
+        };
+
+        class IconInvokedDownloadJob : public paf::job::JobItem
+        {
+        public:
+            using paf::job::JobItem::JobItem;
+
+            SceVoid Run();
+            SceVoid Finish(){}
+
+            Page *callingPage;
+            SceUInt64 hash;
+
+            SceBool DialogResult;
+
+            static SceVoid DialogEventHandler(Dialog::ButtonCode res, ScePVoid pUserData);
+
+            IconInvokedDownloadJob(const char *name, SceUInt64 _hash, Page *caller):job::JobItem(name),callingPage(caller),hash(_hash){}
         };
 
         enum PageMode
@@ -166,6 +166,8 @@ namespace apps
 
         //Cancels current icon downloads and assignments, DO NOT CALL FROM MAIN THREAD
         SceVoid CancelIconJobs();
+        //Enables icon downloads and assignments
+        SceVoid StartIconJobs();
 
         Page();
         virtual ~Page();
@@ -185,8 +187,7 @@ namespace apps
         
         SceVoid OnClear() override;
         SceVoid OnCleared() override;
-        SceVoid OnForwardButtonPressed() override;
-        SceVoid OnPageDeleted(generic::MultiPageAppList::Body *body) override;
+        SceVoid OnPageDelete(generic::MultiPageAppList::Body *body) override;
 
         ScePVoid DefaultNewPageData() override;
 
@@ -194,7 +195,6 @@ namespace apps
         
         db::List appList;
         db::List searchList;
-        TextureList loadedTextures;
 
         IconDownloadThread *iconDownloadThread; //Enqueues downloads
         paf::job::JobQueue *iconDownloadQueue; //Performs downloads
@@ -208,7 +208,10 @@ namespace apps
         class Callback : public paf::ui::EventCallback
         {
         public:
-            Callback();
+            Callback(apps::Page *page){
+                eventHandler = OnGet;
+                pUserData = page;
+            }
 
             static void OnGet(SceInt32 eventID, paf::ui::Widget *self, SceInt32 unk, ScePVoid pUserData);
         };

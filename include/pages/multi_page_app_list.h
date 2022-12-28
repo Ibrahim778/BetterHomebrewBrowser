@@ -56,7 +56,7 @@ namespace generic
             Body *prev;
             void *userDat;
 
-            Body(Body *_prev = SCE_NULL, void *userDat = SCE_NULL):prev(_prev),userDat(SCE_NULL){}
+            Body(Body *_prev = SCE_NULL, void *userDat = SCE_NULL):prev(_prev),userDat(userDat){}
         };
 
         class CategoryCB : public paf::ui::EventCallback
@@ -71,6 +71,7 @@ namespace generic
 
         static SceVoid ForwardButtonCB(SceInt32 eventID, paf::ui::Widget *self, SceInt32 unk, ScePVoid pUserData);
         static SceVoid BackCB(SceInt32 eventID, paf::ui::Widget *self, SceInt32 unk, ScePVoid pUserData);
+        static void QuickCategoryCB(paf::input::GamePad::GamePadData *data, ScePVoid pUserData);
 
         //Redisplays the elements in the parsed db list according to category, also resets the current page number to 0 (1)
         SceVoid Redisplay(void *userDat = SCE_NULL);
@@ -107,12 +108,19 @@ namespace generic
         virtual SceVoid OnCategoryChanged(int prevCategory, int currentCategory);
         //Called to populate pages made with NewPage()
         virtual SceVoid PopulatePage(paf::ui::Widget *scrollBox, void *userDat);
+        //Called whenever a page is going to be deleted
+        virtual SceVoid OnPageDelete(Body *userDat);
         //Called whenever a page is deleted
         virtual SceVoid OnPageDeleted(Body *userDat);
         //Called whenever the forward button is pressed
         virtual SceVoid OnForwardButtonPressed();
         //Used to set some default data to be passed as the userData for the NewPage and Redisplay functions
         virtual ScePVoid DefaultNewPageData();
+
+        //Lock categories
+        SceVoid Lock();
+        //Unlock categories
+        SceVoid Release();
 
         MultiPageAppList(db::List *targetList = SCE_NULL, const char *templateName = "");
         virtual ~MultiPageAppList();
@@ -135,6 +143,7 @@ namespace generic
         db::List *targetList;
 
         SceInt32 category;
+        bool locked;
     };
 }
 

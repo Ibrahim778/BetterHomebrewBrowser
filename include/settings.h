@@ -23,6 +23,7 @@ public:
         Hash_Refresh = 0xDF43DB7A,
         Hash_nLoad = 0xA7E3A711,
         Hash_Source = 0x92EFFF4E,
+        Hash_DownloadInterval = 0xA2C36161
     };
 
     Settings();
@@ -33,9 +34,9 @@ public:
     SceVoid Open();
     SceVoid Close();
 
-
     db::Id source;
     int nLoad;
+    int downloadInterval;
 
 private:
     static sce::AppSettings *appSettings;
@@ -62,10 +63,10 @@ private:
 
     static SceInt32 CBGetTex(paf::graph::Surface **tex, const char *elementId);
 
-
-    const int d_settingsVersion = 1;
+    const int d_settingsVersion = 3;
     const int d_source = db::CBPSDB;
     const int d_nLoad = 50;
+    const int d_downloadInterval = 6;
 };
 
 #endif

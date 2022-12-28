@@ -11,13 +11,14 @@
 #include "utils.h"
 #include "print.h"
 #include "common.h"
-#include "main.h"
 #include "network.h"
 #include "bhbb_dl.h"
+#include "error_codes.h"
 
 using namespace paf;
+using namespace Utils;
 
-SceUInt32 Utils::GetHashById(const char *id)
+SceUInt32 Misc::GetHash(const char *id)
 {
     rco::Element searchReq;
     rco::Element searchRes;
@@ -28,7 +29,7 @@ SceUInt32 Utils::GetHashById(const char *id)
     return searchRes.hash;
 }
 
-SceVoid Utils::HttpsToHttp(paf::string& url)
+SceVoid Net::HttpsToHttp(paf::string& url)
 { 
     if(sce_paf_strncmp("https", url.data(), 5) != 0)
         return;
@@ -44,16 +45,16 @@ SceVoid Utils::HttpsToHttp(paf::string& url)
     delete[] buff;
 }
 
-SceVoid Utils::GetStringFromID(const char *id, paf::string *out)
+SceVoid String::GetFromID(const char *id, paf::string *out)
 {
     rco::Element e;
-    e.hash = Utils::GetHashById(id);
+    e.hash = Misc::GetHash(id);
     
     wchar_t *wstr = mainPlugin->GetWString(&e);
     ccc::UTF16toUTF8((const wchar_t *)wstr, out);
 }
 
-SceBool Utils::IsValidURLSCE(const char *url)
+SceBool Net::IsValidURLSCE(const char *url)
 {
     paf::HttpFile file;
     paf::HttpFile::OpenArg openArg;
@@ -74,10 +75,10 @@ SceBool Utils::IsValidURLSCE(const char *url)
     return SCE_FALSE;
 }
 
-SceVoid Utils::GetfStringFromID(const char *id, paf::string *out)
+SceVoid String::GetfFromID(const char *id, paf::string *out)
 {
     paf::string *str = new paf::string;
-    Utils::GetStringFromID(id, str);
+    String::GetFromID(id, str);
 
     int slashNum = 0;
     int strlen = str->length();
@@ -143,14 +144,14 @@ SceVoid Utils::GetfStringFromID(const char *id, paf::string *out)
     delete[] buff;
 }
 
-SceInt32 Utils::SetWidgetLabel(paf::ui::Widget *widget, const char *text)
+SceInt32 Widget::SetLabel(paf::ui::Widget *widget, const char *text)
 {
     paf::wstring wstr;
     ccc::UTF8toUTF16(text, &wstr);    
     return widget->SetLabel(&wstr);
 }
 
-SceInt32 Utils::SetWidgetLabel(paf::ui::Widget *widget, paf::string *text)
+SceInt32 Widget::SetLabel(paf::ui::Widget *widget, paf::string *text)
 {
     paf::wstring wstr;
 
@@ -159,22 +160,22 @@ SceInt32 Utils::SetWidgetLabel(paf::ui::Widget *widget, paf::string *text)
     return widget->SetLabel(&wstr);
 }
 
-wchar_t *Utils::GetStringPFromID(const char *id)
+wchar_t *String::GetPFromID(const char *id)
 {
     rco::Element e;
-    e.hash = Utils::GetHashById(id);
+    e.hash = Misc::GetHash(id);
 
     return mainPlugin->GetWString(&e);
 }
 
-void Utils::ToLowerCase(char *string)
+void String::ToLowerCase(char *string)
 {
     //Convert to lowerCase
     for(int i = 0; string[i] != '\0'; i++)
         if(string[i] > 64 && string[i] < 91) string[i] += 0x20;
 }
 
-void Utils::InitMusic()
+void Misc::InitMusic()
 {
     SceInt32 ret = -1;
 
@@ -199,21 +200,21 @@ void Utils::InitMusic()
     if(ret < 0) print("[SEND_EVENT_PLAY] Error! 0x%X", ret);
 }
 
-SceVoid Utils::DeleteTexture(paf::graph::Surface **tex)
+SceVoid Widget::DeleteTexture(paf::graph::Surface **tex)
 {
     if(tex != NULL)
     {
         if(*tex == TransparentTex) return;
         if(*tex != NULL)
         {
-            //(*tex)->Release();
+            (*tex)->UnsafeRelease();
             delete *tex;
             *tex = SCE_NULL;
         }
     }
 }
 
-SceVoid Utils::StartBGDL()
+SceVoid Misc::StartBGDL()
 {
     SceInt32 res = SCE_OK;
     SceUID moduleID = SCE_UID_INVALID_UID;
@@ -253,29 +254,95 @@ SceVoid Utils::StartBGDL()
 #endif
 }
 
-ui::Widget *Utils::CreateWidget(const char *id, const char *type, const char *style, ui::Widget *parent)
-{
-    rco::Element styleInfo;
-    styleInfo.hash = Utils::GetHashById(style);
-    rco::Element widgetInfo;
-    widgetInfo.hash = Utils::GetHashById(id);
-
-    return mainPlugin->CreateWidgetWithStyle(parent, type, &widgetInfo, &styleInfo);
-}
-
-SceInt32 Utils::PlayEffect(paf::ui::Widget *widget, SceFloat32 param, paf::effect::EffectType type, paf::ui::EventCallback::EventHandler animCB, ScePVoid pUserData)
+SceInt32 Widget::PlayEffect(paf::ui::Widget *widget, SceFloat32 param, paf::effect::EffectType type, paf::ui::EventCallback::EventHandler animCB, ScePVoid pUserData)
 {
     widget->PlayEffect(param, type, animCB, pUserData);
     if(widget->animationStatus & 0x80)
         widget->animationStatus &= ~0x80;
 }
 
-SceInt32 Utils::PlayEffectReverse(paf::ui::Widget *widget, SceFloat32 param, paf::effect::EffectType type, paf::ui::EventCallback::EventHandler animCB, ScePVoid pUserData)
+SceInt32 Widget::PlayEffectReverse(paf::ui::Widget *widget, SceFloat32 param, paf::effect::EffectType type, paf::ui::EventCallback::EventHandler animCB, ScePVoid pUserData)
 {
     widget->PlayEffectReverse(param, type, animCB, pUserData);
     if(widget->animationStatus & 0x80)
         widget->animationStatus &= ~0x80;
 }
+
+SceVoid GamePad::CB(paf::input::GamePad::GamePadData *pData)
+{
+    //(~pData->buttons & buttons) = Removed bits
+    if((~pData->buttons & buttons) != 0)
+    {
+        input::GamePad::GamePadData dat;
+        sce_paf_memcpy(&dat, pData, sizeof(dat));
+        dat.buttons = (~pData->buttons & buttons);
+        for(GamePadCB& c : cbList)
+            c.func(&dat, c.pUserData);
+    }
+
+    buttons = pData->buttons;
+}
+
+SceVoid GamePad::RegisterButtonUpCB(Utils::GamePad::CallbackFunction cb, ScePVoid pUserData)
+{
+    if(cbList.size() == 0)
+        paf::input::GamePad::RegisterCallback(CB);
+
+    cbList.push_back(GamePadCB(cb, pUserData));
+}
+
+SceVoid Time::SavePreviousDLTime()
+{
+    SceInt32 err = SCE_OK;
+    auto file = LocalFile::Open(SavePath, SCE_O_WRONLY | SCE_O_CREAT | SCE_O_TRUNC, 0666, &err);
+    if(err != SCE_OK)
+    {
+        print("Error opening %s -> 0x%X\n", err);
+        return;
+    }
+
+    file.get()->Write(Time::previousDownloadTime, sizeof(Time::previousDownloadTime));
+}
+
+paf::rtc::Tick Time::GetPreviousDLTime(db::Id source)
+{
+    Time::LoadPreviousDLTime();
+    return Time::previousDownloadTime[source];
+}
+
+SceVoid Time::SetPreviousDLTime(db::Id source, paf::rtc::Tick time)
+{
+    Time::previousDownloadTime[source] = time;
+    Time::SavePreviousDLTime();
+}
+
+SceVoid Time::LoadPreviousDLTime()
+{
+    sce_paf_memset(Time::previousDownloadTime, 0, sizeof(Time::previousDownloadTime));
+
+    SceInt32 err = SCE_OK;
+    auto file = LocalFile::Open(SavePath, SCE_O_RDONLY, 0, &err);
+    if(err != SCE_OK)
+    {
+    #ifdef _DEBUG
+        if(err == SCE_PAF_ERROR_ERRNO_ENOENT)
+            print("[Info] Previous time does not exist, aborting\n");
+        else
+            print("[Error] Reading %s -> 0x%X\n", SavePath, err);
+    #endif // _DEBUG
+        return;
+    }
+
+    file.get()->Read(Time::previousDownloadTime, sizeof(Time::previousDownloadTime));
+}   
+
+SceVoid Time::ResetPreviousDLTime()
+{
+    sce_paf_memset(Time::previousDownloadTime, 0, sizeof(Time::previousDownloadTime));
+
+    LocalFile::RemoveFile(Time::SavePath);
+}
+
 #ifdef _DEBUG
 
 SceVoid Utils::PrintAllChildren(paf::ui::Widget *widget, int offset)

@@ -6,9 +6,7 @@
 
 text::Page::Page(const char *text):generic::Page::Page("text_page_template")
 {
-    paf::wstring wstr;
-    paf::ccc::UTF8toUTF16(text, &wstr);
-    Utils::GetChildByHash(root, Utils::GetHashById("page_text"))->SetLabel(&wstr);
+    Utils::Widget::SetLabel(Utils::Widget::GetChild(root, Utils::Misc::GetHash("page_text")), text);
 }
 
 text::Page::~Page()

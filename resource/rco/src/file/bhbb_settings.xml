@@ -8,6 +8,12 @@
             <list_item id="list_source_01" title="db_name_1" value="1" />
             <list_item id="list_source_02" title="db_name_2" value="2" />
         </list>
+        <list id="list_downloadInterval" title="msg_settings_downloadInterval" key="downloadInterval" default_value="6">
+            <list_item id="list_downloadInterval_00" title="msg_settings_downloadInterval_always" value="0" />
+            <list_item id="list_downloadInterval_01" title="6" value="6" />
+            <list_item id="list_downloadInterval_02" title="12" value="12" />
+            <list_item id="list_downloadInterval_03" title="24" value="24" />
+        </list>
         <list id="list_nLoad" title="msg_settings_nLoad" key="nLoad" default_value="100">
             <list_item id="list_nLoad_00" title="20" value="20" />
             <list_item id="list_nLoad_01" title="50" value="50" />
