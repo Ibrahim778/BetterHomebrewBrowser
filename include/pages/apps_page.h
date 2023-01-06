@@ -4,82 +4,16 @@
 #include <kernel.h>
 #include <paf.h>
 #include <vector>
-#include <unordered_map>
 
-#include "multi_page_app_list.h"
 #include "db.h"
 #include "dialog.h"
-
-#define FLAG_ICON_DOWNLOAD       (1)
-#define FLAG_ICON_LOAD_SURF      (2)
-#define FLAG_ICON_ASSIGN_TEXTURE (4)
+#include "page.h"
 
 namespace apps
 {
-    class Page : public generic::MultiPageAppList
+    class Page : public generic::Page
     {
     public:
-        class IconAssignJob : public paf::job::JobItem 
-        {
-        public:
-            
-            struct Param {
-                SceUInt32 widgetHash;
-                paf::string path;
-
-                Param(SceUInt32 targetWidget, paf::string dPath):
-                    widgetHash(targetWidget),path(dPath){}
-            };
-
-            using paf::job::JobItem::JobItem;
-
-            SceVoid Run();
-            SceVoid Finish(){}
-
-            Page *callingPage;
-            Param taskParam;
-
-            IconAssignJob(const char *name, Page *caller, Param param):job::JobItem(name),callingPage(caller),taskParam(param){}
-        };
-
-        class IconDownloadJob : public paf::job::JobItem 
-        {
-        public:
-            
-            struct Param {
-                SceUInt32 widgetHash;
-                paf::string dest;
-
-                Param(SceUInt32 targetWidget, paf::string dPath):
-                    widgetHash(targetWidget),dest(dPath){}
-            };
-
-            using paf::job::JobItem::JobItem;
-
-            SceVoid Run();
-            SceVoid Finish(){}
-
-            static SceBool CancelCheck(Page *caller);
-
-            Page *callingPage;
-            Param taskParam;
-
-            IconDownloadJob(const char *name, Page *caller, Param param):job::JobItem(name),callingPage(caller),taskParam(param){}
-        
-        };
-
-        class IconDownloadThread : public paf::thread::Thread
-        {
-        private:
-            Page *callingPage;
-        public:
-            paf::thread::Thread::Thread;
-
-            SceVoid EntryFunction();
-
-            IconDownloadThread(Page *callingPage, SceInt32 initPriority = SCE_KERNEL_DEFAULT_PRIORITY_USER, SceSize stackSize = SCE_KERNEL_4KiB, const char *name = "apps::Page::IconDownloadThread"):paf::thread::Thread::Thread(initPriority, stackSize, name),callingPage(callingPage){}
-        };
-
         class IconZipJob : public paf::job::JobItem
         {
         public:
@@ -87,22 +21,6 @@ namespace apps
 
             SceVoid Run();
             SceVoid Finish(){}
-        };
-
-        class IconAssignThread : public paf::thread::Thread
-        {
-        private:
-            Page *callingPage;
-        public:
-            db::List *targetList;
-            int category;
-            int loadNum;
-            int pageCountBeforeCreation;
-            paf::thread::Thread::Thread;
-
-            SceVoid EntryFunction();
-
-            IconAssignThread(Page *callingPage, SceInt32 initPriority = SCE_KERNEL_DEFAULT_PRIORITY_USER - 1, SceSize stackSize = SCE_KERNEL_8KiB, const char *name = "apps::Page::IconAssignThread"):paf::thread::Thread::Thread(initPriority, stackSize, name),callingPage(callingPage){}
         };
 
         class LoadJob : public paf::job::JobItem
@@ -118,33 +36,79 @@ namespace apps
             LoadJob(const char *name, Page *caller):job::JobItem(name),callingPage(caller){}
         };
 
-        class SearchCB : public paf::ui::EventCallback
+        class ListViewCB : public paf::ui::ListView::ItemCallback
         {
         public:
-            SearchCB(Page *page) {
-                pUserData = page;
-                eventHandler = OnGet;
+            ListViewCB(apps::Page *workPage)
+            {
+                this->workPage = workPage;
             }
 
-            static SceVoid OnGet(SceInt32 eventID, paf::ui::Widget *self, SceInt32 unk, ScePVoid pUserData);
+            ~ListViewCB()
+            {
+
+            }
+
+            ui::ListItem *Create(Param *info);
+
+            SceVoid Start(Param *info)
+            {
+                info->parent->PlayEffect(0.0f, effect::EffectType_Fadein1);
+            }
+
+            apps::Page *workPage;
         };
 
-        class IconInvokedDownloadJob : public paf::job::JobItem
+        // (Thanks Graphene (pt 3))
+        class AsyncIconLoader
         {
         public:
-            using paf::job::JobItem::JobItem;
 
-            SceVoid Run();
-            SceVoid Finish(){}
+            AsyncIconLoader(const char *path, paf::ui::Widget *target, paf::graph::Surface **surf = SCE_NULL, SceBool autoLoad = true);
 
-            Page *callingPage;
-            SceUInt64 hash;
+            ~AsyncIconLoader();
 
-            SceBool DialogResult;
+            SceVoid Load();
 
-            static SceVoid DialogEventHandler(Dialog::ButtonCode res, ScePVoid pUserData);
+            SceVoid Abort();
 
-            IconInvokedDownloadJob(const char *name, SceUInt64 _hash, Page *caller):job::JobItem(name),callingPage(caller),hash(_hash){}
+        private:
+
+            class TargetDeleteEventCallback : public paf::ui::EventCallback
+            {
+            public:
+
+                TargetDeleteEventCallback(AsyncIconLoader *parent)
+                {
+                    workObj = parent;
+                }
+
+                virtual ~TargetDeleteEventCallback();
+
+                AsyncIconLoader *workObj;
+            };
+
+            class Job : public paf::job::JobItem
+            {
+            public:
+
+                using paf::job::JobItem::JobItem;
+
+                ~Job() { }
+
+                SceVoid Run();
+
+                SceVoid Finish();
+
+                static SceBool DownloadCancelCheck(ScePVoid pUserData);
+
+                AsyncIconLoader *workObj;
+                paf::ui::Widget *target;
+                paf::string fPath;
+                paf::graph::Surface **loadedSurface;
+            };
+
+            Job *item;
         };
 
         enum PageMode
@@ -154,53 +118,70 @@ namespace apps
         };
 
         static SceVoid IconDownloadDecideCB(Dialog::ButtonCode buttonResult, ScePVoid userDat);
-        static SceVoid ErrorRetryCB(SceInt32 eventID, paf::ui::Widget *self, SceInt32 unk, ScePVoid pUserData);
+        static SceVoid ErrorRetryCB(Dialog::ButtonCode buttonResult, ScePVoid userDat);
+        static SceVoid SearchCB(SceInt32 eventID, paf::ui::Widget *self, SceInt32 unk, ScePVoid pUserData);
+        static SceVoid CategoryCB(SceInt32 eventID, paf::ui::Widget *self, SceInt32 unk, ScePVoid pUserData);
+        static SceVoid RefreshCB(SceInt32 eventID, paf::ui::Widget *self, SceInt32 unk, ScePVoid pUserData);
+        static SceVoid QuickCategoryCB(paf::input::GamePad::GamePadData *data, ScePVoid pUserData);
 
         //Sets page mode: Search or Browse
         SceVoid SetMode(PageMode mode);
         //Cancels any icon download jobs, Redownloads and parses index and calls Redisplay()
         SceVoid Load();
 
-        //Creates a new page and populates with buttons
-        SceVoid PopulatePage(paf::ui::Widget *scrollBox, void *userDat) override;
+        //Locks the current cateogry, (Prevents SetCategory from working)
+        SceVoid LockCategory();
+        //Unlocks the current category, (Restores SetCategory functionality)
+        SceVoid ReleaseCategory();
 
-        //Cancels current icon downloads and assignments, DO NOT CALL FROM MAIN THREAD
-        SceVoid CancelIconJobs();
-        //Enables icon downloads and assignments
-        SceVoid StartIconJobs();
+        //Retrieve the current target list
+        db::List *GetTargetList();
+        //Set the current target list
+        SceVoid SetTargetList(db::List *list);
+
+        //Hides the list 
+        SceVoid ClearList();
+        //Show the list according to the current target list
+        SceVoid DisplayList();
+        //Redisplays the list (will also reflect page number & category updates)
+        SceVoid Redisplay();
+
+        //Set the current category
+        SceBool SetCategory(int category);
+        //Get the current category
+        int GetCategory();
+        //Set the current category list
+        SceVoid SetCategories(const std::vector<db::Category>& categoryList);
 
         Page();
         virtual ~Page();
     
     private:
-        enum {
-            Hash_SearchButton = 0xCCCE2527,
-            Hash_SearchEnterButton = 0xAB8CB65E,
-            Hash_SearchBackButton = 0x6A2C094C,
-            Hash_SearchBox = 0x7BB7D799,
-        } ButtonHash;
 
-        //Starts adding new icon download *jobs*
-        SceVoid StartIconDownloads();
-        //Stops adding any new icon download *jobs* to cancel current jobs use CancelIconJobs()
-        SceVoid CancelIconDownloads();
-        
-        SceVoid OnClear() override;
-        SceVoid OnCleared() override;
-        SceVoid OnPageDelete(generic::MultiPageAppList::Body *body) override;
-
-        ScePVoid DefaultNewPageData() override;
-
+        //Current PageMode
         PageMode mode;
         
+        //Full parsed list
         db::List appList;
+        //List for current search items
         db::List searchList;
+        //Pointer to current list in use
+        db::List *targetList;
 
-        IconDownloadThread *iconDownloadThread; //Enqueues downloads
-        paf::job::JobQueue *iconDownloadQueue; //Performs downloads
-        paf::job::JobQueue *iconAssignQueue; //Performs texture loading and assignments
-        SceUID iconFlags;
-        std::vector<SceUInt64> textureJobs;
+        //Current Category
+        int category;
+        //Category lock
+        bool locked;
+
+        //Widgets
+        paf::ui::BusyIndicator *busyIndicator;
+        paf::ui::CornerButton *optionsButton;
+        paf::ui::Button *refreshButton;
+        paf::ui::Button *searchButton;
+        paf::ui::Button *searchEnterButton;
+        paf::ui::Button *searchBackButton;
+        paf::ui::TextBox *searchBox;
+        paf::ui::ListView *listView;
     };
 
     namespace button

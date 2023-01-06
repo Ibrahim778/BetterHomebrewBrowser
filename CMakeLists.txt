@@ -16,7 +16,8 @@ link_directories(
 if(${CMAKE_BUILD_TYPE} STREQUAL Debug)
     message(Debug build!)
     add_compile_options(
-        -D_SCE_TARGET_OS_PSP2=1 -Xdiag=0 -Xquit=2 -Od -g -noex -DSCE_PAF_TOOL_PRX=1 -D_DEBUG=1
+        -D_SCE_TARGET_OS_PSP2=1 -Xdiag=0 -Xquit=2 -Od -g -noex -D_DEBUG=1
+        #-D_SCE_TARGET_OS_PSP2=1 -Xdiag=0 -Xquit=2 -Od -g -noex -DSCE_PAF_TOOL_PRX=1 -D_DEBUG=1
     )
 else()
     add_compile_options(
@@ -25,7 +26,7 @@ else()
 endif()
 
 add_custom_target(file_toucher 
-        COMMAND ${CMAKE_COMMAND} -E touch_nocreate ${CMAKE_CURRENT_SOURCE_DIR}/src/main.cpp)
+        COMMAND ${CMAKE_COMMAND} -E touch_nocreate ${CMAKE_CURRENT_SOURCE_DIR}/src/settings.cpp)
 
 add_link_options(
   --no-standard-libraries -Map=${CMAKE_BINARY_DIR}/mapfile -sn-full-map
@@ -48,14 +49,15 @@ add_executable(${PROJECT_NAME}
     src/pages/text_page.cpp
     src/pages/apps_page.cpp
     src/pages/apps_info_page.cpp
-    src/pages/multi_page_app_list.cpp
     src/json.cpp
     src/dialog.cpp
-    src/xthrow.cpp
     src/paf_runtime.c
 
     common/bhbb_dl.h
     
+    include/bhbb_plugin.h
+    include/bhbb_locale.h
+    include/bhbb_settings.h
     include/utils.h
     include/network.h
     include/csv.h
@@ -68,7 +70,6 @@ add_executable(${PROJECT_NAME}
     include/pages/text_page.h
     include/pages/apps_page.h
     include/pages/apps_info_page.h
-    include/pages/multi_page_app_list.h
     include/json.hpp
     include/dialog.h
 )

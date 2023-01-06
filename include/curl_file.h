@@ -3,7 +3,7 @@
 
 #include <kernel.h>
 #include <paf.h>
-#include <curl/curl.h>
+#include <psp2_compat/curl/curl.h>
 
 //#define CURL_FILE_UA "Mozilla/5.0 (PlayStation Vita 3.74) AppleWebKit/537.73 (KHTML, like Gecko) Silk/3.2"
 #define CURL_FILE_UA "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.36"

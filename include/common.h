@@ -6,21 +6,15 @@
 
 #define MUSIC_PATH "pd0:data/systembgm/store.at9"
 
-extern paf::Plugin *mainPlugin;
+extern paf::Plugin *g_appPlugin;
 
-extern paf::graph::Surface *BrokenTex;
-extern paf::graph::Surface *TransparentTex;
+extern paf::graph::Surface *g_brokenTex;
+extern paf::graph::Surface *g_transparentTex;
 
 extern int loadFlags;
 
-extern paf::ui::CornerButton *g_backButton;
-extern paf::ui::CornerButton *g_forwardButton;
-extern paf::ui::BusyIndicator *g_busyIndicator;
-
 extern Downloader *g_downloader;
 extern apps::Page *g_appsPage;
-
-extern wchar_t *g_versionInfo;
 
 extern job::JobQueue *g_mainQueue;
 

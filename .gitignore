@@ -1,3 +1,4 @@
+/.fleet
 /.vscode
 /.vs
 /build
@@ -16,3 +17,4 @@
 *.DS_Store
 /update_rco.sh
 bhbb_dl/.vscode
+/genhashheaders.py

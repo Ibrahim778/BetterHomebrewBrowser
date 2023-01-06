@@ -30,7 +30,7 @@ int curl_global_memmanager_set_np(curl_malloc allocate, curl_f deallocate, curl_
 
 #define CBGDL_DL_PATH "ux0:temp/bhbb_cbgdl"
 
-#define EXTRACT_PATH "ux0:data/bhbb_prom"
+#define EXTRACT_PATH "ux0:data/bhbb_prom/"
 int install(const char *file);
 
 #ifdef __cplusplus

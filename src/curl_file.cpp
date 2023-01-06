@@ -1,6 +1,6 @@
 #include <kernel.h>
 #include <paf.h>
-#include <curl/curl.h>
+#include <psp2_compat/curl/curl.h>
 
 #include "curl_file.h"
 #include "print.h"

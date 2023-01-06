@@ -8,6 +8,11 @@
 #include "print.h"
 #include "db.h"
 #include "pages/text_page.h"
+#include "bhbb_plugin.h"
+#include "bhbb_settings.h"
+
+#define WIDE2(x) L##x
+#define WIDE(x) WIDE2(x)
 
 using namespace paf;
 using namespace sce;
@@ -15,6 +20,7 @@ using namespace Utils;
 
 static Settings *currentSettingsInstance = SCE_NULL;
 sce::AppSettings *Settings::appSettings = SCE_NULL;
+static wchar_t *s_versionInfo = SCE_NULL;
 
 Settings::Settings()
 {
@@ -23,6 +29,23 @@ Settings::Settings()
 		print("Error another settings instance exists! ABORT!\n");
 		sceKernelExitProcess(0);
 	}
+
+
+    //Thanks Graphene
+    auto infoString = new wstring;
+
+    #ifdef _DEBUG
+        *infoString = L"Private Beta\n";
+    #else
+        *infoString = L"Public Release\n";
+    #endif
+
+    *infoString += WIDE(__DATE__) L"\n";
+    *infoString += L"Version: 1.1\nBGDL Version: 2.1\ncBGDL Version: 1.0";
+
+    print("%ls\n", infoString->data());
+
+    s_versionInfo = (wchar_t *)infoString->data();
 
 	SceInt32 ret = 0;
     SceSize fileSize = 0;
@@ -48,7 +71,7 @@ Settings::Settings()
 
 	Framework::GetInstance()->LoadPlugin(&pInit);
     
-	sInit.xmlFile = mainPlugin->resource->GetFile(Misc::GetHash("file_bhbb_settings"), &fileSize, &mimeType);
+	sInit.xmlFile = g_appPlugin->resource->GetFile(file_bhbb_settings, &fileSize, &mimeType);
 
 	sInit.allocCB = sce_paf_malloc;
 	sInit.freeCB = sce_paf_free;
@@ -66,14 +89,12 @@ Settings::Settings()
         ret = appSettings->Initialize();
 
         appSettings->SetInt("settings_version", d_settingsVersion);
-        appSettings->SetInt("source", d_source);
-        appSettings->SetInt("nLoad", d_nLoad);
         appSettings->SetInt("downloadInterval", d_downloadInterval);
+        appSettings->SetInt("source", db::VHBDB);
 	}
-
+    
     //Get values
     appSettings->GetInt("source", (int *)&source, d_source);
-    appSettings->GetInt("nLoad", &nLoad, d_nLoad);
     appSettings->GetInt("downloadInterval", &downloadInterval, d_downloadInterval);
 
 	currentSettingsInstance = this;
@@ -111,7 +132,7 @@ SceVoid Settings::Close()
 
 SceVoid Settings::Open()
 {
-    g_appsPage->root->SetAlpha(0.39f);
+    ui::Widget::SetControlFlags(g_appsPage->root, 0);
     g_appsPage->root->PlayEffectReverse(10, effect::EffectType_Fadein1);
 
 	AppSettings::InterfaceCallbacks ifCb;
@@ -184,22 +205,12 @@ SceInt32 Settings::CBValueChange(const char *elementId, const char *newValue)
 
 	switch (elementHash)
 	{   
-    case Hash_nLoad:
-        GetInstance()->nLoad = value;
-        g_appsPage->Redisplay();
-        break;
-
-    case Hash_Source:
+    case list_source:
         GetInstance()->source = (db::Id)value;
         g_appsPage->Load();
         break;
     
-    case Hash_Refresh:
-        Time::SetPreviousDLTime(GetInstance()->source, 0); //Force redownload
-        g_appsPage->Load();
-        break;
-
-    case Hash_DownloadInterval:
+    case list_downloadInterval:
         GetInstance()->downloadInterval = value;
         break;
 
@@ -219,18 +230,18 @@ SceInt32 Settings::CBValueChange2(const char *elementId, const char *newValue)
 SceVoid Settings::CBTerm()
 {    
     g_appsPage->root->PlayEffect(-100, effect::EffectType_Fadein1);
-    g_appsPage->root->SetAlpha(1.0f);
+    ui::Widget::SetControlFlags(g_appsPage->root, 1);
 }
 
 wchar_t *Settings::CBGetString(const char *elementId)
 {
     if(sce_paf_strncmp(elementId, "msg_version_info", 16) == 0)
-        return g_versionInfo;
+        return s_versionInfo;
 
     rco::Element searchParam;
     searchParam.hash = Misc::GetHash(elementId);
 
-    return mainPlugin->GetWString(&searchParam);
+    return g_appPlugin->GetWString(&searchParam);
 }
 
 SceInt32 Settings::CBGetTex(graph::Surface **tex, const char *elementId)

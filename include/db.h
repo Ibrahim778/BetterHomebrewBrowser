@@ -3,6 +3,9 @@
 
 #include <kernel.h>
 #include <vector>
+#include <paf.h>
+
+#include "bhbb_locale.h"
 
 namespace db
 {
@@ -12,49 +15,65 @@ namespace db
         paf::string titleID;
         paf::string title;
         paf::string author;
-        std::vector<paf::string> iconURL;
+        paf::vector<paf::string> iconURL;
         paf::string iconPath;
-        std::vector<paf::string> downloadURL;
+        paf::vector<paf::string> downloadURL;
         paf::string description;
         
-        std::vector<paf::string> dataURL;
+        paf::vector<paf::string> dataURL;
         paf::string dataPath;
         
-        std::vector<paf::string> screenshotURL;
+        paf::vector<paf::string> screenshotURL;
         
         paf::string version;
 
-        paf::ui::ImageButton *button;
+        paf::graph::Surface *surface;
 
         int type;
 
         SceUInt64 hash;
 
-        entryInfo():hash(0xDEADBEEF){}
+        entryInfo():hash(0xDEADBEEF),surface(SCE_NULL){}
     } entryInfo;
 
     typedef struct 
     {
         int id;
-        const char *nameID;
+        SceUInt64 nameHash;
+        SceUInt64 singleHash;
     } Category;
 
+    typedef enum // Should match the index in info[]
+    {
+        CBPSDB = 0,
+        VITADB = 1,
+        VHBDB = 2,
+    } Id;
+    
     class List
     {
     public:
+        struct CategorisedList
+        {
+            CategorisedList(int _category):category(_category) {}
+
+            int category;
+            paf::vector<db::entryInfo *> entries;    
+        };
+
         List();
         ~List();
 
-        //void Init(int size);
         void Clear();
         void Add(db::entryInfo &entry);
+        void Categorise(db::Id source);
 
         size_t GetSize(int category = -1);
-        entryInfo &Get(int index);
-        std::vector<db::entryInfo>::iterator Get(int index, int category);
         entryInfo &Get(SceUInt64 hash);
+        CategorisedList &GetCategory(int category);
         
-        std::vector<db::entryInfo> entries;
+        paf::vector<db::entryInfo> entries;
+        paf::vector<CategorisedList> categories;
     };
 
     namespace vitadb
@@ -80,13 +99,6 @@ namespace db
         SceInt32 GetDownloadUrl(db::entryInfo &entry, paf::string &out);
         SceInt32 GetDataUrl(db::entryInfo &entry, paf::string &out);
     }
-
-    typedef enum // Should match the index in info[]
-    {
-        CBPSDB = 0,
-        VITADB = 1,
-        VHBDB = 2,
-    } Id;
 
     typedef struct
     {
@@ -125,9 +137,10 @@ namespace db
             .categoryNum = 1,
             .categories = {
                 {
-                    .id = -1,
-                    .nameID = "db_category_all"
-                }
+                    .id = CategoryAll,
+                    .nameHash = db_category_all,
+                    .singleHash = db_category_all
+                },
             },
             .id = CBPSDB
         },
@@ -146,24 +159,29 @@ namespace db
             .categoryNum = 5,
             .categories = {
                 {
-                    .id = -1, 
-                    .nameID = "db_category_all"
+                    .id = CategoryAll, 
+                    .nameHash = db_category_all,
+                    .singleHash = db_category_all
                 },
                 {
                     .id = 1,
-                    .nameID = "db_category_game"
+                    .nameHash = db_category_game,
+                    .singleHash = db_category_single_game
                 },
                 {
                     .id = 2,
-                    .nameID = "db_category_port"
+                    .nameHash = db_category_port,
+                    .singleHash = db_category_single_port
                 },
                 {
                     .id = 5,
-                    .nameID = "db_category_emu"
+                    .nameHash = db_category_emu,
+                    .singleHash = db_category_single_emu
                 },
                 {
                     .id = 4,
-                    .nameID = "db_category_util"
+                    .nameHash = db_category_util,
+                    .singleHash = db_category_single_util
                 }
             },
             .id = VITADB //index in info[]
@@ -183,20 +201,24 @@ namespace db
             .categoryNum = 4,
             .categories = {
                 {
-                    .id = -1,
-                    .nameID = "db_category_all"
+                    .id = CategoryAll,
+                    .nameHash = db_category_all,
+                    .singleHash = db_category_all
                 },
                 {
                     .id = 0,
-                    .nameID = "db_category_app"
+                    .nameHash = db_category_app,
+                    .singleHash = db_category_single_app
                 },
                 {
                     .id = 1,
-                    .nameID = "db_category_game"
+                    .nameHash = db_category_game,
+                    .singleHash = db_category_single_game
                 },
                 {
                     .id = 2,
-                    .nameID = "db_category_emu"
+                    .nameHash = db_category_emu,
+                    .singleHash = db_category_single_emu
                 }
             },
             .id = VHBDB

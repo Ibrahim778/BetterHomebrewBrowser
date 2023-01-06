@@ -40,6 +40,24 @@ namespace apps
                 DescriptionLoadThread(Page *callingPage, SceInt32 initPriority = SCE_KERNEL_DEFAULT_PRIORITY_USER, SceSize stackSize = SCE_KERNEL_16KiB, const char *name = "apps::info::Page::DescriptionLoadThread"):paf::thread::Thread::Thread(initPriority, stackSize, name),callingPage(callingPage){}
             };
 
+            class IconInvokedDownloadJob : public paf::job::JobItem
+            {
+            public:
+                using paf::job::JobItem::JobItem;
+
+                SceVoid Run();
+                SceVoid Finish(){}
+
+                Page *callingPage;
+                SceUInt64 hash;
+
+                SceBool DialogResult;
+
+                static SceVoid DialogEventHandler(Dialog::ButtonCode res, ScePVoid pUserData);
+                static SceVoid ButtonCB(SceInt32 eventID, paf::ui::Widget *self, SceInt32 unk, ScePVoid pUserData);
+
+                IconInvokedDownloadJob(const char *name, SceUInt64 _hash, Page *caller):job::JobItem(name),callingPage(caller),hash(_hash){}
+            };
 
             Page(db::entryInfo& info);
             virtual ~Page();
@@ -50,6 +68,7 @@ namespace apps
 
             db::entryInfo &info;
             paf::graph::Surface *iconSurf;
+            paf::ui::ImageButton *iconButton;
 
             IconLoadThread *iconLoadThread;
             DescriptionLoadThread *descriptionLoadThread;
@@ -90,17 +109,13 @@ namespace apps
                 paf::string &url;
                 LoadThread *loadThread;
                 paf::graph::Surface *surface;
+                paf::ui::BusyIndicator *busyIndicator;
+                paf::ui::CornerButton *backButton;
             };
         };
         
         namespace button
         {
-            typedef enum
-            {
-                ButtonHash_DataDownload = 0xFADB190A,
-                ButtonHash_Download = 0x1383EA9,
-            } ButtonHash;
-
             class DataDownloadTask : public paf::job::JobItem
             {
             private:

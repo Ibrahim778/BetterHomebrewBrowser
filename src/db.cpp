@@ -10,6 +10,7 @@
 #include "json.hpp"
 #include "utils.h"
 #include "curl_file.h"
+#include "bhbb_locale.h"
 
 using namespace sce;
 using namespace db;
@@ -90,6 +91,8 @@ SceInt32 vitadb::Parse(db::List *outList, const char *jsonPath)
             outList->Add(currentEntry);
         }
     }
+
+    init.terminate();
     return SCE_OK;
 }
 
@@ -513,7 +516,7 @@ SceInt32 cbpsdb::GetDescription(db::entryInfo& entry, paf::string& out)
     SceInt32 ret = SCE_OK;
     if(sce_paf_strncmp(entry.description.data(), "None", 4) == 0)
     {
-        String::GetFromID("msg_no_desc", &out);
+        String::GetFromHash(msg_no_desc, &out);
         return ret;
     }    
 
@@ -553,6 +556,42 @@ db::List::List()
 
 }
 
+void db::List::Categorise(db::Id source)
+{
+    for(int i = 0; i < db::info[source].categoryNum; i++)
+    {
+        if(db::info[source].categories[i].id == db::CategoryAll) // Skip the all category
+            continue; 
+        
+        CategorisedList catList = CategorisedList(db::info[source].categories[i].id);
+        
+        for (db::entryInfo &en : entries)
+        {
+            if(en.type == db::info[source].categories[i].id)
+                catList.entries.push_back(&en);
+        }
+
+        categories.push_back(catList);
+    }
+}
+
+db::List::CategorisedList &db::List::GetCategory(int category)
+{
+    auto catList = db::List::CategorisedList(0xFFFFFFFF);
+    if(category == db::CategoryAll)
+    {
+        print("[Error] Please use the entries property in order to acces an element without a specific category!\n");
+        return catList; 
+    }
+
+    for(CategorisedList &catList : categories)
+    {
+        if(catList.category == category)
+            return catList;
+    }
+    return catList;
+}
+
 void db::List::Add(db::entryInfo &entry)
 {
     entries.push_back(entry);
@@ -567,24 +606,6 @@ db::entryInfo &db::List::Get(SceUInt64 hash)
 {   
     for(db::entryInfo& entry : entries)
         if(entry.hash == hash) return entry;
-}
-
-db::entryInfo &db::List::Get(int index)
-{
-    return entries[index];
-}
-
-std::vector<db::entryInfo>::iterator db::List::Get(int index, int category)
-{
-    print("Get, index: %d\n", index);
-
-    size_t i = 0, size = entries.size();
-    auto end = entries.end();
-    std::vector<db::entryInfo>::iterator entry;
-    for(entry = entries.begin(); i < index && entry != end && i < size; i++, entry++)
-        if(entry->type != category) i--;
-
-    return entry;
 }
 
 size_t db::List::GetSize(int category)

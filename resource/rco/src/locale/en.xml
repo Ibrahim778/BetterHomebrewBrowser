@@ -9,17 +9,23 @@
     <string src="Ports" id="db_category_port" />
     <string src="Games" id="db_category_game" />
     <string src="Apps" id="db_category_app" />
+    <string src="Utility" id="db_category_single_util" />
+    <string src="Emulator" id="db_category_single_emu" />
+    <string src="Port" id="db_category_single_port" />
+    <string src="Game" id="db_category_single_game" />
+    <string src="App" id="db_category_single_app" />
+    <string src="Unknown" id="db_category_unk" />
     
     <string src="SSL Error Occurred\n\nPlease Ensure You Have iTLS-Enso Installed" id="msg_error_ssl"/>
     <string src="Network Connection Error" id="msg_error_net"/>
-    <string src="There was a network error while downloading the index\nEnsure your device is connected to the internet and retry" id="msg_net_fix"/>
     <string src="iTLS-Enso is not running\nEnsure iTLS-Enso is installed correctly before running this application" id="msg_no_itls"/>
+    <string src="There was a network error\nEnsure your device is connected to the internet and retry" id="msg_net_fix" />
     
-    <string src="Error Loading Screenshot" id="msg_screenshot_error"/>
-    <string src="Error Loading Icon" id="msg_icon_error"/>
-    <string src="Error Loading Description" id="msg_desc_error"/>
-    <string src="Error Reading Index" id="msg_error_index" />
-    <string src="Connection to the server failed\nPlease Try Again Later" id="msg_fix_index"/>
+    <string src="Error loading entry" id="msg_entry_error" />
+    <string src="Error loading screenshot" id="msg_screenshot_error"/>
+    <string src="Error loading icon" id="msg_icon_error"/>
+    <string src="Error loading description" id="msg_desc_error"/>
+    <string src="Connection to the server failed\nPlease try again later" id="msg_error_index"/>
     <string src="Icon directories for this database are missing\nWould you like to download the pack?\n(This will be queued in the livearea and installed automagically)" id="msg_icon_pack_missing"/>
     <string src="Error parsing index" id="msg_error_parse"/>
     <string src="There was an error, please try again later" id="msg_wait_fix" />

@@ -8,6 +8,23 @@
 
 namespace Utils
 {
+    //Why didn't I think of this either? (Thanks Graphene (pt 2))
+    class SimpleEventCallback : public paf::ui::EventCallback
+	{
+	public:
+
+		SimpleEventCallback(paf::ui::EventCallback::EventHandler function, ScePVoid userArg = SCE_NULL)
+		{
+			eventHandler = function;
+			pUserData = userArg;
+		};
+
+		virtual ~SimpleEventCallback()
+		{
+
+		};
+	};
+
     namespace Misc
     {
         void InitMusic();
@@ -18,8 +35,11 @@ namespace Utils
     {
         void ToLowerCase(char *string);
         SceVoid GetFromID(const char *id, paf::string *out);
+        SceVoid GetFromHash(SceUInt64 id, paf::string *out);
         SceVoid GetfFromID(const char *id, paf::string *out);
+        SceVoid GetfFromHash(SceUInt64 id, paf::string *out);
         wchar_t *GetPFromID(const char *id);
+        wchar_t *GetPFromHash(SceUInt64 Hash);
     };
 
     namespace Net 
@@ -49,7 +69,7 @@ namespace Utils
             rco::Element widgetInfo;
             widgetInfo.hash = Utils::Misc::GetHash(id);
 
-            return (T*)mainPlugin->CreateWidgetWithStyle(parent, type, &widgetInfo, &styleInfo);
+            return (T*)g_appPlugin->CreateWidgetWithStyle(parent, type, &widgetInfo, &styleInfo);
         }        
         SceInt32 SetLabel(paf::ui::Widget *widget, const char *text);
         SceInt32 SetLabel(paf::ui::Widget *widget, paf::string *text);

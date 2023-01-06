@@ -8,40 +8,25 @@ namespace generic
     class Page
     {
     public:
-        typedef void(*ButtonEventCallback)(SceInt32 eventID, paf::ui::Widget *self, SceInt32 unk, ScePVoid pUserData);
-
-    	paf::ui::Plane *root;
-
-        static void Setup();
-		static void DeleteCurrentPage();
-        static void ResetBackButton();
-        static Page *GetCurrentPage();
-
-        static void SetForwardButtonEvent(ButtonEventCallback callback, void *data);
-        static void SetBackButtonEvent(ButtonEventCallback callback, void *data);
-
-        Page(const char *pageName);
+        Page(SceInt32 hash, paf::Plugin::PageOpenParam openParam, paf::Plugin::PageCloseParam closeParam);
 		virtual ~Page();
 
         SceUInt64 GetHash();
 
-        virtual void OnRedisplay();
-        virtual void OnDelete();
+        paf::ui::Scene *root;
+
+        // virtual void OnRedisplay();
+        // virtual void OnDelete();
+
+        static SceVoid DeleteCurrentPage();
+        static generic::Page *GetCurrentPage();
+
+        static SceVoid DefaultBackButtonCB(SceInt32 eventID, paf::ui::Widget *self, SceInt32 unk, ScePVoid pUserData);
 
     private:
-        static void BackButtonEventHandler(SceInt32, paf::ui::Widget *, SceInt32, ScePVoid);
-        static void ForwardButtonEventHandler(SceInt32, paf::ui::Widget *, SceInt32, ScePVoid);
-        
-        static paf::ui::Plane *templateRoot;
-        static generic::Page *currPage;
-        generic::Page *prev;
-    
-        static ButtonEventCallback backCallback;
-        static ButtonEventCallback forwardCallback;
-        static void *backData;
-        static void *forwardData;
 
-        SceUInt64 hash;
+        paf::Plugin::PageCloseParam closeParam;
+        SceInt32 hash;
     };
 }
 

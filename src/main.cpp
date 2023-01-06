@@ -7,7 +7,6 @@
 #include <taihen.h>
 
 #include "print.h"
-#include "paf.h"
 #include "common.h"
 #include "utils.h"
 #include "network.h"
@@ -16,9 +15,9 @@
 #include "pages/text_page.h"
 #include "dialog.h"
 #include "pages/apps_page.h"
-
-#define WIDE2(x) L##x
-#define WIDE(x) WIDE2(x)
+#include "pages/apps_info_page.h"
+#include "bhbb_plugin.h"
+#include "bhbb_locale.h"
 
 extern "C" {
 
@@ -60,15 +59,13 @@ extern "C" {
 using namespace paf;
 using namespace Utils;
 
-Plugin *mainPlugin              = SCE_NULL;
+Plugin *g_appPlugin              = SCE_NULL;
 
-graph::Surface *BrokenTex       = SCE_NULL;
-graph::Surface *TransparentTex  = SCE_NULL;
+graph::Surface *g_brokenTex       = SCE_NULL;
+graph::Surface *g_transparentTex  = SCE_NULL;
 
 Downloader *g_downloader        = SCE_NULL;
 apps::Page *g_appsPage          = SCE_NULL;
-
-wchar_t *g_versionInfo          = SCE_NULL;
 
 job::JobQueue *g_mainQueue      = SCE_NULL;
 
@@ -81,13 +78,13 @@ void OnNetworkChecked()
     else 
     {
         string msgTemplate;
-        String::GetfFromID("msg_net_fix", &msgTemplate);
+        String::GetfFromHash(msg_net_fix, &msgTemplate);
 
         string errorMsg = ccc::Sprintf(msgTemplate.data(), Network::GetLastError());
 
         new text::Page(errorMsg.data());
 
-        generic::Page::SetBackButtonEvent(apps::Page::ErrorRetryCB, g_appsPage);
+        // generic::Page::SetBackButtonEvent(apps::Page::ErrorRetryCB, g_appsPage); TODO: FIX
     }
 }
 
@@ -99,35 +96,18 @@ SceVoid onPluginReady(Plugin *plugin)
         return;
     }
 
-    mainPlugin = plugin;
+    g_appPlugin = plugin;
 
     rco::Element e; 
-    e.hash = Misc::GetHash("tex_missing_icon");
-    mainPlugin->GetTexture(&BrokenTex, mainPlugin, &e);
-    BrokenTex->AddRef(); //Prevent Deletion
+    e.hash = tex_missing_icon;
+    g_appPlugin->GetTexture(&g_brokenTex, g_appPlugin, &e);
+    g_brokenTex->AddRef(); //Prevent Deletion
 
 	e.hash = Misc::GetHash("_common_texture_transparent");
-	Plugin::GetTexture(&TransparentTex, Plugin::Find("__system__common_resource"), &e);
-    TransparentTex->AddRef(); //Prevent Deletion
-    
-    //Thanks Graphene
-    auto infoString = new wstring;
-
-#ifdef _DEBUG
-    *infoString = L"Private Beta\n";
-#else
-    *infoString = L"Public Release\n";
-#endif
-
-    *infoString += WIDE(__DATE__) L"\n";
-    *infoString += L"Version: 1.1\nBGDL Version: 2.0\ncBGDL Version: 1.0";
-
-    print("%ls\n", infoString->data());
-
-    g_versionInfo = (wchar_t *)infoString->data();
+	Plugin::GetTexture(&g_transparentTex, Plugin::Find("__system__common_resource"), &e);
+    g_transparentTex->AddRef(); //Prevent Deletion
 
     sceShellUtilInitEvents(0);
-    generic::Page::Setup();
 
     SceUInt64 unk = 0;
     SceUID itlsID = _vshKernelSearchModuleByName("itlsKernel", &unk);
@@ -136,7 +116,7 @@ SceVoid onPluginReady(Plugin *plugin)
     if(itlsID < 0)
     {
         string err;
-        String::GetfFromID("msg_no_itls", &err);
+        String::GetfFromHash(msg_no_itls, &err);
         new text::Page(err.data());
         return;
     }
@@ -153,6 +133,7 @@ SceVoid onPluginReady(Plugin *plugin)
 
     g_mainQueue = new job::JobQueue("BHBB::MainQueue", &mainOpt);
     g_downloader = new Downloader();
+
     g_appsPage = new apps::Page();
 
     Network::Check(OnNetworkChecked);
@@ -163,7 +144,7 @@ SceVoid onPluginReady(Plugin *plugin)
 int main()
 {
 #ifdef _DEBUG
-    SCE_PAF_AUTO_TEST_SET_EXTRA_TTY(sceIoOpen("tty0:", SCE_O_WRONLY, 0)); //This line will break things if using non devkit libpaf
+    //SCE_PAF_AUTO_TEST_SET_EXTRA_TTY(sceIoOpen("tty0:", SCE_O_WRONLY, 0)); //This line will break things if using non devkit libpaf
 #endif
 
     Misc::StartBGDL();
@@ -195,7 +176,7 @@ int main()
     piParam.resourcePath = "app0:resource/bhbb_plugin.rco";
     piParam.scopeName = "__main__";
 #ifdef _DEBUG
-    piParam.pluginFlags = Plugin::InitParam::PluginFlag_UseRcdDebug; //This line will break things if using non devkit libpaf
+    //piParam.pluginFlags = Plugin::InitParam::PluginFlag_UseRcdDebug; //This line will break things if using non devkit libpaf
 #endif
     piParam.pluginStartCB = onPluginReady;
 

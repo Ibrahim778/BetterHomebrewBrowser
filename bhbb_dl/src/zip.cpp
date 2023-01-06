@@ -99,13 +99,18 @@ int Zipfile::Unzip(const char *outpath, UnzipProgressCallback cb) {
 		char filename[MAX_FILENAME];
 		char fullfilepath[MAX_FILENAME];
 		char destDir[MAX_FILENAME];
-		if (unzGetCurrentFileInfo(zipfile_, &file_info, filename, MAX_FILENAME, nullptr, 0, nullptr, 0) != UNZ_OK)
+
+        sce_paf_memset(fullfilepath, 0, sizeof(fullfilepath));
+        sce_paf_memset(filename, 0, sizeof(destDir));
+        sce_paf_memset(destDir, 0, sizeof(filename));
+		
+        if (unzGetCurrentFileInfo(zipfile_, &file_info, filename, MAX_FILENAME, nullptr, 0, nullptr, 0) != UNZ_OK)
 		{
 			sceClibPrintf("Error reading zip file info");
 			return -9;
 		}
-		snprintf(fullfilepath, sizeof(fullfilepath), hasTrailingSlash(fullfilepath) ? "%s%s" : "%s/%s", outpath, filename);
-
+		snprintf(fullfilepath, sizeof(fullfilepath), "%s%s", outpath, filename);
+        print("fullfilepath: %s\n", fullfilepath);
 		// Check if this entry is a directory or file.
 		const size_t filename_length = strlen(fullfilepath);
 		if (fullfilepath[filename_length - 1] == dir_delimter) {

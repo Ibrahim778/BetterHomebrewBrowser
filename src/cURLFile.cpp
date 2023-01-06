@@ -1,4 +1,4 @@
-#include <curl/curl.h>
+#include <psp2_compat/curl/curl.h>
 
 #include "cURLFile.h"
 #include "print.h"
@@ -41,8 +41,8 @@ SceVoid cURLFile::SetCancelCheck(cancelCheck cb, void *data)
     if(cb)
     {
         curl_easy_setopt(handle, CURLOPT_NOPROGRESS, 0L);
-        curl_easy_setopt(handle, CURLOPT_PROGRESSDATA, &cancel);
-        curl_easy_setopt(handle, CURLOPT_PROGRESSFUNCTION, ProgressCB);
+        curl_easy_setopt(handle, CURLOPT_XFERINFODATA, &cancel);
+        curl_easy_setopt(handle, CURLOPT_XFERINFOFUNCTION, ProgressCB);
     }
     else
         curl_easy_setopt(handle, CURLOPT_NOPROGRESS, 1L);
@@ -78,8 +78,8 @@ SceInt32 cURLFile::SaveFile(const char *url, const char *file, cURLFile::cancelC
     if(cancel)
     {
         curl_easy_setopt(handle, CURLOPT_NOPROGRESS, 0L);
-        curl_easy_setopt(handle, CURLOPT_PROGRESSDATA, &cancelStruct);
-        curl_easy_setopt(handle, CURLOPT_PROGRESSFUNCTION, ProgressCB);
+        curl_easy_setopt(handle, CURLOPT_XFERINFODATA, &cancelStruct);
+        curl_easy_setopt(handle, CURLOPT_XFERINFOFUNCTION, ProgressCB);
     }
     else
         curl_easy_setopt(handle, CURLOPT_NOPROGRESS, 1L);
@@ -120,7 +120,7 @@ size_t cURLFile::ProgressCB(curlCancel *cancel, double dltotal, double dlnow, do
 {
     if(cancel->cb)
         if(cancel->cb(cancel->data))
-            return 1;
+            return 1; //Cancelled
 
     return 0;
 }

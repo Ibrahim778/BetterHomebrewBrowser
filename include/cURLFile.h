@@ -2,7 +2,7 @@
 #define CURLFILE_HPP
 
 #include <paf.h>
-#include <curl/curl.h>
+#include <psp2_compat/curl/curl.h>
 
 class cURLFile
 {

@@ -14,6 +14,7 @@
 #include "network.h"
 #include "bhbb_dl.h"
 #include "error_codes.h"
+#include "curl_file.h"
 
 using namespace paf;
 using namespace Utils;
@@ -50,7 +51,16 @@ SceVoid String::GetFromID(const char *id, paf::string *out)
     rco::Element e;
     e.hash = Misc::GetHash(id);
     
-    wchar_t *wstr = mainPlugin->GetWString(&e);
+    wchar_t *wstr = g_appPlugin->GetWString(&e);
+    ccc::UTF16toUTF8((const wchar_t *)wstr, out);
+}
+
+SceVoid String::GetFromHash(SceUInt64 id, paf::string *out)
+{
+    rco::Element e;
+    e.hash = id;
+    
+    wchar_t *wstr = g_appPlugin->GetWString(&e);
     ccc::UTF16toUTF8((const wchar_t *)wstr, out);
 }
 
@@ -144,6 +154,75 @@ SceVoid String::GetfFromID(const char *id, paf::string *out)
     delete[] buff;
 }
 
+SceVoid String::GetfFromHash(SceUInt64 id, paf::string *out)
+{
+    paf::string *str = new paf::string;
+    String::GetFromHash(id, str);
+
+    int slashNum = 0;
+    int strlen = str->length();
+    const char *strptr = str->data();
+    for(int i = 0; i < strlen + 1 && strptr[i] != '\0'; i++)
+        if(strptr[i] == '\\') slashNum++;
+
+    int buffSize = (strlen + 1) - slashNum;
+    char *buff = new char[buffSize];
+    sce_paf_memset(buff, 0, buffSize);
+
+    for(char *buffPtr = buff, *strPtr = (char *)strptr; *strPtr != '\0'; strPtr++, buffPtr++)
+    {
+        if(*strPtr == '\\')
+        {
+            switch(*(strPtr + sizeof(char)))
+            {
+                case 'n':
+                    *buffPtr = '\n';
+                    break;
+                case 'a':
+                    *buffPtr = '\a';
+                    break;
+                case 'b':
+                    *buffPtr = '\b';
+                    break;
+                case 'e':
+                    *buffPtr = '\e';
+                    break;
+                case 'f':
+                    *buffPtr = '\f';
+                    break;
+                case 'r':
+                    *buffPtr = '\r';
+                    break;
+                case 'v':
+                    *buffPtr = '\v';
+                    break;
+                case '\\':
+                    *buffPtr = '\\';
+                    break;
+                case '\'':
+                    *buffPtr = '\'';
+                    break;
+                case '\"':
+                    *buffPtr = '\"';
+                    break;
+                case '?':
+                    *buffPtr = '\?';
+                    break;
+                case 't':
+                    *buffPtr = '\t';
+                    break;
+            }
+            strPtr++;
+        }
+        else *buffPtr = *strPtr;
+    }
+
+    *out = buff;
+
+    delete str;
+    delete[] buff;
+}
+
 SceInt32 Widget::SetLabel(paf::ui::Widget *widget, const char *text)
 {
     paf::wstring wstr;
@@ -165,7 +244,15 @@ wchar_t *String::GetPFromID(const char *id)
     rco::Element e;
     e.hash = Misc::GetHash(id);
 
-    return mainPlugin->GetWString(&e);
+    return g_appPlugin->GetWString(&e);
+}
+
+wchar_t *String::GetPFromHash(SceUInt64 hash)
+{
+    rco::Element e;
+    e.hash = hash;
+
+    return g_appPlugin->GetWString(&e);
 }
 
 void String::ToLowerCase(char *string)
@@ -204,7 +291,7 @@ SceVoid Widget::DeleteTexture(paf::graph::Surface **tex)
 {
     if(tex != NULL)
     {
-        if(*tex == TransparentTex) return;
+        if(*tex == g_transparentTex) return;
         if(*tex != NULL)
         {
             (*tex)->UnsafeRelease();

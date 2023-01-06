@@ -3,11 +3,11 @@
 
 #define cURL_PATH "app0:module/libcurl.suprx"
 
-typedef void*(*curl_malloc)(unsigned int size);
-typedef void(*curl_free)(void *ptr);
-typedef void*(*curl_realloc)(void *ptr, unsigned int new_size);
+typedef void*(*t_curl_malloc)(unsigned int size);
+typedef void(*t_curl_free)(void *ptr);
+typedef void*(*t_curl_realloc)(void *ptr, unsigned int new_size);
 
-extern "C" int curl_global_memmanager_set_np(curl_malloc allocate, curl_free deallocate, curl_realloc reallocate);
+extern "C" int curl_global_memmanager_set_np(t_curl_malloc allocate, t_curl_free deallocate, t_curl_realloc reallocate);
 
 namespace Network
 {
