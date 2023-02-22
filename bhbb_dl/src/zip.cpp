@@ -1,29 +1,24 @@
 #include "zip.h"
-
-#include <psp2/io/stat.h>
-#include <psp2/paf.h>
-#include <psp2/types.h>
-#include <string.h>
-
-#include "notifmgr.h"
 #include "print.h"
 
-extern "C" int sceClibPrintf(const char*,...);
+#include <minizip/unzip.h>
+#include <paf.h>
+#include <kernel.h>
 
 #define dir_delimter '/'
 #define MAX_FILENAME 512
 #define READ_SIZE 8192
 
-#define snprintf(...) sce_paf_snprintf(__VA_ARGS__)
+extern bool NotifMgr_currDlCanceled;
 
-static void mkdir_rec(const char* dir) { //TODO: ScePaf has a function for this too
+static void mkdir_rec(const char* dir) {
 	
 	char tmp[256];
 	char* p = nullptr;
 	size_t len;
 
-	snprintf(tmp, sizeof(tmp), "%s", dir);
-	len = strlen(tmp);
+	sce_paf_snprintf(tmp, sizeof(tmp), "%s", dir);
+	len = sce_paf_strlen(tmp);
 
 	if (tmp[len - 1] == '/')
 		tmp[len - 1] = 0;
@@ -38,38 +33,31 @@ static void mkdir_rec(const char* dir) { //TODO: ScePaf has a function for this 
 	sceIoMkdir(tmp, 0777);
 }
 
-
-Zipfile::Zipfile(const char *zip_path) {
-	
-	zipfile_ = unzOpen(zip_path);
-	if (!zipfile_)
-	{
-		sceClibPrintf("Cannot open zip\n");
-	}
-
-	if (unzGetGlobalInfo(zipfile_, &global_info_) != UNZ_OK)
-		sceClibPrintf("Cannot read zip info");
+paf::string dirnameOf(const paf::string& fname) {
+    for(int i = fname.length() - 1; i > 0; i--)
+    {
+        if(fname.c_str()[i] == '\\' || fname.c_str()[i] == '/')
+        {
+            return paf::string(fname.data(), i);
+        }
+    }
+    return paf::string("");
 }
 
-SceBool hasTrailingSlash(const char *str)
-{
-#ifndef _DEBUG
-	int i = strlen(str) - 1;
-	if(str[i] == '/' || str[i] == '\\')	return true;
-	else return false;
-#else
-	int i = strlen(str) - 1;
-	if(str[i] == '/' || str[i] == '\\')
+Zipfile::Zipfile(const paf::string zip_path) {
+	
+	zipfile_ = unzOpen(zip_path.c_str());
+	if (!zipfile_)
     {
-        print("hasTrailingSlash %s -> true\n", str);
-        return true;
-    }	
-	else 
-    {
-        print("hasTralingSlash %s -> false\n", str);
-        return false;
+		print("Cannot open zip");
+        return;
     }
-#endif
+
+	if (unzGetGlobalInfo(zipfile_, &global_info_) != UNZ_OK)
+	{
+        print("Cannot read zip info");
+        return;
+    }
 }
 
 Zipfile::~Zipfile() {
@@ -77,83 +65,72 @@ Zipfile::~Zipfile() {
 		unzClose(zipfile_);
 }
 
-int Zipfile::Unzip(const char *outpath, UnzipProgressCallback cb) {
+int Zipfile::Unzip(const paf::string outpath, void (*progcb)(SceUInt, SceUInt)) {
 	
 	if (uncompressed_size_ == 0)
-	{
-        if(UncompressedSize() < 0)
-            return -1;
-    }
+		UncompressedSize();
+
 	char read_buffer[READ_SIZE];
 
 	uLong i;
 	if (unzGoToFirstFile(zipfile_) != UNZ_OK)
 	{
-		sceClibPrintf("Error going to first file");
-		return -11;
-	}
-	
+        print("Error going to first file");
+        return -1;
+    }
+
 	for (i = 0; i < global_info_.number_entry; ++i) {
 		
 		unz_file_info file_info;
 		char filename[MAX_FILENAME];
 		char fullfilepath[MAX_FILENAME];
-		char destDir[MAX_FILENAME];
-
-        sce_paf_memset(fullfilepath, 0, sizeof(fullfilepath));
-        sce_paf_memset(filename, 0, sizeof(destDir));
-        sce_paf_memset(destDir, 0, sizeof(filename));
-		
-        if (unzGetCurrentFileInfo(zipfile_, &file_info, filename, MAX_FILENAME, nullptr, 0, nullptr, 0) != UNZ_OK)
+		if (unzGetCurrentFileInfo(zipfile_, &file_info, filename, MAX_FILENAME, nullptr, 0, nullptr, 0) != UNZ_OK)
 		{
-			sceClibPrintf("Error reading zip file info");
-			return -9;
-		}
-		snprintf(fullfilepath, sizeof(fullfilepath), "%s%s", outpath, filename);
-        print("fullfilepath: %s\n", fullfilepath);
+            print("Error reading zip file info");
+            return -2;
+        }
+		
+        sce_paf_snprintf(fullfilepath, sizeof(fullfilepath), "%s%s", outpath.c_str(), filename);
+
 		// Check if this entry is a directory or file.
-		const size_t filename_length = strlen(fullfilepath);
+		const size_t filename_length = sce_paf_strlen(fullfilepath);
 		if (fullfilepath[filename_length - 1] == dir_delimter) {
 			mkdir_rec(fullfilepath);
 		} else {
 			// Create the dir where the file will be placed
-
-			int lastSlash = filename_length - 1;
-			for(; lastSlash > 0 && fullfilepath[lastSlash] != '/' && fullfilepath[lastSlash] != '\\'; lastSlash--);
-			sce_paf_strncpy(destDir, fullfilepath, lastSlash + 1);
-			destDir[lastSlash] = 0;
-
-			mkdir_rec(destDir);
+			paf::string destdir = dirnameOf(paf::string(fullfilepath));
+			mkdir_rec(destdir.c_str());
 
 			// Entry is a file, so extract it.
 			if (unzOpenCurrentFile(zipfile_) != UNZ_OK)
 			{
-				sceClibPrintf("Cannot open file from zip");
-				return -8;
-			}
+                print("Cannot open file from zip");
+                return -3;
+            }
+
 			// Open a file to write out the data.
-			FILE* out = fopen(fullfilepath, "wb");
+			FILE* out = sce_paf_fopen(fullfilepath, "wb");
 			if (out == nullptr) {
 				unzCloseCurrentFile(zipfile_);
-				sceClibPrintf("Cannot open destination file %s\n", fullfilepath);
-				return -7;
-			}
+				print("Cannot open destination file");
+                return -4;
+            }
 
 			int error;
 			do {
 				error = unzReadCurrentFile(zipfile_, read_buffer, READ_SIZE);
 				if (error < 0) {
 					unzCloseCurrentFile(zipfile_);
-					sceClibPrintf("Cannot read current zip file");
-					return -6;
-				}
+					print("Cannot read current zip file");
+                    return -5;
+                }
 
 				if (error > 0)
-					fwrite(read_buffer, error, 1, out); // TODO check fwrite return
+					sce_paf_fwrite(read_buffer, error, 1, out); // TODO check fwrite return
 				
 			} while (error > 0);
 
-			fclose(out);
+			sce_paf_fclose(out);
 		}
 
 		unzCloseCurrentFile(zipfile_);
@@ -161,17 +138,17 @@ int Zipfile::Unzip(const char *outpath, UnzipProgressCallback cb) {
 		// Go the the next entry listed in the zip file.
 		if ((i + 1) < global_info_.number_entry)
 			if (unzGoToNextFile(zipfile_) != UNZ_OK)
-				{
-					sceClibPrintf("Error getting next zip file");
-					return -5;
-				}
+			{
+                print("Error getting next zip file");
+                return -6;
+            }
         
-        if(cb)
-        {
-            cb(i, global_info_.number_entry);
-            if(NotifMgr_currDlCanceled) break;
-        }
-    }
+        if(progcb)
+            progcb(i, global_info_.number_entry);
+        
+        if(NotifMgr_currDlCanceled)
+            break;
+	}
 
 	return 0;
 }
@@ -182,53 +159,31 @@ int Zipfile::UncompressedSize() {
 
 	if (unzGoToFirstFile(zipfile_) != UNZ_OK)
 	{
-		sceClibPrintf("Error going into first file!\n");
-		return -1;
-	}
+        print("Error going to first file");
+        return -1;
+    }
 
 	uLong i;
-	for (i = 0; i < global_info_.number_entry && !NotifMgr_currDlCanceled; ++i) {
+	for (i = 0; i < global_info_.number_entry; ++i) {
 		
 		unz_file_info file_info;
 		char filename[MAX_FILENAME];
 		if (unzGetCurrentFileInfo(zipfile_, &file_info, filename, MAX_FILENAME, nullptr, 0, nullptr, 0) != UNZ_OK)
 		{
-			sceClibPrintf("Error reading Zip File Info!\n");
-			return -2;
-		}
+            print("Error reading zip file info");
+            return -2;
+        }
 
 		uncompressed_size_ += file_info.uncompressed_size;
 
 		// Go the the next entry listed in the zip file.
 		if ((i + 1) < global_info_.number_entry)
 			if (unzGoToNextFile(zipfile_) != UNZ_OK)
-				{
-					sceClibPrintf("Error calculating zip size!\n");
-					return -3;
-				}
-	}
+			{
+                print("Error calculating zip size");
+                return -3;
+            }
+    }
 
-	return uncompressed_size_;
-}
-
-int unZipTo(const char *path, const char *dest)
-{   
-    print("File: %s -> %s\n", path, dest);     
-    if(!path || !dest) return -2;
-    
-    Zipfile zFile = Zipfile(path);
-    SceInt32 ret = zFile.Unzip(dest);
-    
-    return ret;
-}
-
-int unZipToWithProgressCB(const char *path, const char *dest, UnzipProgressCallback cb)
-{   
-    print("File: %s -> %s\n", path, dest);     
-    if(!path || !dest) return -2;
-    
-    Zipfile zFile = Zipfile(path);
-    SceInt32 ret = zFile.Unzip(dest, cb);
-    
-    return ret;
+	return 0;
 }

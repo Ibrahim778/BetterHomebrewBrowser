@@ -11,7 +11,7 @@
 
 /*************************** HEADER FILES ***************************/
 #include "sha1.h"
-#include <psp2/paf.h>
+#include <paf/stdc.h>
 
 /****************************** MACROS ******************************/
 #define ROTLEFT(a, b) ((a << b) | (a >> (32 - b)))

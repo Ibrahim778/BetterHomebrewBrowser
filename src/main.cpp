@@ -78,10 +78,10 @@ void OnNetworkChecked()
     else 
     {
         string msgTemplate;
-        String::GetfFromHash(msg_net_fix, &msgTemplate);
-
-        string errorMsg = ccc::Sprintf(msgTemplate.data(), Network::GetLastError());
-
+        str::GetfFromHash(msg_net_fix, &msgTemplate);
+        string errorMsg;
+        common::string_util::setf(errorMsg, msgTemplate.data(), Network::GetLastError());
+        
         new text::Page(errorMsg.data());
 
         // generic::Page::SetBackButtonEvent(apps::Page::ErrorRetryCB, g_appsPage); TODO: FIX
@@ -97,7 +97,7 @@ SceVoid onPluginReady(Plugin *plugin)
     }
 
     g_appPlugin = plugin;
-
+    
     rco::Element e; 
     e.hash = tex_missing_icon;
     g_appPlugin->GetTexture(&g_brokenTex, g_appPlugin, &e);
@@ -116,7 +116,7 @@ SceVoid onPluginReady(Plugin *plugin)
     if(itlsID < 0)
     {
         string err;
-        String::GetfFromHash(msg_no_itls, &err);
+        str::GetfFromHash(msg_no_itls, &err);
         new text::Page(err.data());
         return;
     }
@@ -143,14 +143,15 @@ SceVoid onPluginReady(Plugin *plugin)
 
 int main()
 {
-#ifdef _DEBUG
-    //SCE_PAF_AUTO_TEST_SET_EXTRA_TTY(sceIoOpen("tty0:", SCE_O_WRONLY, 0)); //This line will break things if using non devkit libpaf
+#ifdef SCE_PAF_TOOL_PRX
+    SCE_PAF_AUTO_TEST_SET_EXTRA_TTY(sceIoOpen("tty0:", SCE_O_WRONLY, 0)); //This line will break things if using non devkit libpaf
 #endif
 
     Misc::StartBGDL();
     Misc::InitMusic();
 
     Framework::InitParam fwParam;
+
     fwParam.LoadDefaultParams();
     fwParam.applicationMode = Framework::ApplicationMode::Mode_Application;
     
@@ -159,7 +160,7 @@ int main()
 
     Framework *fw = new Framework(fwParam);
 
-    fw->LoadCommonResource();
+    fw->LoadCommonResourceSync();
 
     SceAppUtilInitParam init;
     SceAppUtilBootParam boot;
@@ -175,14 +176,14 @@ int main()
     piParam.pluginName = "bhbb_plugin";
     piParam.resourcePath = "app0:resource/bhbb_plugin.rco";
     piParam.scopeName = "__main__";
-#ifdef _DEBUG
-    //piParam.pluginFlags = Plugin::InitParam::PluginFlag_UseRcdDebug; //This line will break things if using non devkit libpaf
+#ifdef SCE_PAF_TOOL_PRX
+    piParam.pluginFlags = Plugin::InitParam::PluginFlag_UseRcdDebug; //This line will break things if using non devkit libpaf
 #endif
     piParam.pluginStartCB = onPluginReady;
 
-    fw->LoadPluginAsync(&piParam);
+    fw->LoadPluginAsync(piParam);
 
-    fw->EnterRenderingLoop();
+    fw->Run();
 
     return sceKernelExitProcess(0);
 }

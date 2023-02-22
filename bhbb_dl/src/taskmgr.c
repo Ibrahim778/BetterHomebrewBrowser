@@ -1,5 +1,5 @@
-#include <psp2/paf.h>
-#include <psp2/kernel/threadmgr.h>
+#include <kernel.h>
+#include <paf/stdc.h>
 
 #include "taskmgr.h"
 

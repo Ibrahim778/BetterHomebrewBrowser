@@ -30,7 +30,7 @@ public:
     
 private:
 
-    static size_t SaveCB(char *ptr, size_t size, size_t nmemb, paf::SharedPtr<paf::LocalFile> *userdata);
+    static size_t SaveCB(char *ptr, size_t size, size_t nmemb, paf::common::SharedPtr<paf::LocalFile> *userdata);
     static size_t ProgressCB(curlCancel *userDat, double dltotal, double dlnow, double ultotal, double ulnow);
     static size_t WriteCB(char *ptr, size_t size, size_t nmemb, cURLFile *userdata);
 

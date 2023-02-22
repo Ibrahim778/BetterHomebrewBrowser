@@ -55,7 +55,7 @@ SceInt32 cURLFile::SaveFile(const char *url, const char *file, cURLFile::cancelC
     cancelStruct.data = cancelData;
 
     SceInt32 ret = SCE_OK;
-    paf::SharedPtr<paf::LocalFile> localFile = paf::LocalFile::Open(file, SCE_O_WRONLY | SCE_O_TRUNC | SCE_O_CREAT, 0666, &ret);
+    paf::common::SharedPtr<paf::LocalFile> localFile = paf::LocalFile::Open(file, SCE_O_WRONLY | SCE_O_TRUNC | SCE_O_CREAT, 0666, &ret);
     if(ret != SCE_OK)
         return ret;
 
@@ -125,7 +125,7 @@ size_t cURLFile::ProgressCB(curlCancel *cancel, double dltotal, double dlnow, do
     return 0;
 }
 
-size_t cURLFile::SaveCB(char *ptr, size_t size, size_t nmemb, paf::SharedPtr<paf::LocalFile> *file)
+size_t cURLFile::SaveCB(char *ptr, size_t size, size_t nmemb, paf::common::SharedPtr<paf::LocalFile> *file)
 {
     print("Writing 0x%X\n", size * nmemb);
     return file->get()->Write(ptr, size * nmemb);

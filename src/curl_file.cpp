@@ -492,7 +492,6 @@ SharedPtr<CurlFile> CurlFile::Open(const char *path, SceUInt32 flag, SceUInt32 m
 
 SharedPtr<CurlFile> CurlFile::Open(const SceWChar16 *url, SceInt32 *error, SceUInt32 flag, bool useShare)
 {
-	wstring text16;
 	string text8;
 
 	if (!url) {
@@ -500,10 +499,7 @@ SharedPtr<CurlFile> CurlFile::Open(const SceWChar16 *url, SceInt32 *error, SceUI
 		return SharedPtr<CurlFile>();
 	}
 
-	text16 = (wchar_t *)url;
-
-	ccc::UTF16toUTF8(&text16, &text8);
-
+    common::Utf16ToUtf8((wchar_t *)url, &text8);
 	return CurlFile::Open(text8.c_str(), flag, 0, error);
 }
 

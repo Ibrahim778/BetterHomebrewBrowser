@@ -8,6 +8,7 @@ set(CMAKE_C_STANDARD 99)
 set(CMAKE_CXX_STANDARD 11)
 
 add_subdirectory(libScePafPreload)
+add_subdirectory(bhbb_dl)
 
 link_directories(
   ${VDSUITE_LIBRARY_DIRECTORIES}
@@ -16,8 +17,7 @@ link_directories(
 if(${CMAKE_BUILD_TYPE} STREQUAL Debug)
     message(Debug build!)
     add_compile_options(
-        -D_SCE_TARGET_OS_PSP2=1 -Xdiag=0 -Xquit=2 -Od -g -noex -D_DEBUG=1
-        #-D_SCE_TARGET_OS_PSP2=1 -Xdiag=0 -Xquit=2 -Od -g -noex -DSCE_PAF_TOOL_PRX=1 -D_DEBUG=1
+        -D_SCE_TARGET_OS_PSP2=1 -Xdiag=0 -Xquit=2 -O3 -g -noex -DSCE_PAF_TOOL_PRX=1 -D_DEBUG=1
     )
 else()
     add_compile_options(
@@ -100,7 +100,6 @@ target_link_libraries(${PROJECT_NAME}
     SceShellUtil_stub
     SceDeflt
     SceAppSettings_stub
-    SceAppSettings2_stub
     SceJson_stub
     SceCommonGuiDialog_stub
     SceModulemgr_stub
@@ -124,6 +123,7 @@ VDSuiteSignElf(${PROJECT_NAME}.self $<TARGET_FILE:${PROJECT_NAME}> BOOT_PARAM bo
 add_dependencies(${PROJECT_NAME}
     libScePafPreload.suprx
     file_toucher    
+    bhbb_dl
 )
 
 if(${CMAKE_BUILD_TYPE} STREQUAL Debug)

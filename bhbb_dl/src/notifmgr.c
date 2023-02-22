@@ -1,26 +1,24 @@
-#include "notifmgr.h"
-#include <vdsuite/notification_util.h>
-#include <stdbool.h>
-#include <psp2/paf.h>
-#include <psp2/kernel/clib.h>
+#include <kernel.h>
+#include <psp2_compat/curl/curl.h>
+#include <notification_util.h>
 
-#include <psp2/kernel/clib.h>
+#include "notifmgr.h"
 #include "print.h"
 
 static SceWChar16 currProgressNotifText[64];
 static SceWChar16 currProgressNotifSubText[64];
 
-bool NotifMgr_currDlCanceled = false;
+SceBool NotifMgr_currDlCanceled = SCE_FALSE;
 
 #define SET_TEXT(dest, src) sce_paf_wcsncpy(((wchar_t *)(dest)), ((wchar_t *)(src)), sizeof((dest)))
 void cancelCallback(void *userData) 
 {
-    NotifMgr_currDlCanceled = true;
+    NotifMgr_currDlCanceled = SCE_TRUE;
 }
 
 void NotifMgr_Init()
 {
-    NotifMgr_currDlCanceled = false;
+    NotifMgr_currDlCanceled = SCE_FALSE;
 }
 
 void NotifMgr_EndNotif(const char *txt, const char *subtxt)

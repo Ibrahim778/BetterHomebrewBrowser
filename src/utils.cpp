@@ -46,22 +46,24 @@ SceVoid Net::HttpsToHttp(paf::string& url)
     delete[] buff;
 }
 
-SceVoid String::GetFromID(const char *id, paf::string *out)
+SceVoid str::GetFromID(const char *id, paf::string *out)
 {
     rco::Element e;
     e.hash = Misc::GetHash(id);
     
     wchar_t *wstr = g_appPlugin->GetWString(&e);
-    ccc::UTF16toUTF8((const wchar_t *)wstr, out);
+    
+    common::Utf16ToUtf8(wstr, out);
 }
 
-SceVoid String::GetFromHash(SceUInt64 id, paf::string *out)
+SceVoid str::GetFromHash(SceUInt64 id, paf::string *out)
 {
     rco::Element e;
     e.hash = id;
     
     wchar_t *wstr = g_appPlugin->GetWString(&e);
-    ccc::UTF16toUTF8((const wchar_t *)wstr, out);
+    
+    common::Utf16ToUtf8(wstr, out);
 }
 
 SceBool Net::IsValidURLSCE(const char *url)
@@ -85,10 +87,10 @@ SceBool Net::IsValidURLSCE(const char *url)
     return SCE_FALSE;
 }
 
-SceVoid String::GetfFromID(const char *id, paf::string *out)
+SceVoid str::GetfFromID(const char *id, paf::string *out)
 {
     paf::string *str = new paf::string;
-    String::GetFromID(id, str);
+    str::GetFromID(id, str);
 
     int slashNum = 0;
     int strlen = str->length();
@@ -154,10 +156,10 @@ SceVoid String::GetfFromID(const char *id, paf::string *out)
     delete[] buff;
 }
 
-SceVoid String::GetfFromHash(SceUInt64 id, paf::string *out)
+SceVoid str::GetfFromHash(SceUInt64 id, paf::string *out)
 {
     paf::string *str = new paf::string;
-    String::GetFromHash(id, str);
+    str::GetFromHash(id, str);
 
     int slashNum = 0;
     int strlen = str->length();
@@ -225,21 +227,20 @@ SceVoid String::GetfFromHash(SceUInt64 id, paf::string *out)
 
 SceInt32 Widget::SetLabel(paf::ui::Widget *widget, const char *text)
 {
-    paf::wstring wstr;
-    ccc::UTF8toUTF16(text, &wstr);    
-    return widget->SetLabel(&wstr);
+    wstring str16;
+    common::Utf8ToUtf16(text, &str16);
+
+    return widget->SetLabel(&str16);
 }
 
-SceInt32 Widget::SetLabel(paf::ui::Widget *widget, paf::string *text)
+SceInt32 Widget::SetLabel(paf::ui::Widget *widget, paf::string &text)
 {
-    paf::wstring wstr;
-
-    ccc::UTF8toUTF16(text, &wstr);
-
-    return widget->SetLabel(&wstr);
+    paf::wstring str16;
+    common::Utf8ToUtf16(text, &str16);
+    return widget->SetLabel(&str16);
 }
 
-wchar_t *String::GetPFromID(const char *id)
+wchar_t *str::GetPFromID(const char *id)
 {
     rco::Element e;
     e.hash = Misc::GetHash(id);
@@ -247,7 +248,7 @@ wchar_t *String::GetPFromID(const char *id)
     return g_appPlugin->GetWString(&e);
 }
 
-wchar_t *String::GetPFromHash(SceUInt64 hash)
+wchar_t *str::GetPFromHash(SceUInt64 hash)
 {
     rco::Element e;
     e.hash = hash;
@@ -255,7 +256,7 @@ wchar_t *String::GetPFromHash(SceUInt64 hash)
     return g_appPlugin->GetWString(&e);
 }
 
-void String::ToLowerCase(char *string)
+void str::ToLowerCase(char *string)
 {
     //Convert to lowerCase
     for(int i = 0; string[i] != '\0'; i++)

@@ -1,77 +1,88 @@
-cmake_minimum_required(VERSION 3.19)
-if(NOT DEFINED CMAKE_TOOLCHAIN_FILE)
-  if(DEFINED ENV{VITASDK})
-    set(CMAKE_TOOLCHAIN_FILE "$ENV{VITASDK}/share/vita.toolchain.cmake" CACHE PATH "toolchain file")
-  else()
-    message(FATAL_ERROR "Please define VITASDK to point to your SDK path!")
-  endif()
-endif()
-
-include("$ENV{VITASDK}/share/vita.cmake" REQUIRED)
-
+cmake_minimum_required(VERSION 3.12)
+set(CMAKE_TOOLCHAIN_FILE "$ENV{SCE_PSP2_SDK_DIR}/host_tools/build/cmake/psp2-snc-toolchain.cmake")
 project(bhbb_dl)
+include(VitaDevelopmentSuite)
 
 set(CMAKE_C_STANDARD 99)
 set(CMAKE_CXX_STANDARD 11)
+enable_language(EMD)
 
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wl,-q -Wall -O3 -std=gnu99")
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -fno-rtti -fno-exceptions -nostdlib")
-
-add_compile_options(
-    -D_SCE_TARGET_OS_PSP2=1
-)
+if(${CMAKE_BUILD_TYPE} STREQUAL Debug)
+    message(Debug build!)
+    add_compile_options(
+        -D_SCE_TARGET_OS_PSP2=1 -Xdiag=0 -Xquit=2 -Od -g -noex -D_DEBUG=1 -DPAF_BUILD=1
+        #-D_SCE_TARGET_OS_PSP2=1 -Xdiag=0 -Xquit=2 -Od -g -noex -DSCE_PAF_TOOL_PRX=1 -D_DEBUG=1
+    )
+else()
+    add_compile_options(
+        -D_SCE_TARGET_OS_PSP2=1 -Xdiag=0 -Xquit=2 -O3 -noex -DPAF_BUILD=1
+    )
+endif()
 
 add_link_options(
-
+    --prx-no-runtime-support
 )
 
-add_executable(${PROJECT_NAME}
-    src/main.c
+add_library(${PROJECT_NAME} MODULE
+    
+    include/head_bin.h
+    include/main.h
+    include/netutils.h
+    include/notice.h
+    include/notifmgr.h
+    include/offsets.h
+    include/promote.h
+    include/sha1.h
+    include/taskmgr.h
+    include/zip.h
+
+    src/main.cpp
     src/offsets.c
 
-    src/minizip/ioapi.c
-    src/minizip/unzip.c
-    src/minizip/unzip.c
-    src/minizip/zip.c
     src/zip.cpp
-    src/zip.h
-    src/libc2paf.c
     src/taskmgr.c
-    src/taskmgr.h
     src/notifmgr.c
-    src/notifmgr.h
     src/net.c
-    src/net.h
     src/promote.c
-    src/promote.h
     src/sha1.c
-    src/sha1.h
-    src/head_bin.h
+    src/notice.cpp
 
-    bhbb_dl.yml
+    bhbb_dl.emd
 )
 
-target_link_libraries(${PROJECT_NAME}
-    SceLibKernel_stub
-    ScePaf_stub
-    z
-    SceKernelThreadMgr_stub
-    SceIofilemgr_stub
-    taihen_stub
-    SceSysmodule_stub
-    SceNotificationUtilVDSuite_stub_weak
-    ScePafVDSuite_stub
-    ScePromoterUtil_stub_weak
-    curl_stub_weak
+
+target_link_directories(${PROJECT_NAME} PRIVATE
+  ${VDSUITE_LIBRARY_DIRECTORIES}
 )
 
 target_include_directories(${PROJECT_NAME} PRIVATE
     ../common
     include
+    ${VDSUITE_USER_INCLUDE_DIRECTORIES}
+    ${VDSUITE_STANDARD_INCLUDE_DIRECTORIES}
+    $ENV{SCE_PSP2_SDK_DIR}/target/include
+    $ENV{SCE_PSP2_SDK_DIR}/target/include_common
 )
 
-target_link_directories(${PROJECT_NAME} PRIVATE
-    $ENV{VITASDK}/arm-vita-eabi/lib/vdsuite
+
+target_link_libraries(${PROJECT_NAME}
+    SceLibKernel_stub
+    ScePafStdc_stub
+    ScePafResource_stub
+    ScePafMisc_stub
+    SceThreadMgr_stub
+    taihenUnsafe_stub
+    SceModulemgr_stub
+    taihen_stub
+    SceSysmodule_stub
+    SceNotificationUtil_stub_weak
+    SceNotificationUtilProgress_stub_weak
+    SceIofilemgr_stub
+    ScePromoterUtil_stub_weak
+    SceLsdb_stub
+    ScePafThread_stub
+    curl_stub_weak
+    minizip
 )
 
-vita_create_self(${PROJECT_NAME}.suprx ${PROJECT_NAME} CONFIG ${PROJECT_NAME}.yml UNSAFE)
+VDSuiteSignElf(${PROJECT_NAME}.suprx ${PROJECT_NAME})

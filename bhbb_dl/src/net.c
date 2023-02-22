@@ -1,16 +1,15 @@
-#include <psp2/io/fcntl.h>
-#include <psp2/paf.h>
+#include <kernel.h>
+#include <paf/stdc.h>
+#include <psp2_compat/curl/curl.h>
 
 #include "net.h"
 #include "notifmgr.h"
 #include "print.h"
 
-#include <vdsuite/curl/curl.h>
-
 #define USER_AGENT "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.36"
 
 CURL *curl = SCE_NULL;
-extern bool running;
+extern SceBool running;
 
 int curlProgressCallback(void *userDat, double dltotal, double dlnow, double ultotal, double ulnowm)
 {

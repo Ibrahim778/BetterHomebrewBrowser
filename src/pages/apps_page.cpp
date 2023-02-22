@@ -117,7 +117,7 @@ ui::ListItem *apps::Page::ListViewCB::Create(apps::Page::ListViewCB::Param *para
                 break;
             }
         }
-        categoryText->SetLabel(&wstring(String::GetPFromHash(categoryTextHash)));
+        categoryText->SetLabel(&wstring(str::GetPFromHash(categoryTextHash)));
     }
     else 
         categoryText->PlayEffectReverse(0, effect::EffectType_Reset);
@@ -154,7 +154,7 @@ apps::Page::AsyncIconLoader::AsyncIconLoader(const char *path, ui::Widget *targe
 	if (autoLoad)
 	{
 		SharedPtr<job::JobItem> itemParam(item);
-		g_mainQueue->Enqueue(&itemParam);
+		g_mainQueue->Enqueue(itemParam);
 	}
 }
 
@@ -171,7 +171,7 @@ apps::Page::AsyncIconLoader::~AsyncIconLoader()
 SceVoid apps::Page::AsyncIconLoader::Load()
 {
 	SharedPtr<job::JobItem> itemParam(item);
-	g_mainQueue->Enqueue(&itemParam);
+	g_mainQueue->Enqueue(itemParam);
 }
 
 SceVoid apps::Page::AsyncIconLoader::Abort()
@@ -310,25 +310,25 @@ SceVoid apps::Page::SearchCB(SceInt32 eventID, ui::Widget *self, SceInt32 unk, S
     case search_box:
     case search_enter_button:
     {
-        paf::wstring keyString;
+        paf::string key8;
+        paf::wstring key16;
         
         ui::Widget *textBox = Widget::GetChild(page->root, search_box);
-        textBox->GetLabel(&keyString);
+        textBox->GetLabel(&key16);
         
-        if(keyString.length() == 0)
+        if(key16.length() == 0)
             break;
 
-        paf::string key;
-        ccc::UTF16toUTF8(&keyString, &key);
-
-        String::ToLowerCase((char *)key.data());
+        common::Utf16ToUtf8(key16, &key8);
+        
+        str::ToLowerCase((char *)key8.data());
         
         //Get rid of trailing space char
-        for(int i = key.length() - 1; i > 0; i--)
+        for(int i = key8.length() - 1; i > 0; i--)
         {
-            if(key.data()[i] == ' ')
+            if(key8.data()[i] == ' ')
             {
-                ((char *)key.data())[i] = 0; //Shouldn't really do this with a paf::string but w/e
+                ((char *)key8.data())[i] = 0; //Shouldn't really do this with a paf::string but w/e
             } else break;
         }
 
@@ -341,9 +341,9 @@ SceVoid apps::Page::SearchCB(SceInt32 eventID, ui::Widget *self, SceInt32 unk, S
             string titleID = entry->titleID.data();
             string title = entry->title.data();
 
-            String::ToLowerCase((char *)titleID.data());
-            String::ToLowerCase((char *)title.data());
-            if(sce_paf_strstr(title.data(), key.data()) || sce_paf_strstr(titleID.data(), key.data()))
+            str::ToLowerCase((char *)titleID.data());
+            str::ToLowerCase((char *)title.data());
+            if(sce_paf_strstr(title.data(), key8.data()) || sce_paf_strstr(titleID.data(), key8.data()))
             {
                 page->searchList.Add(*entry);
             }
@@ -402,26 +402,32 @@ void apps::Page::QuickCategoryCB(input::GamePad::GamePadData *data, ScePVoid pUs
 SceVoid apps::Page::IconZipJob::Run()
 {
     sceShellUtilLock(SCE_SHELL_UTIL_LOCK_TYPE_PS_BTN);
-    Dialog::OpenPleaseWait(g_appPlugin, SCE_NULL, String::GetPFromHash(msg_wait));
+    Dialog::OpenPleaseWait(g_appPlugin, SCE_NULL, str::GetPFromHash(msg_wait));
 
     string titleTemplate;
-    String::GetFromHash(icons_dl_name, &titleTemplate);
+    str::GetFromHash(icons_dl_name, &titleTemplate);
     
-    string title = ccc::Sprintf(titleTemplate.data(), db::info[Settings::GetInstance()->source].name);
+    string title;
+    common::string_util::setf(title, titleTemplate.data(), db::info[Settings::GetInstance()->source].name);
     
     EnqueueCBGDLTask(title.data(), db::info[Settings::GetInstance()->source].iconsURL, db::info[Settings::GetInstance()->source].iconFolderPath);
 
     Dialog::Close();
-    Dialog::OpenOk(g_appPlugin, NULL, String::GetPFromHash(msg_download_queued));
+    Dialog::OpenOk(g_appPlugin, NULL, str::GetPFromHash(msg_download_queued));
     sceShellUtilUnlock(SCE_SHELL_UTIL_LOCK_TYPE_PS_BTN);
+}
+
+SceVoid apps::Page::HideKeyboard()
+{
+    searchBox->Hide();
 }
 
 SceVoid apps::Page::IconDownloadDecideCB(Dialog::ButtonCode buttonResult, ScePVoid userDat)
 {
     if(buttonResult == Dialog::ButtonCode::ButtonCode_Yes)
     {
-        SharedPtr<job::JobItem> ptr = paf::SharedPtr<job::JobItem>(new IconZipJob("BHBB::IconZipJob"));
-        job::s_defaultJobQueue->Enqueue(&ptr);
+        SharedPtr<job::JobItem> ptr = paf::common::SharedPtr<job::JobItem>(new IconZipJob("BHBB::IconZipJob"));
+        job::s_defaultJobQueue->Enqueue(ptr);
     }
 }
 
@@ -433,7 +439,7 @@ SceVoid apps::Page::ErrorRetryCB(Dialog::ButtonCode buttonResult, ScePVoid pUser
 SceVoid apps::Page::Load()
 {
     auto jobPtr = SharedPtr<job::JobItem>(new LoadJob("BHBB::apps::Page::LoadJob", this));
-    g_mainQueue->Enqueue(&jobPtr);
+    g_mainQueue->Enqueue(jobPtr);
 }
 
 SceBool apps::Page::SetCategory(int _category)
@@ -498,7 +504,7 @@ SceVoid apps::Page::SetCategories(const std::vector<db::Category>& categoryList)
         button->SetPosition(&paf::Vector4(i * buttonSize, 1));
         button->SetAnchor(ui::Anchor_Left, ui::Anchor_None, ui::Anchor_None, ui::Anchor_None);
         button->SetAlign(ui::Align_Left, ui::Align_None, ui::Align_None, ui::Align_None);
-        button->SetLabel(&paf::wstring(String::GetPFromHash(category.nameHash)));
+        button->SetLabel(&paf::wstring(str::GetPFromHash(category.nameHash)));
         button->SetColor(this->category == category.id ? &paf::Rgba(1,1,1,1) : &paf::Rgba(1,1,1,0.4f));
         button->PlayEffect(0, effect::EffectType_Fadein1);
         button->elem.hash = category.nameHash;
@@ -579,7 +585,7 @@ SceVoid apps::Page::LoadJob::Run()
     {
         sceShellUtilLock(SCE_SHELL_UTIL_LOCK_TYPE_PS_BTN);
 
-        Dialog::OpenPleaseWait(g_appPlugin, SCE_NULL, String::GetPFromHash(msg_wait));
+        Dialog::OpenPleaseWait(g_appPlugin, SCE_NULL, str::GetPFromHash(msg_wait));
         ret = cURLFile::SaveFile(db::info[Settings::GetInstance()->source].indexURL, db::info[Settings::GetInstance()->source].indexPath); 
         Dialog::Close();
 
@@ -587,13 +593,13 @@ SceVoid apps::Page::LoadJob::Run()
 
         if(ret != SCE_OK)
         {
-            Dialog::OpenError(g_appPlugin, ret, String::GetPFromHash(msg_error_index), ErrorRetryCB, callingPage);
+            Dialog::OpenError(g_appPlugin, ret, str::GetPFromHash(msg_error_index), ErrorRetryCB, callingPage);
             return;
         }
 
-        paf::rtc::Tick currentTick;
-        paf::rtc::GetCurrentTick(&currentTick);
-        Time::SetPreviousDLTime(Settings::GetInstance()->source, currentTick);
+        paf::rtc::Tick dlTick;
+        paf::rtc::GetCurrentTick(&dlTick);
+        Time::SetPreviousDLTime(Settings::GetInstance()->source, dlTick);
     }
 
     if(!LocalFile::Exists(db::info[Settings::GetInstance()->source].iconFolderPath))
@@ -602,9 +608,11 @@ SceVoid apps::Page::LoadJob::Run()
         if(db::info[Settings::GetInstance()->source].iconsURL != SCE_NULL)
         {
             string dialogText;
-            wstring wstrText;
-            String::GetfFromHash(msg_icon_pack_missing, &dialogText);
-            ccc::UTF8toUTF16(&dialogText, &wstrText);
+            
+            common::String str(dialogText);
+            str::GetfFromHash(msg_icon_pack_missing, &dialogText);
+            
+            wstring wstrText = str.GetWString();
 
             Dialog::OpenYesNo(g_appPlugin, NULL, (wchar_t *)wstrText.data(), IconDownloadDecideCB);
         }
@@ -615,14 +623,15 @@ SceVoid apps::Page::LoadJob::Run()
     thread::s_mainThreadMutex.Unlock();
 
     callingPage->SetTargetList(&callingPage->appList);
+    print("Parsing...");
     // Parse the DB
     ret = db::info[Settings::GetInstance()->source].Parse(&callingPage->appList, db::info[Settings::GetInstance()->source].indexPath);
     if(ret != SCE_OK) // Parsing failed
     {   
         Dialog::Close();
-        Dialog::OpenError(g_appPlugin, ret, String::GetPFromHash(msg_error_parse), ErrorRetryCB, callingPage);
+        Dialog::OpenError(g_appPlugin, ret, str::GetPFromHash(msg_error_parse), ErrorRetryCB, callingPage);
         return;   
-    }
+    } print("Done!\n");
     // Sort the list into categories
     callingPage->appList.Categorise(Settings::GetInstance()->source);
 
@@ -645,7 +654,6 @@ SceVoid apps::button::Callback::OnGet(SceInt32 eventId, ui::Widget *self, SceInt
         return;
     
     apps::Page *page = (apps::Page *)pUserData;
-        
-    page.
+    page->HideKeyboard();
     new apps::info::Page(page->GetTargetList()->Get(self->elem.hash));
 }

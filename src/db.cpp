@@ -17,7 +17,7 @@ using namespace db;
 using namespace paf;
 using namespace Utils;
 
-#define SET_STRING(pafString, jsonString) { if(rootval[i][jsonString] != NULL) { pafString = rootval[i][jsonString].getString().c_str(); } } 
+#define SET_STRING(pafString, jsonString) pafString = rootval[i][jsonString].getString().c_str()
 SceInt32 vitadb::Parse(db::List *outList, const char *jsonPath)
 {
     outList->Clear();
@@ -56,8 +56,10 @@ SceInt32 vitadb::Parse(db::List *outList, const char *jsonPath)
 
             if(rootval[i]["icon"] != NULL)
             {
-                currentEntry.iconURL.push_back(ccc::Sprintf("https://rinnegatamante.it/vitadb/icons/%s", rootval[i]["icon"].getString().c_str()));
-                currentEntry.iconPath = ccc::Sprintf("%s/%s", db::info[VITADB].iconFolderPath, rootval[i]["icon"].getString().c_str());
+                paf::string url;
+                common::string_util::setf(url, "https://rinnegatamante.it/vitadb/icons/%s", rootval[i]["icon"].getString().c_str());
+                currentEntry.iconURL.push_back(url);
+                common::string_util::setf(currentEntry.iconPath, "%s%s", db::info[VITADB].iconFolderPath, rootval[i]["icon"].getString().c_str());
             }
 
             SET_STRING(currentEntry.title, "name");
@@ -70,18 +72,18 @@ SceInt32 vitadb::Parse(db::List *outList, const char *jsonPath)
             SET_STRING(currentEntry.description, "long_description");
             SET_STRING(currentEntry.version, "version");        
 
-            auto screenshotStr = rootval[i]["screenshots"].getString().c_str();
-            char *token = sce_paf_strtok((char *)screenshotStr, ";");
+            // auto screenshotStr = rootval[i]["screenshots"].getString().c_str();
+            // char *token = sce_paf_strtok((char *)screenshotStr, ";");
             
-            while(token != SCE_NULL) 
-            {
-                char fileName[sce_paf_strlen(token) - 11];
-                sce_paf_memset(fileName, 0, sizeof(fileName));
-                sce_paf_strncpy(fileName, token + 12, sizeof(fileName));
+            // while(token != SCE_NULL) 
+            // {
+            //     char fileName[sce_paf_strlen(token) - 11];
+            //     sce_paf_memset(fileName, 0, sizeof(fileName));
+            //     sce_paf_strncpy(fileName, token + 12, sizeof(fileName));
 
-                currentEntry.screenshotURL.push_back(ccc::Sprintf("https://rinnegatamante.it/vitadb/screenshots/%s", fileName));
-                token = sce_paf_strtok(SCE_NULL, ";");
-            }   
+            //     currentEntry.screenshotURL.push_back(ccc::Sprintf("https://rinnegatamante.it/vitadb/screenshots/%s", fileName));
+            //     token = sce_paf_strtok(SCE_NULL, ";");
+            // }   TODO: FIX
 
             if(rootval[i]["type"] != NULL)
                 currentEntry.type = (int)sce_paf_strtoul(rootval[i]["type"].getString().c_str(), NULL, 10);
@@ -217,7 +219,7 @@ SceInt32 cbpsdb::Parse(db::List *outList, const char *csvPath)
         currentEntry.hash = Misc::GetHash(currentEntry.id.data());
         currentEntry.description = parsed[7];
 
-        currentEntry.iconPath = ccc::Sprintf("%s/%s.png", db::info[CBPSDB].iconFolderPath, currentEntry.id.data());
+        common::string_util::setf(currentEntry.iconPath, "%s%s.png", db::info[CBPSDB].iconFolderPath, currentEntry.id.data());
         
         currentEntry.dataPath.clear();
 
@@ -251,7 +253,9 @@ SceInt32 cbpsdb::Parse(db::List *outList, const char *csvPath)
 
 SceInt32 vhbdb::Parse(db::List *outList, const char *jsonPath)
 {
+    print("Clearing...\n");
     outList->Clear();
+    print("Cleared\n");
 
     PAFAllocator allocator;
     Json::InitParameter initParam((Json::MemAllocator *)&allocator, 0, 1024);
@@ -264,8 +268,9 @@ SceInt32 vhbdb::Parse(db::List *outList, const char *jsonPath)
 
         rootVal.clear();
         
-
+        print("Json Parser::parse\n");
         SceInt32 ret = Json::Parser::parse(rootVal, jsonPath);
+        print("Done!\n");
         if(ret < 0)
         {
             print("Json::Parser::parse() -> 0x%X\n", ret);
@@ -284,20 +289,20 @@ SceInt32 vhbdb::Parse(db::List *outList, const char *jsonPath)
             SET_STRING(currentEntry.titleID, "title_id");
             SET_STRING(currentEntry.title, "name");
 
-            currentEntry.id = ccc::Sprintf("%X%X", Misc::GetHash(currentEntry.titleID.data()), Misc::GetHash(currentEntry.title.data()));
+            common::string_util::setf(currentEntry.id, "%X%X", Misc::GetHash(currentEntry.titleID.data()), Misc::GetHash(currentEntry.title.data()));
 
             if(rootval[i]["icons"] != NULL)
                 for(int x = 0; x < rootval[i]["icons"].count(); x++)
                     currentEntry.iconURL.push_back(paf::string(rootval[i]["icons"][x].getString().c_str()));
             
-            currentEntry.iconPath = ccc::Sprintf("%s/%s.png", db::info[VHBDB].iconFolderPath, currentEntry.id.data());
+            common::string_util::setf(currentEntry.iconPath, "%s%s.png", db::info[VHBDB].iconFolderPath, currentEntry.id.data());
 
-            if(rootval[i]["downloads"] != NULL)
-                for(int x = 0; x < rootval[i]["downloads"].count(); x++)
-                    currentEntry.downloadURL.push_back(paf::string(rootval[i]["downloads"][x].getString().c_str()));
+            // if(rootval[i]["downloads"] != NULL)
+            //     for(int x = 0; x < rootval[i]["downloads"].count(); x++)
+            //         currentEntry.downloadURL.push_back(paf::string(rootval[i]["downloads"][x].getString().c_str()));
 
-            if(rootval[i]["data"] != NULL)
-                currentEntry.dataURL.push_back(paf::string(rootval[i]["data"].getString().c_str()));
+            // if(rootval[i]["data"] != NULL)
+            //     currentEntry.dataURL.push_back(paf::string(rootval[i]["data"].getString().c_str()));
 
             currentEntry.author = "";
             if(rootval[i]["authors"] != NULL)
@@ -308,7 +313,7 @@ SceInt32 vhbdb::Parse(db::List *outList, const char *jsonPath)
                 }
             
 
-            SET_STRING(currentEntry.dataPath, "data_path")
+            SET_STRING(currentEntry.dataPath, "data_path");
             SET_STRING(currentEntry.description, "description");
             SET_STRING(currentEntry.version, "version"); 
   
@@ -516,7 +521,7 @@ SceInt32 cbpsdb::GetDescription(db::entryInfo& entry, paf::string& out)
     SceInt32 ret = SCE_OK;
     if(sce_paf_strncmp(entry.description.data(), "None", 4) == 0)
     {
-        String::GetFromHash(msg_no_desc, &out);
+        str::GetFromHash(msg_no_desc, &out);
         return ret;
     }    
 

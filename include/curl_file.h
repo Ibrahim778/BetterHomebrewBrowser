@@ -9,6 +9,7 @@
 #define CURL_FILE_UA "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.36"
 
 using namespace paf;
+using namespace common;
 
 class CurlFile : public paf::File
 {
@@ -89,7 +90,7 @@ public:
 	static SharedPtr<CurlFile> Open(const char *path, SceUInt32 flag, SceUInt32 mode, SceInt32 *error, bool useShare = false, bool secondaryHeaders = false);
 
 	static SharedPtr<CurlFile> Open(const SceWChar16 *url, SceInt32 *error, SceUInt32 flag, bool useShare = false);
-
+    
 	static SharedPtr<CurlFile> Open(const char *url, SceInt32 *error, SceUInt32 flag, bool useShare = false);
 
 	static SceInt32 GetStat(const char *url, CurlFileStat *stat, bool useShare = false);

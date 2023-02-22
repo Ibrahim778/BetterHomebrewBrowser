@@ -18,3 +18,5 @@
 /update_rco.sh
 bhbb_dl/.vscode
 /genhashheaders.py
+._*
+/run.bat

@@ -93,8 +93,11 @@ SceInt32 Downloader::Enqueue(const char *url, const char *name, BGDLParam *param
 	bfInfo.data1 = &minfo;
 	bfInfo.data1Size = sizeof(sce::Download::MetadataInfo);
 
+    print("Doing invokeSyncMethod: 96\n");
 	ret = dw.client->invokeSyncMethod(0x1234000D, &dtInfo, 2, &ret2, &bfInfo, 1);
-	if (ret != SCE_OK)
+    print("invokeSyncMethod :96 => 0x%X 0x%X\n", ret, ret2);
+	
+    if (ret != SCE_OK)
 		return ret;
 	else if (ret2 != SCE_OK)
 		return ret2;
@@ -116,9 +119,10 @@ SceInt32 Downloader::Enqueue(const char *url, const char *name, BGDLParam *param
 
 	bfInfo.data1 = &dwRes;
 	bfInfo.data1Size = sizeof(SceInt32);
-
 	ret2 = SCE_OK;
+    print("Doing invokeSyncMethod :122\n");
 	ret = dw.client->invokeSyncMethod(0x12340011, &dtInfo, 3, &ret2, &bfInfo, 1);
+    print("invokeSyncMethod :122 => 0x%X 0x%X\n", ret, ret2);
 	if (ret2 != SCE_OK) 
     {
 		//invalid filename?
@@ -127,7 +131,9 @@ SceInt32 Downloader::Enqueue(const char *url, const char *name, BGDLParam *param
 		sce_paf_snprintf((char *)minfo.name, sizeof(minfo.name), "DefaultFilename%s", ext);
 
 		ret2 = SCE_OK;
+        print("Doing invokeSyncMethod :132\n");
 		ret = dw.client->invokeSyncMethod(0x12340011, &dtInfo, 3, &ret2, &bfInfo, 1);
+        print("invokeSyncMethod :132 => 0x%X 0x%X\n", ret, ret2);
 		if (ret2 != SCE_OK)
 			return ret2;
 	}
@@ -135,10 +141,11 @@ SceInt32 Downloader::Enqueue(const char *url, const char *name, BGDLParam *param
     if(param != NULL && param->magic == (BHBB_DL_CFG_VER | BHBB_DL_MAGIC))
     {
         print("Writing param....\n");
-        string paramPath = ccc::Sprintf("ux0:bgdl/t/%08x/install_param.ini", dwRes);
+        string paramPath; 
+        common::string_util::setf(paramPath, "ux0:bgdl/t/%08x/install_param.ini", dwRes);
 
         SceInt32 result = SCE_OK;
-        SharedPtr<LocalFile> openResult = LocalFile::Open(paramPath.data(), SCE_O_WRONLY | SCE_O_CREAT | SCE_O_TRUNC, 0666, &result);
+        common::SharedPtr<LocalFile> openResult = LocalFile::Open(paramPath.data(), SCE_O_WRONLY | SCE_O_CREAT | SCE_O_TRUNC, 0666, &result);
         if(result < 0)
         {
             print("open %s -> 0x%X\n", paramPath.data(), result);
@@ -168,5 +175,6 @@ SceInt32 Downloader::EnqueueAsync(const char *url, const char *name, BGDLParam *
     else
         dwJob->param.magic = 0;
 
-	return g_mainQueue->Enqueue(&SharedPtr<job::JobItem>(dwJob));
+    common::SharedPtr<job::JobItem> ptr(dwJob);
+	return g_mainQueue->Enqueue(ptr);
 }

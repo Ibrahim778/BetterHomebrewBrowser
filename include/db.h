@@ -39,8 +39,8 @@ namespace db
     typedef struct 
     {
         int id;
-        SceUInt64 nameHash;
-        SceUInt64 singleHash;
+        SceUInt64 nameHash; //Example: Apps
+        SceUInt64 singleHash; //Example: App
     } Category;
 
     typedef enum // Should match the index in info[]
@@ -128,7 +128,7 @@ namespace db
             .GetDownloadUrl = cbpsdb::GetDownloadUrl,
             .GetDataUrl = cbpsdb::GetDataUrl,
             .name = "CBPS DB",
-            .iconFolderPath = "ux0:data/betterHomebrewBrowser/icons/cbpsdb",
+            .iconFolderPath = "ux0:data/betterHomebrewBrowser/icons/cbpsdb/",
             .iconsURL = "https://github.com/Ibrahim778/CBPS-DB-Icon-Downloader/raw/main/icons.zip?raw=true",
             .indexURL = "https://raw.githubusercontent.com/KuromeSan/cbps-db/master/cbpsdb.csv",
             .indexPath = "ux0:temp/cbpsdb.csv",
@@ -150,7 +150,7 @@ namespace db
             .GetDownloadUrl = vitadb::GetDownloadUrl,
             .GetDataUrl = vitadb::GetDataUrl,
             .name = "Vita DB", 
-            .iconFolderPath = "ux0:/data/betterHomebrewBrowser/icons/vitadb", 
+            .iconFolderPath = "ux0:/data/betterHomebrewBrowser/icons/vitadb/", 
             .iconsURL = "https://vitadb.rinnegatamante.it/icons_zip.php", 
             .indexURL = "https://rinnegatamante.it/vitadb/list_hbs_json.php",
             .indexPath = "ux0:temp/vitadb.json",
@@ -192,7 +192,7 @@ namespace db
             .GetDownloadUrl = vhbdb::GetDownloadUrl,
             .GetDataUrl = vhbdb::GetDataUrl,
             .name = "VHB DB",
-            .iconFolderPath = "ux0:/data/betterHomebrewBrowser/icons/vhbdb",
+            .iconFolderPath = "ux0:/data/betterHomebrewBrowser/icons/vhbdb/",
             .iconsURL = SCE_NULL,
             .indexURL = "https://github.com/vhbd/database/releases/download/latest/db_minify.json",
             .indexPath = "ux0:temp/vhbdb.json",

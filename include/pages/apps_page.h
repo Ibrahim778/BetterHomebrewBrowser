@@ -146,6 +146,9 @@ namespace apps
         //Redisplays the list (will also reflect page number & category updates)
         SceVoid Redisplay();
 
+        //Hides the IME keyboard if opened for search
+        SceVoid HideKeyboard();
+
         //Set the current category
         SceBool SetCategory(int category);
         //Get the current category

@@ -1,15 +1,11 @@
 // Thanks to theflow0 for vitashell
 
-#include <psp2/promoterutil.h>
-#include <psp2/sysmodule.h>
-#include <psp2/kernel/clib.h>
-#include <psp2/paf.h>
-#include <psp2/io/fcntl.h>
-#include <psp2/io/dirent.h>
+#include <kernel.h>
+#include <libsysmodule.h>
+#include <paf/stdc.h>
 
 #include "sha1.h"
 #include "head_bin.h"
-#include <stdlib.h>
 
 #define BSWAP32(x) (((x & 0xFF) << 24) | ((x & 0xFF00) << 8) | ((x & 0xFF0000) >> 8) | ((x & 0xFF000000) >> 24))
 

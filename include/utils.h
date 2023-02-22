@@ -31,7 +31,7 @@ namespace Utils
         SceVoid StartBGDL();    
         SceUInt32 GetHash(const char *id);
     }
-    namespace String 
+    namespace str 
     {
         void ToLowerCase(char *string);
         SceVoid GetFromID(const char *id, paf::string *out);
@@ -72,7 +72,7 @@ namespace Utils
             return (T*)g_appPlugin->CreateWidgetWithStyle(parent, type, &widgetInfo, &styleInfo);
         }        
         SceInt32 SetLabel(paf::ui::Widget *widget, const char *text);
-        SceInt32 SetLabel(paf::ui::Widget *widget, paf::string *text);
+        SceInt32 SetLabel(paf::ui::Widget *widget, paf::string &text);
         SceVoid DeleteTexture(paf::graph::Surface **tex);
     };
     

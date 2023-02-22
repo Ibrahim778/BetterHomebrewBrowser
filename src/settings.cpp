@@ -41,7 +41,7 @@ Settings::Settings()
     #endif
 
     *infoString += WIDE(__DATE__) L"\n";
-    *infoString += L"Version: 1.1\nBGDL Version: 2.1\ncBGDL Version: 1.0";
+    *infoString += L"Version: 1.1\nBGDL Version: 2.1\ncBGDL Version: 1.1";
 
     print("%ls\n", infoString->data());
 
@@ -69,7 +69,7 @@ Settings::Settings()
 	pInit.pluginPath = "vs0:vsh/common/app_settings.suprx";
 	pInit.unk_58 = 0x96;
 
-	Framework::GetInstance()->LoadPlugin(&pInit);
+	Plugin::LoadSync(pInit);
     
 	sInit.xmlFile = g_appPlugin->resource->GetFile(file_bhbb_settings, &fileSize, &mimeType);
 
@@ -78,7 +78,7 @@ Settings::Settings()
 	sInit.reallocCB = sce_paf_realloc;
 	sInit.safeMemoryOffset = 0;
 	sInit.safeMemorySize = 0x400;
-
+    
 	AppSettings::GetInstance(&sInit, &appSettings);
 
 
@@ -122,6 +122,7 @@ SceVoid Settings::Close()
     e.hash = 0xF6C9D4C0;
 
     auto plugin = paf::Plugin::Find("app_settings_plugin");
+    if(!plugin) return;
     ui::Widget *root = plugin->GetPageByHash(&e);
     if(!root) return;
     e.hash = 0x8211F03F;
@@ -137,17 +138,17 @@ SceVoid Settings::Open()
 
 	AppSettings::InterfaceCallbacks ifCb;
 
-	ifCb.listChangeCb = CBListChange;
-	ifCb.listForwardChangeCb = CBListForwardChange;
-	ifCb.listBackChangeCb = CBListBackChange;
-	ifCb.isVisibleCb = CBIsVisible;
-	ifCb.elemInitCb = CBElemInit;
-	ifCb.elemAddCb = CBElemAdd;
-	ifCb.valueChangeCb = CBValueChange;
-	ifCb.valueChangeCb2 = CBValueChange2;
-	ifCb.termCb = CBTerm;
-	ifCb.getStringCb = CBGetString;
-	ifCb.getTexCb = CBGetTex;
+	ifCb.onStartPageTransitionCb = CBListChange;
+	ifCb.onPageActivateCb = CBListForwardChange;
+	ifCb.onPageDeactivateCb = CBListBackChange;
+	ifCb.onCheckVisible = CBIsVisible;
+	ifCb.onPostCreateCb = CBElemAdd;
+	ifCb.onPreCreateCb = CBElemInit;
+	ifCb.onPressCb = CBValueChange;
+	ifCb.onPressCb2 = CBValueChange2;
+	ifCb.onTermCb = CBTerm;
+	ifCb.onGetStringCb = CBGetString;
+	ifCb.onGetSurfaceCb = CBGetTex;
 
 	Plugin *appSetPlug = paf::Plugin::Find("app_settings_plugin");
 	AppSettings::Interface *appSetIf = (sce::AppSettings::Interface *)appSetPlug->GetInterface(1);
@@ -165,17 +166,17 @@ SceVoid Settings::OpenCallback::OnGet(SceInt32, ui::Widget *, SceInt32, ScePVoid
     Settings::GetInstance()->Open();
 }
 
-SceVoid Settings::CBListChange(const char *elementId)
+SceVoid Settings::CBListChange(const char *elementId, SceInt32 type)
 {
 
 }
 
-SceVoid Settings::CBListForwardChange(const char *elementId)
+SceVoid Settings::CBListForwardChange(const char *elementId, SceInt32 type)
 {
 
 }
 
-SceVoid Settings::CBListBackChange(const char *elementId)
+SceVoid Settings::CBListBackChange(const char *elementId, SceInt32 type)
 {
 
 }
@@ -187,7 +188,7 @@ SceInt32 Settings::CBIsVisible(const char *elementId, SceBool *pIsVisible)
 	return SCE_OK;
 }
 
-SceInt32 Settings::CBElemInit(const char *elementId)
+SceInt32 Settings::CBElemInit(const char *elementId, AppSettings::Element *element)
 {
 	return SCE_OK;
 }
@@ -227,7 +228,7 @@ SceInt32 Settings::CBValueChange2(const char *elementId, const char *newValue)
 	return SCE_OK;
 }
 
-SceVoid Settings::CBTerm()
+SceVoid Settings::CBTerm(SceInt32 result)
 {    
     g_appsPage->root->PlayEffect(-100, effect::EffectType_Fadein1);
     ui::Widget::SetControlFlags(g_appsPage->root, 1);

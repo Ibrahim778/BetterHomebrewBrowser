@@ -29,9 +29,9 @@ Page::Page(db::entryInfo& entry):
     iconLoadThread(SCE_NULL),
     descriptionLoadThread(SCE_NULL)
 {
-    Widget::SetLabel(Widget::GetChild(root, info_title_text), &info.title);
-    Widget::SetLabel(Widget::GetChild(root, info_author_text), &info.author);
-    Widget::SetLabel(Widget::GetChild(root, info_version_text), &info.version);
+    Widget::SetLabel(Widget::GetChild(root, info_title_text), info.title);
+    Widget::SetLabel(Widget::GetChild(root, info_author_text), info.author);
+    Widget::SetLabel(Widget::GetChild(root, info_version_text), info.version);
     
     Widget::GetChild(root, download_button)->RegisterEventCallback(ui::EventMain_Decide,  new button::Callback(this));
     Widget::GetChild(root, back_button)->RegisterEventCallback(ui::EventMain_Decide, new SimpleEventCallback(generic::Page::DefaultBackButtonCB));
@@ -146,14 +146,14 @@ SceVoid button::DataDownloadTask::Run()
 {
     print("DataDownloadTask START!\n");
     sceShellUtilLock(SCE_SHELL_UTIL_LOCK_TYPE_PS_BTN);
-    Dialog::OpenPleaseWait(g_appPlugin, SCE_NULL, String::GetPFromHash(msg_wait));
+    Dialog::OpenPleaseWait(g_appPlugin, SCE_NULL, str::GetPFromHash(msg_wait));
 
     paf::string out;
     SceInt32 r = db::info[Settings::GetInstance()->source].GetDataUrl(caller->GetInfo(), out);
     if(r != SCE_OK)
     {
         Dialog::Close();
-        Dialog::OpenOk(g_appPlugin, SCE_NULL, String::GetPFromHash(msg_src_err));
+        Dialog::OpenOk(g_appPlugin, SCE_NULL, str::GetPFromHash(msg_src_err));
         sceShellUtilUnlock(SCE_SHELL_UTIL_LOCK_TYPE_PS_BTN);
         return;
     }
@@ -164,14 +164,15 @@ SceVoid button::DataDownloadTask::Run()
     param.type = BGDLTarget::CustomPath;
 
     string titleTemplate;
-    String::GetFromHash(data_dl_name, &titleTemplate);
+    str::GetFromHash(data_dl_name, &titleTemplate);
     
-    string title = ccc::Sprintf(titleTemplate.data(), caller->GetInfo().title.data());
-
+    string title;
+    common::string_util::setf(title, titleTemplate.data(), caller->GetInfo().title.data());
+    
     g_downloader->Enqueue(out.data(), title.data(), &param);
 
     Dialog::Close();
-    Dialog::OpenOk(g_appPlugin, SCE_NULL, String::GetPFromHash(msg_download_queued));
+    Dialog::OpenOk(g_appPlugin, SCE_NULL, str::GetPFromHash(msg_download_queued));
     sceShellUtilUnlock(SCE_SHELL_UTIL_LOCK_TYPE_PS_BTN);
     print("DataDownloadTask FINISH!\n");
 }
@@ -180,7 +181,7 @@ SceVoid button::AppDownloadTask::Run()
 {
     print("AppDownloadTask START!\n");
     sceShellUtilLock(SCE_SHELL_UTIL_LOCK_TYPE_PS_BTN);
-    Dialog::OpenPleaseWait(g_appPlugin, SCE_NULL, String::GetPFromHash(msg_wait));
+    Dialog::OpenPleaseWait(g_appPlugin, SCE_NULL, str::GetPFromHash(msg_wait));
 
     paf::string out;
     SceInt32 r = db::info[Settings::GetInstance()->source].GetDownloadUrl(caller->GetInfo(), out);
@@ -188,7 +189,7 @@ SceVoid button::AppDownloadTask::Run()
     if(r != SCE_OK)
     {
         Dialog::Close();
-        Dialog::OpenOk(g_appPlugin, SCE_NULL, String::GetPFromHash(msg_src_err));
+        Dialog::OpenOk(g_appPlugin, SCE_NULL, str::GetPFromHash(msg_src_err));
         sceShellUtilUnlock(SCE_SHELL_UTIL_LOCK_TYPE_PS_BTN);
         return;
     }   
@@ -201,27 +202,29 @@ SceVoid button::AppDownloadTask::Run()
     g_downloader->Enqueue(out.data(), caller->GetInfo().title.data(), &param);
 
     Dialog::Close();
-    Dialog::OpenOk(g_appPlugin, SCE_NULL, String::GetPFromHash(msg_download_queued));
+    Dialog::OpenOk(g_appPlugin, SCE_NULL, str::GetPFromHash(msg_download_queued));
     sceShellUtilUnlock(SCE_SHELL_UTIL_LOCK_TYPE_PS_BTN);
     print("AppDownloadTask FINISH!\n");
 }
 
 SceVoid button::Callback::OnGet(SceInt32 eventID, ui::Widget *self, SceInt32 unk, ScePVoid pUserData)
 {
+    common::SharedPtr<job::JobItem> ptr;
     switch(self->elem.hash)
     {
     case download_button:
-        g_mainQueue->Enqueue(&SharedPtr<job::JobItem>(new AppDownloadTask((apps::info::Page *)pUserData, "BHBB::AppDownloadTask")));
+        ptr = common::SharedPtr<job::JobItem>(new AppDownloadTask((apps::info::Page *)pUserData, "BHBB::AppDownloadTask"));
         break;
 
     case data_download_button:
-        g_mainQueue->Enqueue(&SharedPtr<job::JobItem>(new DataDownloadTask((apps::info::Page *)pUserData, "BHBB::DataDownloadTask")));
+        ptr = common::SharedPtr<job::JobItem>(new DataDownloadTask((apps::info::Page *)pUserData, "BHBB::DataDownloadTask"));
         break;
 
     default:
         print("Unknown hash! 0x%X\n", self->elem.hash);
         break;
     }
+    g_mainQueue->Enqueue(ptr);
 }
 
 SceVoid screenshot::Callback::OnGet(SceInt32 eventID, ui::Widget *self, SceInt32 unk, ScePVoid pUserData)
@@ -277,7 +280,7 @@ SceVoid screenshot::Page::LoadThread::EntryFunction()
     {
         print("Error making surf! fileErr: 0x%X callingPage->surface: 0x%X\n", fileErr, callingPage->surface);
         callingPage->busyIndicator->Stop();
-        Dialog::OpenError(g_appPlugin, fileErr, String::GetPFromHash(msg_screenshot_error), ErrorCB);
+        Dialog::OpenError(g_appPlugin, fileErr, str::GetPFromHash(msg_screenshot_error), ErrorCB);
         Cancel();
         return;
     }
@@ -304,11 +307,11 @@ SceVoid Page::DescriptionLoadThread::EntryFunction()
     SceInt32 ret = db::info[Settings::GetInstance()->source].GetDescription(callingPage->info, desc);
     auto descText = Widget::GetChild<ui::Text>(callingPage->root, info_description_text);
     if(ret == SCE_OK)
-        Widget::SetLabel(descText, &desc);
+        Widget::SetLabel(descText, desc);
     else
     {
-        Dialog::OpenError(g_appPlugin, ret, String::GetPFromHash(msg_desc_error));
-        descText->SetLabel(&wstring(String::GetPFromHash(msg_desc_error)));
+        Dialog::OpenError(g_appPlugin, ret, str::GetPFromHash(msg_desc_error));
+        descText->SetLabel(&wstring(str::GetPFromHash(msg_desc_error)));
     }
 
     busyIndicator->Stop();
@@ -324,7 +327,8 @@ SceVoid Page::IconInvokedDownloadJob::DialogEventHandler(Dialog::ButtonCode resC
 
 SceVoid Page::IconInvokedDownloadJob::ButtonCB(SceInt32 eventID, ui::Widget *self, SceInt32 unk, ScePVoid pUserData)
 {
-    g_mainQueue->Enqueue(&SharedPtr<job::JobItem>(new IconInvokedDownloadJob("IconInvokedDownloadJob", ((Page *)pUserData)->GetInfo().hash, (Page *)pUserData)));
+    auto ptr = SharedPtr<job::JobItem>(new IconInvokedDownloadJob("IconInvokedDownloadJob", ((Page *)pUserData)->GetInfo().hash, (Page *)pUserData));
+    g_mainQueue->Enqueue(ptr);
 }
 
 SceVoid Page::IconInvokedDownloadJob::Run()
@@ -332,18 +336,18 @@ SceVoid Page::IconInvokedDownloadJob::Run()
     auto &entry = callingPage->info;
     if(entry.iconURL.size() == 0)
     {
-        Dialog::OpenOk(g_appPlugin, SCE_NULL, String::GetPFromHash(msg_icon_no_source));    
+        Dialog::OpenOk(g_appPlugin, SCE_NULL, str::GetPFromHash(msg_icon_no_source));    
         return;
     }
 
     if(LocalFile::Exists(entry.iconPath.data()))
     {
-        Dialog::OpenYesNo(g_appPlugin, SCE_NULL, String::GetPFromHash(msg_icon_redownload), DialogEventHandler, this);
+        Dialog::OpenYesNo(g_appPlugin, SCE_NULL, str::GetPFromHash(msg_icon_redownload), DialogEventHandler, this);
         Dialog::WaitEnd();
         if(!DialogResult) return; //Return if the user said no
     }
 
-    Dialog::OpenPleaseWait(g_appPlugin, SCE_NULL, String::GetPFromHash(msg_downloading_icon));
+    Dialog::OpenPleaseWait(g_appPlugin, SCE_NULL, str::GetPFromHash(msg_downloading_icon));
     print("Opened pls wait\n");
     
     SceInt32 ret = SCE_OK;
@@ -409,5 +413,5 @@ SceVoid Page::IconInvokedDownloadJob::Run()
     print("Closed\n");
     print("DL Success: %s\n", DownloadSuccess ? "True" : "False");
     if(!DownloadSuccess)
-        Dialog::OpenError(g_appPlugin, ret, String::GetPFromHash(msg_icon_error));    
+        Dialog::OpenError(g_appPlugin, ret, str::GetPFromHash(msg_icon_error));    
 }
