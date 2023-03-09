@@ -7,7 +7,6 @@ include(VitaDevelopmentSuite)
 set(CMAKE_C_STANDARD 99)
 set(CMAKE_CXX_STANDARD 11)
 
-add_subdirectory(libScePafPreload)
 add_subdirectory(bhbb_dl)
 
 link_directories(
@@ -51,7 +50,8 @@ add_executable(${PROJECT_NAME}
     src/pages/apps_info_page.cpp
     src/json.cpp
     src/dialog.cpp
-    src/paf_runtime.c
+    src/arith64.c
+    src/paf_runtime.cpp
 
     common/bhbb_dl.h
     
@@ -63,6 +63,7 @@ add_executable(${PROJECT_NAME}
     include/csv.h
     include/settings.h
     include/downloader.h
+    include/json.h
     include/curl_file.h
     include/cURLFile.h
     include/db.h
@@ -70,7 +71,6 @@ add_executable(${PROJECT_NAME}
     include/pages/text_page.h
     include/pages/apps_page.h
     include/pages/apps_info_page.h
-    include/json.hpp
     include/dialog.h
 )
 
@@ -106,6 +106,7 @@ target_link_libraries(${PROJECT_NAME}
     SceVshBridge_stub
     taihenUnsafe_stub
     curl_stub
+    snc
 )
 
 target_include_directories(${PROJECT_NAME} PRIVATE
@@ -121,7 +122,6 @@ VDSuiteCreateSfo(${PROJECT_NAME}.sfo param.sfx)
 VDSuiteSignElf(${PROJECT_NAME}.self $<TARGET_FILE:${PROJECT_NAME}> BOOT_PARAM bootparam.yml)
 
 add_dependencies(${PROJECT_NAME}
-    libScePafPreload.suprx
     file_toucher    
     bhbb_dl
 )
@@ -133,7 +133,6 @@ if(${CMAKE_BUILD_TYPE} STREQUAL Debug)
       ${CMAKE_BINARY_DIR}/${PROJECT_NAME}.sfo sce_sys/param.sfo
       resource/bhbb_plugin.rco resource/bhbb_plugin.rco
       resource/rco/src/texture/bg.png sce_sys/pic0.png
-      ${CMAKE_BINARY_DIR}/libScePafPreload/libScePafPreload.suprx module/libScePafPreload.suprx
       ${CMAKE_BINARY_DIR}/bhbb_dl/bhbb_dl.suprx module/bhbb_dl.suprx
       sce_sys sce_sys
       module module
@@ -146,7 +145,6 @@ else()
         ${CMAKE_BINARY_DIR}/${PROJECT_NAME}.sfo sce_sys/param.sfo
         resource/bhbb_plugin.rco resource/bhbb_plugin.rco
         resource/rco/src/texture/bg.png sce_sys/pic0.png
-        ${CMAKE_BINARY_DIR}/libScePafPreload/libScePafPreload.suprx module/libScePafPreload.suprx
         ${CMAKE_BINARY_DIR}/bhbb_dl/bhbb_dl.suprx module/bhbb_dl.suprx
         sce_sys sce_sys
         module module

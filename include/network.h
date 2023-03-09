@@ -3,9 +3,9 @@
 
 #define cURL_PATH "app0:module/libcurl.suprx"
 
-typedef void*(*t_curl_malloc)(unsigned int size);
+typedef void*(*t_curl_malloc)(size_t size);
 typedef void(*t_curl_free)(void *ptr);
-typedef void*(*t_curl_realloc)(void *ptr, unsigned int new_size);
+typedef void*(*t_curl_realloc)(void *ptr, size_t new_size);
 
 extern "C" int curl_global_memmanager_set_np(t_curl_malloc allocate, t_curl_free deallocate, t_curl_realloc reallocate);
 

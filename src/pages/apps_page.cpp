@@ -581,7 +581,7 @@ SceVoid apps::Page::LoadJob::Run()
     rtc::Tick currentTick;
     rtc::GetCurrentTick(&currentTick);
 
-    if(nextTick < currentTick) //The download time has passed (or was never set in the first place)
+    if(nextTick < currentTick || !LocalFile::Exists(db::info[Settings::GetInstance()->source].indexURL)) //The download time has passed (or was never set in the first place)
     {
         sceShellUtilLock(SCE_SHELL_UTIL_LOCK_TYPE_PS_BTN);
 

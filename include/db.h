@@ -23,7 +23,7 @@ namespace db
         paf::vector<paf::string> dataURL;
         paf::string dataPath;
         
-        paf::vector<paf::string> screenshotURL;
+        paf::list<paf::string> screenshotURL;
         
         paf::string version;
 
@@ -70,6 +70,7 @@ namespace db
 
         size_t GetSize(int category = -1);
         entryInfo &Get(SceUInt64 hash);
+        entryInfo &ReturnNew();
         CategorisedList &GetCategory(int category);
         
         paf::vector<db::entryInfo> entries;

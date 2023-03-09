@@ -21,13 +21,10 @@ static int lastError = 0;
 
 static void (*CheckComplete)(void) = SCE_NULL;
 static Network::Status CurrentStatus = Network::Status::Offline;
-static SceUID curlID = SCE_UID_INVALID_UID;
 
 void Network::Init()
 {
     /* NetCtl */
-	sceSysmoduleLoadModule(SCE_SYSMODULE_NET);
-
 	SceNetInitParam netInitParam;
 	netInitParam.memory = sce_paf_malloc(NET_HEAP_SIZE);
 	netInitParam.size = NET_HEAP_SIZE;
@@ -43,7 +40,6 @@ void Network::Init()
 	sceSslInit(SSL_HEAP_SIZE);
 
     /* CURL */
-    curlID = sceKernelLoadStartModule(cURL_PATH, 0, SCE_NULL, 0, SCE_NULL, SCE_NULL);
     curl_global_memmanager_set_np(sce_paf_malloc, sce_paf_free, sce_paf_realloc);
 
     lastError = 0;
@@ -51,9 +47,6 @@ void Network::Init()
 
 void Network::Term()
 {
-    /* CURL */
-    sceKernelStopUnloadModule(curlID, 0, SCE_NULL, 0, SCE_NULL, SCE_NULL);
-
     /* HTTPS */
 	sceSslTerm();
 	sceHttpTerm();
@@ -63,7 +56,6 @@ void Network::Term()
     /* NetCtl */
 	sceNetCtlTerm();
 	sceNetTerm();
-	sceSysmoduleUnloadModule(SCE_SYSMODULE_NET);
 }
 
 void Network::Check(void (*onComplete)(void))

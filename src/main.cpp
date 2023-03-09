@@ -20,38 +20,10 @@
 #include "bhbb_locale.h"
 
 extern "C" {
-
-    SCE_USER_MODULE_LIST("app0:module/libScePafPreload.suprx");
-
-    extern const char			sceUserMainThreadName[] = "BHBB_MAIN";
-    extern const int			sceUserMainThreadPriority = SCE_KERNEL_DEFAULT_PRIORITY_USER;
-    extern const unsigned int	sceUserMainThreadStackSize = SCE_KERNEL_THREAD_STACK_SIZE_DEFAULT_USER_MAIN;
-    extern unsigned int         sceLibcHeapSize = 0x180000;
-
-    void __cxa_set_dso_handle_main(void *dso)
-    {
-
-    }
-
-    int _sceLdTlsRegisterModuleInfo()
-    {
-        return 0;
-    }
-
-    int __aeabi_unwind_cpp_pr0()
-    {
-        return 9;
-    }
-
-    int __aeabi_unwind_cpp_pr1()
-    {
-        return 9;
-    }
-
-    int __at_quick_exit()
-    {
-        return 0;
-    }
+    const char			sceUserMainThreadName[] = "BHBB_MAIN";
+    const int			sceUserMainThreadPriority = SCE_KERNEL_DEFAULT_PRIORITY_USER;
+    const unsigned int	sceUserMainThreadStackSize = SCE_KERNEL_THREAD_STACK_SIZE_DEFAULT_USER_MAIN;
+    unsigned int        sceLibcHeapSize = 0x180000;
 
     SceUID _vshKernelSearchModuleByName(const char *name, SceUInt64 *unk);
 }
@@ -143,13 +115,17 @@ SceVoid onPluginReady(Plugin *plugin)
 
 int main()
 {
-#ifdef SCE_PAF_TOOL_PRX
+#if defined(SCE_PAF_TOOL_PRX) && defined(_DEBUG) && !defined(__INTELLISENSE__)
     SCE_PAF_AUTO_TEST_SET_EXTRA_TTY(sceIoOpen("tty0:", SCE_O_WRONLY, 0)); //This line will break things if using non devkit libpaf
 #endif
 
-    Misc::StartBGDL();
-    Misc::InitMusic();
+    Misc::StartBGDL(); // Init bhbb_dl
+    Misc::InitMusic(); // BG Music
 
+	sceSysmoduleLoadModule(SCE_SYSMODULE_NET);
+
+    new Module("app0:module/libcurl.suprx");
+    
     Framework::InitParam fwParam;
 
     fwParam.LoadDefaultParams();
@@ -176,7 +152,7 @@ int main()
     piParam.pluginName = "bhbb_plugin";
     piParam.resourcePath = "app0:resource/bhbb_plugin.rco";
     piParam.scopeName = "__main__";
-#ifdef SCE_PAF_TOOL_PRX
+#if defined(SCE_PAF_TOOL_PRX) && defined(_DEBUG)
     piParam.pluginFlags = Plugin::InitParam::PluginFlag_UseRcdDebug; //This line will break things if using non devkit libpaf
 #endif
     piParam.pluginStartCB = onPluginReady;
