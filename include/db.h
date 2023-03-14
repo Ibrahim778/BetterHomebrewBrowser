@@ -2,7 +2,6 @@
 #define DB_H
 
 #include <kernel.h>
-#include <vector>
 #include <paf.h>
 
 #include "bhbb_locale.h"

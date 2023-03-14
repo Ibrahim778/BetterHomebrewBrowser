@@ -22,12 +22,9 @@ using namespace Utils;
 SceUInt32 Misc::GetHash(const char *id)
 {
     rco::Element searchReq;
-    rco::Element searchRes;
-    
     searchReq.id = id;
-    searchRes.hash = searchRes.GetHash(&searchReq.id);
-
-    return searchRes.hash;
+    
+    return searchReq.GetHash(&searchReq.id);
 }
 
 SceVoid Net::HttpsToHttp(paf::string& url)

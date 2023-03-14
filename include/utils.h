@@ -62,7 +62,7 @@ namespace Utils
         }
 
         template<class T = paf::ui::Widget>
-        T *Utils::Widget::Create(const char *id, const char *type, const char *style, paf::ui::Widget *parent)
+        T *Create(const char *id, const char *type, const char *style, paf::ui::Widget *parent)
         {
             rco::Element styleInfo;
             styleInfo.hash = Utils::Misc::GetHash(style);

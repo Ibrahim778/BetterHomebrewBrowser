@@ -74,15 +74,22 @@ SceInt32 vitadb::Parse(db::List *outList, const char *jsonPath)
         info.dataPath = "ux0:data/";
         info.description = jdoc[i]["long_description"].as<const char *>();
         info.version = jdoc[i]["version"].as<const char *>();
+        auto screenshotStr = jdoc[i]["screenshots"].as<const char *>();
+        char *token = sce_paf_strtok((char *)screenshotStr, ";");
+        
+        while(token != SCE_NULL) 
+        {
+            string url = "https://rinnegatamante.it/vitadb/";
+            url += token;
+            info.screenshotURL.push_back(url);
+            token = sce_paf_strtok(SCE_NULL, ";");
+        }
 
-        // common::string_util::tokenize(info.screenshotURL, jdoc[i]["screenshots"].as<const char *>(), sce_paf_strlen(jdoc[i]["screenshots"].as<const char *>()), ';');
-        // print("ssize = %d\n", info.screenshotURL.size());
         info.type = jdoc[i]["type"].as<int>();
-        info.hash = jdoc[i]["hash"].as<int>();
+        // info.hash = Misc::GetHash(info.id.data());
 
-        // outList->Add(info);
     }
-
+    
     delete[] jstring;
 
     return SCE_OK;
@@ -572,11 +579,11 @@ void db::List::Categorise(db::Id source)
 
 db::List::CategorisedList &db::List::GetCategory(int category)
 {
-    auto catList = db::List::CategorisedList(0xFFFFFFFF);
+    auto errList = db::List::CategorisedList(0xFFFFFFFF);
     if(category == db::CategoryAll)
     {
         print("[Error] Please use the entries property in order to acces an element without a specific category!\n");
-        return catList; 
+        return errList; 
     }
 
     for(CategorisedList &catList : categories)
@@ -584,7 +591,7 @@ db::List::CategorisedList &db::List::GetCategory(int category)
         if(catList.category == category)
             return catList;
     }
-    return catList;
+    return errList;
 }
 
 void db::List::Add(db::entryInfo &entry)

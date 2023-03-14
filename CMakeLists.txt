@@ -48,7 +48,6 @@ add_executable(${PROJECT_NAME}
     src/pages/text_page.cpp
     src/pages/apps_page.cpp
     src/pages/apps_info_page.cpp
-    src/json.cpp
     src/dialog.cpp
     src/arith64.c
     src/paf_runtime.cpp
