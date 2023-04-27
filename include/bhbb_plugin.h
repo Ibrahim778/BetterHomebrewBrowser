@@ -10,7 +10,7 @@
 #define main_busy 0x93B83495
 #define back_button 0xA20371F2
 #define forward_button 0xCD489D3E
-#define apps_page 0xDAC3BD11
+#define app_page 0xC77E992C
 #define apps_page_bg 0x0BD99FBD
 #define template_ref_apps_page_list_template 0x15644830
 #define plane_categories 0x0E7479A4
@@ -120,7 +120,7 @@
 #define glowobj1 0xAA063E30
 #define list_style_list_view 0x75A687C1
 #define main_style_busyindicator 0xAAE41186
-#define en-gb 0xA4D34FFD
+#define en_gb 0xA4D34FFD
 #define en 0x094B0FE0
 #define ja 0x84572EF2
 #define fr 0xB858A87C
@@ -129,11 +129,11 @@
 #define it 0x6C5522CA
 #define nl 0x595477BD
 #define pt 0xBC811258
-#define pt-br 0xC697295F
+#define pt_br 0xC697295F
 #define ru 0x67B8B1C4
 #define ko 0x65A7DA8F
-#define zh-t 0x31BE3F43
-#define zh-s 0x3F1096F8
+#define zh_t 0x31BE3F43
+#define zh_s 0x3F1096F8
 #define fi 0x6B163FA3
 #define sv 0x0A6190DF
 #define da 0xCDD4F874

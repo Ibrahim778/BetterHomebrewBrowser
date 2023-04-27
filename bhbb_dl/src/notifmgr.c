@@ -1,5 +1,5 @@
 #include <kernel.h>
-#include <psp2_compat/curl/curl.h>
+// #include <psp2_compat/curl/curl.h>
 #include <notification_util.h>
 
 #include "notifmgr.h"

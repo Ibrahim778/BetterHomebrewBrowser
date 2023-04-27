@@ -1,138 +1,123 @@
 #include <kernel.h>
-#include <stdio.h>
 #include <paf.h>
 #include <shellsvc.h>
 #include <libsysmodule.h>
 #include <apputil.h>
 #include <taihen.h>
+#include <net.h>
+#include <libperf.h>
+#include <libnetctl.h>
+#include <vshbridge.h>
 
 #include "print.h"
-#include "common.h"
 #include "utils.h"
-#include "network.h"
-#include "downloader.h"
-#include "settings.h"
-#include "pages/text_page.h"
-#include "dialog.h"
-#include "pages/apps_page.h"
-#include "pages/apps_info_page.h"
+#include "common.h"
 #include "bhbb_plugin.h"
 #include "bhbb_locale.h"
+#include "pages/app_browser.h"
+#include "pages/textf_page.h"
+#include "db/vitadb.h"
+
+#define NET_HEAP_SIZE  (2 * 1024 * 1024)
+#define HTTP_HEAP_SIZE (2 * 1024 * 1024)
+#define SSL_HEAP_SIZE  (2 * 1024 * 1024)
 
 extern "C" {
     const char			sceUserMainThreadName[] = "BHBB_MAIN";
     const int			sceUserMainThreadPriority = SCE_KERNEL_DEFAULT_PRIORITY_USER;
     const unsigned int	sceUserMainThreadStackSize = SCE_KERNEL_THREAD_STACK_SIZE_DEFAULT_USER_MAIN;
-    unsigned int        sceLibcHeapSize = 0x180000;
 
     SceUID _vshKernelSearchModuleByName(const char *name, SceUInt64 *unk);
+    int curl_global_memmanager_set_np(void *(*allocate)(size_t), void (*deallocate)(void *), void *(*reallocate)(void *, size_t));
 }
 
 using namespace paf;
-using namespace Utils;
 
-Plugin *g_appPlugin              = SCE_NULL;
+Plugin *g_appPlugin = SCE_NULL;
 
-graph::Surface *g_brokenTex       = SCE_NULL;
-graph::Surface *g_transparentTex  = SCE_NULL;
+intrusive_ptr<graph::Surface> g_brokenTex;
+intrusive_ptr<graph::Surface> g_transparentTex;
 
-Downloader *g_downloader        = SCE_NULL;
-apps::Page *g_appsPage          = SCE_NULL;
-
-job::JobQueue *g_mainQueue      = SCE_NULL;
-
-void OnNetworkChecked()
-{
-    if(Network::GetCurrentStatus() == Network::Online)
-    {
-        g_appsPage->Load();
-    }
-    else 
-    {
-        string msgTemplate;
-        str::GetfFromHash(msg_net_fix, &msgTemplate);
-        string errorMsg;
-        common::string_util::setf(errorMsg, msgTemplate.data(), Network::GetLastError());
-        
-        new text::Page(errorMsg.data());
-
-        // generic::Page::SetBackButtonEvent(apps::Page::ErrorRetryCB, g_appsPage); TODO: FIX
-    }
-}
-
-SceVoid onPluginReady(Plugin *plugin)
+SceVoid PluginStart(Plugin *plugin)
 {
     if(plugin == SCE_NULL)
     {
-        print("[MAIN_BHBB] Error Plugin load failed!\n");
+        print("[bhbb_plugin] Error Plugin load failed!\n");
         return;
     }
 
     g_appPlugin = plugin;
-    
-    rco::Element e; 
-    e.hash = tex_missing_icon;
-    g_appPlugin->GetTexture(&g_brokenTex, g_appPlugin, &e);
-    g_brokenTex->AddRef(); //Prevent Deletion
+    print("[bhbb_plugin] Create success! %p\n", plugin);
 
-	e.hash = Misc::GetHash("_common_texture_transparent");
-	Plugin::GetTexture(&g_transparentTex, Plugin::Find("__system__common_resource"), &e);
-    g_transparentTex->AddRef(); //Prevent Deletion
-
-    sceShellUtilInitEvents(0);
-
-    SceUInt64 unk = 0;
-    SceUID itlsID = _vshKernelSearchModuleByName("itlsKernel", &unk);
+    SceUInt64 buff = 0;
+    SceUID itlsID = _vshKernelSearchModuleByName("itlsKernel", &buff);
 
     print("iTLS-Enso: 0x%X\n", itlsID);
     if(itlsID < 0)
     {
-        string err;
-        str::GetfFromHash(msg_no_itls, &err);
-        new text::Page(err.data());
+        new page::TextfPage(msg_no_itls);
         return;
     }
 
-    new Settings();
+    IDParam param(tex_missing_icon);
     
-    Network::Init();
+    g_brokenTex = g_appPlugin->GetTexture(param);
+    g_brokenTex->AddRef(); //Prevent Deletion
+
+    param = "_common_texture_transparent";
+
+	g_transparentTex = Plugin::Find("__system__common_resource")->GetTexture(param);
+    g_transparentTex->AddRef(); //Prevent Deletion
+
+    sceShellUtilInitEvents(0);
     
-    job::JobQueue::Option mainOpt;
-    mainOpt.workerNum = 1;
-    mainOpt.workerOpt = SCE_NULL;
-    mainOpt.workerPriority = SCE_KERNEL_DEFAULT_PRIORITY_USER + 5;
-    mainOpt.workerStackSize = SCE_KERNEL_16KiB;
+    job::JobQueue::Option opt;
+    opt.workerNum = 1;
+    opt.workerStackSize = SCE_KERNEL_256KiB;
+    
+    job::JobQueue::Init(&opt);
 
-    g_mainQueue = new job::JobQueue("BHBB::MainQueue", &mainOpt);
-    g_downloader = new Downloader();
+    SceNetInitParam netInitParam;
+	netInitParam.memory = sce_paf_malloc(NET_HEAP_SIZE);
+	netInitParam.size = NET_HEAP_SIZE;
+	netInitParam.flags = 0;
+	sceNetInit(&netInitParam);
 
-    g_appsPage = new apps::Page();
+	sceNetCtlInit();
 
-    Network::Check(OnNetworkChecked);
-
-    sceSysmoduleLoadModule(SCE_SYSMODULE_JSON);
+    /* HTTPS */
+	sceSysmoduleLoadModule(SCE_SYSMODULE_SSL);
+	sceSysmoduleLoadModule(SCE_SYSMODULE_HTTPS);
+	sceHttpInit(HTTP_HEAP_SIZE);
+	sceSslInit(SSL_HEAP_SIZE);
+    
+    auto page = new AppBrowser(new VitaDB());
+    page->Load();
 }
 
 int main()
 {
 #if defined(SCE_PAF_TOOL_PRX) && defined(_DEBUG) && !defined(__INTELLISENSE__)
-    SCE_PAF_AUTO_TEST_SET_EXTRA_TTY(sceIoOpen("tty0:", SCE_O_WRONLY, 0)); //This line will break things if using non devkit libpaf
+    //This line will break things if using non devkit libpaf
+    SCE_PAF_AUTO_TEST_SET_EXTRA_TTY(sceIoOpen("tty0:", SCE_O_WRONLY, 0)); 
 #endif
 
-    Misc::StartBGDL(); // Init bhbb_dl
-    Misc::InitMusic(); // BG Music
+    Utils::StartBGDL(); // Init bhbb_dl
+    Utils::InitMusic(); // BG Music
 
 	sceSysmoduleLoadModule(SCE_SYSMODULE_NET);
+    sceSysmoduleLoadModuleInternal(SCE_SYSMODULE_INTERNAL_COMMON_GUI_DIALOG);
 
-    new Module("app0:module/libcurl.suprx");
-    
+    new Module("app0:module/libcurl.suprx", "libcurl");
+    curl_global_memmanager_set_np(sce_paf_malloc, sce_paf_free, sce_paf_realloc);
+
     Framework::InitParam fwParam;
 
-    fwParam.LoadDefaultParams();
-    fwParam.applicationMode = Framework::ApplicationMode::Mode_Application;
+    Framework::SampleInit(&fwParam);
+    fwParam.mode = Framework::Mode_Application;
     
-    fwParam.defaultSurfacePoolSize = 16 * 1024 * 1024;
-    fwParam.textSurfaceCacheSize = 2621440; //2.5MB
+    fwParam.surface_pool_size = 16 * 1024 * 1024;
+    fwParam.text_surface_pool_size = 2621440; //2.5MB
 
     Framework *fw = new Framework(fwParam);
 
@@ -149,16 +134,22 @@ int main()
 
     Plugin::InitParam piParam;
 
-    piParam.pluginName = "bhbb_plugin";
-    piParam.resourcePath = "app0:resource/bhbb_plugin.rco";
-    piParam.scopeName = "__main__";
+    piParam.name = "bhbb_plugin";
+    piParam.resource_file = "app0:resource/bhbb_plugin.rco";
+    piParam.caller_name = "__main__";
+
 #if defined(SCE_PAF_TOOL_PRX) && defined(_DEBUG)
-    piParam.pluginFlags = Plugin::InitParam::PluginFlag_UseRcdDebug; //This line will break things if using non devkit libpaf
+    //This line will break things if using non devkit libpaf
+    // piParam.option = Plugin::InitParam::PluginFlag_UseRcdDebug;
 #endif
-    piParam.pluginStartCB = onPluginReady;
 
-    fw->LoadPluginAsync(piParam);
+    piParam.start_func = PluginStart;
 
+    Plugin::LoadAsync(piParam);
+
+    // if(vshSblAimgrIsTool())
+    //     sceRazorCpuStartCapture();
+    
     fw->Run();
 
     return sceKernelExitProcess(0);

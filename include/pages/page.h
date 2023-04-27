@@ -3,31 +3,27 @@
 
 #include <paf.h>
 
-namespace generic
+namespace page
 {
-    class Page
+    class Base
     {
     public:
-        Page(SceInt32 hash, paf::Plugin::PageOpenParam openParam, paf::Plugin::PageCloseParam closeParam);
-		virtual ~Page();
+        Base(uint32_t hash, paf::Plugin::PageOpenParam openParam, paf::Plugin::PageCloseParam closeParam);
+		virtual ~Base();
 
-        SceUInt64 GetHash();
+        uint32_t GetHash();
 
         paf::ui::Scene *root;
 
-        // virtual void OnRedisplay();
-        // virtual void OnDelete();
-
-        static SceVoid DeleteCurrentPage();
-        static generic::Page *GetCurrentPage();
-
-        static SceVoid DefaultBackButtonCB(SceInt32 eventID, paf::ui::Widget *self, SceInt32 unk, ScePVoid pUserData);
-
-    private:
-
+        static void DeleteCurrentPage();
+        static page::Base *GetCurrentPage();
+        static void DefaultBackButtonCB(uint32_t eventID, paf::ui::Handler *self, paf::ui::Event *event, ScePVoid pUserData);
+    
+    protected:
+        paf::ui::CornerButton *backButton;
         paf::Plugin::PageCloseParam closeParam;
-        SceInt32 hash;
     };
+    
 }
 
 #endif

@@ -1,16 +1,30 @@
-#ifndef TEXT_PAGE_H
-#define TEXT_PAGE_H
+#ifndef _TEXT_PAGE_H_
+#define _TEXT_PAGE_H_
+
+#include <paf.h>
 
 #include "page.h"
 
-namespace text
+namespace page 
 {
-    class Page : public generic::Page
+    class TextPage : public page::Base
     {
-    public: 
-        Page(const char *text);
-        virtual ~Page();
+    public:
+        TextPage();
+
+        TextPage(const paf::string& txt);
+        TextPage(const paf::wstring& txt);
+        TextPage(uint32_t strHash);
+
+        virtual ~TextPage(){}
+
+        virtual void SetText(const paf::string& txt);
+        virtual void SetText(uint32_t hash);
+        virtual void SetText(const paf::wstring& str);
+
+    protected:
+        paf::ui::Text *text;
     };
-}
+};
 
 #endif

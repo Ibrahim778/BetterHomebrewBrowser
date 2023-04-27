@@ -8,9 +8,8 @@ set(CMAKE_CXX_STANDARD 11)
 enable_language(EMD)
 
 if(${CMAKE_BUILD_TYPE} STREQUAL Debug)
-    message(Debug build!)
     add_compile_options(
-        -D_SCE_TARGET_OS_PSP2=1 -Xdiag=0 -Xquit=2 -Od -g -noex -D_DEBUG=1 -DPAF_BUILD=1 -D__SNC__
+        -D_SCE_TARGET_OS_PSP2=1 -Xdiag=0 -Xquit=2 -Od -g -noex -D_DEBUG=1 -DPAF_BUILD=1 -D__psp2__ -D__SNC__
         #-D_SCE_TARGET_OS_PSP2=1 -Xdiag=0 -Xquit=2 -Od -g -noex -DSCE_PAF_TOOL_PRX=1 -D_DEBUG=1
     )
 else()

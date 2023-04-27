@@ -1,7 +1,5 @@
-//By GrapheneCT (From VBackup)
-
-#ifndef BHBB_DIALOG_H
-#define BHBB_DIALOG_H
+#ifndef _DIALOG_H_
+#define _DIALOG_H_
 
 #include <kernel.h>
 #include <paf.h>
@@ -9,10 +7,8 @@
 
 using namespace paf;
 
-class Dialog
+namespace dialog
 {
-public:
-
 	enum ButtonCode
 	{
 		ButtonCode_X = 1,
@@ -27,41 +23,48 @@ public:
 
 	typedef void(*EventHandler)(ButtonCode buttonCode, ScePVoid pUserArg);
 
-	static SceVoid OpenPleaseWait(Plugin *workPlugin, wchar_t *titleText, wchar_t *messageText, SceBool withCancel = SCE_FALSE, EventHandler eventHandler= SCE_NULL, ScePVoid userArg = SCE_NULL);
+	SceVoid OpenPleaseWait(Plugin *workPlugin, const wchar_t *titleText, const wchar_t *messageText, SceBool withCancel = SCE_FALSE, EventHandler eventHandler= SCE_NULL, ScePVoid userArg = SCE_NULL);
 
-    static SceVoid OpenOk(Plugin *workPlugin, wchar_t *titleText, wchar_t *messageText, EventHandler eventHandler = SCE_NULL, ScePVoid userArg = SCE_NULL);
+	SceVoid OpenYesNo(Plugin *workPlugin, const wchar_t *titleText, const wchar_t *messageText, EventHandler eventHandler = SCE_NULL, ScePVoid userArg = SCE_NULL);
 
-	static SceVoid OpenYesNo(Plugin *workPlugin, wchar_t *titleText, wchar_t *messageText, EventHandler eventHandler = SCE_NULL, ScePVoid userArg = SCE_NULL);
+	SceVoid OpenOk(Plugin *workPlugin, const wchar_t *titleText, const wchar_t *messageText, EventHandler eventHandler = SCE_NULL, ScePVoid userArg = SCE_NULL);
 
-	static SceVoid OpenError(Plugin *workPlugin, SceInt32 errorCode, wchar_t *messageText = SCE_NULL, EventHandler eventHandler = SCE_NULL, ScePVoid userArg = SCE_NULL);
+	SceVoid OpenError(Plugin *workPlugin, SceInt32 errorCode, const wchar_t *messageText = SCE_NULL, EventHandler eventHandler = SCE_NULL, ScePVoid userArg = SCE_NULL);
 
-	static SceVoid OpenTwoButton(
+	SceVoid OpenTwoButton(
 		Plugin *workPlugin,
-		wchar_t *titleText,
-		wchar_t *messageText,
+		const wchar_t *titleText,
+		const wchar_t *messageText,
 		SceUInt32 button1TextHashref,
 		SceUInt32 button2TextHashref,
 		EventHandler eventHandler = SCE_NULL,
 		ScePVoid userArg = SCE_NULL);
 
-	static SceVoid OpenThreeButton(
+	SceVoid OpenThreeButton(
 		Plugin *workPlugin,
-		wchar_t *titleText,
-		wchar_t *messageText,
+		const wchar_t *titleText,
+		const wchar_t *messageText,
 		SceUInt32 button1TextHashref,
 		SceUInt32 button2TextHashref,
 		SceUInt32 button3TextHashref,
 		EventHandler eventHandler = SCE_NULL,
 		ScePVoid userArg = SCE_NULL);
 
-	static SceVoid Close();
+	ui::ListView *dialog::OpenListView(
+		Plugin *workPlugin,
+		const wchar_t *titleText,
+		EventHandler eventHandler = SCE_NULL,
+		ScePVoid userArg = SCE_NULL);
 
-	static SceVoid WaitEnd();
+	ui::ScrollView *dialog::OpenScrollView(
+		Plugin *workPlugin,
+		const wchar_t *titleText,
+		EventHandler eventHandler = SCE_NULL,
+		ScePVoid userArg = SCE_NULL);
 
-private:
+	SceVoid Close();
 
-	static SceVoid CommonGuiEventHandler(SceInt32 instanceSlot, sce::CommonGuiDialog::ButtonCode buttonCode, ScePVoid pUserArg);
-
+	SceVoid WaitEnd();
 };
 
 #endif

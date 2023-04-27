@@ -9,12 +9,7 @@ set(CMAKE_CXX_STANDARD 11)
 
 add_subdirectory(bhbb_dl)
 
-link_directories(
-  ${VDSUITE_LIBRARY_DIRECTORIES}
-)
-
 if(${CMAKE_BUILD_TYPE} STREQUAL Debug)
-    message(Debug build!)
     add_compile_options(
         -D_SCE_TARGET_OS_PSP2=1 -Xdiag=0 -Xquit=2 -O3 -g -noex -DSCE_PAF_TOOL_PRX=1 -D_DEBUG=1
     )
@@ -24,53 +19,72 @@ else()
     )
 endif()
 
-add_custom_target(file_toucher 
-        COMMAND ${CMAKE_COMMAND} -E touch_nocreate ${CMAKE_CURRENT_SOURCE_DIR}/src/settings.cpp)
+# Generate the headers for the PAF plugin
+add_custom_command(
+    OUTPUT ${CMAKE_SOURCE_DIR}/include/bhbb_plugin.h
+    COMMAND py $ENV{SCE_PSP2_SDK_DIR}/host_tools/build/cxml/genhashheaders.py ${CMAKE_SOURCE_DIR}/resource/bhbb_plugin.xml ${CMAKE_SOURCE_DIR}/include/bhbb_plugin.h
+)
 
-add_link_options(
-  --no-standard-libraries -Map=${CMAKE_BINARY_DIR}/mapfile -sn-full-map
+# Generate the headers for the plugin locale
+add_custom_command(
+    OUTPUT ${CMAKE_SOURCE_DIR}/include/bhbb_locale.h
+    COMMAND py $ENV{SCE_PSP2_SDK_DIR}/host_tools/build/cxml/genhashheaders.py ${CMAKE_SOURCE_DIR}/resource/locale/en.xml ${CMAKE_SOURCE_DIR}/include/bhbb_locale.h
+)
+
+# Generate the headers for the plugin settings
+add_custom_command(
+    OUTPUT ${CMAKE_SOURCE_DIR}/include/bhbb_settings.h
+    COMMAND py $ENV{SCE_PSP2_SDK_DIR}/host_tools/build/cxml/genhashheaders.py ${CMAKE_SOURCE_DIR}/resource/file/bhbb_settings.xml ${CMAKE_SOURCE_DIR}/include/bhbb_settings.h
 )
 
 add_executable(${PROJECT_NAME}
     src/main.cpp
     src/utils.cpp
-    src/bgdl.c
-    src/network.cpp
-    src/csv.c
-    src/split.c
-    src/fread_csv_line.c
-    src/settings.cpp
-    src/downloader.cpp
-    src/curl_file.cpp
-    src/cURLFile.cpp
-    src/db.cpp
-    src/pages/page.cpp
-    src/pages/text_page.cpp
-    src/pages/apps_page.cpp
-    src/pages/apps_info_page.cpp
     src/dialog.cpp
-    src/arith64.c
+
+    src/pages/page.cpp
+    src/pages/app_viewer.cpp
+    src/pages/text_page.cpp
+    src/pages/textf_page.cpp
+    src/pages/app_browser.cpp
     src/paf_runtime.cpp
+
+    src/db/source.cpp
+    src/db/vitadb.cpp
+    src/db/vhbdb.cpp
+    src/db/cbpsdb.cpp
 
     common/bhbb_dl.h
     
+    include/utils.h
     include/bhbb_plugin.h
     include/bhbb_locale.h
     include/bhbb_settings.h
-    include/utils.h
-    include/network.h
-    include/csv.h
-    include/settings.h
-    include/downloader.h
-    include/json.h
-    include/curl_file.h
-    include/cURLFile.h
-    include/db.h
-    include/pages/page.h
-    include/pages/text_page.h
-    include/pages/apps_page.h
-    include/pages/apps_info_page.h
     include/dialog.h
+    include/json.h
+
+    include/pages/page.h
+    include/pages/app_browser.h
+    include/pages/app_viewer.h
+    include/pages/text_page.h
+    include/pages/textf_page.h
+    
+    include/db/source.h
+    include/db/vitadb.h
+    include/db/vhbdb.h
+    include/db/cbpsdb.h
+)
+
+target_link_directories(${PROJECT_NAME} PRIVATE
+    ${VDSUITE_LIBRARY_DIRECTORIES}
+)
+  
+target_link_options(${PROJECT_NAME} PRIVATE    
+    --no-standard-libraries -Map=${CMAKE_BINARY_DIR}/mapfile -sn-full-map
+)
+
+add_dependencies(${PROJECT_NAME}
+    bhbb_dl
 )
 
 target_link_libraries(${PROJECT_NAME}
@@ -99,14 +113,44 @@ target_link_libraries(${PROJECT_NAME}
     SceShellUtil_stub
     SceDeflt
     SceAppSettings_stub
-    SceJson_stub
     SceCommonGuiDialog_stub
     SceModulemgr_stub
     SceVshBridge_stub
     taihenUnsafe_stub
+    ScePerf_stub
     curl_stub
     snc
 )
+
+# Create our list for all locale .xml files
+file(GLOB localeXml "${CMAKE_SOURCE_DIR}/resource/locale/*.xml")
+# Create our list for generated rcs files
+set(rcsFiles)
+# Loop through the xml files and generate an rcs file and add to the deps list
+foreach(_xml ${localeXml})
+    get_filename_component(localeName ${_xml} NAME_WE)
+    set(rcsOutPath ${CMAKE_SOURCE_DIR}/resource/locale/${localeName}.rcs)
+    message("Locale added - ${localeName}.rcs")
+    add_custom_command(
+        OUTPUT ${rcsOutPath}
+        COMMAND python $ENV{SCE_PSP2_SDK_DIR}/host_tools/build/cxml/appinfo/rcs_compiler.py -o ${rcsOutPath} ${_xml} 
+    )
+    list(APPEND rcsFiles ${rcsOutPath})
+endforeach()
+# Generate RCO file
+add_custom_command(
+    OUTPUT ${CMAKE_BINARY_DIR}/bhbb_plugin.rco
+    DEPENDS ${CMAKE_SOURCE_DIR}/resource/bhbb_plugin.xml ${rcsFiles}
+    COMMAND python $ENV{SCE_PSP2_SDK_DIR}/host_tools/build/cxml/appinfo/appinfo_compiler.py -o ${CMAKE_BINARY_DIR}/bhbb_plugin.rco ${CMAKE_SOURCE_DIR}/resource/bhbb_plugin.xml
+)
+if(${CMAKE_BUILD_TYPE} STREQUAL Debug)
+    # Generate the RCD file
+    add_custom_command(
+        OUTPUT ${CMAKE_BINARY_DIR}/bhbb_plugin.rcd
+        DEPENDS ${CMAKE_SOURCE_DIR}/resource/bhbb_plugin.xml 
+        COMMAND $ENV{SCE_PSP2_SDK_DIR}/host_tools/build/bin/psp2rcd.exe -i ${CMAKE_SOURCE_DIR}/resource/bhbb_plugin.xml -o ${CMAKE_BINARY_DIR}/bhbb_plugin.rcd
+    )
+endif()
 
 target_include_directories(${PROJECT_NAME} PRIVATE
   ${CMAKE_SOURCE_DIR}/include
@@ -118,34 +162,40 @@ target_include_directories(${PROJECT_NAME} PRIVATE
 )
 
 VDSuiteCreateSfo(${PROJECT_NAME}.sfo param.sfx)
-VDSuiteSignElf(${PROJECT_NAME}.self $<TARGET_FILE:${PROJECT_NAME}> BOOT_PARAM bootparam.yml)
-
-add_dependencies(${PROJECT_NAME}
-    file_toucher    
-    bhbb_dl
-)
+VDSuiteSignElf(${PROJECT_NAME}.self $<TARGET_FILE:${PROJECT_NAME}> BOOT_PARAM bootparam.yml PROGRAM_AUTHORITY_ID 2200000000000001)
 
 if(${CMAKE_BUILD_TYPE} STREQUAL Debug)
     VDSuitePackage(${PROJECT_NAME}.vpk
     FILES
       ${PROJECT_NAME}.self eboot.bin
       ${CMAKE_BINARY_DIR}/${PROJECT_NAME}.sfo sce_sys/param.sfo
-      resource/bhbb_plugin.rco resource/bhbb_plugin.rco
-      resource/rco/src/texture/bg.png sce_sys/pic0.png
+      ${CMAKE_BINARY_DIR}/bhbb_plugin.rco resource/bhbb_plugin.rco
+      resource/texture/bg.png sce_sys/pic0.png
       ${CMAKE_BINARY_DIR}/bhbb_dl/bhbb_dl.suprx module/bhbb_dl.suprx
       sce_sys sce_sys
       module module
-      ${CMAKE_SOURCE_DIR}/resource/bhbb_plugin.rcd resource/bhbb_plugin.rcd
+      ${CMAKE_BINARY_DIR}/bhbb_plugin.rcd resource/bhbb_plugin.rcd
   )  
 else()
     VDSuitePackage(${PROJECT_NAME}.vpk
     FILES
         ${PROJECT_NAME}.self eboot.bin
         ${CMAKE_BINARY_DIR}/${PROJECT_NAME}.sfo sce_sys/param.sfo
-        resource/bhbb_plugin.rco resource/bhbb_plugin.rco
-        resource/rco/src/texture/bg.png sce_sys/pic0.png
+        ${CMAKE_BINARY_DIR}/bhbb_plugin.rco resource/bhbb_plugin.rco
+        resource/texture/bg.png sce_sys/pic0.png
         ${CMAKE_BINARY_DIR}/bhbb_dl/bhbb_dl.suprx module/bhbb_dl.suprx
         sce_sys sce_sys
         module module
     )
 endif()
+
+add_custom_target(${PROJECT_NAME}.elf.target
+  DEPENDS ${PROJECT_NAME}.elf
+)
+
+add_custom_command(
+  OUTPUT ${PROJECT_NAME}.elf
+  DEPENDS ${PROJECT_NAME}.self
+  COMMAND "$ENV{SCE_ROOT_DIR}/PSP2/Tools/Publishing Tools/bin/ext/unfself.exe" ${CMAKE_BINARY_DIR}/${PROJECT_NAME}.self ${CMAKE_BINARY_DIR}/${PROJECT_NAME}.elf
+  COMMENT "Making ELF file"
+)

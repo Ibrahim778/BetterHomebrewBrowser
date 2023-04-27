@@ -1,9 +1,11 @@
-#include <paf/stdc.h>
+#include <paf.h>
 // ArduinoJson - https://arduinojson.org
 // Copyright © 2014-2022, Benoit BLANCHON
 // MIT License
 
 #pragma once
+using namespace paf;
+#define ARDUINOJSON_HAS_NULLPTR 1
 
 #ifdef __cplusplus
 

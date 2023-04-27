@@ -1,11 +1,8 @@
 //Based of off bgvpk & download_enabler by SKGleba & TheFlow
 
-#include <kernel.h>
+#include <paf.h>
 #include <libsysmodule.h>
 #include <notification_util.h>
-#include <stdbool.h>
-#include <psp2_compat/curl/curl.h>
-#include <paf.h>
 
 #include <taihen.h>
 
@@ -25,7 +22,7 @@ SceUID taskThreadID =   SCE_UID_INVALID_UID;
 SceUID pipeThreadID =   SCE_UID_INVALID_UID;
 SceUID libcurlID    =   SCE_UID_INVALID_UID;
 
-SceBool running = false;
+bool running = false;
 
 SceUID hooks[6];
 tai_hook_ref_t ExportFileRef;
@@ -34,9 +31,9 @@ const unsigned char nop32[4] = {0xaf, 0xf3, 0x00, 0x80};
 
 cBGDLItem currentTask;
 
-SceInt32 (*sceLsdbSendNotification)(SceLsdbNotificationParam *, SceInt32);
+int (*sceLsdbSendNotification)(SceLsdbNotificationParam *, int);
 
-int ExportFilePatched(uint32_t *data)
+int ExportFilePatched(unsigned int *data)
 {
     int res = TAI_NEXT(ExportFilePatched, ExportFileRef, data);
 
@@ -154,7 +151,7 @@ int install(const char *file)
     return res;
 }
 
-void UnzipProgressCB(uint curr, uint total)
+void UnzipProgressCB(unsigned int curr, unsigned int total)
 {
     double progress = curr + 1.0;
     double percent = (double)progress / total * 100.0;
@@ -179,7 +176,7 @@ SceInt32 TaskThread(SceSize args, void *argp)
             if(libcurlID != SCE_UID_INVALID_UID)
             {
                 curlEnd();
-                sceKernelStopUnloadModule(libcurlID, 0, SCE_NULL, 0, SCE_NULL, SCE_NULL);
+                sceKernelStopUnloadModule(libcurlID, 0, nullptr, 0, nullptr, nullptr);
                 libcurlID = SCE_UID_INVALID_UID;
             }
             continue;

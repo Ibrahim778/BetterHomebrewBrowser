@@ -1,5 +1,5 @@
 #include <kernel.h>
-#include <paf/stdc.h>
+#include <paf/std/stdio.h>
 #include <psp2_compat/curl/curl.h>
 
 #include "net.h"

@@ -1,5 +1,5 @@
 #include <kernel.h>
-#include <paf/stdc.h>
+#include <paf/std/stdio.h>
 
 #include "taskmgr.h"
 
@@ -8,14 +8,23 @@ extern SceUID taskMutex;
 
 int DoesTaskExist(const char *name)
 {
+    if(taskMutex == SCE_UID_INVALID_UID)
+        return -1;
+
+    sceKernelLockMutex(taskMutex, 1, SCE_NULL);
+    
     taskNode *node = head;
     while(head != SCE_NULL)
     {
         if(sce_paf_strncmp(node->data.name, name, sizeof(node->data.name)) == 0)
+        {
+            sceKernelUnlockMutex(taskMutex, 1);
             return 1;
+        }
         node = head->prev;
     }
-
+    
+    sceKernelUnlockMutex(taskMutex, 1);
     return 0;
 }
 

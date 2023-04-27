@@ -2,8 +2,8 @@
 #include "print.h"
 
 #include <minizip/unzip.h>
-#include <paf.h>
 #include <kernel.h>
+#include <paf.h>
 
 #define dir_delimter '/'
 #define MAX_FILENAME 512
@@ -109,7 +109,7 @@ int Zipfile::Unzip(const paf::string outpath, void (*progcb)(SceUInt, SceUInt)) 
             }
 
 			// Open a file to write out the data.
-			FILE* out = sce_paf_fopen(fullfilepath, "wb");
+			sce_paf_FILE* out = sce_paf_fopen(fullfilepath, "wb");
 			if (out == nullptr) {
 				unzCloseCurrentFile(zipfile_);
 				print("Cannot open destination file");
