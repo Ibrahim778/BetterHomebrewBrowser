@@ -23,6 +23,11 @@
 #define search_back_button 0x6A2C094C
 #define search_box 0x7BB7D799
 #define plane_seperator 0x91F4F4FE
+#define plane_header 0xF2BFE50E
+#define text_header 0x33C6855B
+#define plane_sort 0x185DDBEB
+#define text_label_sort 0x0A2EBEB1
+#define button_header_sort 0x6A39A260
 #define busy 0xE18A89F9
 #define options_button 0x16623214
 #define app_info_page 0xB50E17AD
@@ -42,7 +47,7 @@
 #define info_description_text 0x2F8B5309
 #define description_busy 0xBC9FD07F
 #define back_button 0xA20371F2
-#define screenshot_page 0xD0122E3A
+#define page_image_viewer 0xA03B9AF6
 #define page_root 0x5E5BC488
 #define picture 0x0E66B49D
 #define busy 0xE18A89F9
@@ -51,6 +56,8 @@
 #define page_root 0x5E5BC488
 #define page_text 0x62A7C933
 #define back_button 0xA20371F2
+#define template_image_button_list 0x569AE85F
+#define list_button 0x68EF628A
 #define info_screenshot_button_template 0x8A5010ED
 #define screenshot_button 0x141B53FF
 #define apps_page_list_template 0xF5D46175
@@ -64,6 +71,10 @@
 #define text_list_item_version 0xDCC83E92
 #define text_list_item_category 0x526345B8
 #define category_button_template 0x68A96713
+#define style_image_button_list 0xE896CA66
+#define textobj 0x01F875B1
+#define planeobj 0xE95F1628
+#define glowobj 0xEB3B8F6E
 #define style_text_list_button_author 0x0F75B5FE
 #define text_obj1 0xA56E4BA2
 #define style_text_list_button_version 0xA26CFDFB
@@ -81,6 +92,8 @@
 #define style_icon_button 0x5CA84181
 #define planeobj1 0x8F56C33F
 #define glowobj1 0xAA063E30
+#define style_text_header 0x11A1FCBB
+#define text_obj1 0xA56E4BA2
 #define text_info_style 0xFF6CE494
 #define text_normal_obj 0xC8BB0270
 #define style_text_info_title 0xF23679A0

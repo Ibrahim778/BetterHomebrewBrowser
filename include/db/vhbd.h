@@ -5,17 +5,18 @@
 
 #include "source.h"
 
-class VHBDB : public Source
+class VHBD : public Source
 {
 public:
-    VHBDB();
-    virtual ~VHBDB();
+    VHBD();
+    virtual ~VHBD();
 
     int Parse();
-    int DownloadIndex();
+    int DownloadIndex(bool forceRefresh);
     int GetDescription(Entry &entry, paf::wstring& out);
     int GetDownloadURL(Entry &entry, paf::string& out);
     int GetDataURL(Entry &entry, paf::string& out);
+
 };
 
 #endif

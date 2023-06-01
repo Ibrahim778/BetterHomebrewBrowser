@@ -264,3 +264,8 @@ SceVoid dialog::WaitEnd()
 		thread::Sleep(100);
 	}
 }
+
+int dialog::Current()
+{
+    return s_currentDialog;
+}

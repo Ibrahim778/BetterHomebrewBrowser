@@ -2,12 +2,13 @@
 #define _SOURCE_H_
 
 #include <paf.h>
+#include <vector>
 
 class Source
 {
 public:
     static const int CategoryAll = -1;
-    
+
     enum ID 
     {
         CBPS_DB = 0,
@@ -32,9 +33,7 @@ public:
     public:
         Entry(Source *source):hash(0xDEADBEEF),pSource(source)
         {
-            sceClibPrintf("Adding elem\n");
-            iconURL.push_back("Hey");
-            sceClibPrintf("Done\n");
+            
         };
 
         Source *pSource;
@@ -46,18 +45,21 @@ public:
         paf::wstring title;
         paf::wstring author;
         
-        paf::vector<paf::string> iconURL;
+        std::vector<paf::string> iconURL;
         paf::string iconPath;
 
-        paf::vector<paf::string> dataURL;
+        std::vector<paf::string> dataURL;
         paf::string dataPath;
 
         paf::wstring description;
-        paf::vector<paf::string> downloadURL;
+        std::vector<paf::string> downloadURL;
 
-        paf::vector<paf::string> screenshotURL;
+        std::vector<paf::string> screenshotURL;
         
         paf::wstring version;
+
+        paf::datetime::DateTime lastUpdated;
+        unsigned int downloadNum;
     };
 
     class List
@@ -68,46 +70,84 @@ public:
             CategorisedEntries(int _category):category(_category){}
 
             int category;
-            paf::vector<Source::Entry *> entries;
+            std::vector<Source::Entry *> entries;
         };
+
+        typedef bool (*SortFunc)(Source::Entry&a, Source::Entry& b);
 
         List();
         virtual ~List();
 
         void Categorise(Source *source);
-        void Add(Source::Entry &entry);
         void Clear();
+        void Sort(SortFunc func);
+
+        void Add(Source::Entry &entry)
+        {
+            entries.push_back(entry);
+        }
+
+        void Add(const Source::Entry &entry)
+        {
+            entries.push_back(entry);
+        }
 
         size_t GetSize(int categoryID = -1);
         Source::Entry& Get(uint32_t hash);
         CategorisedEntries& GetCategory(int categoryID);
         
-        paf::vector<Source::Entry> entries;
-        paf::vector<CategorisedEntries> categoriedEntries;
+        std::vector<Source::Entry> entries;
+    
+        static bool Sort_MostDownloaded(Source::Entry &a,Source::Entry &b);
+        static bool Sort_LeastDownloaded(Source::Entry &a,Source::Entry &b);
+        static bool Sort_MostRecent(Source::Entry &a,Source::Entry &b);
+        static bool Sort_OldestFirst(Source::Entry &a,Source::Entry &b);
+        static bool Sort_Alphabetical(Source::Entry &a,Source::Entry &b);
+        static bool Sort_AlphabeticalRev(Source::Entry &a,Source::Entry &b);
+        static bool Sort_None(Source::Entry &a,Source::Entry &b)
+        {
+            return false;
+        }
+
+    private:
+        std::vector<CategorisedEntries> categoriedEntries;
+    };
+
+    struct SortMode // Could use a map for this maybe?
+    {
+        SortMode(uint32_t _hash, List::SortFunc _func):hash(_hash),func(_func)
+        {
+
+        }
+
+        uint32_t hash; // label hash
+        List::SortFunc func;
     };
 
     Source(){}
+
+    static Source *Create(ID id);
+
     virtual ~Source(){}
 
     virtual int Parse(){};
-    virtual int DownloadIndex(){};
+    virtual int DownloadIndex(bool forceRefresh = false){};
     virtual int GetDescription(Entry &entry, paf::wstring& out){};
     virtual int GetDownloadURL(Entry &entry, paf::string& out){};
     virtual int GetDataURL(Entry &entry, paf::string& out){};
 
     const Category& GetCategoryByID(int id);
     const Source::Category& GetCategoryByHash(uint32_t hash);
+    List::SortFunc GetSortFunction(uint32_t hash);
 
     // List to parse to
     List *pList;
 
     // Info
-    paf::string name;
     paf::string iconFolderPath;
     paf::string iconsURL;
-    paf::string indexURL;
-    paf::string indexPath;
-    paf::vector<Category> categories;
+    std::vector<Category> categories;
+    std::vector<SortMode> sortModes; // first sort mode will be default!
     bool screenshotsSupported;
     uint8_t id;
 };

@@ -26,25 +26,18 @@ add_library(${PROJECT_NAME} MODULE
     
     include/head_bin.h
     include/main.h
-    include/netutils.h
-    include/notice.h
-    include/notifmgr.h
     include/offsets.h
     include/promote.h
     include/sha1.h
-    include/taskmgr.h
     include/zip.h
+    include/installer.h
 
     src/main.cpp
     src/offsets.c
-
     src/zip.cpp
-    src/taskmgr.c
-    src/notifmgr.c
-    src/net.c
     src/promote.c
     src/sha1.c
-    src/notice.cpp
+    src/installer.cpp
 
     bhbb_dl.emd
 )
@@ -68,7 +61,13 @@ target_link_libraries(${PROJECT_NAME}
     SceLibKernel_stub
     ScePafStdc_stub
     ScePafResource_stub
+    ScePafWidget_stub
+    ScePafGraphics_stub
+    ScePafTopLevel_stub
     ScePafMisc_stub
+    ScePafCommon_stub
+    SceAppMgrUser_stub
+    SceAppMgr_stub
     SceThreadMgr_stub
     taihenUnsafe_stub
     SceModulemgr_stub
@@ -80,6 +79,7 @@ target_link_libraries(${PROJECT_NAME}
     ScePromoterUtil_stub_weak
     SceLsdb_stub
     ScePafThread_stub
+    SceShellUtil_stub
     curl_stub_weak
     minizip
 )

@@ -1,7 +1,12 @@
 #include <paf.h>
+#include <algorithm>
 
 #include "db/source.h"
 #include "print.h"
+
+#include "db/vitadb.h"
+#include "db/vhbd.h"
+#include "db/cbpsdb.h"
 
 Source::List::List()
 {
@@ -11,6 +16,19 @@ Source::List::List()
 Source::List::~List()
 {
     Clear();
+}
+
+Source *Source::Create(Source::ID id)
+{
+    switch(id)
+    {
+    case VITA_DB:
+        return new VitaDB();
+    case VHB_DB:
+        return new VHBD();
+    case CBPS_DB:
+        return new CBPSDB();
+    }
 }
 
 const Source::Category& Source::GetCategoryByID(int id)
@@ -39,21 +57,16 @@ void Source::List::Clear()
     entries.clear();
 }
 
-void Source::List::Add(Source::Entry& entry)
-{
-    entries.push_back(entry);
-}
-
 size_t Source::List::GetSize(int category)
 {
     if(category == Source::CategoryAll)
         return entries.size();
     
-    size_t out = 0;
-    for(Source::Entry& entry : entries)
-        if(entry.category == category) out++;
+    for(auto& cat : categoriedEntries)
+        if(cat.category == category)
+            return cat.entries.size();
     
-    return out;
+    return -1;
 }
 
 Source::Entry& Source::List::Get(uint32_t hash)
@@ -79,8 +92,21 @@ Source::List::CategorisedEntries& Source::List::GetCategory(int category)
     return errList;
 }
 
+Source::List::SortFunc Source::GetSortFunction(uint32_t hash)
+{
+    for(auto& i : sortModes)
+    {
+        if(i.hash == hash)
+            return i.func;
+    }
+    return List::Sort_None;
+}
+
 void Source::List::Categorise(Source *source)
 {
+    if(!categoriedEntries.empty())
+        categoriedEntries.clear();
+
     for (Source::Category &category : source->categories)
     {
         if(category.id == Source::CategoryAll)
@@ -94,4 +120,39 @@ void Source::List::Categorise(Source *source)
         
         categoriedEntries.push_back(entryList);
     }
+}
+
+bool Source::List::Sort_MostRecent(Source::Entry &a, Source::Entry &b)
+{
+    return b.lastUpdated < a.lastUpdated;
+}
+
+bool Source::List::Sort_OldestFirst(Source::Entry &a, Source::Entry &b)
+{
+    return a.lastUpdated < b.lastUpdated;
+}
+
+bool Source::List::Sort_MostDownloaded(Source::Entry &a, Source::Entry &b)
+{
+    return b.downloadNum < a.downloadNum;
+}
+
+bool Source::List::Sort_LeastDownloaded(Source::Entry &a, Source::Entry &b)
+{
+    return a.downloadNum < b.downloadNum;
+}
+
+bool Source::List::Sort_Alphabetical(Source::Entry &a, Source::Entry &b)
+{
+    return sce_paf_wcscasecmp(a.title.c_str(), b.title.c_str()) < 0;
+}
+
+bool Source::List::Sort_AlphabeticalRev(Source::Entry &a, Source::Entry &b)
+{
+    return sce_paf_wcscasecmp(b.title.c_str(), a.title.c_str()) < 0;
+}
+
+void Source::List::Sort(SortFunc func)
+{
+    std::sort(entries.begin(), entries.end(), func);
 }

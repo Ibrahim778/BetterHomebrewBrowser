@@ -3,6 +3,7 @@
 #include <kernel.h>
 #include <libsysmodule.h>
 #include <paf/std/stdio.h>
+#include <appmgr.h>
 
 #include "sha1.h"
 #include "head_bin.h"
@@ -16,6 +17,8 @@
 #define PSF_TYPE_BIN 0
 #define PSF_TYPE_STR 2
 #define PSF_TYPE_VAL 4
+
+extern int sceAppMgrQuitApp(SceUID);
 
 typedef struct SfoHeader {
     uint32_t magic;
@@ -81,7 +84,7 @@ static void fpkg_hmac(const uint8_t* data, unsigned int len, uint8_t hmac[16]) {
     sce_paf_memcpy(hmac, sha1, 16);
 }
 
-int makeHead(const char *path) {
+int makeHead(const char *path, char *out_titleID) {
     char tmp_path[1088];
     uint8_t hmac[16];
     uint32_t off;
@@ -103,9 +106,9 @@ int makeHead(const char *path) {
     }
     sceIoClose(fd);
     // Get title id
-    char titleid[12];
-    sce_paf_memset(titleid, 0, sizeof(titleid));
-    getSfoString((char *)sfo_buffer, "TITLE_ID", titleid, sizeof(titleid));
+    
+    sce_paf_memset(out_titleID, 0, 12);
+    getSfoString((char *)sfo_buffer, "TITLE_ID", out_titleID, 12);
 
     // Get content id
     char contentid[48];
@@ -121,7 +124,7 @@ int makeHead(const char *path) {
 
     // Write full title id
     char full_title_id[48];
-    sce_paf_snprintf(full_title_id, sizeof(full_title_id), "EP9000-%s_00-0000000000000000", titleid);
+    sce_paf_snprintf(full_title_id, sizeof(full_title_id), "EP9000-%s_00-0000000000000000", out_titleID);
     sce_paf_strncpy((char*)&head_bin[0x30], sce_paf_strlen(contentid) > 0 ? contentid : full_title_id, 48);
 
     // hmac of pkg header
@@ -160,11 +163,15 @@ int makeHead(const char *path) {
     return res;
 }
 
-int promoteApp(const char* path) {
-    int res = makeHead(path);
+int promoteApp(const char* path, char *out_titleID) {
+    int res = makeHead(path, out_titleID);
     if (res < 0)
         return res;
     
+    SceAppMgrAppStatus status;
+    if(sceAppMgrGetStatusByName(out_titleID, &status) >= 0)
+        sceAppMgrQuitApp(status.appId);
+
     sceSysmoduleLoadModuleInternal(SCE_SYSMODULE_INTERNAL_PROMOTER_UTIL);
 
     res = scePromoterUtilityInit();

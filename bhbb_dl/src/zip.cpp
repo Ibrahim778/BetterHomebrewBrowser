@@ -9,41 +9,6 @@
 #define MAX_FILENAME 512
 #define READ_SIZE 8192
 
-extern bool NotifMgr_currDlCanceled;
-
-static void mkdir_rec(const char* dir) {
-	
-	char tmp[256];
-	char* p = nullptr;
-	size_t len;
-
-	sce_paf_snprintf(tmp, sizeof(tmp), "%s", dir);
-	len = sce_paf_strlen(tmp);
-
-	if (tmp[len - 1] == '/')
-		tmp[len - 1] = 0;
-
-	for (p = tmp + 1; *p; p++)
-		if (*p == '/') {
-			*p = 0;
-			sceIoMkdir(tmp, 0777);
-			*p = '/';
-		}
-		
-	sceIoMkdir(tmp, 0777);
-}
-
-paf::string dirnameOf(const paf::string& fname) {
-    for(int i = fname.length() - 1; i > 0; i--)
-    {
-        if(fname.c_str()[i] == '\\' || fname.c_str()[i] == '/')
-        {
-            return paf::string(fname.data(), i);
-        }
-    }
-    return paf::string("");
-}
-
 Zipfile::Zipfile(const paf::string zip_path) {
 	
 	zipfile_ = unzOpen(zip_path.c_str());
@@ -65,7 +30,7 @@ Zipfile::~Zipfile() {
 		unzClose(zipfile_);
 }
 
-int Zipfile::Unzip(const paf::string outpath, void (*progcb)(SceUInt, SceUInt)) {
+int Zipfile::Unzip(const paf::string outpath, void (*progcb)(SceUInt, SceUInt,void*), void *progdata) {
 	
 	if (uncompressed_size_ == 0)
 		UncompressedSize();
@@ -95,11 +60,11 @@ int Zipfile::Unzip(const paf::string outpath, void (*progcb)(SceUInt, SceUInt)) 
 		// Check if this entry is a directory or file.
 		const size_t filename_length = sce_paf_strlen(fullfilepath);
 		if (fullfilepath[filename_length - 1] == dir_delimter) {
-			mkdir_rec(fullfilepath);
+			paf::Dir::CreateRecursive(fullfilepath);
 		} else {
 			// Create the dir where the file will be placed
-			paf::string destdir = dirnameOf(paf::string(fullfilepath));
-			mkdir_rec(destdir.c_str());
+			paf::string destdir = paf::common::StripFilename(fullfilepath, "P");
+			paf::Dir::CreateRecursive(destdir.c_str());
 
 			// Entry is a file, so extract it.
 			if (unzOpenCurrentFile(zipfile_) != UNZ_OK)
@@ -144,10 +109,7 @@ int Zipfile::Unzip(const paf::string outpath, void (*progcb)(SceUInt, SceUInt)) 
             }
         
         if(progcb)
-            progcb(i, global_info_.number_entry);
-        
-        if(NotifMgr_currDlCanceled)
-            break;
+            progcb(i, global_info_.number_entry, progdata);
 	}
 
 	return 0;

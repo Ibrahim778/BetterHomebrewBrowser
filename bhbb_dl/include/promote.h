@@ -4,7 +4,7 @@
 
 SCE_CDECL_BEGIN
 
-int promoteApp(const char* path);
+int promoteApp(const char* path, const char *out_titleID);
 
 SCE_CDECL_END
 

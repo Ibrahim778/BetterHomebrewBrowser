@@ -1,50 +1,55 @@
 #ifndef NOTICE_H
 #define NOTICE_H
 
-#include <kernel.h>
 #include <paf.h>
 
 enum SceLsdbNotificationAction
 {
+    AppBound        = 1,
     AppOpen         = 2,
-    AppHighlight    = 3
-};
+    AppHighlight    = 3,
+    AppLaunch       = 0xb // untested
+};// Other known: 0x8 (progress dialog)
+
+// 0x3 = Download progress
 enum SceLsdbNotificationPreset
 {
+    AppInstallFailed = 0, // Happened when int wasnt set
     LiveAreaRefreshed = 0x900,
     AppInstalledSuccessfully = 0x52,
-    Custom = 0x100, //Maybe idk. One single line of text.
+    Custom = 0x100, // One single line of text (desc)
 };
 
-//Based off of reversing done by @Princess-of-Sleeping and @Rinnegatamante
-struct SceLsdbNotificationParam {
-    paf::string     ownerTitleID; // Usually titleID of the caller
-    paf::string     unkStr_Category; //Could be category or smth idk, known used: "g00", "LAUPDATE" and "0", also seen "LOGSTATUS0"
-    SceInt32        unk[2]; //Set to 0xFF
-    SceInt32        preset; //see (SceLsdbNotificationPreset) 
-    SceInt32        iUnk0;
-    SceUInt32       action; //action on press (see SceLsdbNotificationAction)
-    SceByte8        bUnk0; //always set to 1, but 2 and 3 also work
-    SceByte8        bUnk1;
-    SceChar8        unk1[2];
+//Based off of reversing done by @Princess-of-Sleeping and @Rinnegatamante along with field information in app.db
+struct SceLsdbNotificationParam 
+{
+    paf::string     title_id; // Usually titleID of the caller, can be empty
+    paf::string     item_id;
+    SceInt32        unk[2]; // del flag? (0) 
+    SceInt32        msg_type; //see (SceLsdbNotificationPreset) 
+    SceInt32        iunk; // unused? always 0
+    SceUInt32       action_type; //action on press (see SceLsdbNotificationAction)
+    SceByte8        hash;  // wrong, mostly set to 0 or 1
+    SceByte8        new_flag; // 0 = no popup & highlight in notif centre 1 = popup & no highlight
+    SceChar8        unk1[2]; // Set to 0xFF
     paf::string     iconPath;
-    SceInt32        unk2[2];
+    SceInt32        unk2[2]; 
     //Some of these are covnerted to int's via sce_paf_atoi
-    paf::string     unkStr1;
-    paf::string     unkStr2;
-    paf::string     unkStr3;
-    paf::string     unkStr4;
-    paf::string     unkStr5;
-    paf::string     unkStr6;
-    paf::string     unkStr7;
-    paf::string     unkStr8;
-    paf::string     unkStr9;
-    paf::string     unkStr10;
-    paf::string     text;
-    SceInt32        launchArgs; //*supposedly* Launch arguments for the app upon launch
-    paf::string     titleID; // basically work titleid. Will be used depending on opt (APP_HIGHTLIGHT or APP_OPEN) and will use it's icon if none specified in iconPath
-    paf::string     arg;
-    paf::string     unkStr11;
+    paf::string     msg_arg0; 
+    paf::string     msg_arg1;
+    paf::string     msg_arg2;
+    paf::string     msg_arg3;
+    paf::string     msg_arg4;
+    paf::string     msg_arg5;
+    paf::string     msg_arg6;
+    paf::string     msg_arg7; // int (error code)
+    paf::string     msg_arg8; // int
+    paf::string     title;  
+    paf::string     desc;
+    SceInt32        exec_mode; 
+    paf::string     exec_titleid; // basically work titleid. Will be used depending on opt (APP_HIGHTLIGHT or APP_OPEN) and will use it's icon if none specified in iconPath
+    paf::string     exec_arg; //Launch arguments for the app upon launch
+    paf::string     icon_data; // unverified
     SceInt32        unk3[3];
     SceInt32        iUnk2; //Princess set this to 0x10 ¿:/? (0 also works)
 
@@ -55,13 +60,12 @@ struct SceLsdbNotificationParam {
         sce_paf_memset(unk2, 0, sizeof(unk2));
         sce_paf_memset(unk3, 0, sizeof(unk3));
 
-        preset = 0;
+        msg_type = 0;
+        iunk = 0;
+        hash = 1; // hash is 1 by default
         iUnk2 = 0;
-        bUnk1 = 1;
-        bUnk0 = 0;
-        iUnk0 = 0;
-        action = 0;
-        launchArgs = 0;
+        action_type = 0;
+        exec_mode = 0;
     }
 };
 

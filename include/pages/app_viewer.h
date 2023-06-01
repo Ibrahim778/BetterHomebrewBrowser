@@ -5,16 +5,16 @@
 
 #include "page.h"
 #include "db/source.h"
+#include "app_browser.h"
 
 class AppViewer : public page::Base
 {
 public:
-    class AsyncDescriptionLoader
+    class AsyncDescriptionLoader // Could probably do this a little cleaner now but oh well
     {
     public:
         AsyncDescriptionLoader(Source::Entry& entry, paf::ui::Widget *target, bool autoLoad = true);
         ~AsyncDescriptionLoader();
-
 
         void Load();
         void Abort();
@@ -58,13 +58,26 @@ public:
         Job *item;
     };
 
-    static void ScreenshotCB(int id, paf::ui::Handler *self, paf::ui::Event *event, void *pUserData);
+    class IconDownloadJob : public paf::job::JobItem
+    {
+    public:
+        using paf::job::JobItem::JobItem;
 
-    AppViewer(Source::Entry& entry);
+        void Run();
+        void Finish(){}
+
+        AppViewer *workPage;
+    };
+
+    static void ScreenshotCB(int id, paf::ui::Handler *self, paf::ui::Event *event, void *pUserData);
+    static void IconButtonCB(int id, paf::ui::Handler *self, paf::ui::Event *event, void *pUserData);
+
+    AppViewer(Source::Entry& entry, AppBrowser::TexPool *pTexPool);
     ~AppViewer();
 
 protected:
     Source::Entry &app;
+    AppBrowser::TexPool *pool;
 };
 
 #endif

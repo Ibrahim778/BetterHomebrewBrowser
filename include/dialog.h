@@ -23,6 +23,8 @@ namespace dialog
 
 	typedef void(*EventHandler)(ButtonCode buttonCode, ScePVoid pUserArg);
 
+    int Current();
+
 	SceVoid OpenPleaseWait(Plugin *workPlugin, const wchar_t *titleText, const wchar_t *messageText, SceBool withCancel = SCE_FALSE, EventHandler eventHandler= SCE_NULL, ScePVoid userArg = SCE_NULL);
 
 	SceVoid OpenYesNo(Plugin *workPlugin, const wchar_t *titleText, const wchar_t *messageText, EventHandler eventHandler = SCE_NULL, ScePVoid userArg = SCE_NULL);

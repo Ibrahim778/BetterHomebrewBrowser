@@ -16,7 +16,9 @@
 #include "bhbb_locale.h"
 #include "pages/app_browser.h"
 #include "pages/textf_page.h"
-#include "db/vitadb.h"
+#include "db/source.h"
+#include "settings.h"
+#include "downloader.h"
 
 #define NET_HEAP_SIZE  (2 * 1024 * 1024)
 #define HTTP_HEAP_SIZE (2 * 1024 * 1024)
@@ -33,14 +35,11 @@ extern "C" {
 
 using namespace paf;
 
-Plugin *g_appPlugin = SCE_NULL;
-
-intrusive_ptr<graph::Surface> g_brokenTex;
-intrusive_ptr<graph::Surface> g_transparentTex;
+Plugin *g_appPlugin = nullptr;
 
 SceVoid PluginStart(Plugin *plugin)
 {
-    if(plugin == SCE_NULL)
+    if(plugin == nullptr)
     {
         print("[bhbb_plugin] Error Plugin load failed!\n");
         return;
@@ -49,25 +48,24 @@ SceVoid PluginStart(Plugin *plugin)
     g_appPlugin = plugin;
     print("[bhbb_plugin] Create success! %p\n", plugin);
 
-    SceUInt64 buff = 0;
-    SceUID itlsID = _vshKernelSearchModuleByName("itlsKernel", &buff);
+    SceKernelFwInfo fw;
+    fw.size = sizeof(fw);
+    _vshSblGetSystemSwVersion(&fw);
 
-    print("iTLS-Enso: 0x%X\n", itlsID);
-    if(itlsID < 0)
+    int subVersion = sce_paf_atoi(&fw.versionString[2]); // Too lazy to figure out how fw.version works (lol)
+
+    if(subVersion < 68) // Version 3.68 introduced TLS 1.2 and doesn't need iTLS-Enso
     {
-        new page::TextfPage(msg_no_itls);
-        return;
+        SceUInt64 buff = 0;
+        SceUID itlsID = _vshKernelSearchModuleByName("itlsKernel", &buff);
+        
+        print("iTLS-Enso: 0x%X\n", itlsID);
+        if(itlsID < 0)
+        {
+            new page::TextfPage(msg_no_itls);
+            return;
+        }
     }
-
-    IDParam param(tex_missing_icon);
-    
-    g_brokenTex = g_appPlugin->GetTexture(param);
-    g_brokenTex->AddRef(); //Prevent Deletion
-
-    param = "_common_texture_transparent";
-
-	g_transparentTex = Plugin::Find("__system__common_resource")->GetTexture(param);
-    g_transparentTex->AddRef(); //Prevent Deletion
 
     sceShellUtilInitEvents(0);
     
@@ -91,7 +89,10 @@ SceVoid PluginStart(Plugin *plugin)
 	sceHttpInit(HTTP_HEAP_SIZE);
 	sceSslInit(SSL_HEAP_SIZE);
     
-    auto page = new AppBrowser(new VitaDB());
+    new Downloader();
+    new Settings();
+
+    auto page = new AppBrowser(Source::Create((Source::ID)Settings::GetInstance()->source));
     page->Load();
 }
 
@@ -106,6 +107,7 @@ int main()
     Utils::InitMusic(); // BG Music
 
 	sceSysmoduleLoadModule(SCE_SYSMODULE_NET);
+	sceSysmoduleLoadModule(SCE_SYSMODULE_FIBER);
     sceSysmoduleLoadModuleInternal(SCE_SYSMODULE_INTERNAL_COMMON_GUI_DIALOG);
 
     new Module("app0:module/libcurl.suprx", "libcurl");
@@ -140,15 +142,12 @@ int main()
 
 #if defined(SCE_PAF_TOOL_PRX) && defined(_DEBUG)
     //This line will break things if using non devkit libpaf
-    // piParam.option = Plugin::InitParam::PluginFlag_UseRcdDebug;
+    piParam.option = Plugin::Option_ResourceLoadWithDebugSymbol;
 #endif
 
     piParam.start_func = PluginStart;
 
     Plugin::LoadAsync(piParam);
-
-    // if(vshSblAimgrIsTool())
-    //     sceRazorCpuStartCapture();
     
     fw->Run();
 

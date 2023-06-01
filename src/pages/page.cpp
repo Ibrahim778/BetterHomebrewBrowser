@@ -2,6 +2,7 @@
 #include <paf.h>
 
 #include <algorithm>
+#include <vector>
 
 #include "pages/page.h"
 #include "common.h"
@@ -10,7 +11,7 @@
 
 using namespace paf;
 
-paf::vector<page::Base *> s_pageStack; //Why didn't I think of this? (Thanks Graphene)
+std::vector<page::Base *> s_pageStack; //Why didn't I think of this? (Thanks Graphene)
 
 page::Base::Base(uint32_t _hash, Plugin::PageOpenParam openParam, Plugin::PageCloseParam cParam):closeParam(cParam),backButton(SCE_NULL)
 {
@@ -28,12 +29,12 @@ page::Base::Base(uint32_t _hash, Plugin::PageOpenParam openParam, Plugin::PageCl
         previousPage->root->SetActivate(false); //Disable touch and button controls
         if(backButton)
         {
-            backButton->DoTransition_core(0, common::transition::Type_Reset, 0);
+            backButton->Show(common::transition::Type_Reset);
             backButton->AddEventCallback(ui::CornerButton::CB_BTN_DECIDE, (ui::HandlerCB)page::Base::DefaultBackButtonCB);
         }
     }
     else if(backButton)
-        backButton->DoTransitionReverse_core(0, common::transition::Type_Reset, 0);
+        backButton->Hide(common::transition::Type_Reset);
 
     s_pageStack.push_back(this); //Add our current page to the stack
 }
@@ -70,7 +71,7 @@ SceVoid page::Base::DeleteCurrentPage()
 {
     auto button = page::Base::GetCurrentPage()->backButton;
     if(button)
-        button->DoTransitionReverse_core(0, common::transition::Type_Reset, false);
+        button->Hide(common::transition::Type_Reset);
 
 	delete s_pageStack.back();
 }

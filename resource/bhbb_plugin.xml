@@ -66,9 +66,31 @@
                     <layout_hint adjust="1,0" anchor="0,1" align="0,1" size="0,1" />
                 </plane>
             </plane>
+
+            <plane id="plane_header" style="_common_style_plane_transparent">
+                <layout_hint adjust="1,0" size="0,60" />
+                
+                <text id="text_header" style="style_text_header" >
+                    <layout_hint adjust="1,0" size="0,60" />
+                </text>
+               
+                <plane id="plane_sort" style="_common_style_plane_transparent">
+                    <layout_hint align="2,0" anchor="2,0" size="300,60" />
+                    
+                    <text id="text_label_sort" style="style_text_header" label="msg_sort_header" >
+                        <layout_hint align="1,0" adjust="2,0" anchor="1,0" size="0,60"/>
+                    </text>
+                  
+                    <button id="button_header_sort" style="_common_default_style_button" >
+                        <layout_hint align="2,0" anchor="2,0" size="200,50" pos="-10,0"/>
+                    </button>
+                </plane>
+            </plane>
+           
             <busyindicator style="main_style_busyindicator" texture="_common_texture_busy" id="busy" >
                 <layout_hint pos="0, 0" size="60, 60" />
             </busyindicator>
+           
             <corner_button style="_common_style_corner_bottom_right" id="options_button" />
         </page>
 
@@ -127,7 +149,7 @@
             <corner_button style="_common_style_corner_bottom_left" id="back_button" />
         </page>
         
-        <page id="screenshot_page">
+        <page id="page_image_viewer">
             <plane style="_common_default_style_plane" texture="tex_main_bg" id="page_root">
                 <layout_hint size="960, 544" pos="0,0"/>
 				<scroll_view style="_common_style_scroll_view_transparent">
@@ -159,6 +181,13 @@
 	</pagetable>
 
 	<templatetable>
+        <template id="template_image_button_list" fast_open="1" >
+            <image_button sound="_common_sound_image_button" style="style_image_button_list" id="list_button" >
+                <layout_hint size="540, 70" align="1, 2" adjust="0, 0" />
+                <focus_hint focus_shape="3" focus_size="540, 70" />
+            </image_button>
+        </template>
+
         <template fast_open="1" id="info_screenshot_button_template">
             <image_button sound="_common_sound_image_button" style="style_screenshot_button" enable_long_press_text_auto_scroll="1" id="screenshot_button" >
                 <layout_hint size="182,103" />
@@ -203,6 +232,13 @@
 	</templatetable>
 
 	<styletable>
+
+        <style_image_button layout_type_x="1" glow_obj="glowobj" color="1, 1, 1, 1" layout_type_y="0" label_obj="textobj" image_obj="planeobj" image_margin="10" id="style_image_button_list">
+            <textobj line_space="4" font_size="28" bold="1" align_y="1" ellipsis="1" id="textobj" />
+            <planeobj scale_mode_y="3" scale_mode_x="3" size="80, 80" id="planeobj" pos="0, 0" />
+            <planeobj texture0="_common_texture_list_glow_70px" blend="2" id="glowobj" />
+        </style_image_button>
+
         <style_text textobj="text_obj1" id="style_text_list_button_author">
             <textobj font_size="20" font_color="0.9, 0.9, 0.9, 1" bold="1" ellipsis="1" max_line_count="2" line_space="0" id="text_obj1" />
         </style_text>
@@ -232,6 +268,10 @@
 			<planeobj texture0="_common_texture_transparent" size="50,50" scale_mode_y="3" scale_mode_x="3" id="planeobj1" />
 			<planeobj texture0="_common_texture_list_glow_70px" blend="2" id="glowobj1" />
 		</style_image_button>
+
+        <style_text textobj="text_obj1" id="style_text_header">
+            <textobj font_size="26" bold="1" color="1, 1, 1, 1" word_wrap="1" align_x="0" align_y="1" adjust_x="1" adjust_y="1" ellipsis="1" id="text_obj1" />
+        </style_text>
 
         <style_text textobj="text_normal_obj" id="text_info_style">
 			<textobj font_size="35" bold="0" color="1, 1, 1, 1" word_wrap="1" align_x="1" align_y="1" ellipsis="1" id="text_normal_obj" />

@@ -121,7 +121,7 @@ int Utils::DownloadFile(const char *url, const char *dest)
         LocalFile::RemoveFile(dest);
     }
 
-    print("[Utils::DownloadFile] Result > 0x%X\n", ret);
+    print("[Utils::DownloadFile] (%s -> %s) result > 0x%X\n", url, dest, ret);
     return ret;
 }
 

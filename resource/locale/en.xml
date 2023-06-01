@@ -16,35 +16,33 @@
     <string src="App" id="db_category_single_app" />
     <string src="Unknown" id="db_category_unk" />
     
-    <string src="SSL Error Occurred\n\nPlease ensure you have iTLS-Enso installed" id="msg_error_ssl"/>
+    <string src="SSL Error Occurred&#xA;&#xA;Please ensure you have iTLS-Enso installed" id="msg_error_ssl"/>
     <string src="Network Connection Error" id="msg_error_net"/>
-    <string src="iTLS-Enso is not running\nEnsure iTLS-Enso is installed correctly before running this application" id="msg_no_itls"/>
-    <string src="There was a network error\nEnsure your device is connected to the internet and retry" id="msg_net_fix" />
+    <string src="iTLS-Enso is not running&#xA;Ensure iTLS-Enso is installed correctly before running this application" id="msg_no_itls"/>
+    <string src="There was a network error&#xA;Ensure your device is connected to the internet and retry" id="msg_net_fix" />
     
     <string src="Error loading entry" id="msg_entry_error" />
     <string src="Error loading screenshot" id="msg_screenshot_error"/>
     <string src="Error loading icon" id="msg_icon_error"/>
     <string src="Error loading description" id="msg_desc_error"/>
-    <string src="Connection to the server failed\nPlease try again later" id="msg_error_index"/>
-    <string src="Icon directories for this database are missing\nWould you like to download the pack?\n(This will be queued in the livearea and installed automagically)" id="msg_icon_pack_missing"/>
+    <string src="Connection to the server failed&#xA;Please try again later" id="msg_error_index"/>
+    <string src="Icon directories for this database are missing&#xA;Would you like to download the pack?&#xA;(This will be queued in the livearea and installed automagically)" id="msg_icon_pack_missing"/>
     <string src="Error parsing index" id="msg_error_parse"/>
     <string src="There was an error, please try again later" id="msg_wait_fix" />
     <string src="No vaid sources available for this icon" id="msg_icon_no_source" />
     
     <string src="Options" id="msg_options"/>
-    <string src="Refresh" id="msg_refresh"/>
     <string src="Source" id="msg_settings_source"/>
-    <string src="Entries Per Page" id="msg_settings_nLoad"/>
-    <string src="Version Info" id="msg_settings_verinfo"/>
+    <string src="Build Info" id="msg_settings_verinfo"/>
     
     <string src="CBPS DB" id="db_name_0"/>    
     <string src="Vita DB" id="db_name_1"/>
-    <string src="VHB DB" id="db_name_2"/>
+    <string src="VHBD" id="db_name_2"/>
 
     <string src="Always" id="msg_settings_downloadInterval_always"/>
     <string src="Download After (Hours)" id="msg_settings_downloadInterval"/>
     
-    <string src="Initialising..." id="msg_init" />
+    <string src="Checking for updates..." id="msg_check_update" />
     <string src="Please Wait..." id="msg_wait"/>
     <string src="Downloading Icon..." id="msg_downloading_icon"/>
 
@@ -53,5 +51,15 @@
     <string src="Could not find a valid source for download" id="msg_src_err"/>
     <string src="%s Icons" id="icons_dl_name"/>
     <string src="%s (Data)" id="data_dl_name"/>
+    <string src="  %d Items" id="msg_list_header"/>
+    <string src="Sort by" id="msg_sort_header"/>
     <string src="Do you want to redownload this icon?" id="msg_icon_redownload"/>
+
+    <string src="Alphabetical" id="msg_sort_alpha"/>
+    <string src="Alphabetical (Reversed)" id="msg_sort_alpharev"/>
+    <string src="Most Recent" id="msg_sort_mostrecent"/>
+    <string src="Oldest First" id="msg_sort_oldfirst"/>
+    <string src="Most Downloaded" id="msg_sort_mostdownloaded"/>
+    <string src="Least Downloaded" id="msg_sort_leastdownloaded"/>
+
 </stringset>

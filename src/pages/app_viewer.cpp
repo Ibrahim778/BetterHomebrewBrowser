@@ -1,4 +1,5 @@
 #include <paf.h>
+#include <shellsvc.h>
 
 #include "db/source.h"
 #include "pages/app_viewer.h"
@@ -7,24 +8,37 @@
 #include "common.h"
 #include "print.h"
 #include "dialog.h"
+#include "pages/app_browser.h"
+#include "pages/image_viewer.h"
 
 using namespace paf;
 using namespace common;
 using namespace math;
 using namespace thread;
 
-AppViewer::AppViewer(Source::Entry& entry):page::Base(
-    app_info_page,
-    Plugin::PageOpenParam(false, 200, Plugin::TransitionType_SlideFromBottom),
-    Plugin::PageCloseParam(true)
-),app(entry)
+AppViewer::AppViewer(Source::Entry& entry, AppBrowser::TexPool *pTexPool):
+    page::Base(
+        app_info_page,
+        Plugin::PageOpenParam(false, 200, Plugin::TransitionType_SlideFromBottom),
+        Plugin::PageCloseParam(true)
+    ),app(entry),pool(pTexPool)
 {
+    auto isMainThread = thread::ThreadIDCache::Check(thread::ThreadIDCache::Type_Main);
+    if(!isMainThread)
+        RMutex::main_thread_mutex.Lock();
+
     root->FindChild(info_title_text)->SetString(app.title);
     root->FindChild(info_author_text)->SetString(app.author);
-    root->FindChild(info_version_text)->SetString(app.version);
 
-    RMutex::main_thread_mutex.Lock();
-    
+    String timeVer;
+
+    wchar_t time[0x40];
+    sce_paf_memset(time, 0, sizeof(time));
+
+    entry.lastUpdated.Wcsftime(time, sizeof(time), L"%d/%m/%y");
+    timeVer.SetFormattedString(L"(%ls) %ls", time, entry.version.c_str());
+    root->FindChild(info_version_text)->SetString(timeVer.GetWString().c_str());
+
     if(app.screenshotURL.size() > 0)
     {
         Plugin::TemplateOpenParam tOpen;
@@ -44,7 +58,12 @@ AppViewer::AppViewer(Source::Entry& entry):page::Base(
         root->FindChild(description_plane)->SetSize(960, 444, 0, 0);
     }
     
-    RMutex::main_thread_mutex.Unlock();
+    auto iconButton = root->FindChild(icon_button);
+    iconButton->SetTexture(pTexPool->Get(app.hash), 0, 0);
+    iconButton->AddEventCallback(ui::Button::CB_BTN_DECIDE, IconButtonCB, this);
+    
+    if(!isMainThread)
+        RMutex::main_thread_mutex.Unlock();
 
     new AsyncDescriptionLoader(app, root->FindChild(info_description_text));
 }   
@@ -103,7 +122,12 @@ void AppViewer::AsyncDescriptionLoader::Job::Run()
         target->SetString(g_appPlugin->GetString(msg_desc_error));
     }
     else 
+    {
+        if(entry.screenshotURL.size() == 0)
+            desc += L"\n\n\n";
+            
         target->SetString(desc);
+    }
 }
 
 void AppViewer::AsyncDescriptionLoader::Job::Finish()
@@ -114,5 +138,40 @@ void AppViewer::AsyncDescriptionLoader::Job::Finish()
 
 void AppViewer::ScreenshotCB(int id, paf::ui::Handler *self, paf::ui::Event *event, void *pUserData)
 {
+    auto url = (std::vector<paf::string> *)pUserData;
+    auto workWidget = (ui::Widget *)self; // ID Hash is index of url in above vector
+    
+    new ImageViewer(url->at(workWidget->GetName().GetIDHash()).c_str());
+}
 
+void AppViewer::IconButtonCB(int id, ui::Handler *self, ui::Event *event, void *pUserData)
+{
+    auto job = new IconDownloadJob("AppViewer::IconDownloadJob");
+    job->workPage = (AppViewer *)pUserData;
+    auto jobParam = SharedPtr<job::JobItem>(job);
+    job::JobQueue::default_queue->Enqueue(jobParam);
+}
+
+void AppViewer::IconDownloadJob::Run()
+{
+    dialog::OpenPleaseWait(g_appPlugin, nullptr, g_appPlugin->GetString(msg_downloading_icon));
+    sceShellUtilLock(SCE_SHELL_UTIL_LOCK_TYPE_PS_BTN);
+
+    LocalFile::RemoveFile(workPage->app.iconPath.c_str());
+
+    int res = 0;
+    if(!workPage->pool->Add(&workPage->app, true, &res))
+    {
+        // Failed
+        sceShellUtilUnlock(SCE_SHELL_UTIL_LOCK_TYPE_PS_BTN);
+        dialog::Close();
+        dialog::OpenError(g_appPlugin, res, g_appPlugin->GetString(msg_icon_error));
+        return;
+    }
+
+    workPage->root->FindChild(icon_button)->SetTexture(workPage->pool->Get(workPage->app.hash), 0, 0);
+    event::BroadcastGlobalEvent(g_appPlugin, ui::Handler::CB_STATE_READY_CACHEIMAGE, workPage->app.hash);
+
+    sceShellUtilUnlock(SCE_SHELL_UTIL_LOCK_TYPE_PS_BTN);
+    dialog::Close();
 }

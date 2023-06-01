@@ -11,7 +11,7 @@ add_subdirectory(bhbb_dl)
 
 if(${CMAKE_BUILD_TYPE} STREQUAL Debug)
     add_compile_options(
-        -D_SCE_TARGET_OS_PSP2=1 -Xdiag=0 -Xquit=2 -O3 -g -noex -DSCE_PAF_TOOL_PRX=1 -D_DEBUG=1
+        -D_SCE_TARGET_OS_PSP2=1 -Xdiag=0 -Xquit=2 -O3 -g -noex -D_DEBUG=1 #-DSCE_PAF_TOOL_PRX=1
     )
 else()
     add_compile_options(
@@ -41,17 +41,22 @@ add_executable(${PROJECT_NAME}
     src/main.cpp
     src/utils.cpp
     src/dialog.cpp
+    src/tex_pool.cpp
+    src/event.cpp
+    src/paf_runtime.cpp
+    src/settings.cpp
+    src/downloader.cpp
 
     src/pages/page.cpp
     src/pages/app_viewer.cpp
     src/pages/text_page.cpp
     src/pages/textf_page.cpp
     src/pages/app_browser.cpp
-    src/paf_runtime.cpp
+    src/pages/image_viewer.cpp
 
     src/db/source.cpp
     src/db/vitadb.cpp
-    src/db/vhbdb.cpp
+    src/db/vhbd.cpp
     src/db/cbpsdb.cpp
 
     common/bhbb_dl.h
@@ -62,16 +67,21 @@ add_executable(${PROJECT_NAME}
     include/bhbb_settings.h
     include/dialog.h
     include/json.h
+    include/tex_pool.h
+    include/event.h
+    include/settings.h
+    include/downloader.h
 
     include/pages/page.h
     include/pages/app_browser.h
     include/pages/app_viewer.h
     include/pages/text_page.h
     include/pages/textf_page.h
-    
+    include/pages/image_viewer.h
+
     include/db/source.h
     include/db/vitadb.h
-    include/db/vhbdb.h
+    include/db/vhbd.h
     include/db/cbpsdb.h
 )
 
@@ -116,8 +126,11 @@ target_link_libraries(${PROJECT_NAME}
     SceCommonGuiDialog_stub
     SceModulemgr_stub
     SceVshBridge_stub
+    taihen_stub
     taihenUnsafe_stub
     ScePerf_stub
+    SceFiber_stub
+    PafFileExt
     curl_stub
     snc
 )

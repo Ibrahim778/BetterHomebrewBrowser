@@ -8,12 +8,11 @@
 class CBPSDB : public Source
 {
 public:
-
     CBPSDB();
     virtual ~CBPSDB();
 
     int Parse();
-    int DownloadIndex();
+    int DownloadIndex(bool forceRefresh);
     int GetDescription(Entry &entry, paf::wstring& out);
     int GetDownloadURL(Entry &entry, paf::string& out);
     int GetDataURL(Entry &entry, paf::string& out);

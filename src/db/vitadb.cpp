@@ -7,16 +7,15 @@
 #include "print.h"
 #include "json.h"
 
+#define VITADB_INDEX_URL "https://rinnegatamante.it/vitadb/list_hbs_json.php"
+
 using namespace paf;
 using namespace paf::common;
 
 VitaDB::VitaDB()
 {
-    name = "Vita DB";
     iconFolderPath = "ux0:/data/betterHomebrewBrowser/icons/vitadb/";
     iconsURL = "https://vitadb.rinnegatamante.it/icons_zip.php";
-    indexURL = "https://rinnegatamante.it/vitadb/list_hbs_json.php";
-    indexPath = "ux0:temp/vitadb.json";
     screenshotsSupported = true;
     categories = {
         Source::Category(
@@ -45,17 +44,90 @@ VitaDB::VitaDB()
             db_category_util
         )
     };
+
+    sortModes = {
+        Source::SortMode(
+            msg_sort_mostrecent,
+            List::Sort_MostRecent
+        ),
+        Source::SortMode(
+            msg_sort_oldfirst,
+            List::Sort_OldestFirst
+        ),
+        Source::SortMode(
+            msg_sort_alpha,
+            List::Sort_Alphabetical       
+        ),
+        Source::SortMode(
+            msg_sort_alpharev,
+            List::Sort_AlphabeticalRev
+        ),
+        Source::SortMode(
+            msg_sort_mostdownloaded,
+            List::Sort_MostDownloaded
+        ),
+        Source::SortMode(
+            msg_sort_leastdownloaded,
+            List::Sort_LeastDownloaded
+        )
+    };
+
+    paf::Dir::CreateRecursive(iconFolderPath.c_str());
+    buff = nullptr;
+    buffSize = 0;
+
 }
 
 VitaDB::~VitaDB()
 {
-    
+    if(buff)    
+        delete buff;
 }
 
-int VitaDB::DownloadIndex()
+size_t VitaDB::SaveCore(char *ptr, size_t size, size_t nmeb, VitaDB *workDB)
 {
-    // Just save file with CURL (vitadb does not offer any method to see if something changed afaik)
-    return Utils::DownloadFile(indexURL.c_str(), indexPath.c_str());
+    unsigned int prevBuffSize = workDB->buffSize;
+
+    workDB->buffSize += size * nmeb;
+    workDB->buff = (char *)sce_paf_realloc(workDB->buff, workDB->buffSize + 1);
+
+    sce_paf_memcpy(workDB->buff + prevBuffSize, ptr, size * nmeb);
+    workDB->buff[workDB->buffSize] = '\0';
+
+    return size * nmeb;
+}
+
+int VitaDB::DownloadIndex(bool forceRefresh)
+{
+    // Just read entire file with CURL (vitadb does not offer any method to see if something changed afaik)
+    
+    int ret = SCE_OK;
+    
+    CURL *handle = curl_easy_init();
+    if(!handle)
+    {
+        print("[VitaDB::DownloadIndex] Failed to create curl handle!\n");
+        return -1;
+    }
+    
+    curl_easy_setopt(handle, CURLOPT_SSL_VERIFYHOST, 1L);
+    curl_easy_setopt(handle, CURLOPT_HTTPGET, 1L);
+    curl_easy_setopt(handle, CURLOPT_FOLLOWLOCATION, 1L);
+    curl_easy_setopt(handle, CURLOPT_SSL_VERIFYPEER, 0L);
+    curl_easy_setopt(handle, CURLOPT_USERAGENT, "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.36");
+    curl_easy_setopt(handle, CURLOPT_SSLVERSION, CURL_SSLVERSION_TLSv1_2);
+    curl_easy_setopt(handle, CURLOPT_USE_SSL, CURLUSESSL_ALL);
+
+    curl_easy_setopt(handle, CURLOPT_URL, VITADB_INDEX_URL);
+
+    curl_easy_setopt(handle, CURLOPT_WRITEDATA, this);
+    curl_easy_setopt(handle, CURLOPT_WRITEFUNCTION, SaveCore);
+
+    ret = curl_easy_perform(handle);
+
+    curl_easy_cleanup(handle);
+
+    return ret;
 }
 
 int VitaDB::GetDownloadURL(Source::Entry& entry, paf::string& out)
@@ -78,26 +150,19 @@ int VitaDB::GetDescription(Source::Entry& entry, paf::wstring& out)
 
 int VitaDB::Parse()
 {
+    if(!buff)
+        return -1;
+
     pList->Clear();
 
     int ret = 0;
-    off_t fileSize = 0;
-    char *jsonData = nullptr;
-
-    auto jsonFile = LocalFile::Open(indexPath.c_str(), SCE_O_RDONLY, 0, &ret);
-    if(ret != SCE_OK)
-        return ret;
-
-    fileSize = jsonFile.get()->GetFileSize();
     
-    char *jstring = new char[fileSize + 1];
-    sce_paf_memset(jstring, 0, fileSize + 1);
-    
-    ret = jsonFile.get()->Read(jstring, fileSize);
+    char *jstring = buff;
 
     if(ret < 0)
     {
-        delete[] jstring;
+        delete jstring;
+        buff = nullptr;
         return ret;
     }
 
@@ -106,7 +171,8 @@ int VitaDB::Parse()
     if(err != DeserializationError::Ok)
     {
         print("Error parsing JSON: %s\n", err.c_str());
-        delete[] jstring;
+        delete jstring;
+        buff = nullptr;
         return err.code();
     }   
     
@@ -119,9 +185,19 @@ int VitaDB::Parse()
         
         if(jdoc[i]["icon"] != nullptr)
         {
-            entry.iconPath = common::FormatString("%s/%s", iconFolderPath.c_str(), jdoc[i]["icon"].as<const char *>());
-            // common::FormatString("https://rinnegatamante.it/vitadb/icons/%s", jdoc[i]["icon"].as<const char *>())
-            entry.iconURL.push_back("Hello?");
+            entry.iconPath = common::FormatString("%s%s", iconFolderPath.c_str(), jdoc[i]["icon"].as<const char *>());
+            entry.iconURL.push_back(common::FormatString("https://rinnegatamante.it/vitadb/icons/%s", jdoc[i]["icon"].as<const char *>()));
+        }
+
+        // Would love to use common::string_util::tokenize, but paf::list is wonky (crashes :()
+        char *token = sce_paf_strtok((char *)jdoc[i]["screenshots"].as<const char *>(), ";");
+        
+        while(token != nullptr) 
+        {
+            paf::string url = "https://rinnegatamante.it/vitadb/";
+            url += token;
+            entry.screenshotURL.push_back(url);
+            token = sce_paf_strtok(nullptr, ";");
         }
 
         common::Utf8ToUtf16(jdoc[i]["titleid"].as<const char *>(), &entry.titleID);
@@ -133,11 +209,16 @@ int VitaDB::Parse()
         entry.dataPath = "ux0:data/"; // VitaDB has a constant data path
 
         entry.category = jdoc[i]["type"].as<int>();
+        
+        entry.lastUpdated.ParseSQLiteDateTime(jdoc[i]["date"].as<const char *>());
+
+        entry.downloadNum = jdoc[i]["downloads"].as<unsigned int>();
 
         pList->Add(entry);
     }
 
-    delete[] jstring;
+    delete jstring;
+    buff = nullptr;
 
     return 0;
 }

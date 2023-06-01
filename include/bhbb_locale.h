@@ -31,16 +31,14 @@
 #define msg_wait_fix 0x97C937D8
 #define msg_icon_no_source 0x4BD16ECF
 #define msg_options 0x28B9E30E
-#define msg_refresh 0xACE9AF71
 #define msg_settings_source 0xB5FCDD42
-#define msg_settings_nLoad 0xDE8DEB1A
 #define msg_settings_verinfo 0x32A4C75A
 #define db_name_0 0xFE2C0CEA
 #define db_name_1 0xE7F22CF1
 #define db_name_2 0x8D38EFC4
 #define msg_settings_downloadInterval_always 0xDF222133
 #define msg_settings_downloadInterval 0x59CD4E83
-#define msg_init 0x4681512B
+#define msg_check_update 0x6CEA58D9
 #define msg_wait 0x632B6733
 #define msg_downloading_icon 0x6BC3DE8E
 #define msg_no_desc 0x216ED54A
@@ -48,6 +46,14 @@
 #define msg_src_err 0xC38F3A4B
 #define icons_dl_name 0xB3FB0B3A
 #define data_dl_name 0x797EF6B3
+#define msg_list_header 0x3702A77B
+#define msg_sort_header 0x2D6D0406
 #define msg_icon_redownload 0xCB6C8521
+#define msg_sort_alpha 0x7454A689
+#define msg_sort_alpharev 0xA9CA93F3
+#define msg_sort_mostrecent 0x8130A636
+#define msg_sort_oldfirst 0x9E70B72D
+#define msg_sort_mostdownloaded 0xD184DC6F
+#define msg_sort_leastdownloaded 0xE1653439
 
 #endif

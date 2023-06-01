@@ -5,6 +5,7 @@
 
 #include "page.h"
 #include "db/source.h"
+#include "tex_pool.h"
 
 class AppBrowser : public page::Base
 {
@@ -36,13 +37,75 @@ public:
 
         LoadJob(AppBrowser *caller):pPage(caller),paf::job::JobItem("AppBrowser::LoadJob"){}
     
+        bool forceRefresh;
     protected:
         AppBrowser *pPage;
+    };
+
+    class TexPool : public ::TexPool
+    {
+    public:
+        using ::TexPool::TexPool;
+        using ::TexPool::Add;
+
+        ~TexPool()
+        {
+
+        }
+
+        bool Add(Source::Entry *item, bool allowReplace = false, int *res = nullptr);
+        
+        bool AddAsync(Source::Entry *item, paf::ui::Widget *target, bool allowReplace = false);
+
+        class AddListButtonJob : public paf::job::JobItem
+        {
+        public:
+
+            static void TargetDeleteEventCB(int eventID, paf::ui::Handler *self, paf::ui::Event *event, void *pUserData)
+            {
+                ((AppBrowser::TexPool::AddListButtonJob *)pUserData)->targetDead = true;
+            }
+
+            AddListButtonJob(Source::Entry *entry, paf::ui::Widget *target):paf::job::JobItem::JobItem("AppPage::TexPool::AddListButtonJob"),workEntry(entry),workWidget(target)
+            {
+                targetDead = false; // Cant use IsCanceled because it causes some crash
+                target->AddEventCallback(paf::ui::Widget::CB_STATE_TERM, TargetDeleteEventCB, this);
+            }
+
+            ~AddListButtonJob()
+            {
+
+            }
+
+            void Run()
+            {
+                if(targetDead)
+                    return;
+
+                bool result = workObj->Add(workEntry);
+                if(workObj && workObj->cbPlugin && !targetDead)
+                {
+                    AppBrowser::EntryFactory::TextureCB(result, workWidget, workEntry, workObj);
+                }
+            }   
+
+            void Finish()
+            {
+                if(!targetDead)
+                    workWidget->DeleteEventCallback(paf::ui::Widget::CB_STATE_TERM, TargetDeleteEventCB, this);   
+            }
+
+            TexPool *workObj;
+            Source::Entry *workEntry; 
+            paf::ui::Widget *workWidget;
+            bool targetDead;
+        };
     };
 
     class EntryFactory : public paf::ui::listview::ItemFactory
     {
     public:
+
         EntryFactory(AppBrowser *_workPage):workPage(_workPage)
         {
 
@@ -65,6 +128,9 @@ public:
             param.list_item->Hide(paf::common::transition::Type_Fadein2);
         }
 
+        static void TextureCB(bool success, paf::ui::Widget *target, Source::Entry *workItem, TexPool *workPool);
+        static void TexPoolAddCbFun(int id, paf::ui::Handler *self, paf::ui::Event *event, void *pUserData);
+
     protected:
         AppBrowser *workPage;        
     };
@@ -75,15 +141,19 @@ public:
         PageMode_Search
     };
 
-    // Button callbacks
+    // callbacks
     static void SearchCB(int id, paf::ui::Handler *widget, paf::ui::Event *event, void *pUserData);
     static void RefreshCB(int id, paf::ui::Handler *widget, paf::ui::Event *event, void *pUserData);
     static void CategoryCB(int id, paf::ui::Handler *widget, paf::ui::Event *event, void *pUserData);
     static void QuickCategoryCB(int id, paf::ui::Handler *widget, paf::ui::Event *event, void *pUserData);
     static void EntryCB(int id, paf::ui::Handler *widget, paf::ui::Event *event, void *pUserData);
+    static void SortSizeAdjustCB(int id, paf::ui::Handler *widget, paf::ui::Event *event, void *pUserData);
+    static void SortButtonCB(int id, paf::ui::Handler *widget, paf::ui::Event *event, void *pUserData);
+    static void SortButtonListCB(int id, paf::ui::Handler *widget, paf::ui::Event *event, void *pUserData);
+    static void SettingsCB(int id, paf::ui::Handler *handler, paf::ui::Event *event, void *pUserData);
 
     // Cancel current jobs and reload from source
-    void Load();
+    void Load(bool forceRefresh = false);
 
     // Set the page mode (and update ui)
     void SetMode(PageMode mode);
@@ -91,8 +161,14 @@ public:
     // Set the source
     void SetSource(Source *source);
 
+    // Update list header
+    void UpdateListHeader();
+
     // Set the category and update buttons
     bool SetCategory(int id);
+
+    // Wrapper for Source::List::Sort (Also updates ui button)
+    void Sort(uint32_t hash = -1);
 
     int GetCategory()
     {
@@ -111,13 +187,21 @@ protected:
     {
         if(listView->GetCellNum(0) > 0)
             listView->DeleteCell(0, 0, listView->GetCellNum(0));
+        UpdateListHeader();
+        listHeader->Hide(paf::common::transition::Type_Fadein1);
     }
 
     void CreateList()
     {
-        listView->InsertCell(0, 0, targetList->GetSize(category));
+        listView->InsertCell(0, 0, targetList->GetSize(GetCategory()));
+        UpdateListHeader();
+        listHeader->Show(paf::common::transition::Type_Fadein1);
     }
 
+    // current sort mode
+    uint32_t sortMode;
+
+    // loading flag
     bool loading;
 
     // Current page mode
@@ -138,6 +222,9 @@ protected:
     // Target list (where list_view will pull from)
     Source::List *targetList;
 
+    // Texture pool
+    TexPool *texPool;
+
     // Widgets
     paf::ui::BusyIndicator *busyIndicator;
     paf::ui::CornerButton *optionsButton;
@@ -147,8 +234,7 @@ protected:
     paf::ui::Button *searchBackButton;
     paf::ui::TextBox *searchBox;
     paf::ui::ListView *listView;
-
-    paf::job::JobQueue pageJobs;
+    paf::ui::Plane *listHeader;
 };
 
 #endif

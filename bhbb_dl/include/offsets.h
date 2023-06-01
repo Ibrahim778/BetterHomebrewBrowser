@@ -5,7 +5,7 @@
 
 SCE_CDECL_BEGIN
 
-int GetShellOffsets(SceUInt32 nid, SceUInt32 *getOff, SceUInt32 *expOff, SceUInt32 *recOff, SceUInt32 *lockOff);
+int GetShellOffsets(uint32_t nid, uint32_t *exp_off, uint32_t *rec_off, uint32_t *notif_off);
 
 SCE_CDECL_END
 
