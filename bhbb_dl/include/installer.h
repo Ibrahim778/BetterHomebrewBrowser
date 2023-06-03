@@ -3,6 +3,6 @@
 
 #include "bhbb_dl.h"
 
-int ProcessExport(const char *name, const char *path, const char *icon_path, BGDLParam *param);
+int ProcessExport(::uint32_t id, const char *name, const char *path, const char *icon_path, BGDLParam *param);
 
 #endif

@@ -10,7 +10,7 @@ enable_language(EMD)
 if(${CMAKE_BUILD_TYPE} STREQUAL Debug)
     add_compile_options(
         -D_SCE_TARGET_OS_PSP2=1 -Xdiag=0 -Xquit=2 -Od -g -noex -D_DEBUG=1 -DPAF_BUILD=1 -D__psp2__ -D__SNC__
-        #-D_SCE_TARGET_OS_PSP2=1 -Xdiag=0 -Xquit=2 -Od -g -noex -DSCE_PAF_TOOL_PRX=1 -D_DEBUG=1
+        #-D_SCE_TARGET_OS_PSP2=1 -Xdiag=0 -Xquit=2 -Od -g -noex -DSCE_PAF_TOOL_PRX=1 -D_DEBUG=1 #use this if non devkit libpaf
     )
 else()
     add_compile_options(
@@ -20,6 +20,15 @@ endif()
 
 add_link_options(
     --prx-no-runtime-support
+)
+
+add_custom_target(${PROJECT_NAME}.elf.target
+  DEPENDS ${PROJECT_NAME}.elf
+)
+
+VDSuiteCreateStubs(stubs SceLsdb.emd
+  LIBRARIES
+    SceLsdb_stub_weak
 )
 
 add_library(${PROJECT_NAME} MODULE
@@ -42,9 +51,14 @@ add_library(${PROJECT_NAME} MODULE
     bhbb_dl.emd
 )
 
+add_dependencies(${PROJECT_NAME}
+    stubs.target
+)
+
 
 target_link_directories(${PROJECT_NAME} PRIVATE
   ${VDSUITE_LIBRARY_DIRECTORIES}
+  ${CMAKE_BINARY_DIR}/stubs
 )
 
 target_include_directories(${PROJECT_NAME} PRIVATE
@@ -56,12 +70,12 @@ target_include_directories(${PROJECT_NAME} PRIVATE
     $ENV{SCE_PSP2_SDK_DIR}/target/include_common
 )
 
-
 target_link_libraries(${PROJECT_NAME}
     SceLibKernel_stub
     ScePafStdc_stub
     ScePafResource_stub
     ScePafWidget_stub
+    ScePafThread_stub
     ScePafGraphics_stub
     ScePafTopLevel_stub
     ScePafMisc_stub
@@ -73,15 +87,11 @@ target_link_libraries(${PROJECT_NAME}
     SceModulemgr_stub
     taihen_stub
     SceSysmodule_stub
-    SceNotificationUtil_stub_weak
-    SceNotificationUtilProgress_stub_weak
     SceIofilemgr_stub
     ScePromoterUtil_stub_weak
     SceLsdb_stub
-    ScePafThread_stub
     SceShellUtil_stub
-    curl_stub_weak
+    SceLsdb_stub_weak
     minizip
 )
-
 VDSuiteSignElf(${PROJECT_NAME}.suprx ${PROJECT_NAME})

@@ -9,72 +9,30 @@
 #include "print.h"
 #include "offsets.h"
 #include "bhbb_dl.h"
-#include "notice.h"
 #include "installer.h"
-
-SceUID hooks[7];
-tai_hook_ref_t ExportFileRef;
-tai_hook_ref_t GetFileTypeRef;
-tai_hook_ref_t ToastRef;
-const unsigned char nop32[4] = {0xaf, 0xf3, 0x00, 0x80};
-
-int (*sceLsdbSendNotification)(SceLsdbNotificationParam *, int);
 
 using namespace paf;
 
-tai_hook_ref_t notifLog_ref;
-SceUID         notifLog_id;
-int sceLsdbSendNotificationLog(SceLsdbNotificationParam *pParam, int a2)
-{
-    if(pParam != nullptr)
-    {
-        print("notification %d:\n\ttitle: %s\n\tdesc: %s\n\ttitle_id: %s\n\texec_title_id: %s\n\titem_id: %s\n\tmsg_type 0x%X\n\taction_type: 0x%X\n\tnew_flag: %hhx\n\thash: %hhx\n\tmsg_arg0: %s\n\tmsg_arg1: %s\n\tmsg_arg2: %s\n\tmsg_arg3: %s\n\tmsg_arg4: %s\n\tmsg_arg5: %s\n\tmsg_arg6: %s\n\tmsg_arg7: %s\n\tmsg_arg8: %s\n\tiunk: 0x%X\n\tunk2[0]: 0x%x\n\tunk2[1]: 0x%x\n", a2, 
-            pParam->title.c_str(), 
-            pParam->desc.c_str(), 
-            pParam->title_id.c_str(), 
-            pParam->exec_titleid.c_str(), 
-            pParam->item_id.c_str(),
-            pParam->msg_type,
-            pParam->action_type,
-            pParam->new_flag,
-            pParam->hash,
-            pParam->msg_arg0.c_str(),
-            pParam->msg_arg1.c_str(),
-            pParam->msg_arg2.c_str(),
-            pParam->msg_arg3.c_str(),
-            pParam->msg_arg4.c_str(),
-            pParam->msg_arg5.c_str(),
-            pParam->msg_arg6.c_str(),
-            pParam->msg_arg7.c_str(),
-            pParam->msg_arg8.c_str(),
-            pParam->iunk,
-            pParam->unk2[0],
-            pParam->unk2[1]
-            );
-    }
-    return TAI_NEXT(sceLsdbSendNotificationLog, notifLog_ref, pParam, a2);
-}
-
-void Check(void *)
-{
-}
-
+tai_hook_ref_t ToastRef;
+SceUID ToastID = SCE_UID_INVALID_UID;
 int ToastPatch(void *off, unsigned int arg)
 {
     if(!arg && off != nullptr)
     {
-        if(LocalFile::Exists(common::FormatString("ux0:/bgdl/t/%08x/bhbb.param_done", *(::uint32_t *)off).c_str()))
+        if(LocalFile::Exists(common::FormatString("ux0:/bgdl/t/%08x/.installed", *(::uint32_t *)off).c_str()))
             return 0; // Notification should already be handled in export function
     }
 
     return TAI_NEXT(ToastPatch, ToastRef, off, arg);
 }
 
+tai_hook_ref_t ExportFileRef;
+SceUID ExportFileID = SCE_UID_INVALID_UID;
 int ExportFilePatched(unsigned int *data)
 {
     int res = TAI_NEXT(ExportFilePatched, ExportFileRef, data);
 
-    if(res == 0x80101A09) // Unsuppourted file
+    if(res == 0x80101A09) // Unsupported file
     {
         char buff[0x400];
         ::uint32_t bgdlID = *(::uint32_t *)data[0];
@@ -136,18 +94,14 @@ int ExportFilePatched(unsigned int *data)
 
         sceIoClose(fd);
 
-        res = ProcessExport(title.c_str(), bgdl_path.c_str(), icon_path.c_str(), &param); 
-        if(res == 0)
-        {
-            LocalFile::RenameFile(common::FormatString("ux0:bgdl/t/%08x/bhbb.param", bgdlID).c_str(), common::FormatString("ux0:bgdl/t/%08x/bhbb.param_done", bgdlID).c_str());
-        }
-
-        return res;
+        return ProcessExport(bgdlID, title.c_str(), bgdl_path.c_str(), icon_path.c_str(), &param); 
     }
 
     return res;
 }
 
+tai_hook_ref_t GetFileTypeRef;
+SceUID GetFileTypeID = SCE_UID_INVALID_UID;
 int GetFileTypePatched(int unk, int *type, char **filename, char **mime_type)
 {
     print("unk: %p type: %p fileName: %p mime_type: %s\n", unk, type, filename, *mime_type);
@@ -174,39 +128,24 @@ int module_start(size_t args, void *argp)
 
     unsigned int get_off, exp_off, rec_off, lock_off, notif_off;
 
-    if (GetShellOffsets(info.module_nid, &exp_off, &rec_off, &notif_off) < 0)
+    if(GetShellOffsets(info.module_nid, &exp_off, &rec_off, &notif_off) < 0)
         return SCE_KERNEL_START_FAILED;
     
-
-    hooks[1] = taiHookFunctionOffset(&ExportFileRef, info.modid, 0, exp_off, 1, (void *)ExportFilePatched);
-    hooks[2] = taiHookFunctionOffset(&GetFileTypeRef, info.modid, 0, rec_off, 1, (void *)GetFileTypePatched);
-    hooks[6] = taiHookFunctionOffset(&ToastRef, info.modid, 0, notif_off, 1, (void *)ToastPatch);
-    
-    // notifLog_id = taiHookFunctionImport(&notifLog_ref, "SceShell", 0xFFFFFFFF, 0x315B9FD6, (void *)sceLsdbSendNotificationLog);
-
-    int ret = taiGetModuleExportFunc("SceLsdb", 0xFFFFFFFF, 0x315B9FD6, (uintptr_t *)&sceLsdbSendNotification);    
-    print("ret = 0x%X (%p)\n", ret, (uintptr_t *)sceLsdbSendNotification);
-
-    common::MainThreadCallList::Register(Check, nullptr);
+    ExportFileID = taiHookFunctionOffset(&ExportFileRef, info.modid, 0, exp_off, 1, (void *)ExportFilePatched);
+    GetFileTypeID = taiHookFunctionOffset(&GetFileTypeRef, info.modid, 0, rec_off, 1, (void *)GetFileTypePatched);
+    ToastID = taiHookFunctionOffset(&ToastRef, info.modid, 0, notif_off, 1, (void *)ToastPatch);
 
     return SCE_KERNEL_START_SUCCESS;
 }
 
 int module_stop(size_t args, void *argp)
 {
-    if(hooks[6] >= 0)
-        taiHookRelease(hooks[6], ToastRef);
-    if (hooks[2] >= 0)
-        taiHookRelease(hooks[2], GetFileTypeRef);
-    if (hooks[1] >= 0)
-        taiHookRelease(hooks[1], ExportFileRef);
-    if (hooks[0] >= 0)
-        taiInjectRelease(hooks[0]);
-
-    // if(notifLog_id >= 0)
-    //     taiHookRelease(notifLog_id, notifLog_ref);
-
-    common::MainThreadCallList::Unregister(Check, nullptr);
+    if(ToastID >= 0)
+        taiHookRelease(ToastID, ToastRef);
+    if(GetFileTypeID >= 0)
+        taiHookRelease(GetFileTypeID, GetFileTypeRef);
+    if(ExportFileID >= 0)
+        taiHookRelease(ExportFileID, ExportFileRef);
 
     return SCE_KERNEL_STOP_SUCCESS; 
 }

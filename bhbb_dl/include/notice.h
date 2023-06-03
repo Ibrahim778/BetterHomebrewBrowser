@@ -23,14 +23,14 @@ enum SceLsdbNotificationPreset
 //Based off of reversing done by @Princess-of-Sleeping and @Rinnegatamante along with field information in app.db
 struct SceLsdbNotificationParam 
 {
-    paf::string     title_id; // Usually titleID of the caller, can be empty
+    paf::string     title_id; // Usually titleID of the caller, can sometimes be empty
     paf::string     item_id;
     SceInt32        unk[2]; // del flag? (0) 
     SceInt32        msg_type; //see (SceLsdbNotificationPreset) 
     SceInt32        iunk; // unused? always 0
     SceUInt32       action_type; //action on press (see SceLsdbNotificationAction)
-    SceByte8        hash;  // wrong, mostly set to 0 or 1
-    SceByte8        new_flag; // 0 = no popup & highlight in notif centre 1 = popup & no highlight
+    SceByte8        new_flag; // Blue highlight when opening centre
+    SceByte8        display_type; // 0 = no popup & no highlight in notif centre 1 = popup & no highlight, if 1 when @new_flag = 0 then popup
     SceChar8        unk1[2]; // Set to 0xFF
     paf::string     iconPath;
     SceInt32        unk2[2]; 
@@ -62,7 +62,8 @@ struct SceLsdbNotificationParam
 
         msg_type = 0;
         iunk = 0;
-        hash = 1; // hash is 1 by default
+        new_flag = 0;
+        display_type = 0;
         iUnk2 = 0;
         action_type = 0;
         exec_mode = 0;
@@ -71,7 +72,7 @@ struct SceLsdbNotificationParam
 
 SCE_CDECL_BEGIN
 
-// extern SceInt32 sceLsdbSendNotification(sceLsdbNotificationParam *param, SceInt32 unk);
+int sceLsdbSendNotification(SceLsdbNotificationParam *param, int replacePrev);
 
 SCE_CDECL_END
 

@@ -1,0 +1,9 @@
+emd: 1
+
+Library: SceLsdb attr: auto_export
+Library: SceLsdb version: 1
+Library: SceLsdb stubfile: "SceLsdb_stub"
+Library: SceLsdb nidsuffix: ""
+Library: SceLsdb libnamenid: 0x6BC25E17
+
+Library: SceLsdb function: sceLsdbSendNotification nidvalue: 0x315B9FD6

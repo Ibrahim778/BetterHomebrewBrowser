@@ -80,8 +80,8 @@ VitaDB::VitaDB()
 
 VitaDB::~VitaDB()
 {
-    if(buff)    
-        delete buff;
+    if(buff != nullptr)    
+        sce_paf_free(buff);
 }
 
 size_t VitaDB::SaveCore(char *ptr, size_t size, size_t nmeb, VitaDB *workDB)
@@ -103,6 +103,14 @@ int VitaDB::DownloadIndex(bool forceRefresh)
     
     int ret = SCE_OK;
     
+    // Cleanup previous download buffer (if any)
+    if(buff != nullptr)
+    {
+        sce_paf_free(buff);
+        buff = nullptr;
+        buffSize = 0;
+    }
+
     CURL *handle = curl_easy_init();
     if(!handle)
     {
@@ -114,17 +122,20 @@ int VitaDB::DownloadIndex(bool forceRefresh)
     curl_easy_setopt(handle, CURLOPT_HTTPGET, 1L);
     curl_easy_setopt(handle, CURLOPT_FOLLOWLOCATION, 1L);
     curl_easy_setopt(handle, CURLOPT_SSL_VERIFYPEER, 0L);
-    curl_easy_setopt(handle, CURLOPT_USERAGENT, "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.36");
+    curl_easy_setopt(handle, CURLOPT_USERAGENT, 
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.36");
     curl_easy_setopt(handle, CURLOPT_SSLVERSION, CURL_SSLVERSION_TLSv1_2);
     curl_easy_setopt(handle, CURLOPT_USE_SSL, CURLUSESSL_ALL);
 
     curl_easy_setopt(handle, CURLOPT_URL, VITADB_INDEX_URL);
-
+    
     curl_easy_setopt(handle, CURLOPT_WRITEDATA, this);
     curl_easy_setopt(handle, CURLOPT_WRITEFUNCTION, SaveCore);
 
     ret = curl_easy_perform(handle);
-
+    
+    print("[VitaDB::DownloadIndex] Download %s -> (0x%X) %s\n", VITADB_INDEX_URL, ret, curl_easy_strerror((CURLcode)ret));
+    
     curl_easy_cleanup(handle);
 
     return ret;
@@ -151,7 +162,10 @@ int VitaDB::GetDescription(Source::Entry& entry, paf::wstring& out)
 int VitaDB::Parse()
 {
     if(!buff)
+    {
+        print("[VitaDB::Parse] Error buff == nullptr\n");
         return -1;
+    }
 
     pList->Clear();
 
@@ -159,20 +173,11 @@ int VitaDB::Parse()
     
     char *jstring = buff;
 
-    if(ret < 0)
-    {
-        delete jstring;
-        buff = nullptr;
-        return ret;
-    }
-
     DynamicJsonDocument jdoc(SCE_KERNEL_1MiB);
     DeserializationError err = deserializeJson(jdoc, jstring);
     if(err != DeserializationError::Ok)
     {
         print("Error parsing JSON: %s\n", err.c_str());
-        delete jstring;
-        buff = nullptr;
         return err.code();
     }   
     
@@ -216,9 +221,6 @@ int VitaDB::Parse()
 
         pList->Add(entry);
     }
-
-    delete jstring;
-    buff = nullptr;
 
     return 0;
 }

@@ -140,10 +140,11 @@ asset_found:
         return 0; // Do not redownload!
     
 redownload:
-    diagText->SetString(g_appPlugin->GetString(msg_wait));
-    ret = Utils::DownloadFile(download_url.c_str(), VHBD_SAVE_PATH);
+    diagText->SetString(g_appPlugin->GetString(msg_wait)); // Update dialog
+    ret = Utils::DownloadFile(download_url.c_str(), VHBD_SAVE_PATH); // Download new index
     
-    prev_time.reset();
+    // Reset file handler & save new download time
+    prev_time.reset(); 
     
     prev_time = LocalFile::Open(VHBD_TIME_PATH, SCE_O_WRONLY | SCE_O_CREAT | SCE_O_TRUNC, 0666, &ret);
 #ifdef _DEBUG
