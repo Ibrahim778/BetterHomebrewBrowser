@@ -13,6 +13,8 @@
 
 using namespace paf;
 
+void OnPAFLoad();
+
 tai_hook_ref_t ToastRef;
 SceUID ToastID = SCE_UID_INVALID_UID;
 int ToastPatch(void *off, unsigned int arg)
@@ -117,12 +119,45 @@ int GetFileTypePatched(int unk, int *type, char **filename, char **mime_type)
     return res;
 }
 
-int module_start(size_t args, void *argp)
+SceUID sysmoduleHookID = SCE_UID_INVALID_UID;
+tai_hook_ref_t sysmoduleHookRef;
+int sceSysmoduleLoadModuleInternalWithArgPatched(SceSysmoduleInternalModuleId id, size_t size, void *argp, void *opt)
+{
+    int res = TAI_NEXT(sceSysmoduleLoadModuleInternalWithArgPatched, sysmoduleHookRef, id, size, argp, opt);
+    if(res == 0 && id == SCE_SYSMODULE_INTERNAL_PAF)
+    {
+        OnPAFLoad();
+        taiHookRelease(sysmoduleHookID, sysmoduleHookRef);
+        sysmoduleHookID = SCE_UID_INVALID_UID;
+    }
+    return res;
+}
+
+void OnPAFLoad()
 {
     zipInitPsp2();
-    
+}
+
+int module_start(size_t args, void *argp)
+{    
     tai_module_info_t info;
+    
+    sceClibMemset(&info, 0, sizeof(info));
     info.size = sizeof(info);
+
+    if(taiGetModuleInfo("ScePaf", &info) < 0)
+    {
+        // Hook sysmodule load to catch when PAF is loaded
+        sysmoduleHookID = taiHookFunctionImport(&sysmoduleHookRef, (const char *)TAI_MAIN_MODULE, 0x03FCF19D, 0xC3C26339, sceSysmoduleLoadModuleInternalWithArgPatched);
+    }
+    else 
+    {
+        OnPAFLoad();
+    }
+
+    sceClibMemset(&info, 0, sizeof(info));
+    info.size = sizeof(info);
+
     if(taiGetModuleInfo("SceShell", &info) < 0)
         return SCE_KERNEL_START_FAILED;
 
@@ -146,6 +181,8 @@ int module_stop(size_t args, void *argp)
         taiHookRelease(GetFileTypeID, GetFileTypeRef);
     if(ExportFileID >= 0)
         taiHookRelease(ExportFileID, ExportFileRef);
+    if(sysmoduleHookID >= 0)
+        taiHookRelease(sysmoduleHookID, sysmoduleHookRef);
 
     return SCE_KERNEL_STOP_SUCCESS; 
 }
