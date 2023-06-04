@@ -117,10 +117,10 @@ int ProcessExport(::uint32_t id, const char *name, const char *path, const char 
     {
         notifParam.display_type = 1; // Toast in app
         notifParam.new_flag = 0;     // ^^
-        notifParam.action_type = 0;
-        notifParam.msg_type = Custom;
+        notifParam.action_type = (SceLsdbNotificationParam::Action)0;
+        notifParam.msg_type = SceLsdbNotificationParam::Custom;
         notifParam.title = str.GetString();
-        notifParam.iconPath = icon_path;
+        notifParam.icon_path = icon_path;
 
         sceLsdbSendNotification(&notifParam, 0);
     }
@@ -201,11 +201,11 @@ int ProcessExport(::uint32_t id, const char *name, const char *path, const char 
     // Send notification installed successfully 
     notifParam.title.clear();
     notifParam.exec_titleid = installedTitleID;
-    notifParam.msg_type = AppInstalledSuccessfully;
+    notifParam.msg_type = SceLsdbNotificationParam::AppInstalledSuccessfully;
     notifParam.display_type = 1; // Highlight
     notifParam.new_flag = 1;     // ^^
-    notifParam.action_type = AppHighlight;
-    notifParam.iconPath.clear();
+    notifParam.action_type = SceLsdbNotificationParam::AppHighlight;
+    notifParam.icon_path.clear();
 
     sceLsdbSendNotification(&notifParam, 1);
 

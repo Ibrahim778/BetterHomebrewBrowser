@@ -86,10 +86,10 @@ int ExportFilePatched(unsigned int *data)
         // Next entry is download url (we skip)
         offset += flags.size + 0xC;
         sceIoPread(fd, &flags, sizeof(flags), offset);
-
+        // Read next flags
         offset += flags.size + 0xC;
         sceIoPread(fd, &flags, sizeof(flags), offset);
-
+        // Read icon path
         sceIoPread(fd, buff, flags.size, offset + sizeof(flags));
 
         icon_path = buff;
