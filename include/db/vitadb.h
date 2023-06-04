@@ -18,6 +18,7 @@ public:
     int GetDataURL(Entry &entry, paf::string& out);
 
 protected:
+    int GetSCECompatibleURL(std::vector<paf::string> &urlList, paf::string &out);
     static size_t SaveCore(char *ptr, size_t size, size_t nmeb, VitaDB *workDB);
 
     size_t buffSize;

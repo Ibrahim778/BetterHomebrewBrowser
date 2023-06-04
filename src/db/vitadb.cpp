@@ -1,5 +1,6 @@
 #include <paf.h>
 #include <psp2_compat/curl/curl.h>
+#include <paf_file_ext.h>
 
 #include "db/vitadb.h"
 #include "bhbb_locale.h"
@@ -141,16 +142,55 @@ int VitaDB::DownloadIndex(bool forceRefresh)
     return ret;
 }
 
+int VitaDB::GetSCECompatibleURL(std::vector<paf::string> &urlList, paf::string &out)
+{
+    int ret = -1;
+    for(auto& url : urlList)
+    {
+        // First use curl to get the redirected URL
+        
+        // Open file
+        auto file = CurlFile::Open(url.c_str(), SCE_O_RDONLY, 0, &ret);
+
+        print("[VitaDB::GetSCECompatibleURL] CurlFileOpen(%s) -> 0x%X\n", url.c_str(), ret);
+
+        if(ret != SCE_PAF_OK)
+            continue; // Try next URL
+
+        // Get URL
+        char *redirectURL = nullptr;
+        ret = curl_easy_getinfo(file.get()->curl, CURLINFO_EFFECTIVE_URL, &url);
+
+        print("[VitaDB::GetSCECompatibleURL] curl_easy_getinfo(CURLINFO_EFFECTIVE_URL) -> 0x%X (%s)\n", ret, url == nullptr ? "nullptr" : url);
+
+        if(ret != CURLE_OK || url == nullptr)
+            continue;
+
+        paf::string httpURL;
+        Utils::HttpsToHttp(redirectURL, httpURL); // Convert our URL from https to http
+
+        print("[VitaDB::GetSCECompatibleURL] Utils::HttpsToHttp -> %s\n", httpURL.c_str());
+
+        // Finally, check if it can be used with plain SCE download methods
+        if(Utils::IsValidURLSCE(httpURL.c_str()))
+        {
+            // Great! We can use this to download
+            out = httpURL;
+            return SCE_PAF_OK;
+        }
+    }
+
+    return ret;
+}
+
 int VitaDB::GetDownloadURL(Source::Entry& entry, paf::string& out)
 {
-    out = entry.downloadURL.back();
-    return 0;
+    return GetSCECompatibleURL(entry.downloadURL, out);
 }
 
 int VitaDB::GetDataURL(Source::Entry& entry, paf::string& out)
 {
-    out = entry.dataURL.back();
-    return 0;
+    return GetSCECompatibleURL(entry.dataURL, out);
 }
 
 int VitaDB::GetDescription(Source::Entry& entry, paf::wstring& out)
@@ -218,6 +258,10 @@ int VitaDB::Parse()
         entry.lastUpdated.ParseSQLiteDateTime(jdoc[i]["date"].as<const char *>());
 
         entry.downloadNum = jdoc[i]["downloads"].as<unsigned int>();
+
+        entry.downloadURL.push_back(jdoc[i]["url"].as<const char *>());
+        if(jdoc[i]["data_size"].as<int>() != 0)
+            entry.dataURL.push_back(jdoc[i]["data"].as<const char *>());
 
         pList->Add(entry);
     }

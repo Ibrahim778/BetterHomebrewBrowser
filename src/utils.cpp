@@ -14,19 +14,22 @@
 using namespace paf;
 using namespace paf::common;
 
-SceVoid Utils::HttpsToHttp(paf::string& url)
+void Utils::HttpsToHttp(const char *src, paf::string& outURL)
 { 
-    if(sce_paf_strncmp("https", url.data(), 5) != 0)
+    if(sce_paf_strncmp("https", src, 5) != 0)
+    {
+        outURL = src;  
         return;
+    }
     
-    int strLen = url.length();
+    int strLen = sce_paf_strlen(src);
     
     char* buff = new char[strLen]; //We don't add +1 bcs we will remove the 's' character anyways
     sce_paf_memset(buff, 0, strLen);
 
-    sce_paf_snprintf(buff, strLen, "http%s", &url.data()[5]);
+    sce_paf_snprintf(buff, strLen, "http%s", &src[5]);
 
-    url = buff;
+    outURL = buff;
     delete[] buff;
 }
 
@@ -38,8 +41,8 @@ bool Utils::IsValidURLSCE(const char *url)
 
     openArg.uri = url;
 
-    // openArg.SetOption(4000000, HttpFile::OpenArg::OptionType_ResolveTimeOut);
-	// openArg.SetOption(10000000, HttpFile::OpenArg::OptionType_ConnectTimeOut);
+    openArg.SetOption(4000000, HttpFile::OpenArg::OptionType_ResolveTimeOut);
+	openArg.SetOption(10000000, HttpFile::OpenArg::OptionType_ConnectTimeOut);
 
     ret = file.Open(&openArg);
     if(ret == SCE_OK)
@@ -56,7 +59,7 @@ void Utils::InitMusic()
     SceInt32 ret = -1;
 
     ret = sceMusicInternalAppInitialize(0);
-    if(ret < 0) print("[AUDIO_INIT] Error! 0x%X", ret);
+    print("[sceMusicInternalAppInitialize] 0x%X\n", ret);
 
     SceMusicOpt optParams;
     sce_paf_memset(&optParams, 0, 0x10);
@@ -64,16 +67,16 @@ void Utils::InitMusic()
     optParams.flag = -1;
 
     ret = sceMusicInternalAppSetUri((char *)"pd0:data/systembgm/store.at9", &optParams);
-    if(ret < 0) print("[CORE_OPEN] Error! 0x%X", ret);
+    print("[sceMusicInternalAppSetUri] 0x%X\n", ret);
 
     ret = sceMusicInternalAppSetVolume(SCE_AUDIO_VOLUME_0DB);
-    if(ret < 0) print("[SET_VOL] Error! 0x%X", ret);
+    print("[sceMusicInternalAppSetVolume] 0x%X\n", ret);
 
     ret = sceMusicInternalAppSetRepeatMode(SCE_MUSIC_REPEAT_ONE);
-    if(ret < 0) print("[SET_REPEAT_MODE] Error! 0x%X", ret);
+    print("[sceMusicInternalAppSetRepeatMode] 0x%X\n", ret);
 
     ret = sceMusicInternalAppSetPlaybackCommand(SCE_MUSIC_EVENTID_DEFAULT, 0);
-    if(ret < 0) print("[SEND_EVENT_PLAY] Error! 0x%X", ret);
+    print("[sceMusicInternalAppSetPlaybackCommand] 0x%X\n", ret);
 }
 
 size_t SaveCore(char *ptr, size_t size, size_t nmeb, SharedPtr<LocalFile> *file)

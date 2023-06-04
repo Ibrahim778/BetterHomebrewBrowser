@@ -367,7 +367,6 @@
 		<texture src="texture/top_bar_bg.png" type="texture/png" id="tex_top_bg" />
         <texture src="texture/missing_image.png" type="texture/png" id="tex_missing_icon" />
         <texture src="texture/search_icon.png" type="texture/png" id="search_icon" />
-        <texture src="texture/arrow_forward.png" type="texture/png" id="tex_forward_arrow" />
         <texture src="texture/refresh_button.png" type="texture/png" id="tex_refresh_button"/>
         <texture src="texture/search_back_button.png" type="texture/png" id="tex_search_back_button"/>
         <texture src="texture/download_button.png" type="texture/png" id="tex_download_button" />
