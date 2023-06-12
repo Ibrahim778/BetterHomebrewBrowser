@@ -17,8 +17,8 @@ struct pdb_flags_t // size is 0xB
 
 typedef enum 
 {
-    Zip = 0,
-    App = 1
+    BGDLTarget_Zip = 0,
+    BGDLTarget_App = 1
 } BGDLTarget;
 
 typedef struct BGDLParam

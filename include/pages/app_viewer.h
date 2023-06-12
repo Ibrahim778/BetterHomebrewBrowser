@@ -69,8 +69,27 @@ public:
         AppViewer *workPage;
     };
 
+    class DownloadJob : public paf::job::JobItem
+    {
+    public:
+        enum DownloadType
+        {
+            DownloadType_Data,
+            DownloadType_App
+        };
+
+        using paf::job::JobItem::JobItem;
+
+        void Run();
+        void Finish(){}
+
+        AppViewer *workPage;
+        DownloadType type;
+    };
+
     static void ScreenshotCB(int id, paf::ui::Handler *self, paf::ui::Event *event, void *pUserData);
     static void IconButtonCB(int id, paf::ui::Handler *self, paf::ui::Event *event, void *pUserData);
+    static void DownloadButtonCB(int id, ui::Handler *self, ui::Event *event, void *pUserData);
 
     AppViewer(Source::Entry& entry, AppBrowser::TexPool *pTexPool);
     ~AppViewer();

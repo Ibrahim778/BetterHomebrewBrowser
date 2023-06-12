@@ -13,15 +13,15 @@ using namespace paf;
 
 #define EXTRACT_PATH "ux0:data/bhbb_prom/"
 
-void AppExtractCB(::uint32_t curr, ::uint32_t total, void *pUserData)
+void AppExtractCB(uint64_t curr, uint64_t total, void *pUserData)
 {
     auto progressBar = (ui::ProgressBar *)pUserData;
 
-    float prog = ((float)(curr + 1) / (float)total) * 80.0f;
+    float prog = ((float)(curr + 1) / (float)total) * 95.0f;
     progressBar->SetValueAsync(prog, true);
 }
 
-void ZipExtractCB(::uint32_t curr, ::uint32_t total, void *pUserData)
+void ZipExtractCB(uint64_t curr, uint64_t total, void *pUserData)
 {
     auto progressBar = (ui::ProgressBar *)pUserData;
 
@@ -90,6 +90,7 @@ bool InsideApp()
 
 int ProcessExport(::uint32_t id, const char *name, const char *path, const char *icon_path, BGDLParam *param)
 {   
+    Plugin *indicator_plugin = Plugin::Find("indicator_plugin");
     SceLsdbNotificationParam notifParam;
     common::String str;
     wstring wtitle;
@@ -105,7 +106,7 @@ int ProcessExport(::uint32_t id, const char *name, const char *path, const char 
     
     common::Utf8ToUtf16(name, &wtitle);
 
-    str.SetFormattedString(L"%ls\n%ls", wtitle.c_str(), Plugin::Find("indicator_plugin")->GetString(0x501258e7 /*waiting to install*/));
+    str.SetFormattedString(L"%ls\n%ls", wtitle.c_str(), indicator_plugin->GetString(0x501258e7 /*waiting to install*/));
 
     rtc::GetCurrentTick(&tick);
     
@@ -131,6 +132,8 @@ int ProcessExport(::uint32_t id, const char *name, const char *path, const char 
     // Me and @SonicMastr found this a long time ago
     // This will close the notification centre (if it was open) and suspend input in the livearea
     sceShellUtilLock((SceShellUtilLockType)0x801); 
+    sceShellUtilLock(SCE_SHELL_UTIL_LOCK_TYPE_QUICK_MENU); 
+    sceShellUtilLock(SCE_SHELL_UTIL_LOCK_TYPE_POWEROFF_MENU); 
 
     Plugin::InitParam pInit;
     pInit.caller_name = "__main__";
@@ -143,7 +146,7 @@ int ProcessExport(::uint32_t id, const char *name, const char *path, const char 
     print("bhbb_dl %p\n", bhbb_dl_plugin);
 
     Plugin::PageOpenParam pParam;
-    pParam.overwrite_draw_priority = 1;
+    pParam.overwrite_draw_priority = 1; // Draw on top of everything else
     auto page = bhbb_dl_plugin->PageOpen("page_bg", pParam); // This page has an invisible plane of size 960x544 to prevent touch input
     
     thread::Sleep(200); // Allow for app exit animation to complete
@@ -177,9 +180,11 @@ int ProcessExport(::uint32_t id, const char *name, const char *path, const char 
     
     // Actuall install stuff here
     
-    if(param->type == App)
+    if(param->type == BGDLTarget_App)
+    {
         ret = install(path, diagProg, installedTitleID); 
-    else if(param->type == Zip)
+    }
+    else if(param->type == BGDLTarget_Zip)
     {
         Zipfile zip(path);
         zip.Unzip(param->path, ZipExtractCB, diagProg);
@@ -194,9 +199,21 @@ int ProcessExport(::uint32_t id, const char *name, const char *path, const char 
     Plugin::UnloadAsync("bhbb_dl_plugin");
     
     sceShellUtilUnlock((SceShellUtilLockType)0x801);
+    sceShellUtilUnlock(SCE_SHELL_UTIL_LOCK_TYPE_QUICK_MENU); 
+    sceShellUtilUnlock(SCE_SHELL_UTIL_LOCK_TYPE_POWEROFF_MENU); 
     
     if(ret < 0)
+    {
+//         str.SetFormattedString("%ls", indicator_plugin->GetString(0x77f396a2));
+//         notifParam.title = str.GetString();
+//         notifParam.new_flag = 1;
+// #ifndef __INTELLISENSE__
+//         notifParam.msg_arg7 = common::ToString((uint64_t)ret);
+// #endif
+//         sceLsdbSendNotification(&notifParam, 1);
+        print("Install failed: %d (0x%X)\n", ret, ret);
         return ret;
+    }
 
     // Send notification installed successfully 
     notifParam.title.clear();

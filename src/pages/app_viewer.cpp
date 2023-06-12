@@ -10,6 +10,8 @@
 #include "dialog.h"
 #include "pages/app_browser.h"
 #include "pages/image_viewer.h"
+#include "downloader.h"
+#include "bhbb_dl.h"
 
 using namespace paf;
 using namespace common;
@@ -58,9 +60,19 @@ AppViewer::AppViewer(Source::Entry& entry, AppBrowser::TexPool *pTexPool):
         root->FindChild(description_plane)->SetSize(960, 444, 0, 0);
     }
     
+    // Manage the icon button (For manual icon redownloads)
     auto iconButton = root->FindChild(icon_button);
     iconButton->SetTexture(pTexPool->Get(app.hash), 0, 0);
     iconButton->AddEventCallback(ui::Button::CB_BTN_DECIDE, IconButtonCB, this);
+
+    // Take care of our download buttons
+    root->FindChild(download_button)->AddEventCallback(ui::Button::CB_BTN_DECIDE, DownloadButtonCB, this);
+    
+    auto dataButton = (ui::Button *)root->FindChild(data_download_button);
+    if(app.dataURL.size() == 0) // Hide button
+        dataButton->Hide(transition::Type_Reset);
+    else // Assign callback
+        dataButton->AddEventCallback(ui::Button::CB_BTN_DECIDE, DownloadButtonCB, this);
     
     if(!isMainThread)
         RMutex::main_thread_mutex.Unlock();
@@ -152,6 +164,17 @@ void AppViewer::IconButtonCB(int id, ui::Handler *self, ui::Event *event, void *
     job::JobQueue::default_queue->Enqueue(jobParam);
 }
 
+void AppViewer::DownloadButtonCB(int id, ui::Handler *self, ui::Event *event, void *pUserData)
+{
+    auto pWidget = (ui::Widget *)self;
+
+    auto job = new DownloadJob("AppViewer::DownloadJob");
+    job->type = pWidget->GetName().GetIDHash() == download_button ? DownloadJob::DownloadType_App : DownloadJob::DownloadType_Data;
+    job->workPage = (AppViewer *)pUserData;
+    auto jobParam = SharedPtr<job::JobItem>(job);
+    job::JobQueue::default_queue->Enqueue(jobParam);
+}
+
 void AppViewer::IconDownloadJob::Run()
 {
     dialog::OpenPleaseWait(g_appPlugin, nullptr, g_appPlugin->GetString(msg_downloading_icon));
@@ -174,4 +197,61 @@ void AppViewer::IconDownloadJob::Run()
 
     sceShellUtilUnlock(SCE_SHELL_UTIL_LOCK_TYPE_PS_BTN);
     dialog::Close();
+}
+
+void AppViewer::DownloadJob::Run()
+{
+    print("[AppViewer::DownloadJob] Run(START)\n");
+    
+    paf::string url;
+    paf::string appName;
+    BGDLParam dlParam;
+
+    sce_paf_memset(&dlParam, 0, sizeof(dlParam));
+
+    dlParam.magic = (BHBB_DL_CFG_VER | BHBB_DL_MAGIC);
+
+    sceShellUtilLock(SCE_SHELL_UTIL_LOCK_TYPE_PS_BTN);
+    dialog::OpenPleaseWait(g_appPlugin, nullptr, g_appPlugin->GetString(msg_wait));
+
+    int ret = 0;
+    switch(type)
+    {
+    case DownloadType_App:
+        ret = workPage->app.pSource->GetDownloadURL(workPage->app, url);
+        dlParam.type = BGDLTarget_App;
+        break;
+
+    case DownloadType_Data:
+        ret = workPage->app.pSource->GetDataURL(workPage->app, url);
+        dlParam.type = BGDLTarget_Zip;
+        sce_paf_strncpy(dlParam.path, workPage->app.dataPath.c_str(), sizeof(dlParam.path));
+        break; 
+    }
+
+    if(ret != SCE_PAF_OK)
+    {
+        print("[AppViewer::DownloadJob] Obtain URL FAIL! 0x%X\n", ret);
+        dialog::Close();
+        sceShellUtilUnlock(SCE_SHELL_UTIL_LOCK_TYPE_PS_BTN);
+        return;
+    }
+
+    common::Utf16ToUtf8(workPage->app.title, &appName);
+    
+    ret = Downloader::GetCurrentInstance()->Enqueue(g_appPlugin, url.c_str(), appName.c_str(), workPage->app.iconPath.c_str(), &dlParam);
+
+    dialog::Close();
+    sceShellUtilUnlock(SCE_SHELL_UTIL_LOCK_TYPE_PS_BTN);
+    
+    if(ret != SCE_OK)
+    {
+        dialog::OpenError(g_appPlugin, ret, g_appPlugin->GetString(msg_download_error));
+        print("[AppViewer::DownloadJob] Start download FAIL! 0x%X\n", ret);
+        return;
+    }
+
+    dialog::OpenOk(g_appPlugin, nullptr, g_appPlugin->GetString(msg_download_queued));
+
+    print("[AppViewer::DownloadJob] Run(END)\n");
 }

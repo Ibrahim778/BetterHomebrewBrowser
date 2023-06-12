@@ -25,6 +25,7 @@
 #define msg_screenshot_error 0x36159610
 #define msg_icon_error 0x9AC23D64
 #define msg_desc_error 0x0E709182
+#define msg_download_error 0xCA898CB7
 #define msg_error_index 0x9F897B1C
 #define msg_icon_pack_missing 0xCDA7825D
 #define msg_error_parse 0x31E50D81

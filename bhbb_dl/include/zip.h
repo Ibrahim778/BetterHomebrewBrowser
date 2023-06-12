@@ -8,16 +8,21 @@
 class Zipfile 
 {
 public:
-	Zipfile(const paf::string zip_path);
+    typedef void (*ProgressCallback)(uint64_t current, uint64_t total, void *pUserData);
+
+	Zipfile(const paf::string filePath);
 	~Zipfile();
 
-	int Unzip(const paf::string outpath, void (*progressCB)(::uint32_t curr, ::uint32_t total, void *), void *progdat);
-	int UncompressedSize();
+	int Unzip(const paf::string outPath, ProgressCallback progressCB, void *progressData);
+	int CalculateUncompressedSize();
+    int GetLastError();
 
 private:
-	unzFile zipfile_;
-	uint64_t uncompressed_size_ = 0;
-	unz_global_info global_info_;
+	unzFile handle;
+	uint64_t uncompressedSize;
+	unz_global_info globalInfo;
+
+    int error;
 };
 
 #endif //_ZIP_H_

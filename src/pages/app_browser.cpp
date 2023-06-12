@@ -123,7 +123,7 @@ void AppBrowser::SettingsCB(int id, paf::ui::Handler *handler, paf::ui::Event *e
         print("Downloading test app...\n");
         BGDLParam param;
         param.magic = (BHBB_DL_CFG_VER | BHBB_DL_MAGIC);
-        param.type = App;
+        param.type = BGDLTarget_App;
 
         Downloader::GetCurrentInstance()->Enqueue(g_appPlugin, "http://github.com/Ibrahim778/SelfLauncher/releases/download/V1.1/SelfLauncher.vpk", "Self Launcher", "ux0:app/VITASHELL/sce_sys/icon0.png", &param);
         break;

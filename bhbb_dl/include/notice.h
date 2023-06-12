@@ -42,7 +42,7 @@ public:
     }
 
     paf::string     title_id; // Usually titleID of the caller, can sometimes be empty
-    paf::string     item_id;
+    paf::string     item_id; // Possibly paf::IDParam?
     int             unk[2]; // del flag? (0) 
     Type            msg_type; //see (@Type) 
     int             iunk; // unused? always 0

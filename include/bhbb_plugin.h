@@ -157,7 +157,6 @@
 #define tex_top_bg 0xF71E7043
 #define tex_missing_icon 0x6490991C
 #define search_icon 0x45B91803
-#define tex_forward_arrow 0xCACA22A4
 #define tex_refresh_button 0xA5BF6200
 #define tex_search_back_button 0x966C86C7
 #define tex_download_button 0x64D46FE1

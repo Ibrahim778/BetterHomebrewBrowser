@@ -7,145 +7,153 @@
 
 #define dir_delimter '/'
 #define MAX_FILENAME 512
-#define READ_SIZE 8192
+#define READ_SIZE SCE_KERNEL_4KiB * 2
 
-Zipfile::Zipfile(const paf::string zip_path) {
-	
-	zipfile_ = unzOpen(zip_path.c_str());
-	if (!zipfile_)
+Zipfile::Zipfile(const paf::string zip_path) 
+{
+	handle = unzOpen(zip_path.c_str());
+	if (handle == nullptr)
     {
-		print("Cannot open zip");
+        print("[Error] unzOpen %s -> %p\n", zip_path.c_str(), handle);
+        error = -0xC0FFEE;
         return;
     }
 
-	if (unzGetGlobalInfo(zipfile_, &global_info_) != UNZ_OK)
+    error = unzGetGlobalInfo(handle, &globalInfo);
+	if (error != UNZ_OK)
 	{
-        print("Cannot read zip info");
+        print("Cannot read zip info %d\n", error);
         return;
     }
 }
 
-Zipfile::~Zipfile() {
-	if (zipfile_)
-		unzClose(zipfile_);
+Zipfile::~Zipfile() 
+{
+	if (handle != nullptr)
+		unzClose(handle);
 }
 
-int Zipfile::Unzip(const paf::string outpath, void (*progcb)(SceUInt, SceUInt,void*), void *progdata) {
-	
-	if (uncompressed_size_ == 0)
-		UncompressedSize();
+int Zipfile::Unzip(const paf::string outPath, ProgressCallback progressCallback, void *progressUserData) 
+{
+    if(error != UNZ_OK)
+        return error;
 
-	char read_buffer[READ_SIZE];
+	if (uncompressedSize == 0)
+		CalculateUncompressedSize();
 
-	uLong i;
-	if (unzGoToFirstFile(zipfile_) != UNZ_OK)
-	{
-        print("Error going to first file");
-        return -1;
+	error = unzGoToFirstFile(handle);
+    if(error != UNZ_OK)
+    {
+        print("Error going to first file!\n", error);
+        return error;
     }
 
-	for (i = 0; i < global_info_.number_entry; ++i) {
-		
-		unz_file_info file_info;
-		char filename[MAX_FILENAME];
-		char fullfilepath[MAX_FILENAME];
-		if (unzGetCurrentFileInfo(zipfile_, &file_info, filename, MAX_FILENAME, nullptr, 0, nullptr, 0) != UNZ_OK)
-		{
-            print("Error reading zip file info");
-            return -2;
+    error = UNZ_OK;
+    uint64_t extractedBytes = 0;
+    for(unsigned long i = 0; i < globalInfo.number_entry; i++, error = unzGoToNextFile(handle))
+    {
+        unz_file_info info;
+        char fileName[0x200];
+        paf::string fullPath;
+
+        if(error != UNZ_OK)
+        {
+            print("error going to next file %d\n", error);
+            return error;
         }
-		
-        sce_paf_snprintf(fullfilepath, sizeof(fullfilepath), "%s%s", outpath.c_str(), filename);
 
-		// Check if this entry is a directory or file.
-		const size_t filename_length = sce_paf_strlen(fullfilepath);
-		if (fullfilepath[filename_length - 1] == dir_delimter) {
-			paf::Dir::CreateRecursive(fullfilepath);
-		} else {
-			// Create the dir where the file will be placed
-			paf::string destdir = paf::common::StripFilename(fullfilepath, "P");
+        error = unzGetCurrentFileInfo(handle, &info, fileName, sizeof(fileName), nullptr, 0, nullptr, 0);
+        if(error != UNZ_OK)
+        {
+            print("Error getting file info %d\n", error);
+            return error;
+        }
+
+        fullPath = outPath + paf::string(fileName);
+
+        if(fullPath.c_str()[fullPath.size() - 1] == '/') // Check to see if entry is a directory
+        {
+            print("Creating dir: %s\n", fullPath.c_str());
+            paf::Dir::CreateRecursive(fullPath.c_str());
+        }
+        else 
+        {
+			paf::string destdir = paf::common::StripFilename(fullPath, "P");
 			paf::Dir::CreateRecursive(destdir.c_str());
 
-			// Entry is a file, so extract it.
-			if (unzOpenCurrentFile(zipfile_) != UNZ_OK)
-			{
-                print("Cannot open file from zip");
-                return -3;
+            error = unzOpenCurrentFile(handle);
+            if(error != UNZ_OK)
+            {
+                print("Error opening zip file %s -> %d (Save To: %s)\n", fileName, error, fullPath.c_str());
+                unzCloseCurrentFile(handle);
+                return error;
             }
 
-			// Open a file to write out the data.
-			sce_paf_FILE* out = sce_paf_fopen(fullfilepath, "wb");
-			if (out == nullptr) {
-				unzCloseCurrentFile(zipfile_);
-				print("Cannot open destination file");
-                return -4;
+            auto fHandle = paf::LocalFile::Open(fullPath.c_str(), SCE_O_WRONLY | SCE_O_CREAT | SCE_O_TRUNC, 0666, &error);
+            if(error != SCE_PAF_OK)
+            {
+                print("Error opening file %s -> 0x%X\n", fullPath.c_str(), error);
+                unzCloseCurrentFile(handle);
+                return error;
             }
 
-			int error;
-			do {
-				error = unzReadCurrentFile(zipfile_, read_buffer, READ_SIZE);
-				if (error < 0) {
-					unzCloseCurrentFile(zipfile_);
-					print("Cannot read current zip file");
-                    return -5;
+            char readBuff[READ_SIZE];
+            
+            do
+            {
+                error = unzReadCurrentFile(handle, readBuff, sizeof(readBuff));
+                if(error < 0)
+                {
+                    print("[Error] failed to read zfile %s %d\n", fileName, error);
+                    break;
                 }
 
-				if (error > 0)
-					sce_paf_fwrite(read_buffer, error, 1, out); // TODO check fwrite return
-				
-			} while (error > 0);
+                fHandle.get()->Write(readBuff, error);
 
-			sce_paf_fclose(out);
-		}
-
-		unzCloseCurrentFile(zipfile_);
-
-		// Go the the next entry listed in the zip file.
-		if ((i + 1) < global_info_.number_entry)
-			if (unzGoToNextFile(zipfile_) != UNZ_OK)
-			{
-                print("Error getting next zip file");
-                return -6;
-            }
-        
-        if(progcb)
-            progcb(i, global_info_.number_entry, progdata);
-	}
-
-	return 0;
+            } while(error > 0);
+            
+            print("Extracted: %s -> %s\n", fileName, fullPath.c_str());
+            progressCallback(i, globalInfo.number_entry, progressUserData);
+            
+            unzCloseCurrentFile(handle);
+        }
+    }
+    print("returning: %d\n", error);
+    return error;
 }
 
-int Zipfile::UncompressedSize() {
-
-	uncompressed_size_ = 0;
-
-	if (unzGoToFirstFile(zipfile_) != UNZ_OK)
-	{
-        print("Error going to first file");
-        return -1;
+int Zipfile::CalculateUncompressedSize() 
+{
+    error = unzGoToFirstFile(handle);
+    if(error != UNZ_OK)
+    {
+        print("Error going to first file!\n", error);
+        unzClose(handle);
+        return error;
     }
 
-	uLong i;
-	for (i = 0; i < global_info_.number_entry; ++i) {
-		
-		unz_file_info file_info;
-		char filename[MAX_FILENAME];
-		if (unzGetCurrentFileInfo(zipfile_, &file_info, filename, MAX_FILENAME, nullptr, 0, nullptr, 0) != UNZ_OK)
-		{
-            print("Error reading zip file info");
-            return -2;
+    for(unsigned long i = 0; i < globalInfo.number_entry; i++, error = unzGoToNextFile(handle))
+    {
+        unz_file_info info;
+        char fileName[0x200];
+
+        if(error != UNZ_OK)
+        {
+            print("error going to next file %d\n", error);
+            unzClose(handle);
+            return error;
         }
 
-		uncompressed_size_ += file_info.uncompressed_size;
+        error = unzGetCurrentFileInfo(handle, &info, fileName, sizeof(fileName), nullptr, 0, nullptr, 0);
+        if(error != UNZ_OK)
+        {
+            print("Error getting file info %d\n", error);
+            unzClose(handle);
+            return error;
+        }
 
-		// Go the the next entry listed in the zip file.
-		if ((i + 1) < global_info_.number_entry)
-			if (unzGoToNextFile(zipfile_) != UNZ_OK)
-			{
-                print("Error calculating zip size");
-                return -3;
-            }
+        uncompressedSize += info.uncompressed_size;
     }
 
-	return 0;
+    return 0;
 }

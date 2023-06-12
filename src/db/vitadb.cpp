@@ -153,17 +153,17 @@ int VitaDB::GetSCECompatibleURL(std::vector<paf::string> &urlList, paf::string &
         auto file = CurlFile::Open(url.c_str(), SCE_O_RDONLY, 0, &ret);
 
         print("[VitaDB::GetSCECompatibleURL] CurlFileOpen(%s) -> 0x%X\n", url.c_str(), ret);
-
+        print("FileSize: %llu\n", file.get()->GetFileSize());
         if(ret != SCE_PAF_OK)
             continue; // Try next URL
 
         // Get URL
         char *redirectURL = nullptr;
-        ret = curl_easy_getinfo(file.get()->curl, CURLINFO_EFFECTIVE_URL, &url);
+        ret = curl_easy_getinfo(file.get()->curl, CURLINFO_EFFECTIVE_URL, &redirectURL);
 
-        print("[VitaDB::GetSCECompatibleURL] curl_easy_getinfo(CURLINFO_EFFECTIVE_URL) -> 0x%X (%s)\n", ret, url == nullptr ? "nullptr" : url);
+        print("[VitaDB::GetSCECompatibleURL] getinfo(CURLINFO_EFFECTIVE_URL) -> 0x%X (%s)\n", ret, redirectURL);
 
-        if(ret != CURLE_OK || url == nullptr)
+        if(ret != CURLE_OK || redirectURL == nullptr)
             continue;
 
         paf::string httpURL;

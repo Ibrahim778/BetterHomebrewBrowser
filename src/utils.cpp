@@ -16,20 +16,20 @@ using namespace paf::common;
 
 void Utils::HttpsToHttp(const char *src, paf::string& outURL)
 { 
-    if(sce_paf_strncmp("https", src, 5) != 0)
+    if(sce_paf_strncmp(src, "https", 5) != 0)
     {
-        outURL = src;  
+        outURL = src;
         return;
     }
     
     int strLen = sce_paf_strlen(src);
-    
     char* buff = new char[strLen]; //We don't add +1 bcs we will remove the 's' character anyways
     sce_paf_memset(buff, 0, strLen);
 
     sce_paf_snprintf(buff, strLen, "http%s", &src[5]);
 
     outURL = buff;
+    
     delete[] buff;
 }
 
@@ -39,12 +39,12 @@ bool Utils::IsValidURLSCE(const char *url)
     paf::HttpFile::OpenArg openArg;
     SceInt32 ret = SCE_OK;
 
-    openArg.uri = url;
-
+    openArg.ParseUrl(url);
     openArg.SetOption(4000000, HttpFile::OpenArg::OptionType_ResolveTimeOut);
 	openArg.SetOption(10000000, HttpFile::OpenArg::OptionType_ConnectTimeOut);
 
     ret = file.Open(&openArg);
+    
     if(ret == SCE_OK)
     {
         file.Close();
