@@ -130,7 +130,10 @@ int module_start(size_t args, void *argp)
     unsigned int exp_off, rec_off, notif_off;
 
     if(GetShellOffsets(info.module_nid, &exp_off, &rec_off, &notif_off) < 0)
+    {
+        sceClibPrintf("[BHBB_DL] unsupported firmware! FATAL\n");
         return SCE_KERNEL_START_FAILED;
+    }
     
     ExportFileID = taiHookFunctionOffset(&ExportFileRef, info.modid, 0, exp_off, 1, (void *)ExportFilePatched);
     GetFileTypeID = taiHookFunctionOffset(&GetFileTypeRef, info.modid, 0, rec_off, 1, (void *)GetFileTypePatched);
