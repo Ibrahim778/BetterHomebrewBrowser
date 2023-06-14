@@ -15,7 +15,7 @@
 #include "bhbb_plugin.h"
 #include "bhbb_locale.h"
 #include "pages/app_browser.h"
-#include "pages/textf_page.h"
+#include "pages/text_page.h"
 #include "db/source.h"
 #include "settings.h"
 #include "downloader.h"
@@ -62,7 +62,7 @@ SceVoid PluginStart(Plugin *plugin)
         print("iTLS-Enso: 0x%X\n", itlsID);
         if(itlsID < 0)
         {
-            new page::TextfPage(msg_no_itls);
+            new page::TextPage(msg_no_itls);
             return;
         }
     }

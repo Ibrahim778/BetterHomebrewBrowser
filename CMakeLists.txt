@@ -49,7 +49,6 @@ add_executable(${PROJECT_NAME}
     src/pages/page.cpp
     src/pages/app_viewer.cpp
     src/pages/text_page.cpp
-    src/pages/textf_page.cpp
     src/pages/app_browser.cpp
     src/pages/image_viewer.cpp
 
@@ -76,7 +75,6 @@ add_executable(${PROJECT_NAME}
     include/pages/app_browser.h
     include/pages/app_viewer.h
     include/pages/text_page.h
-    include/pages/textf_page.h
     include/pages/image_viewer.h
 
     include/db/source.h
