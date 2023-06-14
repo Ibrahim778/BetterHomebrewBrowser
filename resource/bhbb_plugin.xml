@@ -222,6 +222,9 @@
                     <text style="style_text_list_button_version" id="text_list_item_category">
                         <layout_hint align="2, 1" anchor="2, 1" adjust="2, 2" pos="-20, 10" />
                     </text>
+                    <plane style="_common_style_plane_transparent" id="plane_list_item_icon">
+                        <layout_hint align="1,0" anchor="1,0" size="100,100" pos="0,0" />
+                    </plane>
                 </image_button>            
             </list_item>
         </template>
@@ -253,9 +256,8 @@
 
         <style_list_item color="1, 1, 1, 0" id="style_list_view_item_generic" />
 
-		<style_image_button layout_type_x="1" glow_obj="list_button_glow" color="1, 1, 1, 1" layout_type_y="0" bg_obj="list_button_bg" image_obj="list_button_image" image_margin="10" id="list_button_style">
+		<style_image_button layout_type_x="1" glow_obj="list_button_glow" color="1, 1, 1, 1" layout_type_y="0" bg_obj="list_button_bg" image_margin="10" id="list_button_style">
 			<planeobj texture0="_common_texture_list_70px" id="list_button_bg" />
-			<planeobj scale_mode_y="3" scale_mode_x="3" size="100, 100" id="list_button_image" pos="-300, 0" />
 			<planeobj texture0="_common_texture_list_glow_70px" blend="2" id="list_button_glow" />
 		</style_image_button>
 

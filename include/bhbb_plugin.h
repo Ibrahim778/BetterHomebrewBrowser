@@ -70,6 +70,7 @@
 #define text_list_item_author 0x62BBEC4D
 #define text_list_item_version 0xDCC83E92
 #define text_list_item_category 0x526345B8
+#define plane_list_item_icon 0xA7E671AA
 #define category_button_template 0x68A96713
 #define style_image_button_list 0xE896CA66
 #define textobj 0x01F875B1
@@ -84,7 +85,6 @@
 #define style_list_view_item_generic 0x885879E0
 #define list_button_style 0x1BB81CE0
 #define list_button_bg 0x04EE2175
-#define list_button_image 0x200C24AE
 #define list_button_glow 0xB52EAC04
 #define style_screenshot_button 0xAC7D4D22
 #define list_button_bg 0x04EE2175

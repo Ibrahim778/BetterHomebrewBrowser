@@ -410,16 +410,16 @@ void AppBrowser::EntryCB(int eventID, paf::ui::Handler *widget, paf::ui::Event *
 
 void AppBrowser::EntryFactory::TextureCB(bool success, paf::ui::Widget *target, Source::Entry *workItem, TexPool *workPool)
 {
-    if(success)
-    {
-        target->SetTexture(workPool->Get(target->GetName().GetIDHash()));
-    }
-    else 
+    auto plane = (ui::Plane *)target->FindChild(plane_list_item_icon);
+    if(!success)
     {
         auto brokenSurf = g_appPlugin->GetTexture(tex_missing_icon);
         workPool->Add(target->GetName().GetIDHash(), brokenSurf, true);
-        target->SetTexture(workPool->Get(target->GetName().GetIDHash()));
     }
+    
+    plane->SetColor(1,1,1,1);
+    plane->SetTexture(workPool->Get(target->GetName().GetIDHash()));
+    plane->Show(transition::Type_Fadein2);
 }
 
 void AppBrowser::EntryFactory::TexPoolAddCbFun(int id, paf::ui::Handler *self, paf::ui::Event *event, void *pUserData)
@@ -441,6 +441,7 @@ ui::ListItem *AppBrowser::EntryFactory::Create(ui::listview::ItemFactory::Create
     ui::Text        *versionText    = nullptr;
     ui::Text        *categoryText   = nullptr;
     ui::Text        *titleText      = nullptr;
+    ui::Plane       *iconPlane      = nullptr;
     Source::List    *workList       = nullptr;
     Source::Entry   *workItem       = nullptr;
 
@@ -455,6 +456,7 @@ ui::ListItem *AppBrowser::EntryFactory::Create(ui::listview::ItemFactory::Create
     versionText = (ui::Text *)button->FindChild(text_list_item_version);
     categoryText = (ui::Text *)button->FindChild(text_list_item_category);
     titleText = (ui::Text *)button->FindChild(text_list_item_title);
+    iconPlane = (ui::Plane *)button->FindChild(plane_list_item_icon);
 
     workList = workPage->targetList;
 
@@ -481,7 +483,11 @@ ui::ListItem *AppBrowser::EntryFactory::Create(ui::listview::ItemFactory::Create
     button->AddEventCallback(ui::Handler::CB_STATE_READY_CACHEIMAGE, TexPoolAddCbFun, workPage->texPool);
 
     if(workPage->texPool->Exist(workItem->hash))
-        button->SetTexture(workPage->texPool->Get(workItem->hash));
+    {
+        iconPlane->SetColor(1,1,1,1);
+        iconPlane->SetTexture(workPage->texPool->Get(workItem->hash));
+        iconPlane->Show(transition::Type_Fadein2);
+    }
     else
         workPage->texPool->AddAsync(workItem, button);
     
