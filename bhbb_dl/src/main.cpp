@@ -13,8 +13,6 @@
 
 using namespace paf;
 
-void OnPAFLoad();
-
 tai_hook_ref_t ToastRef;
 SceUID ToastID = SCE_UID_INVALID_UID;
 int ToastPatch(void *off, unsigned int arg)
@@ -41,16 +39,15 @@ int ExportFilePatched(unsigned int *data)
         pdb_flags_t flags;
         BGDLParam param;
 
-        // BHBB files will have a vpk file as a flag.
+        // BHBB files will have a param file as a flag.
         string bgdl_path = common::FormatString("ux0:bgdl/t/%08x/bhbb.param", bgdlID); 
         
-        auto param_file = LocalFile::Open(bgdl_path.c_str(), SCE_O_RDONLY, 0, &res);
-        if(res != SCE_PAF_OK) // prob doesn't exist
+        SceUID fd = sceIoOpen(bgdl_path.c_str(), SCE_O_RDONLY, 0);
+        if(fd < 0) // prob doesn't exist
             return 0x80101A09; // We can leave this to other download plugins
 
-        param_file.get()->Read(&param, sizeof(BGDLParam));
-        param_file.get()->Close();
-        param_file.release();
+        sceIoRead(fd, &param, sizeof(BGDLParam));
+        sceIoClose(fd);
 
         bgdl_path = common::FormatString("ux0:bgdl/t/%08x/d0.pdb", bgdlID);
         
@@ -61,7 +58,7 @@ int ExportFilePatched(unsigned int *data)
         uint16_t offset = 0xD3;
 
         // paf::LocalFile would be nice but it doesn't have pread?! :( sony L
-        SceUID fd = sceIoOpen(bgdl_path.c_str(), SCE_O_RDONLY, 0);
+        fd = sceIoOpen(bgdl_path.c_str(), SCE_O_RDONLY, 0);
         if(fd < 0)
             return fd;
 
@@ -119,24 +116,6 @@ int GetFileTypePatched(int unk, int *type, char **filename, char **mime_type)
     return res;
 }
 
-SceUID sysmoduleHookID = SCE_UID_INVALID_UID;
-tai_hook_ref_t sysmoduleHookRef;
-int sceSysmoduleLoadModuleInternalWithArgPatched(SceSysmoduleInternalModuleId id, size_t size, void *argp, void *opt)
-{
-    int res = TAI_NEXT(sceSysmoduleLoadModuleInternalWithArgPatched, sysmoduleHookRef, id, size, argp, opt);
-    if(res == 0 && id == SCE_SYSMODULE_INTERNAL_PAF)
-    {
-        OnPAFLoad();
-        taiHookRelease(sysmoduleHookID, sysmoduleHookRef);
-        sysmoduleHookID = SCE_UID_INVALID_UID;
-    }
-    return res;
-}
-
-void OnPAFLoad()
-{
-    zipInitPsp2();
-}
 
 int module_start(size_t args, void *argp)
 {    
@@ -145,23 +124,10 @@ int module_start(size_t args, void *argp)
     sceClibMemset(&info, 0, sizeof(info));
     info.size = sizeof(info);
 
-    if(taiGetModuleInfo("ScePaf", &info) < 0)
-    {
-        // Hook sysmodule load to catch when PAF is loaded
-        sysmoduleHookID = taiHookFunctionImport(&sysmoduleHookRef, (const char *)TAI_MAIN_MODULE, 0x03FCF19D, 0xC3C26339, sceSysmoduleLoadModuleInternalWithArgPatched);
-    }
-    else 
-    {
-        OnPAFLoad();
-    }
-
-    sceClibMemset(&info, 0, sizeof(info));
-    info.size = sizeof(info);
-
     if(taiGetModuleInfo("SceShell", &info) < 0)
         return SCE_KERNEL_START_FAILED;
 
-    unsigned int get_off, exp_off, rec_off, lock_off, notif_off;
+    unsigned int exp_off, rec_off, notif_off;
 
     if(GetShellOffsets(info.module_nid, &exp_off, &rec_off, &notif_off) < 0)
         return SCE_KERNEL_START_FAILED;
@@ -181,8 +147,6 @@ int module_stop(size_t args, void *argp)
         taiHookRelease(GetFileTypeID, GetFileTypeRef);
     if(ExportFileID >= 0)
         taiHookRelease(ExportFileID, ExportFileRef);
-    if(sysmoduleHookID >= 0)
-        taiHookRelease(sysmoduleHookID, sysmoduleHookRef);
 
     return SCE_KERNEL_STOP_SUCCESS; 
 }

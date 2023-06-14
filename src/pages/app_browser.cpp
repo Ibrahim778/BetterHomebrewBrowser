@@ -404,6 +404,7 @@ void AppBrowser::EntryCB(int eventID, paf::ui::Handler *widget, paf::ui::Event *
     auto workPage = (AppBrowser *)pUserData;
     auto workWidget = (ui::Widget *)widget;
     
+    workPage->searchBox->Hide();
     new AppViewer(workPage->appList.Get(workWidget->GetName().GetIDHash()), workPage->texPool);
 }
 

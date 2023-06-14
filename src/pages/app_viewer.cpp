@@ -220,12 +220,14 @@ void AppViewer::DownloadJob::Run()
     case DownloadType_App:
         ret = workPage->app.pSource->GetDownloadURL(workPage->app, url);
         dlParam.type = BGDLTarget_App;
+        sce_paf_strncpy(dlParam.fallback_icon, workPage->app.iconPath.c_str(), sizeof(dlParam.fallback_icon));
         break;
 
     case DownloadType_Data:
         ret = workPage->app.pSource->GetDataURL(workPage->app, url);
         dlParam.type = BGDLTarget_Zip;
         sce_paf_strncpy(dlParam.path, workPage->app.dataPath.c_str(), sizeof(dlParam.path));
+        sce_paf_strncpy(dlParam.fallback_icon, workPage->app.iconPath.c_str(), sizeof(dlParam.fallback_icon));
         break; 
     }
 

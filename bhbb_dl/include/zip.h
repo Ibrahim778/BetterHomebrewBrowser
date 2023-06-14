@@ -3,7 +3,7 @@
 
 #include <paf.h>
 #include <kernel.h>
-#include <minizip/unzip.h>
+#include "minizip/unzip.h"
 
 class Zipfile 
 {
@@ -15,14 +15,22 @@ public:
 
 	int Unzip(const paf::string outPath, ProgressCallback progressCB, void *progressData);
 	int CalculateUncompressedSize();
-    int GetLastError();
+    int GetLastError()
+    {
+        return error;
+    }
+    size_t GetUncompressedSize()
+    {
+        return uncompressedSize;
+    }
 
 private:
 	unzFile handle;
-	uint64_t uncompressedSize;
+	size_t uncompressedSize;
 	unz_global_info globalInfo;
 
     int error;
+    char *readBuff;
 };
 
 #endif //_ZIP_H_

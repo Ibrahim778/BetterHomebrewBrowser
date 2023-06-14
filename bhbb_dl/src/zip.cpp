@@ -1,9 +1,10 @@
+#include <kernel.h>
+#include <paf.h>
+
 #include "zip.h"
 #include "print.h"
 
-#include <minizip/unzip.h>
-#include <kernel.h>
-#include <paf.h>
+#include "minizip/unzip.h"
 
 #define dir_delimter '/'
 #define MAX_FILENAME 512
@@ -25,17 +26,21 @@ Zipfile::Zipfile(const paf::string zip_path)
         print("Cannot read zip info %d\n", error);
         return;
     }
+
+    readBuff = (char *)sce_paf_malloc(READ_SIZE);
 }
 
 Zipfile::~Zipfile() 
 {
 	if (handle != nullptr)
 		unzClose(handle);
+    if(readBuff != nullptr)
+        sce_paf_free(readBuff);
 }
 
 int Zipfile::Unzip(const paf::string outPath, ProgressCallback progressCallback, void *progressUserData) 
 {
-    if(error != UNZ_OK)
+    if(!handle && error != UNZ_OK)
         return error;
 
 	if (uncompressedSize == 0)
@@ -96,12 +101,10 @@ int Zipfile::Unzip(const paf::string outPath, ProgressCallback progressCallback,
                 unzCloseCurrentFile(handle);
                 return error;
             }
-
-            char readBuff[READ_SIZE];
             
             do
             {
-                error = unzReadCurrentFile(handle, readBuff, sizeof(readBuff));
+                error = unzReadCurrentFile(handle, readBuff, READ_SIZE);
                 if(error < 0)
                 {
                     print("[Error] failed to read zfile %s %d\n", fileName, error);
@@ -114,12 +117,13 @@ int Zipfile::Unzip(const paf::string outPath, ProgressCallback progressCallback,
             
             print("Extracted: %s -> %s\n", fileName, fullPath.c_str());
             progressCallback(i, globalInfo.number_entry, progressUserData);
-            
+
             unzCloseCurrentFile(handle);
+
         }
     }
-    print("returning: %d\n", error);
-    return error;
+    
+    return UNZ_OK;
 }
 
 int Zipfile::CalculateUncompressedSize() 
@@ -132,6 +136,7 @@ int Zipfile::CalculateUncompressedSize()
         return error;
     }
 
+    uncompressedSize = 0;
     for(unsigned long i = 0; i < globalInfo.number_entry; i++, error = unzGoToNextFile(handle))
     {
         unz_file_info info;
@@ -155,5 +160,5 @@ int Zipfile::CalculateUncompressedSize()
         uncompressedSize += info.uncompressed_size;
     }
 
-    return 0;
+    return UNZ_OK;
 }

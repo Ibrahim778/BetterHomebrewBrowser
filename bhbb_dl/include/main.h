@@ -8,8 +8,6 @@ SCE_CDECL_BEGIN
 int module_start(size_t args, void *argp);
 int module_stop(size_t args, void *argp);
 
-int zipInitPsp2(void);
-
 SCE_CDECL_END
 
 #endif

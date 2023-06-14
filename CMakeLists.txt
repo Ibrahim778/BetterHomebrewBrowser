@@ -40,7 +40,6 @@ add_custom_command(
 add_executable(${PROJECT_NAME}
     src/main.cpp
     src/utils.cpp
-    src/dialog.cpp
     src/tex_pool.cpp
     src/event.cpp
     src/paf_runtime.cpp
@@ -60,12 +59,13 @@ add_executable(${PROJECT_NAME}
     src/db/cbpsdb.cpp
 
     common/bhbb_dl.h
+    common/dialog.h
+    common/dialog.cpp
     
     include/utils.h
     include/bhbb_plugin.h
     include/bhbb_locale.h
     include/bhbb_settings.h
-    include/dialog.h
     include/json.h
     include/tex_pool.h
     include/event.h

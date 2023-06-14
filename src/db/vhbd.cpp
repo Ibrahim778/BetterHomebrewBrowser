@@ -77,7 +77,7 @@ int VHBD::DownloadIndex(bool forceRefresh)
     
     diagText->SetString(g_appPlugin->GetString(msg_check_update));
 
-    DynamicJsonDocument jdoc(SCE_KERNEL_128KiB);
+    DynamicJsonDocument jdoc(SCE_KERNEL_32KiB);
     
     int ret = 0;
     DeserializationError err;

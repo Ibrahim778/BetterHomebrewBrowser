@@ -8,10 +8,14 @@
 #include "print.h"
 #include "promote.h"
 #include "notice.h"
+#include "dialog.h"
 
 using namespace paf;
 
 #define EXTRACT_PATH "ux0:data/bhbb_prom/"
+#define SAVE_PATH "ux0:/bhbb_downloads/"
+
+#define ERROR_LOW_SPACE -0x50000001
 
 void AppExtractCB(uint64_t curr, uint64_t total, void *pUserData)
 {
@@ -29,8 +33,23 @@ void ZipExtractCB(uint64_t curr, uint64_t total, void *pUserData)
     progressBar->SetValueAsync(prog, true);
 }
 
-int install(const char *file, ui::ProgressBar *progressbar, char *out_titleID)
+bool CheckFreeSpace(Zipfile& zFile)
 {
+    uint64_t max_size;
+    uint64_t free_space;
+    
+    sceAppMgrGetDevInfo("ux0:", &max_size, &free_space);
+
+    zFile.CalculateUncompressedSize();
+    if(zFile.GetUncompressedSize() >= free_space)
+        return false;
+    return true;
+}
+
+int install(Zipfile& zfile, ui::ProgressBar *progressbar, char *out_titleID)
+{
+    int res = SCE_OK;
+
     Dir::RemoveRecursive(EXTRACT_PATH);
     Dir::RemoveRecursive("ux0:temp/new");
     Dir::RemoveRecursive("ux0:appmeta/new");
@@ -42,15 +61,18 @@ int install(const char *file, ui::ProgressBar *progressbar, char *out_titleID)
     Dir::RemoveRecursive("ur0:temp/promote");
     Dir::RemoveRecursive("ur0:temp/game");
 
-    auto zfile = Zipfile(file);
-    int res = zfile.Unzip(EXTRACT_PATH, AppExtractCB, progressbar);
+    res = zfile.Unzip(EXTRACT_PATH, AppExtractCB, progressbar);
     if(res < 0)
-        return res;
+    {
+        print("[install::Unzip()] res -> 0x%X (%d)\n", res, res);
+        goto EXIT;
+    }
     
     res = promoteApp(EXTRACT_PATH, out_titleID);
 
     progressbar->SetValue(100.0f, true);
 
+EXIT:
     Dir::RemoveRecursive(EXTRACT_PATH);
 
     Dir::RemoveRecursive("ux0:temp/new");
@@ -86,6 +108,54 @@ bool InsideApp()
     }
 
     return false;
+}
+
+int SaveFile(const char *path) // This should NEVER fail NEVER EVER! (if it does then I cba to fix UB)
+{
+    auto short_name = common::StripFilename(path, "F");
+    auto dir = common::StripFilename(path, "P");
+    auto ext = common::StripFilename(path, "E");
+
+    string save_path;
+
+    int count = 0;
+    while (1)
+    {
+        if (count == 0)
+        {
+            save_path = paf::common::FormatString(SAVE_PATH "%s.%s", short_name.c_str(), ext.c_str());
+        }
+        else
+        {
+            save_path = paf::common::FormatString(SAVE_PATH "%s (%d).%s", short_name.c_str(), count, ext.c_str());
+        }
+
+        if (!paf::LocalFile::Exists(save_path.c_str()))
+        {
+            break;
+        }
+
+        count++;
+    }
+
+    Dir::CreateRecursive(SAVE_PATH, 0006);
+    LocalFile::RenameFile(path, save_path.c_str());
+
+    auto indicator_plugin = Plugin::Find("indicator_plugin");
+
+    wstring wstr_path;
+    common::Utf8ToUtf16(save_path, &wstr_path);
+    wstring sprint = indicator_plugin->GetString(0xdc0cc888);
+    for(wchar_t *c = sprint.c_str(); *c != '\0'; c++)
+        if(*c == '1') *c = 's'; // Change the string so it'll work with sprintf
+
+    common::String str;
+    str.SetFormattedString(sprint.c_str(), wstr_path.c_str());
+
+    dialog::OpenOk(indicator_plugin, nullptr, str.GetWString().c_str());
+    dialog::WaitEnd();
+
+    return 0;
 }
 
 int ProcessExport(::uint32_t id, const char *name, const char *path, const char *icon_path, BGDLParam *param)
@@ -180,16 +250,32 @@ int ProcessExport(::uint32_t id, const char *name, const char *path, const char 
     
     // Actuall install stuff here
     
+    uint64_t max_size;
+    uint64_t free_space;
+    
+    sceAppMgrGetDevInfo("ux0:", &max_size, &free_space);
+
+    Zipfile zip(path);
+    zip.CalculateUncompressedSize();
+    auto requiredSize = zip.GetUncompressedSize();
+
+    if(free_space <= requiredSize)
+    {
+        ret = ERROR_LOW_SPACE;
+        goto END;
+    }
+
     if(param->type == BGDLTarget_App)
     {
-        ret = install(path, diagProg, installedTitleID); 
+        ret = install(zip, diagProg, installedTitleID); 
+        print("install() -> ret = 0x%X (%d)\n", ret, ret);
     }
     else if(param->type == BGDLTarget_Zip)
     {
-        Zipfile zip(path);
-        zip.Unzip(param->path, ZipExtractCB, diagProg);
+        ret = zip.Unzip(param->path, ZipExtractCB, diagProg);
     }
 
+END:
     diagBase->Hide(common::transition::Type_Popup1);
 
     thread::Sleep(250); // Let the animation play (I am quite surprised this works, I thought it'd hang but it doesnt!)
@@ -204,27 +290,54 @@ int ProcessExport(::uint32_t id, const char *name, const char *path, const char 
     
     if(ret < 0)
     {
-//         str.SetFormattedString("%ls", indicator_plugin->GetString(0x77f396a2));
-//         notifParam.title = str.GetString();
-//         notifParam.new_flag = 1;
-// #ifndef __INTELLISENSE__
-//         notifParam.msg_arg7 = common::ToString((uint64_t)ret);
-// #endif
-//         sceLsdbSendNotification(&notifParam, 1);
-        print("Install failed: %d (0x%X)\n", ret, ret);
-        return ret;
+        if(ret == ERROR_LOW_SPACE) // Display low space dialog
+        {
+            wstring wreqsize;
+            string reqSizeStr = common::FormatBytesize((requiredSize >= free_space) ? (requiredSize - free_space) : 0, 1);
+            
+            common::Utf8ToUtf16(reqSizeStr, &wreqsize);
+
+            wstring sprint = bhbb_dl_plugin->GetString(0x3babf33c);
+            for(wchar_t *c = sprint.c_str(); *c != '\0'; c++)
+                if(*c == '1') *c = 's'; // Change the string so it'll work with sprintf
+
+            str.SetFormattedString(sprint.c_str(), wreqsize.c_str());
+            
+            dialog::OpenError(indicator_plugin, ret, str.GetWString().c_str());      
+        }
+        else // Display generic error dialog
+        {
+            dialog::OpenError(indicator_plugin, ret, indicator_plugin->GetString(0x77f396a2));
+        }
+        
+        dialog::WaitEnd();
+
+        print("Install failed: %d (0x%X)\nResorting to file save!", ret, ret);
+        ret = SaveFile(path);
+
+        notifParam.msg_type = SceLsdbNotificationParam::DownloadComplete;
+        notifParam.exec_titleid = "VITASHELL";
+        notifParam.action_type = SceLsdbNotificationParam::AppOpen;
+        notifParam.exec_mode = 0x20000;
+        notifParam.icon_path = param->fallback_icon;
+        notifParam.title = name;
+        notifParam.new_flag = 1;
+        notifParam.display_type = 1;
+        sceLsdbSendNotification(&notifParam, 1);
     }
+    else 
+    {
+        // Send notification installed successfully 
+        notifParam.title.clear();
+        notifParam.exec_titleid = installedTitleID;
+        notifParam.msg_type = SceLsdbNotificationParam::AppInstalledSuccessfully;
+        notifParam.display_type = 1; // Highlight
+        notifParam.new_flag = 1;     // ^^
+        notifParam.action_type = SceLsdbNotificationParam::AppHighlight;
+        notifParam.icon_path.clear();
 
-    // Send notification installed successfully 
-    notifParam.title.clear();
-    notifParam.exec_titleid = installedTitleID;
-    notifParam.msg_type = SceLsdbNotificationParam::AppInstalledSuccessfully;
-    notifParam.display_type = 1; // Highlight
-    notifParam.new_flag = 1;     // ^^
-    notifParam.action_type = SceLsdbNotificationParam::AppHighlight;
-    notifParam.icon_path.clear();
-
-    sceLsdbSendNotification(&notifParam, 1);
+        sceLsdbSendNotification(&notifParam, 1);
+    }
 
     LocalFile::RenameFile(
         common::FormatString("ux0:/bgdl/t/%08x/bhbb.param", id).c_str(), 

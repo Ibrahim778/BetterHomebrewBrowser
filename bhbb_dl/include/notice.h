@@ -14,7 +14,9 @@ public:
         AppInstallFailed = 0, // Happened when int wasnt set
         LiveAreaRefreshed = 0x900,
         AppInstalledSuccessfully = 0x52,
+        DownloadComplete = 0x51,
         Custom = 0x100, // One single line of text (desc)
+        UserDefined = 0x102, // type used by sceNotificationUtilSendNotification
     };
 
     enum Action
@@ -22,7 +24,7 @@ public:
         AppBound        = 1,
         AppOpen         = 2, // Opens LA
         AppHighlight    = 3,
-        AppLaunch       = 0xb // untested
+        Unk             = 0xb // ?? found in RE (possibly some app launch)
     };// Other known: 0x8
 
     SceLsdbNotificationParam()
@@ -48,7 +50,7 @@ public:
     int             iunk; // unused? always 0
     Action          action_type; //action on press (see @Action)
     SceByte8        new_flag; // Blue highlight when opening centre
-    SceByte8        display_type; // 0 = no popup & no highlight in notif centre 1 = popup & no highlight, if 1 when @new_flag = 0 then popup
+    SceByte8        display_type; // << possibly popup_no << 0 = no popup & no highlight in notif centre 1 = popup & no highlight, if 1 when @new_flag = 0 then popup
     SceChar8        unk1[2]; // Set to 0xFF
     paf::string     icon_path;
     int             unk2[2]; 

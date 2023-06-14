@@ -48,6 +48,17 @@ add_library(${PROJECT_NAME} MODULE
     src/sha1.c
     src/installer.cpp
 
+    # minizip
+    src/minizip/unzip.c
+    src/minizip/ioapi.c
+    src/minizip/zip.c
+
+    src/libc2paf.c
+
+    ../common/bhbb_dl.h
+    ../common/dialog.cpp
+    ../common/dialog.h
+
     bhbb_dl.emd
 )
 
@@ -81,6 +92,7 @@ target_link_libraries(${PROJECT_NAME}
     ScePafMisc_stub
     ScePafCommon_stub
     SceAppMgrUser_stub
+    SceCommonGuiDialog_stub
     SceAppMgr_stub
     SceThreadMgr_stub
     taihenUnsafe_stub
@@ -92,6 +104,6 @@ target_link_libraries(${PROJECT_NAME}
     SceLsdb_stub
     SceShellUtil_stub
     SceLsdb_stub_weak
-    minizip
+    z
 )
 VDSuiteSignElf(${PROJECT_NAME}.suprx ${PROJECT_NAME})
