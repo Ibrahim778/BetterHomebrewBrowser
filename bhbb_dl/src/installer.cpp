@@ -33,19 +33,6 @@ void ZipExtractCB(uint64_t curr, uint64_t total, void *pUserData)
     progressBar->SetValueAsync(prog, true);
 }
 
-bool CheckFreeSpace(Zipfile& zFile)
-{
-    uint64_t max_size;
-    uint64_t free_space;
-    
-    sceAppMgrGetDevInfo("ux0:", &max_size, &free_space);
-
-    zFile.CalculateUncompressedSize();
-    if(zFile.GetUncompressedSize() >= free_space)
-        return false;
-    return true;
-}
-
 int install(Zipfile& zfile, ui::ProgressBar *progressbar, char *out_titleID)
 {
     int res = SCE_OK;
@@ -110,6 +97,11 @@ bool InsideApp()
     return false;
 }
 
+void DecideDialogHandler(dialog::ButtonCode buttonCode, ScePVoid pUserArg)
+{
+    *((dialog::ButtonCode *)pUserArg) = buttonCode;
+}
+
 int SaveFile(const char *path) // This should NEVER fail NEVER EVER! (if it does then I cba to fix UB)
 {
     auto short_name = common::StripFilename(path, "F");
@@ -149,6 +141,9 @@ int SaveFile(const char *path) // This should NEVER fail NEVER EVER! (if it does
     for(wchar_t *c = sprint.c_str(); *c != '\0'; c++)
         if(*c == '1') *c = 's'; // Change the string so it'll work with sprintf
 
+    for(wchar_t *c = sprint.c_str(); *c != '\0'; c++)
+        if(*(c+1) == '[') *c = '\n'; // Make it look a lil nicer
+    
     common::String str;
     str.SetFormattedString(sprint.c_str(), wstr_path.c_str());
 
@@ -156,6 +151,20 @@ int SaveFile(const char *path) // This should NEVER fail NEVER EVER! (if it does
     dialog::WaitEnd();
 
     return 0;
+}
+
+int TitleSizeAdjustCB(paf::int32_t evtID, ui::Handler *handler, ui::Event *evt, void *pUserData)
+{
+    auto text = (ui::Text *)handler;
+    auto icon = (ui::Plane *)pUserData;
+
+    auto size = text->GetDrawObj(ui::Text::OBJ_TEXT)->GetSize();
+
+    text->SetSize(math::v4(size.extract_x(), size.extract_y()));
+
+    icon->SetPos(math::v4(-(size.extract_x() / 2) - (icon->GetSize(0)->extract_x() / 2) - 10, 150));
+
+    text->DeleteEventCallback(ui::Text::CB_STATE_READY, (ui::HandlerCB)TitleSizeAdjustCB, pUserData);
 }
 
 int ProcessExport(::uint32_t id, const char *name, const char *path, const char *icon_path, BGDLParam *param)
@@ -174,16 +183,27 @@ int ProcessExport(::uint32_t id, const char *name, const char *path, const char 
     if(param->magic != (BHBB_DL_CFG_VER | BHBB_DL_MAGIC))
         return 0xC1FFEE;
     
+    LocalFile::RenameFile( // Prevent SceDownload photo toast.
+        common::FormatString("ux0:/bgdl/t/%08x/bhbb.param", id).c_str(), 
+        common::FormatString("ux0:/bgdl/t/%08x/.installed", id).c_str()
+    );
+
     common::Utf8ToUtf16(name, &wtitle);
 
     str.SetFormattedString(L"%ls\n%ls", wtitle.c_str(), indicator_plugin->GetString(0x501258e7 /*waiting to install*/));
 
     rtc::GetCurrentTick(&tick);
+
+    intrusive_ptr<graph::Surface> iconTex;
     
+    auto iconFile = LocalFile::Open(icon_path, SCE_O_RDONLY, 0, &ret);
+    if(ret == SCE_PAF_OK)
+        iconTex = graph::Surface::Load(gutil::GetDefaultSurfacePool(), (common::SharedPtr<File>&)iconFile);
+     
     // Preliminary notif param setup
     notifParam.title_id = "NPXS19999";
     notifParam.item_id = common::FormatString("BHBB_DL_%x%llx", IDParam(name).GetIDHash(), tick);
-    
+
     if(InsideApp()) // Send notification "Ready to install"
     {
         notifParam.display_type = 1; // Toast in app
@@ -199,8 +219,64 @@ int ProcessExport(::uint32_t id, const char *name, const char *path, const char 
     while(InsideApp())
         thread::Sleep(150);
 
+    dialog::ButtonCode result;
+
+    str.SetFormattedString(L"\n%s\nInstall - Install item now (may take a while)\nSave File - Save file to be manually installed later", indicator_plugin->GetString("msg_downloaded"));
+    dialog::OpenTwoButton(indicator_plugin, nullptr, str.GetWString().c_str(), 0, 0, DecideDialogHandler, &result);
+    
     // Me and @SonicMastr found this a long time ago
-    // This will close the notification centre (if it was open) and suspend input in the livearea
+    // This will close the notification centre (if it was open) and suspend input for liveboard
+    sceShellUtilLock((SceShellUtilLockType)0x801); 
+    sceShellUtilLock(SCE_SHELL_UTIL_LOCK_TYPE_QUICK_MENU); 
+
+    // manually set button text because I can't figure out a better solution :)
+
+    auto acceptButton = sce::CommonGuiDialog::Dialog::GetWidget(dialog::Current(), sce::CommonGuiDialog::REGISTER_ID_BUTTON_1);
+    auto rejectButton = sce::CommonGuiDialog::Dialog::GetWidget(dialog::Current(), sce::CommonGuiDialog::REGISTER_ID_BUTTON_2);
+
+    acceptButton->SetString(L"Install");
+    rejectButton->SetString(L"Save File");
+
+    // Might as well make our own title and icon because we can and it looks nicer.
+
+    auto decideDiagPlane = sce::CommonGuiDialog::Dialog::GetWidget(dialog::Current(), sce::CommonGuiDialog::REGISTER_ID_PLANE_BODY);
+
+    auto decideDiagIcon = indicator_plugin->CreateWidget(decideDiagPlane, "plane", "plane_diag_icon", "style_position");
+    decideDiagIcon->SetSize(math::v4(65,65));
+    if(iconTex.get() != nullptr)
+        decideDiagIcon->SetTexture(iconTex);
+
+    auto decideDiagTitle = indicator_plugin->CreateWidget(decideDiagPlane, "text", "text_diag_title", "_common_style_text_dialog_title");//0x93e7966b);
+    decideDiagTitle->SetAdjust(ui::Text::ADJUST_CONTENT, ui::Text::ADJUST_CONTENT, ui::Text::ADJUST_NONE);
+    decideDiagTitle->AddEventCallback(ui::Handler::CB_STATE_READY, (ui::HandlerCB)TitleSizeAdjustCB, decideDiagIcon); 
+    decideDiagTitle->SetPos(math::v4(0, 150));
+    decideDiagTitle->SetString(wtitle);
+
+    dialog::WaitEnd();
+
+    sceShellUtilUnlock(SCE_SHELL_UTIL_LOCK_TYPE_QUICK_MENU); 
+    sceShellUtilUnlock((SceShellUtilLockType)0x801);
+
+    if(result == dialog::ButtonCode_Button1) // Save only
+    {
+        ret = SaveFile(path);
+
+        notifParam.msg_type = SceLsdbNotificationParam::DownloadComplete; // Send download complete notif
+        notifParam.exec_titleid = "VITASHELL";
+        notifParam.action_type = SceLsdbNotificationParam::AppOpen;
+        notifParam.exec_mode = 0x20000;
+        notifParam.icon_path = param->data_icon;
+        notifParam.title = name;
+        notifParam.new_flag = 1;
+        notifParam.display_type = 1;
+        
+        sceLsdbSendNotification(&notifParam, 1);
+
+        return ret;
+    }
+
+    // Me and @SonicMastr found this a long time ago
+    // This will close the notification centre (if it was open) and suspend input for liveboard
     sceShellUtilLock((SceShellUtilLockType)0x801); 
     sceShellUtilLock(SCE_SHELL_UTIL_LOCK_TYPE_QUICK_MENU); 
     sceShellUtilLock(SCE_SHELL_UTIL_LOCK_TYPE_POWEROFF_MENU); 
@@ -238,13 +314,8 @@ int ProcessExport(::uint32_t id, const char *name, const char *path, const char 
     diagIcon->SetTexture(bhbb_dl_plugin->GetTexture(0x264c5084));
     diagText->SetString(bhbb_dl_plugin->GetString("msg_installing"));
 
-    auto iconFile = LocalFile::Open(icon_path, SCE_O_RDONLY, 0, &ret);
-    if(ret == SCE_PAF_OK)
-    {
-        auto tex = graph::Surface::Load(gutil::GetDefaultSurfacePool(), (common::SharedPtr<File>&)iconFile);
-        if(tex.get())
-            diagIcon->SetTexture(tex);
-    }    
+    if(iconTex.get() != nullptr)
+        diagIcon->SetTexture(iconTex);
     
     diagBase->Show(common::transition::Type_Popup1);
     
@@ -319,31 +390,39 @@ END:
         notifParam.exec_titleid = "VITASHELL";
         notifParam.action_type = SceLsdbNotificationParam::AppOpen;
         notifParam.exec_mode = 0x20000;
-        notifParam.icon_path = param->fallback_icon;
+        notifParam.icon_path = param->data_icon;
         notifParam.title = name;
         notifParam.new_flag = 1;
         notifParam.display_type = 1;
         sceLsdbSendNotification(&notifParam, 1);
     }
-    else 
+    else  // operation success
     {
         // Send notification installed successfully 
-        notifParam.title.clear();
-        notifParam.exec_titleid = installedTitleID;
-        notifParam.msg_type = SceLsdbNotificationParam::AppInstalledSuccessfully;
-        notifParam.display_type = 1; // Highlight
-        notifParam.new_flag = 1;     // ^^
-        notifParam.action_type = SceLsdbNotificationParam::AppHighlight;
-        notifParam.icon_path.clear();
+        if(param->type == BGDLTarget_App)
+        {
+            notifParam.title.clear();
+            notifParam.exec_titleid = installedTitleID;
+            notifParam.msg_type = SceLsdbNotificationParam::AppInstalledSuccessfully;
+            notifParam.display_type = 1; // Highlight
+            notifParam.new_flag = 1;     // ^^
+            notifParam.action_type = SceLsdbNotificationParam::AppHighlight;
+            notifParam.icon_path.clear();
+        }
+        else if(param->type == BGDLTarget_Zip)
+        {
+            notifParam.msg_type = SceLsdbNotificationParam::DownloadComplete;
+            notifParam.exec_titleid = "VITASHELL";
+            notifParam.action_type = SceLsdbNotificationParam::AppOpen;
+            notifParam.exec_mode = 0x20000;
+            notifParam.icon_path = param->data_icon;
+            notifParam.title = name;
+            notifParam.new_flag = 1;
+            notifParam.display_type = 1;
+        }
 
         sceLsdbSendNotification(&notifParam, 1);
     }
 
-    LocalFile::RenameFile(
-        common::FormatString("ux0:/bgdl/t/%08x/bhbb.param", id).c_str(), 
-        common::FormatString("ux0:/bgdl/t/%08x/.installed", id).c_str()
-        );
-
     return ret;
 }  
-

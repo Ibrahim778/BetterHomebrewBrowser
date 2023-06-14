@@ -204,7 +204,7 @@ void AppViewer::DownloadJob::Run()
     print("[AppViewer::DownloadJob] Run(START)\n");
     
     paf::string url;
-    paf::string appName;
+    common::String appName;
     BGDLParam dlParam;
 
     sce_paf_memset(&dlParam, 0, sizeof(dlParam));
@@ -220,14 +220,16 @@ void AppViewer::DownloadJob::Run()
     case DownloadType_App:
         ret = workPage->app.pSource->GetDownloadURL(workPage->app, url);
         dlParam.type = BGDLTarget_App;
-        sce_paf_strncpy(dlParam.fallback_icon, workPage->app.iconPath.c_str(), sizeof(dlParam.fallback_icon));
+        sce_paf_strncpy(dlParam.data_icon, workPage->app.iconPath.c_str(), sizeof(dlParam.data_icon));
+        appName = workPage->app.title;
         break;
 
     case DownloadType_Data:
         ret = workPage->app.pSource->GetDataURL(workPage->app, url);
         dlParam.type = BGDLTarget_Zip;
         sce_paf_strncpy(dlParam.path, workPage->app.dataPath.c_str(), sizeof(dlParam.path));
-        sce_paf_strncpy(dlParam.fallback_icon, workPage->app.iconPath.c_str(), sizeof(dlParam.fallback_icon));
+        sce_paf_strncpy(dlParam.data_icon, workPage->app.iconPath.c_str(), sizeof(dlParam.data_icon));
+        appName.SetFormattedString(g_appPlugin->GetString(data_dl_name), workPage->app.title.c_str());
         break; 
     }
 
@@ -238,10 +240,8 @@ void AppViewer::DownloadJob::Run()
         sceShellUtilUnlock(SCE_SHELL_UTIL_LOCK_TYPE_PS_BTN);
         return;
     }
-
-    common::Utf16ToUtf8(workPage->app.title, &appName);
     
-    ret = Downloader::GetCurrentInstance()->Enqueue(g_appPlugin, url.c_str(), appName.c_str(), workPage->app.iconPath.c_str(), &dlParam);
+    ret = Downloader::GetCurrentInstance()->Enqueue(g_appPlugin, url.c_str(), appName.GetString().c_str(), workPage->app.iconPath.c_str(), &dlParam);
 
     dialog::Close();
     sceShellUtilUnlock(SCE_SHELL_UTIL_LOCK_TYPE_PS_BTN);

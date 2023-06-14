@@ -26,7 +26,7 @@ typedef struct BGDLParam
     uint16_t magic;     // bhbb_dl magic | cfg version
     uint8_t type;       // 0 - zip, 1 - app
     char path[0x100];     // This is used when type is set to 0 (custom path)
-    char fallback_icon[0x100]; // Fallback icon for when the notif is deleted
+    char data_icon[0x100]; // Fallback icon for operating with data files and while saving the vpk without install
 } BGDLParam;
 
 #endif

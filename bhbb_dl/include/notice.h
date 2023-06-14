@@ -16,7 +16,7 @@ public:
         AppInstalledSuccessfully = 0x52,
         DownloadComplete = 0x51,
         Custom = 0x100, // One single line of text (desc)
-        UserDefined = 0x102, // type used by sceNotificationUtilSendNotification
+        UserDefined = 0x102, // type used by sceNotificationUtilSendNotification (same as Custom??)
     };
 
     enum Action
