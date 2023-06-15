@@ -146,7 +146,7 @@ asset_found:
     
     prev_time = LocalFile::Open(VHBD_TIME_PATH, SCE_O_RDONLY, 0, &ret);
     
-    if(ret != 0)
+    if(ret != SCE_PAF_OK)
         goto redownload;
 
     sce_paf_memset(buff, 0, sizeof(buff));
@@ -166,8 +166,9 @@ redownload:
     prev_time = LocalFile::Open(VHBD_TIME_PATH, SCE_O_WRONLY | SCE_O_CREAT | SCE_O_TRUNC, 0666, &ret);
         
     print("[VHBD::DownloadIndex] Opened %s for writing -> 0x%X\n", VHBD_TIME_PATH, ret);
+    if(ret == SCE_PAF_OK)
+        prev_time.get()->Write(update_time.c_str(), update_time.length() + 1);
     
-    prev_time.get()->Write(update_time.c_str(), update_time.length() + 1);
     return ret;
 }
 
