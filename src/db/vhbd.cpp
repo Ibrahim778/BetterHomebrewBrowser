@@ -93,7 +93,7 @@ int VHBD::DownloadIndex(bool forceRefresh)
     auto diagText = sce::CommonGuiDialog::Dialog::GetWidget(dialog::Current(), sce::CommonGuiDialog::REGISTER_ID_TEXT_MESSAGE_1); 
     
     diagText->SetString(g_appPlugin->GetString(msg_check_update));
-
+    // Query github API to check for new release with 'latest' tag
     DynamicJsonDocument jdoc(SCE_KERNEL_32KiB);
     
     int ret = 0;
@@ -141,7 +141,7 @@ int VHBD::DownloadIndex(bool forceRefresh)
 asset_found:
     common::SharedPtr<LocalFile> prev_time;
     
-    if(!LocalFile::Exists(VHBD_SAVE_PATH) | !LocalFile::Exists(VHBD_TIME_PATH) | forceRefresh)
+    if(!LocalFile::Exists(VHBD_SAVE_PATH) || !LocalFile::Exists(VHBD_TIME_PATH) || forceRefresh)
         goto redownload;
     
     prev_time = LocalFile::Open(VHBD_TIME_PATH, SCE_O_RDONLY, 0, &ret);
@@ -164,12 +164,9 @@ redownload:
     prev_time.reset(); 
     
     prev_time = LocalFile::Open(VHBD_TIME_PATH, SCE_O_WRONLY | SCE_O_CREAT | SCE_O_TRUNC, 0666, &ret);
-#ifdef _DEBUG
-    if(ret < 0)
-    {
-        print("[Warn VHBD::DownloadIndex] failed to open %s for writing -> 0x%X!\n", VHBD_TIME_PATH, ret);
-    }
-#endif // _DEBUG
+        
+    print("[VHBD::DownloadIndex] Opened %s for writing -> 0x%X\n", VHBD_TIME_PATH, ret);
+    
     prev_time.get()->Write(update_time.c_str(), update_time.length() + 1);
     return ret;
 }
