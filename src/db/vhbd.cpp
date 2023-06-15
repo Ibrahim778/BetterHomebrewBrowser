@@ -69,6 +69,23 @@ VHBD::~VHBD()
     
 }
 
+int VHBD::GetSCECompatibleURL(std::vector<paf::string> &list, paf::string &out)
+{
+    for(auto &url : list)
+    {
+        paf::string httpURL;
+        Utils::HttpsToHttp(url.c_str(), httpURL);
+    
+        if(Utils::IsValidURLSCE(httpURL.c_str()))
+        {
+            out = url;
+            return SCE_PAF_OK;
+        }
+    }
+
+    return -1;
+}
+
 int VHBD::DownloadIndex(bool forceRefresh)
 {
     print("Checking for updates...\n");
@@ -159,12 +176,12 @@ redownload:
 
 int VHBD::GetDownloadURL(Source::Entry& entry, paf::string& out)
 {
-    return 0;
+    return GetSCECompatibleURL(entry.downloadURL, out);
 }
 
 int VHBD::GetDataURL(Source::Entry& entry, paf::string& out)
 {
-    return 0;
+    return GetSCECompatibleURL(entry.dataURL, out);
 }
 
 int VHBD::GetDescription(Source::Entry& entry, paf::wstring& out)
@@ -221,6 +238,18 @@ int VHBD::Parse()
                 entry.iconURL.push_back(homebrew[i]["icons"][x].as<const char *>());
 
             entry.iconPath = common::FormatString("%s%x.png", iconFolderPath.c_str(), entry.hash);
+        }
+
+        if(homebrew[i]["downloads"] != nullptr)
+        {
+            for(unsigned int x = 0; x < homebrew[i]["downloads"].size(); x++)
+                entry.downloadURL.push_back(homebrew[i]["downloads"][x].as<const char *>());
+        }
+
+        if(homebrew[i]["data"] != nullptr)
+        {
+            for(unsigned int x = 0; x < homebrew[i]["data"].size(); x++)
+                entry.dataURL.push_back(homebrew[i]["data"][x].as<const char *>());
         }
 
         common::Utf8ToUtf16(homebrew[i]["title_id"].as<const char *>(), &entry.titleID);

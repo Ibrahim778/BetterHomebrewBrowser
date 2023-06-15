@@ -17,6 +17,9 @@ public:
     int GetDownloadURL(Entry &entry, paf::string& out);
     int GetDataURL(Entry &entry, paf::string& out);
 
+private:
+    static int GetSCECompatibleURL(std::vector<paf::string> &list, paf::string &out);
+
 };
 
 #endif
