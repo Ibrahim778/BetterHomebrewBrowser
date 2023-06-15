@@ -55,50 +55,46 @@ public:
 
         bool Add(Source::Entry *item, bool allowReplace = false, int *res = nullptr);
         
-        bool AddAsync(Source::Entry *item, paf::ui::Widget *target, bool allowReplace = false);
+        bool AddAsync(Source::Entry *item, paf::ui::Widget *workList, uint32_t targetHash, bool allowReplace = false);
 
-        class AddListButtonJob : public paf::job::JobItem
+        class ListIconJob : public paf::job::JobItem
         {
         public:
 
-            static void TargetDeleteEventCB(int eventID, paf::ui::Handler *self, paf::ui::Event *event, void *pUserData)
+            ListIconJob(Source::Entry *entry, paf::ui::Widget *targetList, uint32_t targetName):
+                paf::job::JobItem::JobItem("AppPage::TexPool::ListIconJob"),
+                workEntry(entry),
+                workList(targetList),
+                targetHash(targetName)
             {
-                ((AppBrowser::TexPool::AddListButtonJob *)pUserData)->targetDead = true;
+
             }
 
-            AddListButtonJob(Source::Entry *entry, paf::ui::Widget *target):paf::job::JobItem::JobItem("AppPage::TexPool::AddListButtonJob"),workEntry(entry),workWidget(target)
-            {
-                targetDead = false; // Cant use IsCanceled because it causes some crash
-                target->AddEventCallback(paf::ui::Widget::CB_STATE_TERM, TargetDeleteEventCB, this);
-            }
-
-            ~AddListButtonJob()
+            ~ListIconJob()
             {
 
             }
 
             void Run()
             {
-                if(targetDead)
+                if(workList->FindChild(targetHash) == nullptr)
                     return;
 
                 bool result = workObj->Add(workEntry);
-                if(workObj && workObj->cbPlugin && !targetDead)
+                if(workObj && workObj->cbPlugin && workList->FindChild(targetHash) != nullptr)
                 {
-                    AppBrowser::EntryFactory::TextureCB(result, workWidget, workEntry, workObj);
+                    AppBrowser::EntryFactory::TextureCB(result, workList->FindChild(targetHash), workEntry, workObj);
                 }
             }   
 
             void Finish()
             {
-                if(!targetDead)
-                    workWidget->DeleteEventCallback(paf::ui::Widget::CB_STATE_TERM, TargetDeleteEventCB, this);   
             }
 
             TexPool *workObj;
             Source::Entry *workEntry; 
-            paf::ui::Widget *workWidget;
-            bool targetDead;
+            paf::ui::Widget *workList;
+            uint32_t targetHash;
         };
     };
 

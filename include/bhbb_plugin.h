@@ -62,7 +62,7 @@
 #define screenshot_button 0x141B53FF
 #define apps_page_list_template 0xF5D46175
 #define list_plane 0xD1A3FF38
-#define list_view 0x90531F74
+#define app_list_view 0x4BB109A1
 #define app_button_list_item_template 0x4BC48D01
 #define app_button_list_item 0xE08D4E4C
 #define app_button 0x0FF6B41A

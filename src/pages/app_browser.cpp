@@ -34,7 +34,7 @@ AppBrowser::AppBrowser(Source *_source):
     busyIndicator = (ui::BusyIndicator *)root->FindChild(busy);
     optionsButton = (ui::CornerButton *)root->FindChild(options_button);
     refreshButton = (ui::Button *)root->FindChild(refresh_button);
-    listView = (ui::ListView *)root->FindChild(list_view);
+    listView = (ui::ListView *)root->FindChild(app_list_view);
     searchEnterButton = (ui::Button *)root->FindChild(search_enter_button);
     searchButton = (ui::Button *)root->FindChild(search_button);
     searchBackButton = (ui::Button *)root->FindChild(search_back_button);
@@ -416,19 +416,28 @@ void AppBrowser::EntryFactory::TextureCB(bool success, paf::ui::Widget *target, 
         auto brokenSurf = g_appPlugin->GetTexture(tex_missing_icon);
         workPool->Add(target->GetName().GetIDHash(), brokenSurf, true);
     }
+
+    // RMutex::main_thread_mutex.Lock();
     
     plane->SetColor(1,1,1,1);
     plane->SetTexture(workPool->Get(target->GetName().GetIDHash()));
     plane->Show(transition::Type_Fadein2);
+
+    // RMutex::main_thread_mutex.Unlock();
 }
 
 void AppBrowser::EntryFactory::TexPoolAddCbFun(int id, paf::ui::Handler *self, paf::ui::Event *event, void *pUserData)
 {
     auto workPool = (TexPool *)pUserData;
     auto targetWidget = (ui::Widget *)self;
+    auto icon = (ui::Plane *)targetWidget->FindChild(plane_list_item_icon);
 
     if(event->GetValue(0) == targetWidget->GetName().GetIDHash())
-        targetWidget->SetTexture(workPool->Get(targetWidget->GetName().GetIDHash()));
+    {
+        icon->SetColor(1,1,1,1);
+        icon->SetTexture(workPool->Get(targetWidget->GetName().GetIDHash()));
+        icon->Show(transition::Type_Fadein2);
+    }
 }
 
 ui::ListItem *AppBrowser::EntryFactory::Create(ui::listview::ItemFactory::CreateParam& param)
@@ -447,7 +456,7 @@ ui::ListItem *AppBrowser::EntryFactory::Create(ui::listview::ItemFactory::Create
 
     ui::Widget *targetRoot = param.parent;
     int category = workPage->GetCategory();
-    
+
     g_appPlugin->TemplateOpen(targetRoot, app_button_list_item_template, tOpen);
 
     item = (ui::ListItem *)targetRoot->GetChild(targetRoot->GetChildrenNum() - 1);
@@ -489,7 +498,7 @@ ui::ListItem *AppBrowser::EntryFactory::Create(ui::listview::ItemFactory::Create
         iconPlane->Show(transition::Type_Fadein2);
     }
     else
-        workPage->texPool->AddAsync(workItem, button);
+        workPage->texPool->AddAsync(workItem, param.list_view, button->GetName().GetIDHash());
     
     return item;
 }
@@ -678,7 +687,7 @@ bool AppBrowser::TexPool::Add(Source::Entry *workItem, bool allowReplace, int *r
     return AddLocal(workItem->hash, workItem->iconPath.c_str());
 }
 
-bool AppBrowser::TexPool::AddAsync(Source::Entry *workItem, ui::Widget *workWidget, bool allowReplace)
+bool AppBrowser::TexPool::AddAsync(Source::Entry *workItem, ui::Widget *workList, uint32_t targetHash, bool allowReplace)
 {
     if (!alive)
 	{
@@ -693,7 +702,7 @@ bool AppBrowser::TexPool::AddAsync(Source::Entry *workItem, ui::Widget *workWidg
 		}
 	}
     
-    AddListButtonJob *job = new AddListButtonJob(workItem, workWidget);
+    ListIconJob *job = new ListIconJob(workItem, workList, targetHash);
     job->workObj = this;
     common::SharedPtr<job::JobItem> itemParam(job);
     addAsyncQueue->Enqueue(itemParam);

@@ -198,7 +198,7 @@
         <template fast_open="1" id="apps_page_list_template">
             <plane style="_common_style_plane_transparent" id="list_plane">
                 <layout_hint size="960,504" pos="0, -40" />
-                <list_view style="list_style_list_view" id="list_view">
+                <list_view style="list_style_list_view" id="app_list_view">
                     <layout_hint align="0, 2" anchor="0, 2" size="960, 484" pos="0, 0"/>
                 </list_view>
             </plane>
