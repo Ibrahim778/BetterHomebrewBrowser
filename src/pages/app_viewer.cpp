@@ -215,6 +215,7 @@ void AppViewer::DownloadJob::Run()
     {
         print("[AppViewer::DownloadJob] Obtain URL FAIL! 0x%X\n", ret);
         dialog::Close();
+        dialog::OpenError(g_appPlugin, ret, g_appPlugin->GetString(msg_download_error));
         sceShellUtilUnlock(SCE_SHELL_UTIL_LOCK_TYPE_PS_BTN);
         return;
     }
