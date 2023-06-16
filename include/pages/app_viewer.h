@@ -10,53 +10,26 @@
 class AppViewer : public page::Base
 {
 public:
-    class AsyncDescriptionLoader // Could probably do this a little cleaner now but oh well
+    enum
+    {
+        DescriptionEvent = (paf::ui::Handler::CB_STATE + 0x45000),
+    };
+
+    class AsyncDescriptionJob : public paf::job::JobItem
     {
     public:
-        AsyncDescriptionLoader(Source::Entry& entry, paf::ui::Widget *target, bool autoLoad = true);
-        ~AsyncDescriptionLoader();
+        using paf::job::JobItem::JobItem;
 
-        void Load();
-        void Abort();
-    
-    private:
-        class TargetDeleteEventCallback : public paf::ui::EventListener
-        {
-        public:
-            TargetDeleteEventCallback(AsyncDescriptionLoader *parent)
-            {
-                workObj = parent;
-            }
+        AsyncDescriptionJob(Source::Entry& e, AppViewer *_workPage):JobItem("AsyncDescriptionJob"),entry(e),workPage(_workPage) {}
+        ~AsyncDescriptionJob() {}
+        
+        void Run();
+        void Finish(){}
 
-            virtual ~TargetDeleteEventCallback()
-            {
-                if(workObj)
-                    delete workObj;
-            }
-
-			int32_t Do(int32_t type, paf::ui::Handler *self, paf::ui::Event *e){}
-
-            AsyncDescriptionLoader *workObj;
-        };
-
-        class Job : public paf::job::JobItem
-        {
-        public:
-            using paf::job::JobItem::JobItem;
-
-            Job(Source::Entry& e):JobItem("AsyncDescriptionLoader"),entry(e) {}
-            ~Job() {}
-            
-            void Run();
-            void Finish();
-
-            AsyncDescriptionLoader *workObj;
-            paf::ui::Widget *target;
-            Source::Entry& entry;
-        };
-
-        Job *item;
+        Source::Entry& entry;
+        AppViewer *workPage;
     };
+
 
     class IconDownloadJob : public paf::job::JobItem
     {
@@ -89,11 +62,15 @@ public:
 
     static void ScreenshotCB(int id, paf::ui::Handler *self, paf::ui::Event *event, void *pUserData);
     static void IconButtonCB(int id, paf::ui::Handler *self, paf::ui::Event *event, void *pUserData);
-    static void DownloadButtonCB(int id, ui::Handler *self, ui::Event *event, void *pUserData);
+    static void DownloadButtonCB(int id, paf::ui::Handler *self, paf::ui::Event *event, void *pUserData);
+    static void DescriptionTextCB(int id, paf::ui::Handler *self, paf::ui::Event *event, void *pUserData);
 
     AppViewer(Source::Entry& entry, AppBrowser::TexPool *pTexPool);
     ~AppViewer();
 
+    ui::Text *descText;
+    ui::BusyIndicator *busyIndicator;
+    
 protected:
     Source::Entry &app;
     AppBrowser::TexPool *pool;

@@ -45,6 +45,7 @@ add_executable(${PROJECT_NAME}
     src/paf_runtime.cpp
     src/settings.cpp
     src/downloader.cpp
+    src/fread_line.c
 
     src/pages/page.cpp
     src/pages/app_viewer.cpp
@@ -70,6 +71,7 @@ add_executable(${PROJECT_NAME}
     include/event.h
     include/settings.h
     include/downloader.h
+    include/csv.h
 
     include/pages/page.h
     include/pages/app_browser.h

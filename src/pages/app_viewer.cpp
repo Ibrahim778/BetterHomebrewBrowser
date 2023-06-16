@@ -29,6 +29,9 @@ AppViewer::AppViewer(Source::Entry& entry, AppBrowser::TexPool *pTexPool):
     if(!isMainThread)
         RMutex::main_thread_mutex.Lock();
 
+    busyIndicator = (ui::BusyIndicator *)root->FindChild(description_busy);
+    descText = (ui::Text *)root->FindChild(info_description_text);
+
     root->FindChild(info_title_text)->SetString(app.title);
     root->FindChild(info_author_text)->SetString(app.author);
 
@@ -77,7 +80,12 @@ AppViewer::AppViewer(Source::Entry& entry, AppBrowser::TexPool *pTexPool):
     if(!isMainThread)
         RMutex::main_thread_mutex.Unlock();
 
-    new AsyncDescriptionLoader(app, root->FindChild(info_description_text));
+    busyIndicator->Start();
+
+    descText->AddEventCallback(DescriptionEvent, DescriptionTextCB, this);
+
+    auto itemParam = SharedPtr<job::JobItem>(new AsyncDescriptionJob(app, this));
+    job::JobQueue::default_queue->Enqueue(itemParam);
 }   
 
 AppViewer::~AppViewer()
@@ -85,48 +93,13 @@ AppViewer::~AppViewer()
 
 }
 
-AppViewer::AsyncDescriptionLoader::AsyncDescriptionLoader(Source::Entry& entry, paf::ui::Widget *target, bool autoLoad)
+void AppViewer::DescriptionTextCB(int id, ui::Handler *self, ui::Event *event, void *pUserData)
 {
-    item = new Job(entry);
-    item->target = target;
-    item->workObj = this;
-
-	target->AddEventListener(0x10000000, new TargetDeleteEventCallback(this));
-
-    if(autoLoad)
-        Load();
-}
-
-AppViewer::AsyncDescriptionLoader::~AsyncDescriptionLoader()
-{
-    Abort();
-}
-
-void AppViewer::AsyncDescriptionLoader::Load()
-{
-    SharedPtr<job::JobItem> itemParam(item);
-    job::JobQueue::default_queue->Enqueue(itemParam);
-}
-
-void AppViewer::AsyncDescriptionLoader::Abort()
-{
-	if (item)
-	{
-		item->workObj = nullptr;
-		item->Cancel();
-		item = nullptr;
-	}
-}
-
-void AppViewer::AsyncDescriptionLoader::Job::Run()
-{
-    int res = 0;
+    auto target = (ui::Widget *)self;
     
-    paf::wstring desc;
-    res = entry.pSource->GetDescription(entry, desc);
-    
-    if(IsCanceled())
-        return;
+    int res = event->GetValue(0);
+    auto workPage = (AppViewer *)pUserData;
+    auto desc = (paf::wstring *)(intptr_t)event->GetValue(1);
 
     if(res < 0)
     {
@@ -134,18 +107,23 @@ void AppViewer::AsyncDescriptionLoader::Job::Run()
         target->SetString(g_appPlugin->GetString(msg_desc_error));
     }
     else 
-    {
-        if(entry.screenshotURL.size() == 0)
-            desc += L"\n\n\n";
-            
-        target->SetString(desc);
-    }
+        target->SetString(*desc);
+    
+
+    workPage->busyIndicator->Stop();
 }
 
-void AppViewer::AsyncDescriptionLoader::Job::Finish()
+void AppViewer::AsyncDescriptionJob::Run()
 {
-    if(workObj)
-        workObj->item = nullptr;
+    int res = 0;
+    paf::wstring desc;
+
+    res = entry.pSource->GetDescription(entry, desc);
+    if(entry.screenshotURL.size() == 0)
+        desc += L"\n\n\n";
+        
+    event::BroadcastGlobalEvent(g_appPlugin, AppViewer::DescriptionEvent, res, (uintptr_t)&desc);
+    thread::Sleep(100); // This is enough to keep this stack frame from dying so that the processing in the event can happen
 }
 
 void AppViewer::ScreenshotCB(int id, paf::ui::Handler *self, paf::ui::Event *event, void *pUserData)
