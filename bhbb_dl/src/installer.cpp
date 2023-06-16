@@ -240,7 +240,7 @@ int ProcessExport(::uint32_t id, const char *name, const char *path, const char 
     // Might as well make our own title and icon because we can and it looks nicer.
 
     auto decideDiagPlane = sce::CommonGuiDialog::Dialog::GetWidget(dialog::Current(), sce::CommonGuiDialog::REGISTER_ID_PLANE_BODY);
-
+    thread::Sleep(100);
     auto decideDiagIcon = indicator_plugin->CreateWidget(decideDiagPlane, "plane", "plane_diag_icon", "style_position");
     decideDiagIcon->SetSize(math::v4(65,65));
     if(iconTex.get() != nullptr)
@@ -252,10 +252,17 @@ int ProcessExport(::uint32_t id, const char *name, const char *path, const char 
     decideDiagTitle->SetPos(math::v4(0, 150));
     decideDiagTitle->SetString(wtitle);
 
+    decideDiagIcon->Show(common::transition::Type_Fadein1);
+    decideDiagTitle->Show(common::transition::Type_Fadein1);
+
     dialog::WaitEnd();
 
     sceShellUtilUnlock(SCE_SHELL_UTIL_LOCK_TYPE_QUICK_MENU); 
     sceShellUtilUnlock((SceShellUtilLockType)0x801);
+
+    decideDiagIcon->Hide(common::transition::Type_Fadein1);
+    decideDiagTitle->Hide(common::transition::Type_Fadein1);
+    thread::Sleep(200); // Let dialog close animation complete
 
     if(result == dialog::ButtonCode_Button1) // Save only
     {
