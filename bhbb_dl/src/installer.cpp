@@ -3,12 +3,12 @@
 #include <common_gui_dialog.h>
 #include <shellsvc.h>
 
-#include "zip.h"
 #include "installer.h"
 #include "print.h"
 #include "promote.h"
 #include "notice.h"
 #include "dialog.h"
+#include "compressed_file.h"
 
 using namespace paf;
 
@@ -17,23 +17,26 @@ using namespace paf;
 
 #define ERROR_LOW_SPACE -0x50000001
 
-void AppExtractCB(uint64_t curr, uint64_t total, void *pUserData)
+void AppExtractCB(const char *fname, uint64_t curr, uint64_t total, void *pUserData)
 {
     auto progressBar = (ui::ProgressBar *)pUserData;
 
     float prog = ((float)(curr + 1) / (float)total) * 95.0f;
+    
     progressBar->SetValueAsync(prog, true);
 }
 
-void ZipExtractCB(uint64_t curr, uint64_t total, void *pUserData)
+void ZipExtractCB(const char *fname, uint64_t curr, uint64_t total, void *pUserData)
 {
     auto progressBar = (ui::ProgressBar *)pUserData;
 
     float prog = ((float)(curr + 1) / (float)total) * 100.0f;
+    print("%f\n", prog);
     progressBar->SetValueAsync(prog, true);
+
 }
 
-int install(Zipfile& zfile, ui::ProgressBar *progressbar, char *out_titleID)
+int InstallVPK(paf::common::SharedPtr<CompressedFile> zfile, ui::ProgressBar *progressbar, char *out_titleID)
 {
     int res = SCE_OK;
 
@@ -48,10 +51,11 @@ int install(Zipfile& zfile, ui::ProgressBar *progressbar, char *out_titleID)
     Dir::RemoveRecursive("ur0:temp/promote");
     Dir::RemoveRecursive("ur0:temp/game");
 
-    res = zfile.Unzip(EXTRACT_PATH, AppExtractCB, progressbar);
+    res = zfile->Decompress(EXTRACT_PATH, AppExtractCB, progressbar);
+    
     if(res < 0)
     {
-        print("[install::Unzip()] res -> 0x%X (%d)\n", res, res);
+        print("[InstallVPK::Decompress()] res -> 0x%X (%d)\n", res, res);
         goto EXIT;
     }
     
@@ -307,7 +311,7 @@ int ProcessExport(::uint32_t id, const char *name, const char *path, const char 
     Plugin::TemplateOpenParam tParam;
     bhbb_dl_plugin->TemplateOpen(page, 0x9ac337e5, tParam);
 
-    auto diagBase = page->FindChild("dialog_base");
+    auto diagBase = (ui::Dialog *)page->FindChild("dialog_base");
 
     bhbb_dl_plugin->TemplateOpen(diagBase, 0x388d5cd6, tParam);
 
@@ -333,9 +337,9 @@ int ProcessExport(::uint32_t id, const char *name, const char *path, const char 
     
     sceAppMgrGetDevInfo("ux0:", &max_size, &free_space);
 
-    Zipfile zip(path);
-    zip.CalculateUncompressedSize();
-    auto requiredSize = zip.GetUncompressedSize();
+    auto cfile = CompressedFile::Create(path);
+    cfile->CalculateUncompressedSize();
+    auto requiredSize = cfile->GetUncompressedSize();
 
     if(free_space <= requiredSize)
     {
@@ -345,13 +349,14 @@ int ProcessExport(::uint32_t id, const char *name, const char *path, const char 
 
     if(param->type == BGDLTarget_App)
     {
-        ret = install(zip, diagProg, installedTitleID); 
-        print("install() -> ret = 0x%X (%d)\n", ret, ret);
+        ret = InstallVPK(cfile, diagProg, installedTitleID);    
     }
-    else if(param->type == BGDLTarget_Zip)
+    else if(param->type == BGDLTarget_CompressedFile)
     {
-        ret = zip.Unzip(param->path, ZipExtractCB, diagProg);
+        ret = cfile->Decompress(param->path, ZipExtractCB, diagProg);
     }
+
+    print("Install Complete -> ret = 0x%X (%d)\n", ret, ret);
 
 END:
     diagBase->Hide(common::transition::Type_Popup1);
@@ -416,9 +421,9 @@ END:
             notifParam.action_type = SceLsdbNotificationParam::AppHighlight;
             notifParam.icon_path.clear();
         }
-        else if(param->type == BGDLTarget_Zip)
+        else if(param->type == BGDLTarget_CompressedFile)
         {
-            notifParam.msg_type = SceLsdbNotificationParam::DownloadComplete;
+            notifParam.msg_type = SceLsdbNotificationParam::DownloadComplete; // Send download complete notif
             notifParam.exec_titleid = "VITASHELL";
             notifParam.action_type = SceLsdbNotificationParam::AppOpen;
             notifParam.exec_mode = 0x20000;

@@ -3,33 +3,27 @@
 
 #include <paf.h>
 #include <kernel.h>
+
+#include "compressed_file.h"
 #include "minizip/unzip.h"
 
-class Zipfile 
+class Zipfile : public CompressedFile
 {
 public:
-    typedef void (*ProgressCallback)(uint64_t current, uint64_t total, void *pUserData);
+    enum 
+    {
+        ZIP_CUNK_SIZE = SCE_KERNEL_128KiB
+    };
 
 	Zipfile(const paf::string filePath);
 	~Zipfile();
 
-	int Unzip(const paf::string outPath, ProgressCallback progressCB, void *progressData);
-	int CalculateUncompressedSize();
-    int GetLastError()
-    {
-        return error;
-    }
-    size_t GetUncompressedSize()
-    {
-        return uncompressedSize;
-    }
-
+	virtual int Decompress(const paf::string outPath, ProgressCallback progressCB, void *progressData) override;
+	virtual int CalculateUncompressedSize() override;
+    
 private:
 	unzFile handle;
-	size_t uncompressedSize;
 	unz_global_info globalInfo;
-
-    int error;
     char *readBuff;
 };
 

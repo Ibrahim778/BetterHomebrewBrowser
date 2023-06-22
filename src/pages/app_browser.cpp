@@ -404,7 +404,7 @@ void AppBrowser::EntryCB(int eventID, paf::ui::Handler *widget, paf::ui::Event *
     auto workPage = (AppBrowser *)pUserData;
     auto workWidget = (ui::Widget *)widget;
     
-    workPage->searchBox->Hide();
+    workPage->searchBox->EndEdit();
     new AppViewer(workPage->appList.Get(workWidget->GetName().GetIDHash()), workPage->texPool);
 }
 
@@ -573,7 +573,7 @@ void AppBrowser::ParseThread::EntryFunction()
 
     workPage->targetList = &workPage->appList;
 
-    workPage->Sort(workPage->source->sortModes.begin()->hash);
+    workPage->Sort(workPage->source->sortModes.begin()->hash); // Sort with the first sort mode in list (it is the default)
     workPage->targetList->Categorise(workPage->source);
 
     RMutex::main_thread_mutex.Lock();

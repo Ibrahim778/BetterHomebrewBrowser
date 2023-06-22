@@ -204,7 +204,7 @@ void AppViewer::DownloadJob::Run()
 
     case DownloadType_Data:
         ret = workPage->app.pSource->GetDataURL(workPage->app, url);
-        dlParam.type = BGDLTarget_Zip;
+        dlParam.type = BGDLTarget_CompressedFile;
         sce_paf_strncpy(dlParam.path, workPage->app.dataPath.c_str(), sizeof(dlParam.path));
         sce_paf_strncpy(dlParam.data_icon, workPage->app.iconPath.c_str(), sizeof(dlParam.data_icon));
         appName.SetFormattedString(g_appPlugin->GetString(data_dl_name), workPage->app.title.c_str());

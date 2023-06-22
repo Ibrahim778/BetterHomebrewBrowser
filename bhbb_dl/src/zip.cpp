@@ -8,7 +8,6 @@
 
 #define dir_delimter '/'
 #define MAX_FILENAME 512
-#define READ_SIZE SCE_KERNEL_4KiB * 2
 
 Zipfile::Zipfile(const paf::string zip_path) 
 {
@@ -27,7 +26,7 @@ Zipfile::Zipfile(const paf::string zip_path)
         return;
     }
 
-    readBuff = (char *)sce_paf_malloc(READ_SIZE);
+    readBuff = (char *)sce_paf_malloc(ZIP_CUNK_SIZE);
 }
 
 Zipfile::~Zipfile() 
@@ -38,7 +37,7 @@ Zipfile::~Zipfile()
         sce_paf_free(readBuff);
 }
 
-int Zipfile::Unzip(const paf::string outPath, ProgressCallback progressCallback, void *progressUserData) 
+int Zipfile::Decompress(const paf::string outPath, ProgressCallback progressCallback, void *progressUserData) 
 {
     if(!handle && error != UNZ_OK)
         return error;
@@ -104,7 +103,7 @@ int Zipfile::Unzip(const paf::string outPath, ProgressCallback progressCallback,
             
             do
             {
-                error = unzReadCurrentFile(handle, readBuff, READ_SIZE);
+                error = unzReadCurrentFile(handle, readBuff, ZIP_CUNK_SIZE);
                 if(error < 0)
                 {
                     print("[Error] failed to read zfile %s %d\n", fileName, error);
@@ -116,7 +115,8 @@ int Zipfile::Unzip(const paf::string outPath, ProgressCallback progressCallback,
             } while(error > 0);
             
             print("Extracted: %s -> %s\n", fileName, fullPath.c_str());
-            progressCallback(i, globalInfo.number_entry, progressUserData);
+            if(progressCallback)
+                progressCallback(fileName, i, globalInfo.number_entry, progressUserData);
 
             unzCloseCurrentFile(handle);
 

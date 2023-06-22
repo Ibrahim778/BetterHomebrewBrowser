@@ -38,8 +38,10 @@ add_library(${PROJECT_NAME} MODULE
     include/offsets.h
     include/promote.h
     include/sha1.h
+    include/compressed_file.h
     include/zip.h
     include/installer.h
+    include/tgz.h
 
     src/main.cpp
     src/offsets.c
@@ -47,6 +49,8 @@ add_library(${PROJECT_NAME} MODULE
     src/promote.c
     src/sha1.c
     src/installer.cpp
+    src/compressed_file.cpp
+    src/tgz.cpp
 
     # minizip
     src/minizip/unzip.c
