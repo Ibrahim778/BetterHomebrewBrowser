@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="utf-8"?>
+<stringset>
+    <string src="Télécharger" id="download_button_text"/>
+    <string src="Fichiers additionnels" id="data_button_text"/>
+
+    <string src="Tout" id="db_category_all" />
+    <string src="Utilitaires" id="db_category_util" />
+    <string src="Émulateurs" id="db_category_emu" />
+    <string src="Portages" id="db_category_port" />
+    <string src="Jeux" id="db_category_game" />
+    <string src="Applications" id="db_category_app" />
+  
+    <string src="Utilitaire" id="db_category_single_util" />
+    <string src="Emulateur" id="db_category_single_emu" />
+    <string src="Portage" id="db_category_single_port" />
+    <string src="Jeu" id="db_category_single_game" />
+    <string src="Application" id="db_category_single_app" />
+    <string src="Inconnu" id="db_category_unk" />
+    
+    <string src="Une erreur SSL est survenue.&#xA;&#xA;Vérifiez que iTLS-Enso est bien installé." id="msg_error_ssl"/>
+    <string src="Erreur réseau" id="msg_error_net"/>
+    <string src="iTLS-Enso n'est pas en cours de fonctionnement&#xA;Vérifiez que iTLS-Enso est installé correctement avant de lancer cette application." id="msg_no_itls"/>
+    <string src="Une erreur réseau est survenue.&#xA;Vérifiez que votre appareil est bien connecté à Internet et réessayez." id="msg_net_fix" />
+    
+    <string src="Une erreur est survenue lors du chargement de l'entrée." id="msg_entry_error" />
+    <string src="Une erreur est survenue lors du chargement de la capture d'écran." id="msg_screenshot_error"/>
+    <string src="Une erreur est survenue lors du chargement de l'icône." id="msg_icon_error"/>
+    <string src="Une erreur est survenue lors du chargement de la description." id="msg_desc_error"/>
+    <string src="Une erreur est survenue lors du démarrage du téléchargement." id="msg_download_error"/>
+    <string src="Échec de la connexion au serveur.&#xA;Veuillez réessayer ultérieurement." id="msg_error_index"/>
+    <string src="Une erreur est survenue lors de l'analyse de l'index." id="msg_error_parse"/>
+    <string src="Une erreur est survenue. Veuillez réessayer ultérieurement." id="msg_wait_fix" />
+    <string src="Aucune source valide n'est disponible pour cette icône." id="msg_icon_no_source" />
+    
+    <string src="Options" id="msg_options"/>
+    <string src="Source" id="msg_settings_source"/>
+    <string src="Informations de version" id="msg_settings_verinfo"/>
+    
+    <string src="CBPS DB" id="db_name_0"/>    
+    <string src="Vita DB" id="db_name_1"/>
+    <string src="VHBD" id="db_name_2"/>
+
+    <string src="Toujours" id="msg_settings_downloadInterval_always"/>
+    <string src="Télécharger après (heures)" id="msg_settings_downloadInterval"/>
+    
+    <string src="Recherche de mises à jour..." id="msg_check_update" />
+    <string src="Veuillez patienter..." id="msg_wait"/>
+    <string src="Téléchargment de l'icône..." id="msg_downloading_icon"/>
+
+    <string src="Aucune description disponible" id="msg_no_desc"/>
+    <string src="Le téléchargement a été mis dans la file d'attente de l'écran d'accueil." id="msg_download_queued"/>
+    <string src="Aucune source valide disponible pour le téléchargement." id="msg_src_err"/>
+    <string src="%s icône(s)" id="icons_dl_name"/>
+    <string src="Fichiers additionnels pour %s" id="data_dl_name"/>
+    <string src="  %d éléments" id="msg_list_header"/>
+    <string src="Trier par" id="msg_sort_header"/>
+    <string src="Voulez-vous retélécharger cette icône ?" id="msg_icon_redownload"/>
+
+    <string src="Alphabétique (A à Z)" id="msg_sort_alpha"/>
+    <string src="Alphabétique (Z à A)" id="msg_sort_alpharev"/>
+    <string src="Plus récents d'abord" id="msg_sort_mostrecent"/>
+    <string src="Plus anciens d'abord" id="msg_sort_oldfirst"/>
+    <string src="Plus téléchargés d'abord" id="msg_sort_mostdownloaded"/>
+    <string src="Moins téléchargés d'abord" id="msg_sort_leastdownloaded"/>
+
+</stringset>
