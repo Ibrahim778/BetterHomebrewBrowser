@@ -16,20 +16,20 @@
     <string src="App" id="db_category_single_app" />
     <string src="Unknown" id="db_category_unk" />
     
-    <string src="SSL Error Occurred&#xA;&#xA;Please ensure you have iTLS-Enso installed" id="msg_error_ssl"/>
-    <string src="Network Connection Error" id="msg_error_net"/>
-    <string src="iTLS-Enso is not running&#xA;Ensure iTLS-Enso is installed correctly before running this application" id="msg_no_itls"/>
-    <string src="There was a network error&#xA;Ensure your device is connected to the internet and retry" id="msg_net_fix" />
+    <string src="SSL Error Occurred&#xA;&#xA;Please ensure iTLS-Enso is installed." id="msg_error_ssl"/>
+    <string src="A connection error occurred." id="msg_error_net"/>
+    <string src="iTLS-Enso is not running.&#xA;Ensure that iTLS-Enso is installed properly before running this application." id="msg_no_itls"/>
+    <string src="A network error occurred.&#xA;Ensure your device is connected to the internet and try again." id="msg_net_fix" />
     
-    <string src="Error loading entry" id="msg_entry_error" />
-    <string src="Error loading screenshot" id="msg_screenshot_error"/>
-    <string src="Error loading icon" id="msg_icon_error"/>
-    <string src="Error loading description" id="msg_desc_error"/>
-    <string src="Error starting download" id="msg_download_error"/>
-    <string src="Connection to the server failed&#xA;Please try again later" id="msg_error_index"/>
-    <string src="Error parsing index" id="msg_error_parse"/>
-    <string src="There was an error, please try again later" id="msg_wait_fix" />
-    <string src="No vaid sources available for this icon" id="msg_icon_no_source" />
+    <string src="Error loading entry." id="msg_entry_error" />
+    <string src="Error loading screenshot." id="msg_screenshot_error"/>
+    <string src="Error loading icon." id="msg_icon_error"/>
+    <string src="Error loading description." id="msg_desc_error"/>
+    <string src="Error starting download." id="msg_download_error"/>
+    <string src="Could not connect to the server.&#xA;Please try again later." id="msg_error_index"/>
+    <string src="Error parsing index." id="msg_error_parse"/>
+    <string src="An error occurred. Please try again later." id="msg_wait_fix" />
+    <string src="No valid sources available for this icon." id="msg_icon_no_source" />
     
     <string src="Options" id="msg_options"/>
     <string src="Source" id="msg_settings_source"/>
@@ -43,12 +43,12 @@
     <string src="Download After (Hours)" id="msg_settings_downloadInterval"/>
     
     <string src="Checking for updates..." id="msg_check_update" />
-    <string src="Please Wait..." id="msg_wait"/>
-    <string src="Downloading Icon..." id="msg_downloading_icon"/>
+    <string src="Please wait..." id="msg_wait"/>
+    <string src="Downloading icon..." id="msg_downloading_icon"/>
 
     <string src="No description available" id="msg_no_desc"/>
-    <string src="The download has been queued in the livearea" id="msg_download_queued"/>
-    <string src="Could not find a valid source for download" id="msg_src_err"/>
+    <string src="The download has been added to the Home Screen queue." id="msg_download_queued"/>
+    <string src="Could not find a valid source for download." id="msg_src_err"/>
     <string src="%s Icons" id="icons_dl_name"/>
     <string src="%s (Data)" id="data_dl_name"/>
     <string src="  %d Items" id="msg_list_header"/>
@@ -57,7 +57,7 @@
 
     <string src="Alphabetical" id="msg_sort_alpha"/>
     <string src="Alphabetical (Reversed)" id="msg_sort_alpharev"/>
-    <string src="Most Recent" id="msg_sort_mostrecent"/>
+    <string src="Newest First" id="msg_sort_mostrecent"/>
     <string src="Oldest First" id="msg_sort_oldfirst"/>
     <string src="Most Downloaded" id="msg_sort_mostdownloaded"/>
     <string src="Least Downloaded" id="msg_sort_leastdownloaded"/>
