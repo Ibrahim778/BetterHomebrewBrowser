@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="utf-8"?>
+<stringset>
+    <string src="Herunterladen" id="download_button_text"/>
+    <string src="Daten-Dateien" id="data_button_text"/>
+
+    <string src="Alles" id="db_category_all" />
+    <string src="Werkzeuge" id="db_category_util" />
+    <string src="Emulatoren" id="db_category_emu" />
+    <string src="Ports" id="db_category_port" />
+    <string src="Spiele" id="db_category_game" />
+    <string src="Apps" id="db_category_app" />
+    <string src="Werkzeug" id="db_category_single_util" />
+    <string src="Emulator" id="db_category_single_emu" />
+    <string src="Port" id="db_category_single_port" />
+    <string src="Spiel" id="db_category_single_game" />
+    <string src="App" id="db_category_single_app" />
+    <string src="Unbekannt" id="db_category_unk" />
+    
+    <string src="SSL Fehler ist aufgetreten&#xA;&#xA;Bitte stelle sicher, dass du iTLS-Enso installiert hast" id="msg_error_ssl"/>
+    <string src="Verbindungsfehler" id="msg_error_net"/>
+    <string src="iTLS-Enso läuft nicht&#xA;Bitte stelle sicher, dass du iTLS-Enso installiert hast" id="msg_no_itls"/>
+    <string src="Verbindungsfehler&#xA;Bitte stelle sicher, dass dein Gerät mit dem Internet verbunden ist und versuche es erneut" id="msg_net_fix" />
+    
+    <string src="Eintrag laden fehlgeschlagen" id="msg_entry_error" />
+    <string src="Screenshot laden fehlgeschlagen" id="msg_screenshot_error"/>
+    <string src="Icon laden fehlgeschlagen" id="msg_icon_error"/>
+    <string src="Beschreibung laden fehlgeschlagen" id="msg_desc_error"/>
+    <string src="Fehler beim Starten des Downloads" id="msg_download_error"/>
+    <string src="Verbindung zum Server fehlgeschlagen&#xA;Bitte versuche es später erneut" id="msg_error_index"/>
+    <string src="Icon-Ordner für diese Datenbank fehlen&#xA;Möchtest du die Sammlug herunterladen?&#xA;(Dies wird in der LiveArea in Warteschlange gesetzt und automatisch installiert)" id="msg_icon_pack_missing"/>
+    <string src="Parsen des Index fehlgeschlagen" id="msg_error_parse"/>
+    <string src="Ein Fehler ist aufgetreten, bitte versuche es später erneut" id="msg_wait_fix" />
+    <string src="Keine validen Quellen für dieses Icon verfügbar" id="msg_icon_no_source" />
+    
+    <string src="Optionen" id="msg_options"/>
+    <string src="Quellen" id="msg_settings_source"/>
+    <string src="Build Info" id="msg_settings_verinfo"/>
+    
+    <string src="CBPS DB" id="db_name_0"/>    
+    <string src="Vita DB" id="db_name_1"/>
+    <string src="VHBD" id="db_name_2"/>
+
+    <string src="Always" id="msg_settings_downloadInterval_always"/>
+    <string src="Download After (Hours)" id="msg_settings_downloadInterval"/>
+    
+    <string src="Checking for updates..." id="msg_check_update" />
+    <string src="Please Wait..." id="msg_wait"/>
+    <string src="Downloading Icon..." id="msg_downloading_icon"/>
+
+    <string src="No description available" id="msg_no_desc"/>
+    <string src="The download has been queued in the livearea" id="msg_download_queued"/>
+    <string src="Could not find a valid source for download" id="msg_src_err"/>
+    <string src="%s Icons" id="icons_dl_name"/>
+    <string src="%s (Data)" id="data_dl_name"/>
+    <string src="  %d Items" id="msg_list_header"/>
+    <string src="Sort by" id="msg_sort_header"/>
+    <string src="Do you want to redownload this icon?" id="msg_icon_redownload"/>
+
+    <string src="Alphabetical" id="msg_sort_alpha"/>
+    <string src="Alphabetical (Reversed)" id="msg_sort_alpharev"/>
+    <string src="Most Recent" id="msg_sort_mostrecent"/>
+    <string src="Oldest First" id="msg_sort_oldfirst"/>
+    <string src="Most Downloaded" id="msg_sort_mostdownloaded"/>
+    <string src="Least Downloaded" id="msg_sort_leastdownloaded"/>
+
+</stringset>
