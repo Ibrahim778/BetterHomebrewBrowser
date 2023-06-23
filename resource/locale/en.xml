@@ -27,7 +27,6 @@
     <string src="Error loading description" id="msg_desc_error"/>
     <string src="Error starting download" id="msg_download_error"/>
     <string src="Connection to the server failed&#xA;Please try again later" id="msg_error_index"/>
-    <string src="Icon directories for this database are missing&#xA;Would you like to download the pack?&#xA;(This will be queued in the livearea and installed automagically)" id="msg_icon_pack_missing"/>
     <string src="Error parsing index" id="msg_error_parse"/>
     <string src="There was an error, please try again later" id="msg_wait_fix" />
     <string src="No vaid sources available for this icon" id="msg_icon_no_source" />
