@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <stringset>
     <string src="Télécharger" id="download_button_text"/>
-    <string src="Fichiers additionnels" id="data_button_text"/>
+    <string src="Fichiers de données" id="data_button_text"/>
 
     <string src="Tout" id="db_category_all" />
     <string src="Utilitaires" id="db_category_util" />
@@ -51,7 +51,7 @@
     <string src="Le téléchargement a été mis dans la file d'attente de l'écran d'accueil." id="msg_download_queued"/>
     <string src="Aucune source valide disponible pour le téléchargement." id="msg_src_err"/>
     <string src="%s icône(s)" id="icons_dl_name"/>
-    <string src="Fichiers additionnels pour %s" id="data_dl_name"/>
+    <string src="Données pour %s" id="data_dl_name"/>
     <string src="  %d éléments" id="msg_list_header"/>
     <string src="Trier par" id="msg_sort_header"/>
     <string src="Voulez-vous retélécharger cette icône ?" id="msg_icon_redownload"/>
