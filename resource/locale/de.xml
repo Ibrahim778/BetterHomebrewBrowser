@@ -40,27 +40,27 @@
     <string src="Vita DB" id="db_name_1"/>
     <string src="VHBD" id="db_name_2"/>
 
-    <string src="Always" id="msg_settings_downloadInterval_always"/>
-    <string src="Download After (Hours)" id="msg_settings_downloadInterval"/>
+    <string src="Immer" id="msg_settings_downloadInterval_always"/>
+    <string src="Herunterladen nach (Stunden)" id="msg_settings_downloadInterval"/>
     
-    <string src="Checking for updates..." id="msg_check_update" />
-    <string src="Please Wait..." id="msg_wait"/>
-    <string src="Downloading Icon..." id="msg_downloading_icon"/>
+    <string src="Auf Updates überprüfen..." id="msg_check_update" />
+    <string src="Bitte warten..." id="msg_wait"/>
+    <string src="Lade Icon herunter..." id="msg_downloading_icon"/>
 
-    <string src="No description available" id="msg_no_desc"/>
-    <string src="The download has been queued in the livearea" id="msg_download_queued"/>
-    <string src="Could not find a valid source for download" id="msg_src_err"/>
+    <string src="Keine Beschreibung verfügbar" id="msg_no_desc"/>
+    <string src="Der Download wurde in der LiveArea in Warteschlange gesetzt" id="msg_download_queued"/>
+    <string src=""Keine valide Quelle für diesen Download gefunden" id="msg_src_err"/>
     <string src="%s Icons" id="icons_dl_name"/>
-    <string src="%s (Data)" id="data_dl_name"/>
-    <string src="  %d Items" id="msg_list_header"/>
-    <string src="Sort by" id="msg_sort_header"/>
-    <string src="Do you want to redownload this icon?" id="msg_icon_redownload"/>
+    <string src="%s (Daten-Dateien)" id="data_dl_name"/>
+    <string src="  %d Elemente" id="msg_list_header"/>
+    <string src="Ordne nach" id="msg_sort_header"/>
+    <string src="Möchtest du dieses Icon erneut herunterladen?" id="msg_icon_redownload"/>
 
-    <string src="Alphabetical" id="msg_sort_alpha"/>
-    <string src="Alphabetical (Reversed)" id="msg_sort_alpharev"/>
-    <string src="Most Recent" id="msg_sort_mostrecent"/>
-    <string src="Oldest First" id="msg_sort_oldfirst"/>
-    <string src="Most Downloaded" id="msg_sort_mostdownloaded"/>
-    <string src="Least Downloaded" id="msg_sort_leastdownloaded"/>
+    <string src="Alphabetisch" id="msg_sort_alpha"/>
+    <string src="Alphabetisch (Umgekehrt)" id="msg_sort_alpharev"/>
+    <string src="Neuste" id="msg_sort_mostrecent"/>
+    <string src="Älteste zu erst" id="msg_sort_oldfirst"/>
+    <string src="Am meisten heruntergeladen" id="msg_sort_mostdownloaded"/>
+    <string src="Am wenigsten heruntergeladen" id="msg_sort_leastdownloaded"/>
 
 </stringset>
