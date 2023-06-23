@@ -17,7 +17,7 @@
     <string src="Unknown" id="db_category_unk" />
     
     <string src="SSL Error Occurred&#xA;&#xA;Please ensure iTLS-Enso is installed." id="msg_error_ssl"/>
-    <string src="A network error occurred." id="msg_error_net"/>
+    <string src="A connection error occurred." id="msg_error_net"/>
     <string src="iTLS-Enso is not running.&#xA;Ensure that iTLS-Enso is installed properly before running this application." id="msg_no_itls"/>
     <string src="A network error occurred.&#xA;Ensure your device is connected to the internet and try again." id="msg_net_fix" />
     
