@@ -18,7 +18,7 @@
     <string src="Inconnu" id="db_category_unk" />
     
     <string src="Une erreur SSL est survenue.&#xA;&#xA;Vérifiez que iTLS-Enso est bien installé." id="msg_error_ssl"/>
-    <string src="Erreur réseau" id="msg_error_net"/>
+    <string src="Une erreur réseau est survenue." id="msg_error_net"/>
     <string src="iTLS-Enso n'est pas en cours de fonctionnement&#xA;Vérifiez que iTLS-Enso est installé correctement avant de lancer cette application." id="msg_no_itls"/>
     <string src="Une erreur réseau est survenue.&#xA;Vérifiez que votre appareil est bien connecté à Internet et réessayez." id="msg_net_fix" />
     
