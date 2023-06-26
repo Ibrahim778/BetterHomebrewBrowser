@@ -265,6 +265,9 @@ void AppBrowser::QuickCategoryCB(int eventID, paf::ui::Handler *widget, paf::ui:
     unsigned int detail = event->GetDetail();
     AppBrowser *workPage = (AppBrowser *)pUserData;
 
+    if((detail & 0x1000000) == 0) // Triggers (We only pass bumpers)
+        return;
+
     if(workPage->source->categories.size() == 1) // This source doesn't support categories
         return;
     
