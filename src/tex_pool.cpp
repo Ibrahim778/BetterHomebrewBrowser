@@ -9,7 +9,7 @@ TexPool::TexPool(Plugin *_cbPlugin)
 {
 	storMtx = new thread::RMutex("TexPool::StorMtx");
     auto jobParam = job::JobQueue::Option();
-    jobParam.workerNum = 5;
+    jobParam.workerNum = 3;
 	addAsyncQueue = new job::JobQueue("TexPool::AddAsyncJobQueue", &jobParam);
 	share = NULL;
 	alive = true;
