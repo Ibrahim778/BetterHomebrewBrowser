@@ -45,6 +45,8 @@ bool Utils::IsValidURLSCE(const char *url)
 
     ret = file.Open(&openArg);
     
+    if(ret == 0x80431075) ret = SCE_OK; // Temporary fix till I figure out wot is going on with this SSL stuff (SceDownload should report proper error anyways)
+
     if(ret == SCE_OK)
     {
         file.Close();
