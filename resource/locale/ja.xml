@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="utf-8"?>
+<stringset>
+    <string src="ダウンロード" id="download_button_text"/>
+    <string src="データファイル" id="data_button_text"/>
+
+    <string src="全て" id="db_category_all" />
+    <string src="ユーティリティ" id="db_category_util" />
+    <string src="エミュレーター" id="db_category_emu" />
+    <string src="移植" id="db_category_port" />
+    <string src="ゲーム" id="db_category_game" />
+    <string src="アプリ" id="db_category_app" />
+    <string src="ユーティリティ" id="db_category_single_util" />
+    <string src="エミュレーター" id="db_category_single_emu" />
+    <string src="移植" id="db_category_single_port" />
+    <string src="ゲーム" id="db_category_single_game" />
+    <string src="アプリ" id="db_category_single_app" />
+    <string src="不明" id="db_category_unk" />
+    
+    <string src="SSLエラーが発生しました&#xA;&#xA;iTLS-Ensoがインストールされていることを確認してください。" id="msg_error_ssl"/>
+    <string src="接続エラーが発生しました。" id="msg_error_net"/>
+    <string src="iTLS-Ensoが実行されていません。&#xA;このアプリケーションを実行する前にiTLS-Ensoが適切にインストールされているか確認してください。" id="msg_no_itls"/>
+    <string src="ネットワークエラーが発生しました。&#xA;デバイスがネットワークに接続されていることを確認して、もう一度試してください。" id="msg_net_fix" />
+    
+    <string src="エントリーのロードでエラーが発生しました。" id="msg_entry_error" />
+    <string src="スクリーンショットのロードでエラーが発生しました。" id="msg_screenshot_error"/>
+    <string src="アイコンのロードでエラーが発生しました。" id="msg_icon_error"/>
+    <string src="説明のロードでエラーが発生しました。" id="msg_desc_error"/>
+    <string src="ダウンロードの開始時にエラーが発生しました。" id="msg_download_error"/>
+    <string src="サーバーに接続できませんでした。&#xA;後からもう一度試してください。" id="msg_error_index"/>
+    <string src="インデックス解析でエラーが発生しました。" id="msg_error_parse"/>
+    <string src="エラーが発生しました。後からもう一度試してください。" id="msg_wait_fix" />
+    <string src="このアイコンには有効なソースがありません。" id="msg_icon_no_source" />
+    
+    <string src="オプション" id="msg_options"/>
+    <string src="ソース" id="msg_settings_source"/>
+    <string src="ビルド情報" id="msg_settings_verinfo"/>
+    
+    <string src="CBPS DB" id="db_name_0"/>    
+    <string src="Vita DB" id="db_name_1"/>
+    <string src="VHBD" id="db_name_2"/>
+
+    <string src="常に" id="msg_settings_downloadInterval_always"/>
+    <string src="ダウンロード後 (時)" id="msg_settings_downloadInterval"/>
+    
+    <string src="更新を確認中..." id="msg_check_update" />
+    <string src="お待ちください..." id="msg_wait"/>
+    <string src="アイコンをダウンロードしています..." id="msg_downloading_icon"/>
+
+    <string src="説明がありません。" id="msg_no_desc"/>
+    <string src="ダウンロードはホーム画面のキューに追加されました。" id="msg_download_queued"/>
+    <string src="ダウンロード用の有効なソースが見つかりませんでした。" id="msg_src_err"/>
+    <string src="%s アイコン" id="icons_dl_name"/>
+    <string src="%s (データ)" id="data_dl_name"/>
+    <string src="  %d アイコン" id="msg_list_header"/>
+    <string src="ソート順" id="msg_sort_header"/>
+    <string src="このアイコンを再ダウンロードしますか?" id="msg_icon_redownload"/>
+    <string src="ダウンロードサイズは不明です。" id="msg_download_nosize"/>
+    <string src="このファイルは圧縮ファイルです (tar.gz)。&#xA;サイズは後で計算されないため、ダウンロードする前にこのファイルをインストールするのに十分なスペースがあることを確認してください。スペースが不十分な場合は未定義の動作が発生する可能性があります。" id="msg_download_tgz"/>
+
+
+    <string src="アルファベット順" id="msg_sort_alpha"/>
+    <string src="アルファベット順 (逆順)" id="msg_sort_alpharev"/>
+    <string src="新しい順" id="msg_sort_mostrecent"/>
+    <string src="古い順" id="msg_sort_oldfirst"/>
+    <string src="最もダウンロードされた順" id="msg_sort_mostdownloaded"/>
+    <string src="最もダウンロードされていない順" id="msg_sort_leastdownloaded"/>
+
+</stringset>

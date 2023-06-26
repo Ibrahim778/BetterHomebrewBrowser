@@ -54,6 +54,8 @@
     <string src="  %d записей" id="msg_list_header"/>
     <string src="Сортировка" id="msg_sort_header"/>
     <string src="Хотите загрузить эту иконку снова?" id="msg_icon_redownload"/>
+    <string src="Невозможно расчитать занимаемое место." id="msg_download_nosize"/>
+    <string src="Это сжатый файл (tar.gz).&#xA;поэтому расчитать занимаемое данными место - невозможно. Пожалуйста, убедитесь, что у вас достаточно свободного места. Нехватка места может привести к неожиданным последствиям." id="msg_download_tgz"/>
 
     <string src="По алфавиту (A-Z)" id="msg_sort_alpha"/>
     <string src="По алфавиту (Z-A)" id="msg_sort_alpharev"/>

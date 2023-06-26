@@ -27,7 +27,6 @@
 #define msg_desc_error 0x0E709182
 #define msg_download_error 0xCA898CB7
 #define msg_error_index 0x9F897B1C
-#define msg_icon_pack_missing 0xCDA7825D
 #define msg_error_parse 0x31E50D81
 #define msg_wait_fix 0x97C937D8
 #define msg_icon_no_source 0x4BD16ECF
@@ -50,6 +49,8 @@
 #define msg_list_header 0x3702A77B
 #define msg_sort_header 0x2D6D0406
 #define msg_icon_redownload 0xCB6C8521
+#define msg_download_nosize 0xAD11D949
+#define msg_download_tgz 0x8C8B8C7D
 #define msg_sort_alpha 0x7454A689
 #define msg_sort_alpharev 0xA9CA93F3
 #define msg_sort_mostrecent 0x8130A636

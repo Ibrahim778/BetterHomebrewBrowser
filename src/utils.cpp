@@ -50,7 +50,7 @@ bool Utils::IsValidURLSCE(const char *url)
         file.Close();
         return SCE_TRUE;
     }
-
+    print("Open %s FAIL 0x%X\n", url, ret);
     return SCE_FALSE;
 }
 

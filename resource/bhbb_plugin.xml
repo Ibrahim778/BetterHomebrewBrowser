@@ -67,26 +67,6 @@
                 </plane>
             </plane>
 
-            <plane id="plane_header" style="_common_style_plane_transparent">
-                <layout_hint adjust="1,0" size="0,60" />
-                
-                <text id="text_header" style="style_text_header" >
-                    <layout_hint adjust="1,0" size="0,60" />
-                </text>
-               
-                <plane id="plane_sort" style="_common_style_plane_transparent">
-                    <layout_hint align="2,0" anchor="2,0" size="300,60" />
-                    
-                    <text id="text_label_sort" style="style_text_header" label="msg_sort_header" >
-                        <layout_hint align="1,0" adjust="2,0" anchor="1,0" size="0,60"/>
-                    </text>
-                  
-                    <button id="button_header_sort" style="_common_default_style_button" >
-                        <layout_hint align="2,0" anchor="2,0" size="200,50" pos="-10,0"/>
-                    </button>
-                </plane>
-            </plane>
-           
             <busyindicator style="main_style_busyindicator" texture="_common_texture_busy" id="busy" >
                 <layout_hint pos="0, 0" size="60, 60" />
             </busyindicator>
@@ -112,11 +92,15 @@
                 <text style="style_text_info_author" id="info_author_text">
                     <layout_hint anchor="1,1" align="1,1" pos="100,0" adjust="1,0" size="0,50" />
                 </text>
+                <button style="style_info_button" id="info_button" texture="tex_info_icon">
+                    <layout_hint align="2,2" anchor="2,2" size="80,80" pos="5,10" />
+                    <focus_hint focus_shape="5" focus_size="60.0, 60.0, 0.0" />
+                </button>
                 <button style="style_button_download" id="download_button" label="download_button_text">
-                    <layout_hint align="2,2" anchor="2,2" size="150,50" pos="-5,-5" />
+                    <layout_hint align="2,2" anchor="2,2" size="150,50" pos="-70,-5" />
                 </button>
                 <button style="style_data_download" id="data_download_button" label="data_button_text">
-                    <layout_hint align="2,2" anchor="2,2" size="150,50" pos="-155,-5" />
+                    <layout_hint align="2,2" anchor="2,2" size="150,50" pos="-220,-5" />
                 </button>
                 <text style="style_text_info_version" id="info_version_text">
                     <layout_hint align="2,1" anchor="2,1" adjust="1,0" size="0,50" pos="-10,-5" />
@@ -196,6 +180,25 @@
         </template>
 
         <template fast_open="1" id="apps_page_list_template">
+            <plane id="plane_header" style="_common_style_plane_transparent">
+                <layout_hint adjust="1,0" size="0,60" />
+                
+                <text id="text_header" style="style_text_header" >
+                    <layout_hint adjust="1,0" size="0,60" />
+                </text>
+               
+                <plane id="plane_sort" style="_common_style_plane_transparent">
+                    <layout_hint align="2,0" anchor="2,0" size="300,60" />
+                    
+                    <text id="text_label_sort" style="style_text_header" label="msg_sort_header" >
+                        <layout_hint align="1,0" adjust="2,0" anchor="1,0" size="0,60"/>
+                    </text>
+                  
+                    <button id="button_header_sort" style="_common_default_style_button" >
+                        <layout_hint align="2,0" anchor="2,0" size="200,50" pos="-10,0"/>
+                    </button>
+                </plane>
+            </plane>
             <plane style="_common_style_plane_transparent" id="list_plane">
                 <layout_hint size="960,504" pos="0, -40" />
                 <list_view style="list_style_list_view" id="app_list_view">
@@ -260,6 +263,11 @@
 			<planeobj texture0="_common_texture_list_70px" id="list_button_bg" />
 			<planeobj texture0="_common_texture_list_glow_70px" blend="2" id="list_button_glow" />
 		</style_image_button>
+
+        <style_button color="1.0, 1.0, 1.0, 1.0" id="style_info_button" bg_obj="bgobj0" glow_obj="glowobj0">
+            <planeobj scale_mode_y="1" scale_mode_x="1" id="bgobj0" />
+            <planeobj scale_mode_y="1" scale_mode_x="1" texture0="tex_info_icon_glow" blend="2" id="glowobj0" />
+        </style_button>
 
         <style_image_button glow_obj="list_button_glow" color="1, 1, 1, 1" layout_type_y="0" bg_obj="list_button_bg" id="style_screenshot_button">
 			<planeobj texture0="tex_screensdhot_icon" size="50,50" scale_mode_y="3" scale_mode_x="3" id="list_button_bg" />
@@ -344,15 +352,15 @@
     <stringtable>
 	    <locale src="locale/en.rcs" id="en-gb" />
 	    <locale src="locale/en.rcs" id="en" />
-        <locale src="locale/en.rcs" id="ja" />
-	    <locale src="locale/en.rcs" id="fr" />
+        <locale src="locale/ja.rcs" id="ja" />
+	    <locale src="locale/fr.rcs" id="fr" />
 	    <locale src="locale/en.rcs" id="es" />        
-	    <locale src="locale/en.rcs" id="de" />
+	    <locale src="locale/de.rcs" id="de" />
 	    <locale src="locale/en.rcs" id="it" />
 	    <locale src="locale/en.rcs" id="nl" />
 	    <locale src="locale/en.rcs" id="pt" />
         <locale src="locale/en.rcs" id="pt-br" />
-	    <locale src="locale/en.rcs" id="ru" />
+	    <locale src="locale/ru.rcs" id="ru" />
 	    <locale src="locale/en.rcs" id="ko" />
 	    <locale src="locale/en.rcs" id="zh-t" />
 	    <locale src="locale/en.rcs" id="zh-s" />
@@ -373,6 +381,8 @@
         <texture src="texture/search_back_button.png" type="texture/png" id="tex_search_back_button"/>
         <texture src="texture/download_button.png" type="texture/png" id="tex_download_button" />
         <texture src="texture/data_button.png" type="texture/png" id="tex_data_button" />
+        <texture src="texture/tex_info_icon.png" type="texture/png" id="tex_info_icon" />
+        <texture src="texture/tex_info_icon_glow.png" type="texture/png" id="tex_info_icon_glow" />
         <texture src="texture/screenshot_icon.png" type="texture/png" id="tex_screensdhot_icon" /> 
     </texturetable>
 

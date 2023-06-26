@@ -75,14 +75,17 @@ int VHBD::GetSCECompatibleURL(std::vector<paf::string> &list, paf::string &out)
     {
         paf::string httpURL;
         Utils::HttpsToHttp(url.c_str(), httpURL);
-    
+        print("[VHBD::GetSCECompatibleURL] Trying URL: %s ...", httpURL.c_str());
+
         if(Utils::IsValidURLSCE(httpURL.c_str()))
         {
+            print("OK\n");
             out = url;
             return SCE_PAF_OK;
         }
+        print("FAIL\n");
     }
-
+    print("[VHBD::GetSCECompatibleURL] No compatible URL found! FAIL\n");
     return -1;
 }
 
@@ -280,6 +283,8 @@ int VHBD::Parse()
             entry.category = 2;
         }
 
+        entry.dataSize = 0;
+        entry.downloadSize = 0;
         entry.lastUpdated.ParseSQLiteDateTime(homebrew[i]["updated_at"].as<const char *>());
         
         pList->Add(entry);

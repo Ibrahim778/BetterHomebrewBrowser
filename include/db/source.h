@@ -60,6 +60,9 @@ public:
 
         paf::datetime::DateTime lastUpdated;
         unsigned int downloadNum;
+
+        size_t downloadSize;
+        size_t dataSize;
     };
 
     class List

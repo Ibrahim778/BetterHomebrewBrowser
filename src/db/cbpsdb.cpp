@@ -55,6 +55,8 @@ CBPSDB::CBPSDB()
             List::Sort_AlphabeticalRev
         )
     };
+
+    paf::Dir::CreateRecursive(iconFolderPath.c_str());
 }
 
 CBPSDB::~CBPSDB()
@@ -188,30 +190,33 @@ int CBPSDB::GetSCECompatibleURL(std::vector<paf::string> &list, paf::string &out
     {
         paf::string httpURL;
         Utils::HttpsToHttp(url.c_str(), httpURL);
-    
+        print("[CBPSDB::GetSCECompatibleURL] Trying URL: %s...", url.c_str());
+
         if(Utils::IsValidURLSCE(httpURL.c_str()))
         {
+            print("OK\n");
             out = url;
             return SCE_PAF_OK;
         }
+        print("FAIL\n");
     }
-
+    print("[CBPSDB::GetSCECompatibleURL] No compatible URL found! FAIL\n");
     return -1;
-}
-
-// Thanks stack overflow
-paf::string &ListAt(paf::list<paf::string>& _list, int _i)
-{
-    auto it = _list.begin();
-    for(int i=0; i<_i; i++)
-    {
-        ++it;
-    }
-    return *it;
 }
 
 int CBPSDB::Parse()
 {
+    // Thanks stack overflow
+    auto ListAt = [](paf::list<paf::string>& _list, int _i) -> paf::string&
+    {
+        auto it = _list.begin();
+        for(int i=0; i<_i; i++)
+        {
+            ++it;
+        }
+        return *it;
+    };
+
     pList->Clear();
     
     auto fh = sce_paf_fopen(CBPSDB_SAVE_PATH, "r");
@@ -297,6 +302,9 @@ int CBPSDB::Parse()
         sceRtcGetTick(&dtime, (SceRtcTick *)&tick);
 
         entry.lastUpdated.ConvertRtcTickToDateTime(&tick);
+        
+        entry.dataSize = 0;
+        entry.downloadSize = 0;
 
         pList->Add(entry);
         

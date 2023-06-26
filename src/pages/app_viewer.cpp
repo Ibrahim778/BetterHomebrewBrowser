@@ -77,6 +77,10 @@ AppViewer::AppViewer(Source::Entry& entry, AppBrowser::TexPool *pTexPool):
     else // Assign callback
         dataButton->AddEventCallback(ui::Button::CB_BTN_DECIDE, DownloadButtonCB, this);
     
+    // Setup our information button
+    auto infoButton = (ui::Button *)root->FindChild(info_button);
+    infoButton->AddEventCallback(ui::Button::CB_BTN_DECIDE, InfoButtonCB, this);
+
     if(!isMainThread)
         RMutex::main_thread_mutex.Unlock();
 
@@ -91,6 +95,37 @@ AppViewer::AppViewer(Source::Entry& entry, AppBrowser::TexPool *pTexPool):
 AppViewer::~AppViewer()
 {
 
+}
+
+void AppViewer::InfoButtonCB(int id, ui::Handler *self, ui::Event *event, void *pUserData)
+{
+    auto workPage = (AppViewer *)pUserData;
+
+    paf::wstring diagString;
+
+    if(workPage->app.downloadSize == 0 && workPage->app.dataSize == 0)
+        diagString = g_appPlugin->GetString(msg_download_nosize);
+    else
+    {
+        common::String str;
+        paf::wstring wsize;
+        if(workPage->app.downloadSize != 0)
+        {
+            common::Utf8ToUtf16(common::FormatBytesize(workPage->app.downloadSize, 1), &wsize);
+
+            str.SetFormattedString(L"%s: %s", g_appPlugin->GetString(db_category_single_app), wsize.c_str());
+            diagString += str.GetWString();
+        }
+        if(workPage->app.dataSize != 0)
+        {
+            common::Utf8ToUtf16(common::FormatBytesize(workPage->app.dataSize, 1), &wsize);
+
+            str.SetFormattedString(L"\n%s: %s", g_appPlugin->GetString(data_button_text), wsize.c_str());
+            diagString += str.GetWString();
+        }
+    }
+
+    dialog::OpenOk(g_appPlugin, nullptr, diagString.c_str());
 }
 
 void AppViewer::DescriptionTextCB(int id, ui::Handler *self, ui::Event *event, void *pUserData)
@@ -177,6 +212,11 @@ void AppViewer::IconDownloadJob::Run()
     dialog::Close();
 }
 
+void AppViewer::DownloadJob::DialogCB(dialog::ButtonCode bc, void *pUserData)
+{
+    *((dialog::ButtonCode *)pUserData) = bc;
+}
+
 void AppViewer::DownloadJob::Run()
 {
     print("[AppViewer::DownloadJob] Run(START)\n");
@@ -204,6 +244,23 @@ void AppViewer::DownloadJob::Run()
 
     case DownloadType_Data:
         ret = workPage->app.pSource->GetDataURL(workPage->app, url);
+        if(ret == 0 && sce_paf_strstr(url.c_str(), "tar.gz") != nullptr)
+        {
+            sceShellUtilUnlock(SCE_SHELL_UTIL_LOCK_TYPE_PS_BTN);
+            dialog::Close();
+            
+            dialog::ButtonCode bc;
+
+            dialog::OpenTwoButton(g_appPlugin, nullptr, g_appPlugin->GetString(msg_download_tgz), IDParam("msg_ok").GetIDHash(), IDParam("msg_cancel_vb").GetIDHash(), DialogCB, &bc);
+            dialog::WaitEnd();
+            
+            
+            if(bc == dialog::ButtonCode_No)
+                return;
+
+            dialog::OpenPleaseWait(g_appPlugin, nullptr, g_appPlugin->GetString(msg_wait));
+            sceShellUtilLock(SCE_SHELL_UTIL_LOCK_TYPE_PS_BTN);
+        } 
         dlParam.type = BGDLTarget_CompressedFile;
         sce_paf_strncpy(dlParam.path, workPage->app.dataPath.c_str(), sizeof(dlParam.path));
         sce_paf_strncpy(dlParam.data_icon, workPage->app.iconPath.c_str(), sizeof(dlParam.data_icon));

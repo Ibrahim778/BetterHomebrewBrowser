@@ -5,6 +5,7 @@
 
 #include "page.h"
 #include "db/source.h"
+#include "dialog.h"
 #include "app_browser.h"
 
 class AppViewer : public page::Base
@@ -56,12 +57,15 @@ public:
         void Run();
         void Finish(){}
 
+        static void DialogCB(dialog::ButtonCode code, void *pUserDat);
+
         AppViewer *workPage;
         DownloadType type;
     };
 
     static void ScreenshotCB(int id, paf::ui::Handler *self, paf::ui::Event *event, void *pUserData);
     static void IconButtonCB(int id, paf::ui::Handler *self, paf::ui::Event *event, void *pUserData);
+    static void InfoButtonCB(int id, paf::ui::Handler *self, paf::ui::Event *event, void *pUserData);
     static void DownloadButtonCB(int id, paf::ui::Handler *self, paf::ui::Event *event, void *pUserData);
     static void DescriptionTextCB(int id, paf::ui::Handler *self, paf::ui::Event *event, void *pUserData);
 

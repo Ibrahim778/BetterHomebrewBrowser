@@ -263,6 +263,9 @@ int VitaDB::Parse()
         if(jdoc[i]["data_size"].as<int>() != 0)
             entry.dataURL.push_back(jdoc[i]["data"].as<const char *>());
 
+        entry.downloadSize = sce_paf_strtoull(jdoc[i]["size"].as<const char *>(), nullptr, 10);
+        entry.dataSize = sce_paf_strtoull(jdoc[i]["data_size"].as<const char *>(), nullptr, 10);
+
         pList->Add(entry);
     }
 

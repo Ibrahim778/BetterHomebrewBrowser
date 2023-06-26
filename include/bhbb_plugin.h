@@ -23,11 +23,6 @@
 #define search_back_button 0x6A2C094C
 #define search_box 0x7BB7D799
 #define plane_seperator 0x91F4F4FE
-#define plane_header 0xF2BFE50E
-#define text_header 0x33C6855B
-#define plane_sort 0x185DDBEB
-#define text_label_sort 0x0A2EBEB1
-#define button_header_sort 0x6A39A260
 #define busy 0xE18A89F9
 #define options_button 0x16623214
 #define app_info_page 0xB50E17AD
@@ -37,6 +32,7 @@
 #define icon_busy 0xB14F2899
 #define info_title_text 0x5BC514A0
 #define info_author_text 0x155BF1BB
+#define info_button 0x484C7041
 #define download_button 0x01383EA9
 #define data_download_button 0xFADB190A
 #define info_version_text 0x76A09D62
@@ -61,6 +57,11 @@
 #define info_screenshot_button_template 0x8A5010ED
 #define screenshot_button 0x141B53FF
 #define apps_page_list_template 0xF5D46175
+#define plane_header 0xF2BFE50E
+#define text_header 0x33C6855B
+#define plane_sort 0x185DDBEB
+#define text_label_sort 0x0A2EBEB1
+#define button_header_sort 0x6A39A260
 #define list_plane 0xD1A3FF38
 #define app_list_view 0x4BB109A1
 #define app_button_list_item_template 0x4BC48D01
@@ -86,6 +87,9 @@
 #define list_button_style 0x1BB81CE0
 #define list_button_bg 0x04EE2175
 #define list_button_glow 0xB52EAC04
+#define style_info_button 0xA1D17876
+#define bgobj0 0xB9D90AA7
+#define glowobj0 0x579BE4B9
 #define style_screenshot_button 0xAC7D4D22
 #define list_button_bg 0x04EE2175
 #define list_button_glow 0xB52EAC04
@@ -161,6 +165,8 @@
 #define tex_search_back_button 0x966C86C7
 #define tex_download_button 0x64D46FE1
 #define tex_data_button 0xBF76D799
+#define tex_info_icon 0x96045C6A
+#define tex_info_icon_glow 0xFD675E9A
 #define tex_screensdhot_icon 0xBDABD172
 #define file_bhbb_settings 0x678061B9
 #define _common_snd01 0x48D64CF1

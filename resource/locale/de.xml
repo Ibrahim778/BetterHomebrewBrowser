@@ -49,12 +49,15 @@
 
     <string src="Keine Beschreibung verfügbar" id="msg_no_desc"/>
     <string src="Der Download wurde in der LiveArea in Warteschlange gesetzt" id="msg_download_queued"/>
-    <string src=""Keine valide Quelle für diesen Download gefunden" id="msg_src_err"/>
+    <string src="Keine valide Quelle für diesen Download gefunden" id="msg_src_err"/>
     <string src="%s Icons" id="icons_dl_name"/>
     <string src="%s (Daten-Dateien)" id="data_dl_name"/>
     <string src="  %d Elemente" id="msg_list_header"/>
     <string src="Ordne nach" id="msg_sort_header"/>
     <string src="Möchtest du dieses Icon erneut herunterladen?" id="msg_icon_redownload"/>
+    <string src="Download sizes are unknown" id="msg_download_nosize"/>
+    <string src="This file is a compressed file (tar.gz)&#xA;Please ensure you have enough space to install this before downloading as the size will not be calculated later and may cause undefined behaviour if there is insufficient space" id="msg_download_tgz"/>
+
 
     <string src="Alphabetisch" id="msg_sort_alpha"/>
     <string src="Alphabetisch (Umgekehrt)" id="msg_sort_alpharev"/>

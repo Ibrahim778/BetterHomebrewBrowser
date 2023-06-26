@@ -55,6 +55,9 @@
     <string src="  %d éléments" id="msg_list_header"/>
     <string src="Trier par" id="msg_sort_header"/>
     <string src="Voulez-vous retélécharger cette icône ?" id="msg_icon_redownload"/>
+    <string src="Download sizes are unknown" id="msg_download_nosize"/>
+    <string src="This file is a compressed file (tar.gz)&#xA;Please ensure you have enough space to install this before downloading as the size will not be calculated later and may cause undefined behaviour if there is insufficient space" id="msg_download_tgz"/>
+
 
     <string src="Alphabétique (A à Z)" id="msg_sort_alpha"/>
     <string src="Alphabétique (Z à A)" id="msg_sort_alpharev"/>
