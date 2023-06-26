@@ -46,11 +46,7 @@ public:
     ~TgzFile();
 
     virtual int Decompress(const paf::string outPath, ProgressCallback progressCB, void *progressData) override;
-    virtual int CalculateUncompressedSize()
-    {
-        uncompressedSize = 0;
-        return 0;
-    }
+    virtual int CalculateUncompressedSize();
 
 private:
     static voidpf sce_paf_gzip_zalloc(voidpf opaque, uInt items, uInt size)

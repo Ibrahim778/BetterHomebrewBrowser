@@ -55,8 +55,6 @@
     <string src="ソート順" id="msg_sort_header"/>
     <string src="このアイコンを再ダウンロードしますか?" id="msg_icon_redownload"/>
     <string src="ダウンロードサイズは不明です。" id="msg_download_nosize"/>
-    <string src="このファイルは圧縮ファイルです (tar.gz)。&#xA;サイズは後で計算されないため、ダウンロードする前にこのファイルをインストールするのに十分なスペースがあることを確認してください。スペースが不十分な場合は未定義の動作が発生する可能性があります。" id="msg_download_tgz"/>
-
 
     <string src="アルファベット順" id="msg_sort_alpha"/>
     <string src="アルファベット順 (逆順)" id="msg_sort_alpharev"/>

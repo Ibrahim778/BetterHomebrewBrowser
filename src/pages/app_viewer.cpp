@@ -212,11 +212,6 @@ void AppViewer::IconDownloadJob::Run()
     dialog::Close();
 }
 
-void AppViewer::DownloadJob::DialogCB(dialog::ButtonCode bc, void *pUserData)
-{
-    *((dialog::ButtonCode *)pUserData) = bc;
-}
-
 void AppViewer::DownloadJob::Run()
 {
     print("[AppViewer::DownloadJob] Run(START)\n");
@@ -244,23 +239,6 @@ void AppViewer::DownloadJob::Run()
 
     case DownloadType_Data:
         ret = workPage->app.pSource->GetDataURL(workPage->app, url);
-        if(ret == 0 && sce_paf_strstr(url.c_str(), "tar.gz") != nullptr)
-        {
-            sceShellUtilUnlock(SCE_SHELL_UTIL_LOCK_TYPE_PS_BTN);
-            dialog::Close();
-            
-            dialog::ButtonCode bc;
-
-            dialog::OpenTwoButton(g_appPlugin, nullptr, g_appPlugin->GetString(msg_download_tgz), IDParam("msg_ok").GetIDHash(), IDParam("msg_cancel_vb").GetIDHash(), DialogCB, &bc);
-            dialog::WaitEnd();
-            
-            
-            if(bc == dialog::ButtonCode_No)
-                return;
-
-            dialog::OpenPleaseWait(g_appPlugin, nullptr, g_appPlugin->GetString(msg_wait));
-            sceShellUtilLock(SCE_SHELL_UTIL_LOCK_TYPE_PS_BTN);
-        } 
         dlParam.type = BGDLTarget_CompressedFile;
         sce_paf_strncpy(dlParam.path, workPage->app.dataPath.c_str(), sizeof(dlParam.path));
         sce_paf_strncpy(dlParam.data_icon, workPage->app.iconPath.c_str(), sizeof(dlParam.data_icon));

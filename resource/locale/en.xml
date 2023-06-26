@@ -54,9 +54,8 @@
     <string src="  %d Items" id="msg_list_header"/>
     <string src="Sort by" id="msg_sort_header"/>
     <string src="Do you want to redownload this icon?" id="msg_icon_redownload"/>
-    <string src="Download sizes are unknown" id="msg_download_nosize"/>
-    <string src="This file is a compressed file (tar.gz)&#xA;Please ensure you have enough space to install this before downloading as the size will not be calculated later and may cause undefined behaviour if there is insufficient space" id="msg_download_tgz"/>
-
+    <string src="App size is unknown" id="msg_download_nosize"/>
+    
     <string src="Alphabetical" id="msg_sort_alpha"/>
     <string src="Alphabetical (Reversed)" id="msg_sort_alpharev"/>
     <string src="Newest First" id="msg_sort_mostrecent"/>

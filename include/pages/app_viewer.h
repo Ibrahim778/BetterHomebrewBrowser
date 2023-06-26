@@ -57,8 +57,6 @@ public:
         void Run();
         void Finish(){}
 
-        static void DialogCB(dialog::ButtonCode code, void *pUserDat);
-
         AppViewer *workPage;
         DownloadType type;
     };
