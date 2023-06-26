@@ -15,7 +15,7 @@ public:
         LiveAreaRefreshed = 0x900,
         AppInstalledSuccessfully = 0x52,
         DownloadComplete = 0x51,
-        Custom = 0x100, // One single line of text (desc)
+        Custom = 0x100, // One single line of text (desc, or title, desc takes priority, used by SCE for testing?)
         UserDefined = 0x102, // type used by sceNotificationUtilSendNotification (same as Custom??)
     };
 

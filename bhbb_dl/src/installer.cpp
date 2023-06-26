@@ -367,9 +367,9 @@ END:
 
     Plugin::UnloadAsync("bhbb_dl_plugin");
     
-    sceShellUtilUnlock((SceShellUtilLockType)0x801);
-    sceShellUtilUnlock(SCE_SHELL_UTIL_LOCK_TYPE_QUICK_MENU); 
     sceShellUtilUnlock(SCE_SHELL_UTIL_LOCK_TYPE_POWEROFF_MENU); 
+    sceShellUtilUnlock(SCE_SHELL_UTIL_LOCK_TYPE_QUICK_MENU); 
+    sceShellUtilUnlock((SceShellUtilLockType)0x801);
     
     if(ret < 0)
     {
