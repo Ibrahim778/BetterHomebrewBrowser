@@ -160,6 +160,6 @@ int TgzFile::Decompress(paf::string outPath, ProgressCallback progressCB, void *
 int TgzFile::CalculateUncompressedSize()
 {
     auto fileSize = file->GetFileSize();
-    uncompressedSize = fileSize * 1.5;
+    uncompressedSize = fileSize * 2;
     return 0;
 }
