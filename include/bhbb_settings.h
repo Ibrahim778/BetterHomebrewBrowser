@@ -10,6 +10,8 @@
 #define list_source_02 0x2D5A2E6B
 #define verinfo_setting 0x45EB30EB
 #define label_verinfo 0x804FF666
+#define credits_setting 0x65B3A7E9
+#define label_credinfo 0x85D107C3
 #define button_dl_dev 0x05E1FC07
 
 #endif

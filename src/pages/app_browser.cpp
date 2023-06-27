@@ -22,7 +22,7 @@ using namespace common;
 using namespace thread;
 using namespace math;
 
-AppBrowser::AppBrowser(Source *_source):
+AppBrowser::AppBrowser(paf::common::SharedPtr<Source> _source):
     page::Base(
         app_page,
         Plugin::PageOpenParam(true),
@@ -127,7 +127,6 @@ void AppBrowser::SettingsCB(int id, paf::ui::Handler *handler, paf::ui::Event *e
 
         Downloader::GetCurrentInstance()->Enqueue(g_appPlugin, "http://github.com/Ibrahim778/SelfLauncher/releases/download/V1.1/SelfLauncher.vpk", "Self Launcher", "ux0:app/VITASHELL/sce_sys/icon0.png", &param);
         break;
-
     default:
         break;
     }
@@ -148,7 +147,7 @@ void AppBrowser::SortButtonListCB(int id, paf::ui::Handler *self, paf::ui::Event
     workPage->busyIndicator->Start();
     workPage->ClearList();
     workPage->Sort(workWidget->GetName().GetIDHash());
-    workPage->targetList->Categorise(workPage->source); // cba to sort individual categories so just re-categorise instead!
+    workPage->targetList->Categorise(workPage->source.get()); // cba to sort individual categories so just re-categorise instead!
     workPage->CreateList();
     workPage->busyIndicator->Stop();
 }
@@ -195,7 +194,7 @@ void AppBrowser::SearchCB(int id, paf::ui::Handler *widget, paf::ui::Event *even
                 workPage->ClearList();
                 workPage->targetList = &workPage->appList;
                 workPage->Sort();
-                workPage->targetList->Categorise(workPage->source);
+                workPage->targetList->Categorise(workPage->source.get());
                 workPage->CreateList();
             }
         }
@@ -329,18 +328,14 @@ void AppBrowser::CategoryCB(int eventID, paf::ui::Handler *widget, paf::ui::Even
     }
 }
 
-void AppBrowser::SetSource(Source *tSource)
+void AppBrowser::SetSource(paf::common::SharedPtr<Source> tSource)
 {
-    if(source == tSource) return;
-
-    // cleanup previous source (if valid)
-    if(source)
-        delete source;
+    if(source.get() == tSource.get()) return;
 
     // update source
     source = tSource;
 
-    source->pList = &appList;
+    source->pList = &appList; // Reset list (probably done later on too, but just to be sure)
 
     // Update category widgets
 
@@ -539,7 +534,7 @@ void AppBrowser::Sort(uint32_t hash)
 
 void AppBrowser::Load(bool forceRefresh)
 {
-    if(!loading && source)
+    if(!loading && source.get() != nullptr)
     {
         auto item = new LoadJob(this);
         item->forceRefresh = forceRefresh;
@@ -577,7 +572,7 @@ void AppBrowser::ParseThread::EntryFunction()
     workPage->targetList = &workPage->appList;
 
     workPage->Sort(workPage->source->sortModes.begin()->hash); // Sort with the first sort mode in list (it is the default)
-    workPage->targetList->Categorise(workPage->source);
+    workPage->targetList->Categorise(workPage->source.get());
 
     RMutex::main_thread_mutex.Lock();
 

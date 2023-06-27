@@ -129,7 +129,7 @@ public:
 
     Source(){}
 
-    static Source *Create(ID id);
+    static paf::common::SharedPtr<Source> Create(ID id);
 
     virtual ~Source(){}
 

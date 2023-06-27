@@ -56,8 +56,6 @@
     <string src="Ordne nach" id="msg_sort_header"/>
     <string src="Möchtest du dieses Icon erneut herunterladen?" id="msg_icon_redownload"/>
     <string src="Download-Größe ist unbekannt." id="msg_download_nosize"/>
-    <string src="Diese Datei is komprimiert (tar.gz)&#xA;Bitte stelle vor dem Download sicher, dass genug Speicherplatz zum Installieren verfügbar ist. Die Größe wird später nicht berechnet und es könnte bei Mangel zu undefiniertem Verhalten kommen." id="msg_download_tgz"/>
-
 
     <string src="Alphabetisch" id="msg_sort_alpha"/>
     <string src="Alphabetisch (Umgekehrt)" id="msg_sort_alpharev"/>

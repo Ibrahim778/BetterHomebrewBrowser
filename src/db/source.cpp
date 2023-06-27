@@ -18,16 +18,16 @@ Source::List::~List()
     Clear();
 }
 
-Source *Source::Create(Source::ID id)
+paf::common::SharedPtr<Source> Source::Create(Source::ID id)
 {
     switch(id)
     {
     case VITA_DB:
-        return new VitaDB();
+        return paf::common::SharedPtr<Source>(new VitaDB());
     case VHB_DB:
-        return new VHBD();
+        return paf::common::SharedPtr<Source>(new VHBD());
     case CBPS_DB:
-        return new CBPSDB();
+        return paf::common::SharedPtr<Source>(new CBPSDB());
     }
 }
 

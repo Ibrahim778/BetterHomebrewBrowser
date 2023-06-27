@@ -155,7 +155,7 @@ public:
     void SetMode(PageMode mode);
 
     // Set the source
-    void SetSource(Source *source);
+    void SetSource(paf::common::SharedPtr<Source> source);
 
     // Update list header
     void UpdateListHeader();
@@ -174,7 +174,7 @@ public:
         return category;
     }
 
-    AppBrowser(Source *source);
+    AppBrowser(paf::common::SharedPtr<Source> source);
     ~AppBrowser();
 
 protected:
@@ -207,7 +207,7 @@ protected:
     int category;
 
     // Current source
-    Source *source;
+    paf::common::SharedPtr<Source> source;
 
     // App list
     Source::List appList;

@@ -50,12 +50,13 @@
 #define msg_sort_header 0x2D6D0406
 #define msg_icon_redownload 0xCB6C8521
 #define msg_download_nosize 0xAD11D949
-#define msg_download_tgz 0x8C8B8C7D
 #define msg_sort_alpha 0x7454A689
 #define msg_sort_alpharev 0xA9CA93F3
 #define msg_sort_mostrecent 0x8130A636
 #define msg_sort_oldfirst 0x9E70B72D
 #define msg_sort_mostdownloaded 0xD184DC6F
 #define msg_sort_leastdownloaded 0xE1653439
+#define msg_settings_credits 0x0CCD2374
+#define msg_credinfo 0x69FD8EE2
 
 #endif

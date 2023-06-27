@@ -19,24 +19,6 @@ else()
     )
 endif()
 
-# Generate the headers for the PAF plugin
-add_custom_command(
-    OUTPUT ${CMAKE_SOURCE_DIR}/include/bhbb_plugin.h
-    COMMAND py $ENV{SCE_PSP2_SDK_DIR}/host_tools/build/cxml/genhashheaders.py ${CMAKE_SOURCE_DIR}/resource/bhbb_plugin.xml ${CMAKE_SOURCE_DIR}/include/bhbb_plugin.h
-)
-
-# Generate the headers for the plugin locale
-add_custom_command(
-    OUTPUT ${CMAKE_SOURCE_DIR}/include/bhbb_locale.h
-    COMMAND py $ENV{SCE_PSP2_SDK_DIR}/host_tools/build/cxml/genhashheaders.py ${CMAKE_SOURCE_DIR}/resource/locale/en.xml ${CMAKE_SOURCE_DIR}/include/bhbb_locale.h
-)
-
-# Generate the headers for the plugin settings
-add_custom_command(
-    OUTPUT ${CMAKE_SOURCE_DIR}/include/bhbb_settings.h
-    COMMAND py $ENV{SCE_PSP2_SDK_DIR}/host_tools/build/cxml/genhashheaders.py ${CMAKE_SOURCE_DIR}/resource/file/bhbb_settings.xml ${CMAKE_SOURCE_DIR}/include/bhbb_settings.h
-)
-
 add_executable(${PROJECT_NAME}
     src/main.cpp
     src/utils.cpp
@@ -147,15 +129,38 @@ foreach(_xml ${localeXml})
     add_custom_command(
         OUTPUT ${rcsOutPath}
         COMMAND python $ENV{SCE_PSP2_SDK_DIR}/host_tools/build/cxml/appinfo/rcs_compiler.py -o ${rcsOutPath} ${_xml} 
+        DEPENDS ${_xml}
     )
     list(APPEND rcsFiles ${rcsOutPath})
 endforeach()
 # Generate RCO file
 add_custom_command(
     OUTPUT ${CMAKE_BINARY_DIR}/bhbb_plugin.rco
-    DEPENDS ${CMAKE_SOURCE_DIR}/resource/bhbb_plugin.xml ${rcsFiles}
+    DEPENDS ${CMAKE_SOURCE_DIR}/resource/bhbb_plugin.xml ${CMAKE_SOURCE_DIR}/resource/file/bhbb_settings.xml ${rcsFiles}
     COMMAND python $ENV{SCE_PSP2_SDK_DIR}/host_tools/build/cxml/appinfo/appinfo_compiler.py -o ${CMAKE_BINARY_DIR}/bhbb_plugin.rco ${CMAKE_SOURCE_DIR}/resource/bhbb_plugin.xml
 )
+
+# Generate the headers for the PAF plugin
+add_custom_command(
+    OUTPUT ${CMAKE_SOURCE_DIR}/include/bhbb_plugin.h
+    COMMAND py $ENV{SCE_PSP2_SDK_DIR}/host_tools/build/cxml/genhashheaders.py ${CMAKE_SOURCE_DIR}/resource/bhbb_plugin.xml ${CMAKE_SOURCE_DIR}/include/bhbb_plugin.h
+    DEPENDS ${CMAKE_SOURCE_DIR}/resource/file/bhbb_settings.xml
+)
+
+# Generate the headers for the plugin locale
+add_custom_command(
+    OUTPUT ${CMAKE_SOURCE_DIR}/include/bhbb_locale.h
+    COMMAND py $ENV{SCE_PSP2_SDK_DIR}/host_tools/build/cxml/genhashheaders.py ${CMAKE_SOURCE_DIR}/resource/locale/en.xml ${CMAKE_SOURCE_DIR}/include/bhbb_locale.h
+    DEPENDS ${localeXml}
+)
+
+# Generate the headers for the plugin settings
+add_custom_command(
+    OUTPUT ${CMAKE_SOURCE_DIR}/include/bhbb_settings.h
+    COMMAND py $ENV{SCE_PSP2_SDK_DIR}/host_tools/build/cxml/genhashheaders.py ${CMAKE_SOURCE_DIR}/resource/file/bhbb_settings.xml ${CMAKE_SOURCE_DIR}/include/bhbb_settings.h
+    DEPENDS ${CMAKE_SOURCE_DIR}/resource/file/bhbb_settings.xml
+)
+
 if(${CMAKE_BUILD_TYPE} STREQUAL Debug)
     # Generate the RCD file
     add_custom_command(
