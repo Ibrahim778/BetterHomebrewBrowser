@@ -415,13 +415,11 @@ void AppBrowser::EntryFactory::TextureCB(bool success, paf::ui::Widget *target, 
         workPool->Add(target->GetName().GetIDHash(), brokenSurf, true);
     }
 
-    // RMutex::main_thread_mutex.Lock();
     
     plane->SetColor(1,1,1,1);
     plane->SetTexture(workPool->Get(target->GetName().GetIDHash()));
     plane->Show(transition::Type_Fadein2);
 
-    // RMutex::main_thread_mutex.Unlock();
 }
 
 void AppBrowser::EntryFactory::TexPoolAddCbFun(int id, paf::ui::Handler *self, paf::ui::Event *event, void *pUserData)

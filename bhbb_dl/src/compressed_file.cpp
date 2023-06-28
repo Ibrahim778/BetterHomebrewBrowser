@@ -22,8 +22,10 @@ paf::common::SharedPtr<CompressedFile> CompressedFile::Create(const char *path)
 {
     auto ext = string(sce_paf_strchr(path, '.'));
     
-    if(ext == ".tar.gz")
+    if(ext == ".tar.gz" || ext == ".TAR.GZ")
         return common::SharedPtr<CompressedFile>(new TgzFile(path));
-    else if(ext == ".zip" || ext == ".vpk")
+    else if(ext == ".zip" || ext == ".vpk" || ext == ".ZIP" || ext == ".VPK")
         return common::SharedPtr<CompressedFile>(new Zipfile(path));
+
+    return common::SharedPtr<CompressedFile>(nullptr);
 }

@@ -15,7 +15,8 @@ using namespace paf;
 #define EXTRACT_PATH "ux0:data/bhbb_prom/"
 #define SAVE_PATH "ux0:/bhbb_downloads/"
 
-#define ERROR_LOW_SPACE -0x50000001
+#define ERROR_LOW_SPACE     -0x50000001
+#define ERROR_OPENING_CF    -0x50000002
 
 void AppExtractCB(const char *fname, uint64_t curr, uint64_t total, void *pUserData)
 {
@@ -337,9 +338,16 @@ int ProcessExport(::uint32_t id, const char *name, const char *path, const char 
     
     sceAppMgrGetDevInfo("ux0:", &max_size, &free_space);
 
+    size_t requiredSize;
     auto cfile = CompressedFile::Create(path);
+    if(!cfile.get())
+    {
+        ret = ERROR_OPENING_CF;
+        goto END;
+    }
+
     cfile->CalculateUncompressedSize();
-    auto requiredSize = cfile->GetUncompressedSize();
+    requiredSize = cfile->GetUncompressedSize();
 
     if(free_space <= requiredSize)
     {

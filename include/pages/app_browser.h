@@ -77,10 +77,12 @@ public:
 
             void Run()
             {
-                if(workList->FindChild(targetHash) == nullptr)
+                auto child = workList->FindChild(targetHash);
+                if(child == nullptr)
                     return;
 
                 bool result = workObj->Add(workEntry);
+
                 if(workObj && workObj->cbPlugin && workList->FindChild(targetHash) != nullptr)
                 {
                     AppBrowser::EntryFactory::TextureCB(result, workList->FindChild(targetHash), workEntry, workObj);

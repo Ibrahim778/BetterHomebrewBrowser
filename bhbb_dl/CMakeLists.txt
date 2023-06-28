@@ -23,7 +23,7 @@ add_link_options(
 )
 
 add_custom_target(${PROJECT_NAME}.elf.target
-  DEPENDS ${PROJECT_NAME}.elf
+  DEPENDS ${PROJECT_NAME}.elf ${PROJECT_NAME}.suprx
 )
 
 VDSuiteCreateStubs(stubs SceLsdb.emd

@@ -64,4 +64,6 @@
     <string src="Наиболее скачиваемые" id="msg_sort_mostdownloaded"/>
     <string src="Наименее скачиваемые" id="msg_sort_leastdownloaded"/>
 
+    <string src="@GrapheneCt&#xA;  ScePaf reversing&#xA;  NetStream (reference)&#xA;  SceDownload + SceIPMI reversing&#xA;  Help, and CXML compiler&#xA;&#xA;@CreepNT&#xA;  SceDownload reversing&#xA;&#xA;@Princess-of-sleeping&#xA;  Help with debugging and development&#xA;  SceLsdb notification reversing&#xA;&#xA;@SKGleba &amp; TheFl0w&#xA;  bgvpk and Download Enabler&#xA;&#xA;Beta Testers&#xA;  @SomeonPC&#xA;  @ShadowKnight1620&#xA;  @Koutsie&#xA;  @SparklingPheonix&#xA;  @gl33ntwine&#xA;&#xA;Translators&#xA;  @isage - RU&#xA;  @S1ngyy - DE&#xA;  @CreepNT - FR&#xA;  @Princess-of-sleeping - JA" id="msg_credinfo"/>
+
 </stringset>
