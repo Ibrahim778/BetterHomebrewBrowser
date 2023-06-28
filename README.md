@@ -24,10 +24,10 @@ A homebrew browser that supports multiple DB's with background downloading suppo
 
  #### 3. It can download files in the background just like the official store and will install with a native-looking UI along with proper notifications to complete the look
 <div>
-<img src="https://raw.githubusercontent.com/Ibrahim778/BetterHomebrewBrowser/InDev/imgs/download1.png" width="500" />
-<img src="https://raw.githubusercontent.com/Ibrahim778/BetterHomebrewBrowser/InDev/imgs/download2.png" width="500" />
-<img src="https://raw.githubusercontent.com/Ibrahim778/BetterHomebrewBrowser/InDev/imgs/download3.png" width="500" />
-<img src="https://raw.githubusercontent.com/Ibrahim778/BetterHomebrewBrowser/InDev/imgs/download4.png" width="500" />
+<img src="https://raw.githubusercontent.com/Ibrahim778/BetterHomebrewBrowser/InDev/imgs/download1.png" width="300" />
+<img src="https://raw.githubusercontent.com/Ibrahim778/BetterHomebrewBrowser/InDev/imgs/download2.png" width="300" />
+<img src="https://raw.githubusercontent.com/Ibrahim778/BetterHomebrewBrowser/InDev/imgs/download3.png" width="300" />
+<img src="https://raw.githubusercontent.com/Ibrahim778/BetterHomebrewBrowser/InDev/imgs/download4.png" width="300" />
 </div>
 
 ## Adding a new language
