@@ -12,8 +12,8 @@ A homebrew browser that supports multiple DB's with background downloading suppo
 #### 1. It can download from various sources, meaning a larger content library to chose from
 <div>
 <center>
-	<img style="float: center;" src="https://raw.githubusercontent.com/Ibrahim778/BetterHomebrewBrowser/InDev/imgs/vitadb_icon.png" height="100" />
-	<img style="float: center;" src="https://raw.githubusercontent.com/Ibrahim778/BetterHomebrewBrowser/InDev/imgs/cbpsdb_icon.png" height="100"/>
+	<img src="https://raw.githubusercontent.com/Ibrahim778/BetterHomebrewBrowser/InDev/imgs/vitadb_icon.png" height="100" />
+	<img  src="https://raw.githubusercontent.com/Ibrahim778/BetterHomebrewBrowser/InDev/imgs/cbpsdb_icon.png" height="100"/>
 </center>
 </div>
 <h4> 2. It is designed to be sleek and easy to use with a nice UI </h4>
