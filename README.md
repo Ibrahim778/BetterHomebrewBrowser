@@ -7,28 +7,29 @@ A homebrew browser that supports multiple DB's with background downloading suppo
 
   
 
-## Features  
+# Features  
 
-#### 1. It can download from various sources, meaning a larger content library to chose from
+#### It can download from various sources, meaning a larger content library to chose from
 <div>
 <center>
 	<img src="https://raw.githubusercontent.com/Ibrahim778/BetterHomebrewBrowser/InDev/imgs/vitadb_icon.png" height="100" />
 	<img  src="https://raw.githubusercontent.com/Ibrahim778/BetterHomebrewBrowser/InDev/imgs/cbpsdb_icon.png" height="100"/>
 </center>
 </div>
-<h4> 2. It is designed to be sleek and easy to use with a nice UI </h4>
+<h4> It is designed to be sleek and easy to use with a nice UI </h4>
 <div>
 	<img src="https://raw.githubusercontent.com/Ibrahim778/BetterHomebrewBrowser/InDev/imgs/ui1.png" width="350" />
 	<img src="https://raw.githubusercontent.com/Ibrahim778/BetterHomebrewBrowser/InDev/imgs/ui2.png" width="350" />
 </div>
 
- #### 3. It can download files in the background just like the official store and will install with a native-looking UI along with proper notifications to complete the look
+ #### It can download files in the background just like the official store and will install with a native-looking UI along with proper notifications to complete the look
 <div>
 <img src="https://raw.githubusercontent.com/Ibrahim778/BetterHomebrewBrowser/InDev/imgs/download1.png" width="300" />
 <img src="https://raw.githubusercontent.com/Ibrahim778/BetterHomebrewBrowser/InDev/imgs/download2.png" width="300" />
 <img src="https://raw.githubusercontent.com/Ibrahim778/BetterHomebrewBrowser/InDev/imgs/download3.png" width="300" />
 <img src="https://raw.githubusercontent.com/Ibrahim778/BetterHomebrewBrowser/InDev/imgs/download4.png" width="300" />
 </div>
+<h4>It also supports several languages</h4>
 
 ## Adding a new language
 
@@ -40,23 +41,47 @@ A homebrew browser that supports multiple DB's with background downloading suppo
 
 - Use [English locale](https://github.com/Ibrahim778/BetterHomebrewBrowser/blob/InDev/resource/locale/en.xml) as base. Name your translation XX.xml, where XX is language code.
 
-Supported language codes can be seen [here](https://github.com/Ibrahim778/BetterHomebrewBrowser/blob/InDev/resource/bhbb_plugin.xml#L281) (id attribute).
+Supported language codes can be seen [here](https://github.com/Ibrahim778/BetterHomebrewBrowser/blob/InDev/resource/bhbb_plugin.xml#L352) (id attribute).
 
 - Submit your translation as pull request, it will be added in the next release.
 
   
 
-## Credits
+# Credits
 
   
 
-1. Thanks to [GrapheneCt](https://github.com/GrapheneCt) for ScePaf reversing, help, EMPVA (Reference), NetStream (Reference) and his CXML Compiler (Not Released)
+### @GrapheneCt
+ -  ScePaf reversing
+ -  EMPVA (Reference)
+ - NetStream (Reference) 
+ -  CXML Compiler (Not Released)
+ - SceIPMI & SceDownload reversing
 
-1. Thanks to SomeonPC (RIP) for Livearea™ assets and beta testing
+### @CreepNT
+- SceDownload reversing
 
-1. Thanks to SparklingPheonix for beta testing
+### @Princess-of-sleeping
+- Help with debugging and development
+- Reversing SceLsdb notifications (SceShell notice POC)
 
-  
+### @SKGleba & TheFlow
+- bgvpk & Download Enabler (basis for bhbb_dl)
+
+### Beta Testers
+- @SomeOnPC
+- @ShadowKnight1620
+- @Koutsie
+- @SparklingPheonix
+- @gl33ntwine
+
+### Translators
+- @isage - RU
+- @S1ngyy - DE
+- @CreepNT - FR
+- @Princess-of-sleeping - JA
+
+Livearea assets by SomeonPC  
 
 ## Donations
 
