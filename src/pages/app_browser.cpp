@@ -127,6 +127,11 @@ void AppBrowser::SettingsCB(int id, paf::ui::Handler *handler, paf::ui::Event *e
 
         Downloader::GetCurrentInstance()->Enqueue(g_appPlugin, "http://github.com/Ibrahim778/SelfLauncher/releases/download/V1.1/SelfLauncher.vpk", "Self Launcher", "ux0:app/VITASHELL/sce_sys/icon0.png", &param);
         break;
+
+    case button_donations:
+        Settings::GetInstance()->Close();
+        new page::Base(page_donations, Plugin::PageOpenParam(true), Plugin::PageCloseParam(true));
+        break;
     default:
         break;
     }

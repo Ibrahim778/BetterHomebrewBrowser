@@ -48,6 +48,10 @@
 #define picture 0x0E66B49D
 #define busy 0xE18A89F9
 #define back_button 0xA20371F2
+#define page_donations 0x1AED2003
+#define page_root 0x5E5BC488
+#define page_text 0x62A7C933
+#define donation_qr 0x13FF9183
 #define text_page 0xD23B357F
 #define page_root 0x5E5BC488
 #define page_text 0x62A7C933
@@ -168,6 +172,7 @@
 #define tex_info_icon 0x96045C6A
 #define tex_info_icon_glow 0xFD675E9A
 #define tex_screensdhot_icon 0xBDABD172
+#define tex_donations 0x4EA0A6EB
 #define file_bhbb_settings 0x678061B9
 #define _common_snd01 0x48D64CF1
 
