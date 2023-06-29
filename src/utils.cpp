@@ -1,177 +1,59 @@
-#include <kernel.h>
 #include <audioout.h>
-#include <ShellAudio.h>
 #include <paf.h>
-#include <power.h>
-#include <libsysmodule.h>
-#include <appmgr.h>
-#include <message_dialog.h>
+#include <ShellAudio.h>
 #include <taihen.h>
+#include <appmgr.h>
+#include <psp2_compat/curl/curl.h>
 
 #include "utils.h"
 #include "print.h"
 #include "common.h"
-#include "main.h"
-#include "network.h"
 #include "bhbb_dl.h"
+#include "error_codes.h"
 
 using namespace paf;
+using namespace paf::common;
 
-SceUInt32 Utils::GetHashById(const char *id)
-{
-    rco::Element searchReq;
-    rco::Element searchRes;
-    
-    searchReq.id = id;
-    searchRes.hash = searchRes.GetHash(&searchReq.id);
-
-    return searchRes.hash;
-}
-
-SceVoid Utils::HttpsToHttp(paf::string& url)
+void Utils::HttpsToHttp(const char *src, paf::string& outURL)
 { 
-    if(sce_paf_strncmp("https", url.data(), 5) != 0)
+    if(sce_paf_strncmp(src, "https", 5) != 0)
+    {
+        outURL = src;
         return;
+    }
     
-    int strLen = url.length();
-    
+    int strLen = sce_paf_strlen(src);
     char* buff = new char[strLen]; //We don't add +1 bcs we will remove the 's' character anyways
     sce_paf_memset(buff, 0, strLen);
 
-    sce_paf_snprintf(buff, strLen, "http%s", &url.data()[5]);
+    sce_paf_snprintf(buff, strLen, "http%s", &src[5]);
 
-    url = buff;
+    outURL = buff;
+    
     delete[] buff;
 }
 
-SceVoid Utils::GetStringFromID(const char *id, paf::string *out)
-{
-    rco::Element e;
-    e.hash = Utils::GetHashById(id);
-    
-    wchar_t *wstr = mainPlugin->GetWString(&e);
-    ccc::UTF16toUTF8((const wchar_t *)wstr, out);
-}
-
-SceBool Utils::IsValidURLSCE(const char *url)
+bool Utils::IsValidURLSCE(const char *url)
 {
     paf::HttpFile file;
     paf::HttpFile::OpenArg openArg;
     SceInt32 ret = SCE_OK;
 
-    openArg.SetUrl(url);
-
-    openArg.SetOpt(4000000, HttpFile::OpenArg::Opt_ResolveTimeOut);
-	openArg.SetOpt(10000000, HttpFile::OpenArg::Opt_ConnectTimeOut);
+    openArg.ParseUrl(url);
+    openArg.SetOption(4000000, HttpFile::OpenArg::OptionType_ResolveTimeOut);
+	openArg.SetOption(10000000, HttpFile::OpenArg::OptionType_ConnectTimeOut);
 
     ret = file.Open(&openArg);
+    
+    if(ret == 0x80431075) ret = SCE_OK; // Temporary fix till I figure out wot is going on with this SSL stuff (SceDownload should report proper error anyways)
+
     if(ret == SCE_OK)
     {
         file.Close();
         return SCE_TRUE;
     }
-
+    print("Open %s FAIL 0x%X\n", url, ret);
     return SCE_FALSE;
-}
-
-SceVoid Utils::GetfStringFromID(const char *id, paf::string *out)
-{
-    paf::string *str = new paf::string;
-    Utils::GetStringFromID(id, str);
-
-    int slashNum = 0;
-    int strlen = str->length();
-    const char *strptr = str->data();
-    for(int i = 0; i < strlen + 1 && strptr[i] != '\0'; i++)
-        if(strptr[i] == '\\') slashNum++;
-
-    int buffSize = (strlen + 1) - slashNum;
-    char *buff = new char[buffSize];
-    sce_paf_memset(buff, 0, buffSize);
-
-    for(char *buffPtr = buff, *strPtr = (char *)strptr; *strPtr != '\0'; strPtr++, buffPtr++)
-    {
-        if(*strPtr == '\\')
-        {
-            switch(*(strPtr + sizeof(char)))
-            {
-                case 'n':
-                    *buffPtr = '\n';
-                    break;
-                case 'a':
-                    *buffPtr = '\a';
-                    break;
-                case 'b':
-                    *buffPtr = '\b';
-                    break;
-                case 'e':
-                    *buffPtr = '\e';
-                    break;
-                case 'f':
-                    *buffPtr = '\f';
-                    break;
-                case 'r':
-                    *buffPtr = '\r';
-                    break;
-                case 'v':
-                    *buffPtr = '\v';
-                    break;
-                case '\\':
-                    *buffPtr = '\\';
-                    break;
-                case '\'':
-                    *buffPtr = '\'';
-                    break;
-                case '\"':
-                    *buffPtr = '\"';
-                    break;
-                case '?':
-                    *buffPtr = '\?';
-                    break;
-                case 't':
-                    *buffPtr = '\t';
-                    break;
-            }
-            strPtr++;
-        }
-        else *buffPtr = *strPtr;
-    }
-
-    *out = buff;
-
-    delete str;
-    delete[] buff;
-}
-
-SceInt32 Utils::SetWidgetLabel(paf::ui::Widget *widget, const char *text)
-{
-    paf::wstring wstr;
-    ccc::UTF8toUTF16(text, &wstr);    
-    return widget->SetLabel(&wstr);
-}
-
-SceInt32 Utils::SetWidgetLabel(paf::ui::Widget *widget, paf::string *text)
-{
-    paf::wstring wstr;
-
-    ccc::UTF8toUTF16(text, &wstr);
-
-    return widget->SetLabel(&wstr);
-}
-
-wchar_t *Utils::GetStringPFromID(const char *id)
-{
-    rco::Element e;
-    e.hash = Utils::GetHashById(id);
-
-    return mainPlugin->GetWString(&e);
-}
-
-void Utils::ToLowerCase(char *string)
-{
-    //Convert to lowerCase
-    for(int i = 0; string[i] != '\0'; i++)
-        if(string[i] > 64 && string[i] < 91) string[i] += 0x20;
 }
 
 void Utils::InitMusic()
@@ -179,7 +61,7 @@ void Utils::InitMusic()
     SceInt32 ret = -1;
 
     ret = sceMusicInternalAppInitialize(0);
-    if(ret < 0) print("[AUDIO_INIT] Error! 0x%X", ret);
+    print("[sceMusicInternalAppInitialize] 0x%X\n", ret);
 
     SceMusicOpt optParams;
     sce_paf_memset(&optParams, 0, 0x10);
@@ -187,33 +69,75 @@ void Utils::InitMusic()
     optParams.flag = -1;
 
     ret = sceMusicInternalAppSetUri((char *)"pd0:data/systembgm/store.at9", &optParams);
-    if(ret < 0) print("[CORE_OPEN] Error! 0x%X", ret);
+    print("[sceMusicInternalAppSetUri] 0x%X\n", ret);
 
     ret = sceMusicInternalAppSetVolume(SCE_AUDIO_VOLUME_0DB);
-    if(ret < 0) print("[SET_VOL] Error! 0x%X", ret);
+    print("[sceMusicInternalAppSetVolume] 0x%X\n", ret);
 
     ret = sceMusicInternalAppSetRepeatMode(SCE_MUSIC_REPEAT_ONE);
-    if(ret < 0) print("[SET_REPEAT_MODE] Error! 0x%X", ret);
+    print("[sceMusicInternalAppSetRepeatMode] 0x%X\n", ret);
 
     ret = sceMusicInternalAppSetPlaybackCommand(SCE_MUSIC_EVENTID_DEFAULT, 0);
-    if(ret < 0) print("[SEND_EVENT_PLAY] Error! 0x%X", ret);
+    print("[sceMusicInternalAppSetPlaybackCommand] 0x%X\n", ret);
 }
 
-SceVoid Utils::DeleteTexture(paf::graph::Surface **tex)
+size_t SaveCore(char *ptr, size_t size, size_t nmeb, SharedPtr<LocalFile> *file)
 {
-    if(tex != NULL)
-    {
-        if(*tex == TransparentTex) return;
-        if(*tex != NULL)
-        {
-            //(*tex)->Release();
-            delete *tex;
-            *tex = SCE_NULL;
-        }
-    }
+    return file->get()->Write(ptr, size * nmeb);
 }
 
-SceVoid Utils::StartBGDL()
+int Utils::DownloadFile(const char *url, const char *dest)
+{
+    int ret = SCE_OK;
+    SharedPtr<LocalFile> file = LocalFile::Open(dest, SCE_O_WRONLY | SCE_O_CREAT | SCE_O_TRUNC, 0666, &ret);
+    if(ret != SCE_OK)
+    {
+        print("[Utils::DownloadFile] Failed to open %s for writing -> 0x%X\n", dest, ret);
+        return ret;
+    }
+    
+    CURL *handle = curl_easy_init();
+    if(!handle)
+    {
+        print("[Utils::DownloadFile] Failed to create curl handle!\n");
+        return -1;
+    }
+    
+    curl_easy_setopt(handle, CURLOPT_SSL_VERIFYHOST, 1L);
+    curl_easy_setopt(handle, CURLOPT_HTTPGET, 1L);
+    curl_easy_setopt(handle, CURLOPT_FOLLOWLOCATION, 1L);
+    curl_easy_setopt(handle, CURLOPT_SSL_VERIFYPEER, 0L);
+    curl_easy_setopt(handle, CURLOPT_USERAGENT, "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.36");
+    curl_easy_setopt(handle, CURLOPT_SSLVERSION, CURL_SSLVERSION_TLSv1_2);
+    curl_easy_setopt(handle, CURLOPT_USE_SSL, CURLUSESSL_ALL);
+
+    curl_easy_setopt(handle, CURLOPT_URL, url);
+
+    curl_easy_setopt(handle, CURLOPT_WRITEDATA, &file);
+    curl_easy_setopt(handle, CURLOPT_WRITEFUNCTION, SaveCore);
+
+    ret = curl_easy_perform(handle);
+
+    curl_easy_cleanup(handle);
+
+    if(ret != CURLE_OK)
+    {
+        file.release();
+        LocalFile::RemoveFile(dest);
+    }
+
+    print("[Utils::DownloadFile] (%s -> %s) result > 0x%X\n", url, dest, ret);
+    return ret;
+}
+
+void Utils::Decapitalise(char *string)
+{
+    //Convert to lowerCase
+    for(int i = 0; string[i] != '\0'; i++)
+        if(string[i] > 64 && string[i] < 91) string[i] += 0x20;
+}
+
+void Utils::StartBGDL()
 {
     SceInt32 res = SCE_OK;
     SceUID moduleID = SCE_UID_INVALID_UID;
@@ -230,7 +154,7 @@ SceVoid Utils::StartBGDL()
     {
         SceUID id;
         
-        SharedPtr<LocalFile> openResult = LocalFile::Open("ux0:data/bgdlid", SCE_O_RDONLY, 0, NULL);
+        common::SharedPtr<LocalFile> openResult = LocalFile::Open("ux0:data/bgdlid", SCE_O_RDONLY, 0, NULL);
         openResult.get()->Read(&id, sizeof(SceUID));
         print("Unloading....\n");
         taiStopUnloadModuleForPid(sceShellID, id, 0, NULL, 0, NULL, NULL);
@@ -248,46 +172,7 @@ SceVoid Utils::StartBGDL()
     
     print("BGDL started with ID 0x%X\n", moduleID);
 #ifdef _DEBUG
-    SharedPtr<LocalFile> openResult = LocalFile::Open("ux0:data/bgdlid", SCE_O_WRONLY | SCE_O_CREAT | SCE_O_TRUNC, 0666, NULL);
+    common::SharedPtr<LocalFile> openResult = LocalFile::Open("ux0:data/bgdlid", SCE_O_WRONLY | SCE_O_CREAT | SCE_O_TRUNC, 0666, NULL);
     openResult.get()->Write(&moduleID, sizeof(SceUID));
 #endif
 }
-
-ui::Widget *Utils::CreateWidget(const char *id, const char *type, const char *style, ui::Widget *parent)
-{
-    rco::Element styleInfo;
-    styleInfo.hash = Utils::GetHashById(style);
-    rco::Element widgetInfo;
-    widgetInfo.hash = Utils::GetHashById(id);
-
-    return mainPlugin->CreateWidgetWithStyle(parent, type, &widgetInfo, &styleInfo);
-}
-
-SceInt32 Utils::PlayEffect(paf::ui::Widget *widget, SceFloat32 param, paf::effect::EffectType type, paf::ui::EventCallback::EventHandler animCB, ScePVoid pUserData)
-{
-    widget->PlayEffect(param, type, animCB, pUserData);
-    if(widget->animationStatus & 0x80)
-        widget->animationStatus &= ~0x80;
-}
-
-SceInt32 Utils::PlayEffectReverse(paf::ui::Widget *widget, SceFloat32 param, paf::effect::EffectType type, paf::ui::EventCallback::EventHandler animCB, ScePVoid pUserData)
-{
-    widget->PlayEffectReverse(param, type, animCB, pUserData);
-    if(widget->animationStatus & 0x80)
-        widget->animationStatus &= ~0x80;
-}
-#ifdef _DEBUG
-
-SceVoid Utils::PrintAllChildren(paf::ui::Widget *widget, int offset)
-{
-    for (int i = 0; i < widget->childNum; i++)
-    {
-        for (int i = 0; i < offset; i++) print(" ");
-        wstring wstr;
-        widget->GetChild(i)->GetLabel(&wstr);
-        print(" %d 0x%X (%s, \"%ls\")\n", i, widget->GetChild(i)->elem.hash, widget->GetChild(i)->name(), wstr.data());
-        Utils::PrintAllChildren(widget->GetChild(i), offset + 4);
-    }
-}
-
-#endif

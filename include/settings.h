@@ -5,24 +5,20 @@
 #include <app_settings.h>
 #include <paf.h>
 
-#include "db.h"
+#include "db/source.h"
+#include "bhbb_locale.h"
 
 class Settings
 {
 public:
-    class OpenCallback : public paf::ui::EventCallback
+    enum
     {
-    public:
-        OpenCallback();
-
-        static SceVoid OnGet(SceInt32 id, paf::ui::Widget *widget, SceInt32 unk, ScePVoid data);
+        SettingsEvent = (paf::ui::Handler::CB_STATE + 0x30000),
     };
 
-    enum Hash
+    enum SettingsEvent
     {
-        Hash_Refresh = 0xDF43DB7A,
-        Hash_nLoad = 0xA7E3A711,
-        Hash_Source = 0x92EFFF4E,
+        SettingsEvent_ValueChange
     };
 
     Settings();
@@ -30,42 +26,40 @@ public:
 
     static Settings *GetInstance();
     static sce::AppSettings *GetAppSettings();
-    SceVoid Open();
-    SceVoid Close();
+    void Open();
+    void Close();
 
+    static void OpenCB(int id, paf::ui::Handler *widget, paf::ui::Event *event, void *data);
 
-    db::Id source;
-    int nLoad;
+    int source;
 
 private:
     static sce::AppSettings *appSettings;
 
-    static SceVoid CBListChange(const char *elementId);
+    static void CBOnStartPageTransition(const char *elementId, int32_t type);
 
-    static SceVoid CBListForwardChange(const char *elementId);
+    static void CBOnPageActivate(const char *elementId, int32_t type);
 
-    static SceVoid CBListBackChange(const char *elementId);
+    static void CBOnPageDeactivate(const char *elementId, int32_t type);
 
-    static SceInt32 CBIsVisible(const char *elementId, SceBool *pIsVisible);
+    static int32_t CBOnCheckVisible(const char *elementId, int *pIsVisible);
 
-    static SceInt32 CBElemInit(const char *elementId);
+    static int32_t CBOnPreCreate(const char *elementId, sce::AppSettings::Element *element);
 
-    static SceInt32 CBElemAdd(const char *elementId, paf::ui::Widget *widget);
+    static int32_t CBOnPostCreate(const char *elementId, paf::ui::Widget *widget);
 
-    static SceInt32 CBValueChange(const char *elementId, const char *newValue);
+    static int32_t CBOnPress(const char *elementId, const char *newValue);
 
-    static SceInt32 CBValueChange2(const char *elementId, const char *newValue);
+    static int32_t CBOnPress2(const char *elementId, const char *newValue);
 
-    static SceVoid CBTerm();
+    static void CBOnTerm(int32_t result);
 
-    static wchar_t *CBGetString(const char *elementId);
+    static wchar_t *CBOnGetString(const char *elementId);
 
-    static SceInt32 CBGetTex(paf::graph::Surface **tex, const char *elementId);
+    static int32_t CBOnGetSurface(paf::graph::Surface **surf, const char *elementId);
 
-
-    const int d_settingsVersion = 1;
-    const int d_source = db::CBPSDB;
-    const int d_nLoad = 50;
+    const int d_settingsVersion = 2; 
+    const int d_source = Source::VITA_DB;
 };
 
 #endif

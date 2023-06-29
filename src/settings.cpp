@@ -1,4 +1,4 @@
-#include <kernel.h>
+#include <paf.h>
 #include <libsysmodule.h>
 #include <taihen.h>
 
@@ -6,14 +6,22 @@
 #include "common.h"
 #include "utils.h"
 #include "print.h"
-#include "db.h"
 #include "pages/text_page.h"
+#include "bhbb_plugin.h"
+#include "bhbb_settings.h"
+#include "pages/page.h"
+#include "pages/app_browser.h"
+
+#define WIDE2(x) L##x
+#define WIDE(x) WIDE2(x)
 
 using namespace paf;
 using namespace sce;
 
 static Settings *currentSettingsInstance = SCE_NULL;
 sce::AppSettings *Settings::appSettings = SCE_NULL;
+
+static wchar_t *s_verinfo = NULL;
 
 Settings::Settings()
 {
@@ -23,40 +31,40 @@ Settings::Settings()
 		sceKernelExitProcess(0);
 	}
 
-	SceInt32 ret = 0;
-    SceSize fileSize = 0;
+	int ret = 0;
+    size_t fileSize = 0;
     const char *mimeType = SCE_NULL;
-	Plugin::InitParam pInit;
+	
+    Plugin::InitParam pInit;
 	AppSettings::InitParam sInit;
 
 	sceSysmoduleLoadModuleInternal(SCE_SYSMODULE_INTERNAL_BXCE);
 	sceSysmoduleLoadModuleInternal(SCE_SYSMODULE_INTERNAL_INI_FILE_PROCESSOR);
 	sceSysmoduleLoadModuleInternal(SCE_SYSMODULE_INTERNAL_COMMON_GUI_DIALOG);
 
-	pInit.pluginName = "app_settings_plugin";
-	pInit.resourcePath = "vs0:vsh/common/app_settings_plugin.rco";
-	pInit.scopeName = "__main__";
+	pInit.name = "app_settings_plugin";
+	pInit.resource_file = "vs0:vsh/common/app_settings_plugin.rco";
+	pInit.caller_name = "__main__";
 
-	pInit.pluginSetParamCB = AppSettings::PluginCreateCB;
-	pInit.pluginInitCB = AppSettings::PluginInitCB;
-	pInit.pluginStartCB = AppSettings::PluginStartCB;
-	pInit.pluginStopCB = AppSettings::PluginStopCB;
-	pInit.pluginExitCB = AppSettings::PluginExitCB;
-	pInit.pluginPath = "vs0:vsh/common/app_settings.suprx";
-	pInit.unk_58 = 0x96;
+	pInit.set_param_func = AppSettings::PluginSetParamCB;
+	pInit.init_func = AppSettings::PluginInitCB;
+	pInit.start_func = AppSettings::PluginStartCB;
+	pInit.stop_func = AppSettings::PluginStopCB;
+	pInit.exit_func = AppSettings::PluginExitCB;
+	pInit.module_file = "vs0:vsh/common/app_settings.suprx";
+	pInit.draw_priority = 0x96;
 
-	Framework::GetInstance()->LoadPlugin(&pInit);
+	Plugin::LoadSync(pInit);
     
-	sInit.xmlFile = mainPlugin->resource->GetFile(Utils::GetHashById("file_bhbb_settings"), &fileSize, &mimeType);
+	sInit.xml_file = g_appPlugin->GetResource()->GetFile(file_bhbb_settings, &fileSize, &mimeType);
 
-	sInit.allocCB = sce_paf_malloc;
-	sInit.freeCB = sce_paf_free;
-	sInit.reallocCB = sce_paf_realloc;
-	sInit.safeMemoryOffset = 0;
-	sInit.safeMemorySize = 0x400;
+	sInit.alloc_cb = sce_paf_malloc;
+	sInit.free_cb = sce_paf_free;
+	sInit.realloc_cb = sce_paf_realloc;
+	sInit.safemem_offset = 0;
+	sInit.safemem_size = 0x400;
 
-	AppSettings::GetInstance(&sInit, &appSettings);
-
+	AppSettings::GetInstance(sInit, &appSettings);
 
 	ret = -1;
 	appSettings->GetInt("settings_version", &ret, 0);
@@ -66,12 +74,23 @@ Settings::Settings()
 
         appSettings->SetInt("settings_version", d_settingsVersion);
         appSettings->SetInt("source", d_source);
-        appSettings->SetInt("nLoad", d_nLoad);
 	}
 
     //Get values
     appSettings->GetInt("source", (int *)&source, d_source);
-    appSettings->GetInt("nLoad", &nLoad, d_nLoad);
+
+    paf::wstring *verinfo = new paf::wstring();
+
+#ifdef _DEBUG
+	*verinfo = L"DEBUG ";
+#else
+	*verinfo = L"RELEASE ";
+#endif
+	*verinfo += WIDE(__DATE__);
+	*verinfo += L"\nVersion 1.1\nBGDL Version 3.0";
+	s_verinfo = (wchar_t *)verinfo->c_str();
+
+    print("%ls\n", s_verinfo);
 
 	currentSettingsInstance = this;
 }
@@ -94,138 +113,119 @@ sce::AppSettings *Settings::GetAppSettings()
 
 SceVoid Settings::Close()
 {
-    rco::Element e;
-    e.hash = 0xF6C9D4C0;
-
     auto plugin = paf::Plugin::Find("app_settings_plugin");
-    ui::Widget *root = plugin->GetPageByHash(&e);
-    if(!root) return;
-    e.hash = 0x8211F03F;
-    ui::Widget *exitButton = root->GetChild(&e, 0);
-    if(!exitButton) return;
-    exitButton->SendEvent(ui::EventMain::EventMain_Decide, 0);
+
+    ui::Widget *root = plugin->PageRoot(0xF6C9D4C0);
+    if(!root) 
+        return;
+
+    auto exitButton = (ui::Button *)root->FindChild(0x8211F03F);
+    if(!exitButton) 
+        return;
+
+	ui::Event ev(ui::EV_COMMAND, ui::Event::MODE_DISPATCH, ui::Event::ROUTE_FORWARD, 0, 0, 0, 0, 0);
+    
+    exitButton->DoEvent(ui::Button::CB_BTN_DECIDE, &ev); // I miss the good ol' days when you could pass nullptr as the second arg :(
 }
 
 SceVoid Settings::Open()
 {
-    g_appsPage->root->SetAlpha(0.39f);
-    g_appsPage->root->PlayEffectReverse(10, effect::EffectType_Fadein1);
-
+    page::Base::GetCurrentPage()->root->SetActivate(false);
+    
 	AppSettings::InterfaceCallbacks ifCb;
 
-	ifCb.listChangeCb = CBListChange;
-	ifCb.listForwardChangeCb = CBListForwardChange;
-	ifCb.listBackChangeCb = CBListBackChange;
-	ifCb.isVisibleCb = CBIsVisible;
-	ifCb.elemInitCb = CBElemInit;
-	ifCb.elemAddCb = CBElemAdd;
-	ifCb.valueChangeCb = CBValueChange;
-	ifCb.valueChangeCb2 = CBValueChange2;
-	ifCb.termCb = CBTerm;
-	ifCb.getStringCb = CBGetString;
-	ifCb.getTexCb = CBGetTex;
+	ifCb.onStartPageTransitionCb = CBOnStartPageTransition;
+	ifCb.onPageActivateCb = CBOnPageActivate;
+	ifCb.onPageDeactivateCb = CBOnPageDeactivate;
+	ifCb.onCheckVisible = CBOnCheckVisible;
+	ifCb.onPreCreateCb = CBOnPreCreate;
+	ifCb.onPostCreateCb = CBOnPostCreate;
+	ifCb.onPressCb = CBOnPress;
+	ifCb.onPressCb2 = CBOnPress2;
+	ifCb.onTermCb = CBOnTerm;
+	ifCb.onGetStringCb = CBOnGetString;
+	ifCb.onGetSurfaceCb = CBOnGetSurface;
 
 	Plugin *appSetPlug = paf::Plugin::Find("app_settings_plugin");
 	AppSettings::Interface *appSetIf = (sce::AppSettings::Interface *)appSetPlug->GetInterface(1);
-
+    
 	appSetIf->Show(&ifCb);
 }
 
-Settings::OpenCallback::OpenCallback()
-{
-    eventHandler = OnGet;
-}
-
-SceVoid Settings::OpenCallback::OnGet(SceInt32, ui::Widget *, SceInt32, ScePVoid)
+void Settings::OpenCB(int, ui::Handler *, ui::Event*, void*)
 {
     Settings::GetInstance()->Open();
 }
 
-SceVoid Settings::CBListChange(const char *elementId)
+void Settings::CBOnStartPageTransition(const char *elementId, int32_t type)
 {
 
 }
 
-SceVoid Settings::CBListForwardChange(const char *elementId)
+void Settings::CBOnPageActivate(const char *elementId, int32_t type)
 {
 
 }
 
-SceVoid Settings::CBListBackChange(const char *elementId)
+void Settings::CBOnPageDeactivate(const char *elementId, int32_t type)
 {
 
 }
 
-SceInt32 Settings::CBIsVisible(const char *elementId, SceBool *pIsVisible)
+int32_t Settings::CBOnCheckVisible(const char *elementId, int *pIsVisible)
 {
-	*pIsVisible = SCE_TRUE;
+	*pIsVisible = true;
 
 	return SCE_OK;
 }
 
-SceInt32 Settings::CBElemInit(const char *elementId)
+int32_t Settings::CBOnPreCreate(const char *elementId, sce::AppSettings::Element *element)
 {
 	return SCE_OK;
 }
 
-SceInt32 Settings::CBElemAdd(const char *elementId, paf::ui::Widget *widget)
+int32_t Settings::CBOnPostCreate(const char *elementId, paf::ui::Widget *widget)
 {
 	return SCE_OK;
 }
 
-SceInt32 Settings::CBValueChange(const char *elementId, const char *newValue)
+int32_t Settings::CBOnPress(const char *elementId, const char *newValue)
 {
-	SceInt32 ret = SCE_OK;
-	SceUInt32 elementHash = Utils::GetHashById(elementId);
-	SceInt64 value = sce_paf_strtol(newValue, NULL, 10);
-	print("Element with id: %s (0x%X) called CBValueChange! newValue = %s\n", elementId, elementHash, newValue);
+	int32_t ret = SCE_OK;
+	IDParam elem(elementId);
+	IDParam val(newValue);
 
-	switch (elementHash)
-	{
-    
-    case Hash_nLoad:
-        GetInstance()->nLoad = value;
-        g_appsPage->Redisplay();
-        break;
-
-    case Hash_Source:
-        GetInstance()->source = (db::Id)value;
-    
-    case Hash_Refresh:
-        g_appsPage->Load();
-        break;
-
-	default:
-		break;
-	}
+	event::BroadcastGlobalEvent(g_appPlugin, SettingsEvent, SettingsEvent_ValueChange, elem.GetIDHash(), val.GetIDHash(), sce_paf_atoi(newValue));
 
 	return ret;
 }
 
-SceInt32 Settings::CBValueChange2(const char *elementId, const char *newValue)
+int32_t Settings::CBOnPress2(const char *elementId, const char *newValue)
 {
 	return SCE_OK;
 }
 
-SceVoid Settings::CBTerm()
-{    
-    g_appsPage->root->PlayEffect(-100, effect::EffectType_Fadein1);
-    g_appsPage->root->SetAlpha(1.0f);
-}
-
-wchar_t *Settings::CBGetString(const char *elementId)
+void Settings::CBOnTerm(int32_t result)
 {
-    if(sce_paf_strncmp(elementId, "msg_version_info", 16) == 0)
-        return g_versionInfo;
-
-    rco::Element searchParam;
-    searchParam.hash = Utils::GetHashById(elementId);
-
-    return mainPlugin->GetWString(&searchParam);
+    page::Base::GetCurrentPage()->root->SetActivate(true);
 }
 
-SceInt32 Settings::CBGetTex(graph::Surface **tex, const char *elementId)
+wchar_t *Settings::CBOnGetString(const char *elementId)
+{
+	wchar_t *res = g_appPlugin->GetString(elementId);
+
+	if (res[0] == 0)
+	{
+		if (!sce_paf_strcmp(elementId, "msg_verinfo"))
+		{
+			return s_verinfo;
+		}
+	}
+
+	return res;
+}
+
+int32_t Settings::CBOnGetSurface(graph::Surface **surf, const char *elementId)
 {
 	return SCE_OK;
 }
-

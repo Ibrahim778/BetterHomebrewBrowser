@@ -1,5 +1,7 @@
+/.fleet
 /.vscode
 /.vs
+/cmake-build-debug-vdsuite
 /build
 /build.bat
 /build.sh
@@ -16,3 +18,8 @@
 *.DS_Store
 /update_rco.sh
 bhbb_dl/.vscode
+/genhashheaders.py
+._*
+/.idea
+/run.bat
+*.rcs

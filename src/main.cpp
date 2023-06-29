@@ -1,182 +1,129 @@
 #include <kernel.h>
-#include <stdio.h>
 #include <paf.h>
 #include <shellsvc.h>
 #include <libsysmodule.h>
 #include <apputil.h>
 #include <taihen.h>
+#include <net.h>
+#include <libperf.h>
+#include <libnetctl.h>
+#include <vshbridge.h>
 
 #include "print.h"
-#include "main.h"
-#include "paf.h"
-#include "common.h"
 #include "utils.h"
-#include "network.h"
-#include "downloader.h"
-#include "settings.h"
+#include "common.h"
+#include "bhbb_plugin.h"
+#include "bhbb_locale.h"
+#include "pages/app_browser.h"
 #include "pages/text_page.h"
-#include "dialog.h"
-#include "pages/apps_page.h"
+#include "db/source.h"
+#include "settings.h"
+#include "downloader.h"
 
-#define WIDE2(x) L##x
-#define WIDE(x) WIDE2(x)
+#define NET_HEAP_SIZE  (2 * 1024 * 1024)
+#define HTTP_HEAP_SIZE (2 * 1024 * 1024)
+#define SSL_HEAP_SIZE  (2 * 1024 * 1024)
 
 extern "C" {
-
-    SCE_USER_MODULE_LIST("app0:module/libScePafPreload.suprx");
-
-    extern const char			sceUserMainThreadName[] = "BHBB_MAIN";
-    extern const int			sceUserMainThreadPriority = SCE_KERNEL_DEFAULT_PRIORITY_USER;
-    extern const unsigned int	sceUserMainThreadStackSize = SCE_KERNEL_THREAD_STACK_SIZE_DEFAULT_USER_MAIN;
-    extern unsigned int         sceLibcHeapSize = 0x180000;
-
-    void __cxa_set_dso_handle_main(void *dso)
-    {
-
-    }
-
-    int _sceLdTlsRegisterModuleInfo()
-    {
-        return 0;
-    }
-
-    int __aeabi_unwind_cpp_pr0()
-    {
-        return 9;
-    }
-
-    int __aeabi_unwind_cpp_pr1()
-    {
-        return 9;
-    }
-
-    int __at_quick_exit()
-    {
-        return 0;
-    }
+    const char			sceUserMainThreadName[] = "BHBB_MAIN";
+    const int			sceUserMainThreadPriority = SCE_KERNEL_DEFAULT_PRIORITY_USER;
+    const unsigned int	sceUserMainThreadStackSize = SCE_KERNEL_THREAD_STACK_SIZE_DEFAULT_USER_MAIN;
 
     SceUID _vshKernelSearchModuleByName(const char *name, SceUInt64 *unk);
+    int curl_global_memmanager_set_np(void *(*allocate)(size_t), void (*deallocate)(void *), void *(*reallocate)(void *, size_t));
 }
 
 using namespace paf;
 
-Plugin *mainPlugin = SCE_NULL;
+Plugin *g_appPlugin = nullptr;
 
-graph::Surface *BrokenTex = SCE_NULL;
-graph::Surface *TransparentTex = SCE_NULL;
-
-Downloader *g_downloader = SCE_NULL;
-apps::Page *g_appsPage = SCE_NULL;
-
-wchar_t *g_versionInfo = SCE_NULL;
-
-job::JobQueue *g_mainQueue = SCE_NULL;
-
-void OnNetworkChecked()
+SceVoid PluginStart(Plugin *plugin)
 {
-    if(Network::GetCurrentStatus() == Network::Online)
+    if(plugin == nullptr)
     {
-        g_appsPage->Load();
-    }
-    else 
-    {
-        string msgTemplate;
-        Utils::GetfStringFromID("msg_net_fix", &msgTemplate);
-
-        string errorMsg = ccc::Sprintf(msgTemplate.data(), Network::GetLastError());
-
-        new text::Page(errorMsg.data());
-
-        generic::Page::SetBackButtonEvent(apps::Page::ErrorRetryCB, g_appsPage);
-    }
-}
-
-SceVoid onPluginReady(Plugin *plugin)
-{
-    if(plugin == SCE_NULL)
-    {
-        print("[MAIN_BHBB] Error Plugin load failed!\n");
+        print("[bhbb_plugin] Error Plugin load failed!\n");
         return;
     }
 
-    mainPlugin = plugin;
+    g_appPlugin = plugin;
+    print("[bhbb_plugin] Create success! %p\n", plugin);
 
-    rco::Element e; 
-    e.hash = Utils::GetHashById("tex_missing_icon");
-    mainPlugin->GetTexture(&BrokenTex, mainPlugin, &e);
+    SceKernelFwInfo fw;
+    fw.size = sizeof(fw);
+    _vshSblGetSystemSwVersion(&fw);
 
-	e.hash = Utils::GetHashById("_common_texture_transparent");
-	Plugin::GetTexture(&TransparentTex, Plugin::Find("__system__common_resource"), &e);
+    int subVersion = sce_paf_atoi(&fw.versionString[2]); // Too lazy to figure out how fw.version works (lol)
 
-    //Thanks Graphene
-    auto infoString = new wstring;
-
-#ifdef _DEBUG
-    *infoString = L"Type: Private Beta\n";
-#else
-    *infoString = L"Type: Public Release\n";
-#endif
-
-    *infoString += L"Date: " WIDE(__DATE__) L"\n";
-    *infoString += L"Version: 1.0\nBGDL Version: 2.0\ncBGDL Version: 1.0";
-
-    print("%ls\n", infoString->data());
-
-    g_versionInfo = (wchar_t *)infoString->data();
+    if(subVersion < 68) // Version 3.68 introduced TLS 1.2 and doesn't need iTLS-Enso
+    {
+        SceUInt64 buff = 0;
+        SceUID itlsID = _vshKernelSearchModuleByName("itlsKernel", &buff);
+        
+        print("iTLS-Enso: 0x%X\n", itlsID);
+        if(itlsID < 0)
+        {
+            new page::TextPage(msg_no_itls);
+            return;
+        }
+    }
 
     sceShellUtilInitEvents(0);
-    generic::Page::Setup();
+    
+    job::JobQueue::Option opt;
+    opt.workerNum = 1;
+    opt.workerStackSize = SCE_KERNEL_256KiB;
+    
+    job::JobQueue::Init(&opt);
 
-    SceUInt64 unk = 0;
-    SceUID itlsID = _vshKernelSearchModuleByName("itlsKernel", &unk);
+    SceNetInitParam netInitParam;
+	netInitParam.memory = sce_paf_malloc(NET_HEAP_SIZE);
+	netInitParam.size = NET_HEAP_SIZE;
+	netInitParam.flags = 0;
+	sceNetInit(&netInitParam);
 
-    print("iTLS-Enso: 0x%X\n", itlsID);
-    if(itlsID < 0)
-    {
-        string err;
-        Utils::GetfStringFromID("msg_no_itls", &err);
-        new text::Page(err.data());
-        return;
-    }
+	sceNetCtlInit();
 
+    /* HTTPS */
+	sceSysmoduleLoadModule(SCE_SYSMODULE_SSL);
+	sceSysmoduleLoadModule(SCE_SYSMODULE_HTTPS);
+	sceHttpInit(HTTP_HEAP_SIZE);
+	sceSslInit(SSL_HEAP_SIZE);
+    
+    new Downloader();
     new Settings();
-    
-    Network::Init();
-    
-    job::JobQueue::Option mainOpt;
-    mainOpt.workerNum = 1;
-    mainOpt.workerOpt = SCE_NULL;
-    mainOpt.workerPriority = SCE_KERNEL_DEFAULT_PRIORITY_USER + 5;
-    mainOpt.workerStackSize = SCE_KERNEL_16KiB;
 
-    g_mainQueue = new job::JobQueue("BHBB::MainQueue", &mainOpt);
-    g_downloader = new Downloader();
-    g_appsPage = new apps::Page();
-
-    Network::Check(OnNetworkChecked);
-
-    sceSysmoduleLoadModule(SCE_SYSMODULE_JSON);
+    auto page = new AppBrowser(Source::Create((Source::ID)Settings::GetInstance()->source));
+    page->Load();
 }
 
 int main()
 {
-#ifdef _DEBUG
-    SCE_PAF_AUTO_TEST_SET_EXTRA_TTY(sceIoOpen("tty0:", SCE_O_WRONLY, 0));
+#if defined(SCE_PAF_TOOL_PRX) && defined(_DEBUG) && !defined(__INTELLISENSE__)
+    //This line will break things if using non devkit libpaf
+    SCE_PAF_AUTO_TEST_SET_EXTRA_TTY(sceIoOpen("tty0:", SCE_O_WRONLY, 0)); 
 #endif
 
-    Utils::StartBGDL();
-    Utils::InitMusic();
+    Utils::StartBGDL(); // Init bhbb_dl
+    Utils::InitMusic(); // BG Music
+
+	sceSysmoduleLoadModule(SCE_SYSMODULE_NET);
+	sceSysmoduleLoadModule(SCE_SYSMODULE_FIBER);
+    sceSysmoduleLoadModuleInternal(SCE_SYSMODULE_INTERNAL_COMMON_GUI_DIALOG);
+
+    new Module("app0:module/libcurl.suprx", "libcurl");
+    curl_global_memmanager_set_np(sce_paf_malloc, sce_paf_free, sce_paf_realloc);
 
     Framework::InitParam fwParam;
-    fwParam.LoadDefaultParams();
-    fwParam.applicationMode = Framework::ApplicationMode::Mode_Application;
+
+    Framework::SampleInit(&fwParam);
+    fwParam.mode = Framework::Mode_Application;
     
-    fwParam.defaultSurfacePoolSize = 16 * 1024 * 1024;
-    fwParam.textSurfaceCacheSize = 2621440; //2.5MB
+    fwParam.surface_pool_size = 16 * 1024 * 1024;
+    fwParam.text_surface_pool_size = 2621440; //2.5MB
 
     Framework *fw = new Framework(fwParam);
 
-    fw->LoadCommonResource();
+    fw->LoadCommonResourceSync();
 
     SceAppUtilInitParam init;
     SceAppUtilBootParam boot;
@@ -189,17 +136,20 @@ int main()
 
     Plugin::InitParam piParam;
 
-    piParam.pluginName = "bhbb_plugin";
-    piParam.resourcePath = "app0:resource/bhbb_plugin.rco";
-    piParam.scopeName = "__main__";
-#ifdef _DEBUG
-    piParam.pluginFlags = Plugin::InitParam::PluginFlag_UseRcdDebug;
+    piParam.name = "bhbb_plugin";
+    piParam.resource_file = "app0:resource/bhbb_plugin.rco";
+    piParam.caller_name = "__main__";
+
+#if defined(SCE_PAF_TOOL_PRX) && defined(_DEBUG)
+    //This line will break things if using non devkit libpaf
+    piParam.option = Plugin::Option_ResourceLoadWithDebugSymbol;
 #endif
-    piParam.pluginStartCB = onPluginReady;
 
-    fw->LoadPluginAsync(&piParam);
+    piParam.start_func = PluginStart;
 
-    fw->EnterRenderingLoop();
+    Plugin::LoadAsync(piParam);
+    
+    fw->Run();
 
     return sceKernelExitProcess(0);
 }

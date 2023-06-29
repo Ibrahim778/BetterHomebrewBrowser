@@ -1,229 +1,164 @@
+#include <kernel.h>
+#include <paf.h>
+
 #include "zip.h"
-
-#include <psp2/io/stat.h>
-#include <psp2/paf.h>
-#include <psp2/types.h>
-#include <string.h>
-
-#include "notifmgr.h"
 #include "print.h"
 
-extern "C" int sceClibPrintf(const char*,...);
+#include "minizip/unzip.h"
 
 #define dir_delimter '/'
 #define MAX_FILENAME 512
-#define READ_SIZE 8192
 
-#define snprintf(...) sce_paf_snprintf(__VA_ARGS__)
-
-static void mkdir_rec(const char* dir) { //TODO: ScePaf has a function for this too
-	
-	char tmp[256];
-	char* p = nullptr;
-	size_t len;
-
-	snprintf(tmp, sizeof(tmp), "%s", dir);
-	len = strlen(tmp);
-
-	if (tmp[len - 1] == '/')
-		tmp[len - 1] = 0;
-
-	for (p = tmp + 1; *p; p++)
-		if (*p == '/') {
-			*p = 0;
-			sceIoMkdir(tmp, 0777);
-			*p = '/';
-		}
-		
-	sceIoMkdir(tmp, 0777);
-}
-
-
-Zipfile::Zipfile(const char *zip_path) {
-	
-	zipfile_ = unzOpen(zip_path);
-	if (!zipfile_)
-	{
-		sceClibPrintf("Cannot open zip\n");
-	}
-
-	if (unzGetGlobalInfo(zipfile_, &global_info_) != UNZ_OK)
-		sceClibPrintf("Cannot read zip info");
-}
-
-SceBool hasTrailingSlash(const char *str)
+Zipfile::Zipfile(const paf::string zip_path) 
 {
-#ifndef _DEBUG
-	int i = strlen(str) - 1;
-	if(str[i] == '/' || str[i] == '\\')	return true;
-	else return false;
-#else
-	int i = strlen(str) - 1;
-	if(str[i] == '/' || str[i] == '\\')
+	handle = unzOpen(zip_path.c_str());
+	if (handle == nullptr)
     {
-        print("hasTrailingSlash %s -> true\n", str);
-        return true;
-    }	
-	else 
-    {
-        print("hasTralingSlash %s -> false\n", str);
-        return false;
+        print("[Error] unzOpen %s -> %p\n", zip_path.c_str(), handle);
+        error = -0xC0FFEE;
+        return;
     }
-#endif
+
+    error = unzGetGlobalInfo(handle, &globalInfo);
+	if (error != UNZ_OK)
+	{
+        print("Cannot read zip info %d\n", error);
+        return;
+    }
+
+    readBuff = (char *)sce_paf_malloc(ZIP_CUNK_SIZE);
 }
 
-Zipfile::~Zipfile() {
-	if (zipfile_)
-		unzClose(zipfile_);
+Zipfile::~Zipfile() 
+{
+	if (handle != nullptr)
+		unzClose(handle);
+    if(readBuff != nullptr)
+        sce_paf_free(readBuff);
 }
 
-int Zipfile::Unzip(const char *outpath, UnzipProgressCallback cb) {
-	
-	if (uncompressed_size_ == 0)
-	{
-        if(UncompressedSize() < 0)
-            return -1;
+int Zipfile::Decompress(const paf::string outPath, ProgressCallback progressCallback, void *progressUserData) 
+{
+    if(!handle && error != UNZ_OK)
+        return error;
+
+	if (uncompressedSize == 0)
+		CalculateUncompressedSize();
+
+	error = unzGoToFirstFile(handle);
+    if(error != UNZ_OK)
+    {
+        print("Error going to first file!\n", error);
+        return error;
     }
-	char read_buffer[READ_SIZE];
 
-	uLong i;
-	if (unzGoToFirstFile(zipfile_) != UNZ_OK)
-	{
-		sceClibPrintf("Error going to first file");
-		return -11;
-	}
-	
-	for (i = 0; i < global_info_.number_entry; ++i) {
-		
-		unz_file_info file_info;
-		char filename[MAX_FILENAME];
-		char fullfilepath[MAX_FILENAME];
-		char destDir[MAX_FILENAME];
-		if (unzGetCurrentFileInfo(zipfile_, &file_info, filename, MAX_FILENAME, nullptr, 0, nullptr, 0) != UNZ_OK)
-		{
-			sceClibPrintf("Error reading zip file info");
-			return -9;
-		}
-		snprintf(fullfilepath, sizeof(fullfilepath), hasTrailingSlash(fullfilepath) ? "%s%s" : "%s/%s", outpath, filename);
+    error = UNZ_OK;
+    uint64_t extractedBytes = 0;
+    for(unsigned long i = 0; i < globalInfo.number_entry; i++, error = unzGoToNextFile(handle))
+    {
+        unz_file_info info;
+        char fileName[0x200];
+        paf::string fullPath;
 
-		// Check if this entry is a directory or file.
-		const size_t filename_length = strlen(fullfilepath);
-		if (fullfilepath[filename_length - 1] == dir_delimter) {
-			mkdir_rec(fullfilepath);
-		} else {
-			// Create the dir where the file will be placed
-
-			int lastSlash = filename_length - 1;
-			for(; lastSlash > 0 && fullfilepath[lastSlash] != '/' && fullfilepath[lastSlash] != '\\'; lastSlash--);
-			sce_paf_strncpy(destDir, fullfilepath, lastSlash + 1);
-			destDir[lastSlash] = 0;
-
-			mkdir_rec(destDir);
-
-			// Entry is a file, so extract it.
-			if (unzOpenCurrentFile(zipfile_) != UNZ_OK)
-			{
-				sceClibPrintf("Cannot open file from zip");
-				return -8;
-			}
-			// Open a file to write out the data.
-			FILE* out = fopen(fullfilepath, "wb");
-			if (out == nullptr) {
-				unzCloseCurrentFile(zipfile_);
-				sceClibPrintf("Cannot open destination file %s\n", fullfilepath);
-				return -7;
-			}
-
-			int error;
-			do {
-				error = unzReadCurrentFile(zipfile_, read_buffer, READ_SIZE);
-				if (error < 0) {
-					unzCloseCurrentFile(zipfile_);
-					sceClibPrintf("Cannot read current zip file");
-					return -6;
-				}
-
-				if (error > 0)
-					fwrite(read_buffer, error, 1, out); // TODO check fwrite return
-				
-			} while (error > 0);
-
-			fclose(out);
-		}
-
-		unzCloseCurrentFile(zipfile_);
-
-		// Go the the next entry listed in the zip file.
-		if ((i + 1) < global_info_.number_entry)
-			if (unzGoToNextFile(zipfile_) != UNZ_OK)
-				{
-					sceClibPrintf("Error getting next zip file");
-					return -5;
-				}
-        
-        if(cb)
+        if(error != UNZ_OK)
         {
-            cb(i, global_info_.number_entry);
-            if(NotifMgr_currDlCanceled) break;
+            print("error going to next file %d\n", error);
+            return error;
+        }
+
+        error = unzGetCurrentFileInfo(handle, &info, fileName, sizeof(fileName), nullptr, 0, nullptr, 0);
+        if(error != UNZ_OK)
+        {
+            print("Error getting file info %d\n", error);
+            return error;
+        }
+
+        fullPath = outPath + paf::string(fileName);
+
+        if(fullPath.c_str()[fullPath.size() - 1] == '/') // Check to see if entry is a directory
+        {
+            print("Creating dir: %s\n", fullPath.c_str());
+            paf::Dir::CreateRecursive(fullPath.c_str());
+        }
+        else 
+        {
+			paf::string destdir = paf::common::StripFilename(fullPath, "P");
+			paf::Dir::CreateRecursive(destdir.c_str());
+
+            error = unzOpenCurrentFile(handle);
+            if(error != UNZ_OK)
+            {
+                print("Error opening zip file %s -> %d (Save To: %s)\n", fileName, error, fullPath.c_str());
+                unzCloseCurrentFile(handle);
+                return error;
+            }
+
+            auto fHandle = paf::LocalFile::Open(fullPath.c_str(), SCE_O_WRONLY | SCE_O_CREAT | SCE_O_TRUNC, 0666, &error);
+            if(error != SCE_PAF_OK)
+            {
+                print("Error opening file %s -> 0x%X\n", fullPath.c_str(), error);
+                unzCloseCurrentFile(handle);
+                return error;
+            }
+            
+            do
+            {
+                error = unzReadCurrentFile(handle, readBuff, ZIP_CUNK_SIZE);
+                if(error < 0)
+                {
+                    print("[Error] failed to read zfile %s %d\n", fileName, error);
+                    break;
+                }
+
+                fHandle.get()->Write(readBuff, error);
+
+            } while(error > 0);
+            
+            print("Extracted: %s -> %s\n", fileName, fullPath.c_str());
+            if(progressCallback)
+                progressCallback(fileName, i, globalInfo.number_entry, progressUserData);
+
+            unzCloseCurrentFile(handle);
+
         }
     }
-
-	return 0;
+    
+    return UNZ_OK;
 }
 
-int Zipfile::UncompressedSize() {
+int Zipfile::CalculateUncompressedSize() 
+{
+    error = unzGoToFirstFile(handle);
+    if(error != UNZ_OK)
+    {
+        print("Error going to first file!\n", error);
+        unzClose(handle);
+        return error;
+    }
 
-	uncompressed_size_ = 0;
+    uncompressedSize = 0;
+    for(unsigned long i = 0; i < globalInfo.number_entry; i++, error = unzGoToNextFile(handle))
+    {
+        unz_file_info info;
+        char fileName[0x200];
 
-	if (unzGoToFirstFile(zipfile_) != UNZ_OK)
-	{
-		sceClibPrintf("Error going into first file!\n");
-		return -1;
-	}
+        if(error != UNZ_OK)
+        {
+            print("error going to next file %d\n", error);
+            unzClose(handle);
+            return error;
+        }
 
-	uLong i;
-	for (i = 0; i < global_info_.number_entry && !NotifMgr_currDlCanceled; ++i) {
-		
-		unz_file_info file_info;
-		char filename[MAX_FILENAME];
-		if (unzGetCurrentFileInfo(zipfile_, &file_info, filename, MAX_FILENAME, nullptr, 0, nullptr, 0) != UNZ_OK)
-		{
-			sceClibPrintf("Error reading Zip File Info!\n");
-			return -2;
-		}
+        error = unzGetCurrentFileInfo(handle, &info, fileName, sizeof(fileName), nullptr, 0, nullptr, 0);
+        if(error != UNZ_OK)
+        {
+            print("Error getting file info %d\n", error);
+            unzClose(handle);
+            return error;
+        }
 
-		uncompressed_size_ += file_info.uncompressed_size;
+        uncompressedSize += info.uncompressed_size;
+    }
 
-		// Go the the next entry listed in the zip file.
-		if ((i + 1) < global_info_.number_entry)
-			if (unzGoToNextFile(zipfile_) != UNZ_OK)
-				{
-					sceClibPrintf("Error calculating zip size!\n");
-					return -3;
-				}
-	}
-
-	return uncompressed_size_;
-}
-
-int unZipTo(const char *path, const char *dest)
-{   
-    print("File: %s -> %s\n", path, dest);     
-    if(!path || !dest) return -2;
-    
-    Zipfile zFile = Zipfile(path);
-    SceInt32 ret = zFile.Unzip(dest);
-    
-    return ret;
-}
-
-int unZipToWithProgressCB(const char *path, const char *dest, UnzipProgressCallback cb)
-{   
-    print("File: %s -> %s\n", path, dest);     
-    if(!path || !dest) return -2;
-    
-    Zipfile zFile = Zipfile(path);
-    SceInt32 ret = zFile.Unzip(dest, cb);
-    
-    return ret;
+    return UNZ_OK;
 }

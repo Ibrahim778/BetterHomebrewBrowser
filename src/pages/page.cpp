@@ -1,191 +1,77 @@
 #include <kernel.h>
 #include <paf.h>
 
+#include <algorithm>
+#include <vector>
+
 #include "pages/page.h"
-#include "utils.h"
 #include "common.h"
-#include "main.h"
 #include "print.h"
+#include "bhbb_plugin.h"
 
 using namespace paf;
 
-generic::Page *generic::Page::currPage = SCE_NULL;
-ui::Plane *generic::Page::templateRoot = SCE_NULL;
+std::vector<page::Base *> s_pageStack; //Why didn't I think of this? (Thanks Graphene)
 
-ui::CornerButton *g_backButton;
-ui::CornerButton *g_forwardButton;
-ui::BusyIndicator *g_busyIndicator;
-
-generic::Page::ButtonEventCallback generic::Page::backCallback;
-generic::Page::ButtonEventCallback generic::Page::forwardCallback;
-void *generic::Page::backData;
-void *generic::Page::forwardData;
-
-generic::Page::Page(const char *pageName)
+page::Base::Base(uint32_t _hash, Plugin::PageOpenParam openParam, Plugin::PageCloseParam cParam):closeParam(cParam),backButton(SCE_NULL)
 {
-    this->prev = currPage;
-    currPage = this;
+    if(_hash == 0)
+        return; //¿How did we get here?
 
-    Plugin::TemplateOpenParam tInit;
-    rco::Element e;
-
-    e.hash = Utils::GetHashById(pageName);
+    IDParam param(_hash);
+    root = g_appPlugin->PageOpen(param, openParam);
+    param = back_button;
+    backButton = (ui::CornerButton *)root->FindChild(param);
     
-    SceBool isMainThread = thread::IsMainThread();
-    if(!isMainThread)
-       thread::s_mainThreadMutex.Lock();
+    if(!s_pageStack.empty()) //We have previous pages
+    {
+        page::Base *previousPage = s_pageStack.back(); //Get the previous menu
+        previousPage->root->SetActivate(false); //Disable touch and button controls
+        if(backButton)
+        {
+            backButton->Show(common::transition::Type_Reset);
+            backButton->AddEventCallback(ui::CornerButton::CB_BTN_DECIDE, (ui::HandlerCB)page::Base::DefaultBackButtonCB);
+        }
+    }
+    else if(backButton)
+        backButton->Hide(common::transition::Type_Reset);
 
-    mainPlugin->TemplateOpen(templateRoot, &e, &tInit);
-    
-    if(!isMainThread)
-       thread::s_mainThreadMutex.Unlock();
-
-    root = (ui::Plane *)templateRoot->GetChild(templateRoot->childNum - 1);
-
-	if (currPage->prev != NULL)
-	{        
-        if (prev->root->animationStatus & 0x80)
-			prev->root->animationStatus &= ~0x80;
-            
-		currPage->prev->root->PlayEffect(0, effect::EffectType_3D_SlideToBack1);
-		if (prev->root->animationStatus & 0x80)
-			prev->root->animationStatus &= ~0x80;
-
-		g_backButton->PlayEffect(0, effect::EffectType_Reset);
-        Page::SetBackButtonEvent(NULL, NULL);
-
-		if (currPage->prev->prev != SCE_NULL)
-		{
-			currPage->prev->prev->root->PlayEffectReverse(0, effect::EffectType_Reset);
-			if (prev->prev->root->animationStatus & 0x80)
-				prev->prev->root->animationStatus &= ~0x80;
-		}
-	}
-	else g_backButton->PlayEffectReverse(0, effect::EffectType_Reset);
-	
-    g_forwardButton->PlayEffectReverse(0, effect::EffectType_Reset);
-
-    root->PlayEffect(-50000, effect::EffectType_3D_SlideFromFront);
-	if (root->animationStatus & 0x80)
-		root->animationStatus &= ~0x80;
-
+    s_pageStack.push_back(this); //Add our current page to the stack
 }
 
-SceVoid generic::Page::OnRedisplay()
+page::Base *page::Base::GetCurrentPage()
 {
-
+    return s_pageStack.back();
 }
 
-SceVoid generic::Page::OnDelete()
+uint32_t page::Base::GetHash()
 {
-
+    return root->GetName().GetIDHash();
 }
 
-generic::Page::~Page()
+page::Base::~Base()
 {
-    
-	effect::Play(-100, this->root, effect::EffectType_3D_SlideFromFront, SCE_TRUE, SCE_FALSE);
-	if (prev != SCE_NULL)
-	{
-		prev->root->PlayEffectReverse(0.0f, effect::EffectType_3D_SlideToBack1);
-		prev->root->PlayEffect(0.0f, effect::EffectType_Reset);
-		if (prev->root->animationStatus & 0x80)
-			prev->root->animationStatus &= ~0x80;
+    s_pageStack.erase(std::remove(s_pageStack.begin(), s_pageStack.end(), this), s_pageStack.end()); //Remove our page from the list.
 
-		if (prev->prev != SCE_NULL) {
-			prev->prev->root->PlayEffect(0.0f, effect::EffectType_Reset);
-			if (prev->prev->root->animationStatus & 0x80)
-				prev->prev->root->animationStatus &= ~0x80;
-		}
-	}
-	currPage = this->prev;
+    g_appPlugin->PageClose(root->GetName(), closeParam); //Delete our page
 
-    if (currPage != NULL && currPage->prev != SCE_NULL)
-        g_backButton->PlayEffect(0, effect::EffectType_Reset);
-    else g_backButton->PlayEffectReverse(0, effect::EffectType_Reset);
-
-    if(currPage != SCE_NULL) currPage->OnRedisplay(); 
+    if(!s_pageStack.empty()) //We have other pages
+    {
+        page::Base *previousPage = s_pageStack.back(); //Get our previous page
+        previousPage->root->SetActivate(true); //Enable touch and button controls
+    }
 }
 
-void generic::Page::Setup()
+void page::Base::DefaultBackButtonCB(uint32_t type, ui::Handler *self, ui::Event *event, ScePVoid pUserData)
 {
-    if(templateRoot) return; //Already Initialised
-
-    rco::Element e;
-    Plugin::PageOpenParam pInit;
-    
-    e.hash = Utils::GetHashById("page_main");
-    ui::Widget *page =  mainPlugin->PageOpen(&e, &pInit);
-    
-    e.hash = Utils::GetHashById("template_plane");
-    templateRoot = (ui::Plane *)page->GetChild(&e, 0);
-
-    currPage = SCE_NULL;
-
-    e.hash = Utils::GetHashById("back_button");
-    g_backButton = (ui::CornerButton *)page->GetChild(&e, 0);
-
-    backCallback = SCE_NULL;
-    backData = SCE_NULL;
-
-    forwardCallback = SCE_NULL;
-    forwardData = SCE_NULL;
-
-    g_backButton->PlayEffectReverse(0, effect::EffectType::EffectType_Reset);
-
-    ui::EventCallback *backButtonEventCallback = new ui::EventCallback();
-    backButtonEventCallback->eventHandler = generic::Page::BackButtonEventHandler;
-    g_backButton->RegisterEventCallback(ui::EventMain_Decide, backButtonEventCallback, 0);
-
-    e.hash = Utils::GetHashById("main_busy");
-    g_busyIndicator = (ui::BusyIndicator *)page->GetChild(&e, 0);
-    g_busyIndicator->Stop();
-
-    e.hash = Utils::GetHashById("forward_button");
-    g_forwardButton = (ui::CornerButton *)page->GetChild(&e, 0);
-    g_forwardButton->PlayEffectReverse(0, effect::EffectType_Reset);
-
-    ui::EventCallback *forwardButtonEventCallback = new ui::EventCallback;
-    forwardButtonEventCallback->eventHandler = generic::Page::ForwardButtonEventHandler;
-    g_forwardButton->RegisterEventCallback(ui::EventMain_Decide, forwardButtonEventCallback, 0);
+    page::Base::DeleteCurrentPage();
 }
 
-void generic::Page::ResetBackButton()
+SceVoid page::Base::DeleteCurrentPage()
 {
-    SetBackButtonEvent(SCE_NULL, SCE_NULL);
+    auto button = page::Base::GetCurrentPage()->backButton;
+    if(button)
+        button->Hide(common::transition::Type_Reset);
 
-    if (currPage != NULL && currPage->prev != SCE_NULL)
-        g_backButton->PlayEffect(0, effect::EffectType_Reset);
-    else g_backButton->PlayEffectReverse(0, effect::EffectType_Reset);
-}
-
-void generic::Page::SetBackButtonEvent(ButtonEventCallback callback, void *data)
-{
-    backCallback = callback;
-    backData = data;
-}
-
-void generic::Page::SetForwardButtonEvent(ButtonEventCallback callback, void *data)
-{
-    forwardCallback = callback;
-    forwardData = data;
-}
-
-void generic::Page::BackButtonEventHandler(SceInt32 eventID, ui::Widget *self, SceInt32 unk, ScePVoid)
-{
-    if(backCallback)
-        backCallback(eventID, self, unk, backData);
-    else    
-        generic::Page::DeleteCurrentPage();
-}
-
-void generic::Page::ForwardButtonEventHandler(SceInt32 eventID, ui::Widget *self, SceInt32 unk, ScePVoid)
-{
-    if(forwardCallback)
-        forwardCallback(eventID, self, unk, forwardData);
-}
-
-void generic::Page::DeleteCurrentPage()
-{
-	delete currPage;
+	delete s_pageStack.back();
 }

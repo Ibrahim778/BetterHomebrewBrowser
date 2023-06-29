@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="utf-8"?>
+<stringset>
+    <string src="Скачать" id="download_button_text"/>
+    <string src="Файлы данных" id="data_button_text"/>
+
+    <string src="Все" id="db_category_all" />
+    <string src="Утилиты" id="db_category_util" />
+    <string src="Эмуляторы" id="db_category_emu" />
+    <string src="Порты" id="db_category_port" />
+    <string src="Игры" id="db_category_game" />
+    <string src="Приложения" id="db_category_app" />
+    <string src="Утилита" id="db_category_single_util" />
+    <string src="Эмулятор" id="db_category_single_emu" />
+    <string src="Порт" id="db_category_single_port" />
+    <string src="Игра" id="db_category_single_game" />
+    <string src="Приложение" id="db_category_single_app" />
+    <string src="Неизвестно" id="db_category_unk" />
+    
+    <string src="Ошибка SSL-соединения&#xA;&#xA;Убедитесь, что у вас установлен iTLS-Enso" id="msg_error_ssl"/>
+    <string src="Ошибка сетевого соединения" id="msg_error_net"/>
+    <string src="iTLS-Enso не запущен&#xA;Убедитесь, что iTLS-Enso правильно установлен" id="msg_no_itls"/>
+    <string src="Ошибка сетевого соединения&#xA;Убедитесь, что устройство подключено к интернету" id="msg_net_fix" />
+    
+    <string src="Ошибка при загрузке элемента" id="msg_entry_error" />
+    <string src="Ошибка при загрузке снимка экрана" id="msg_screenshot_error"/>
+    <string src="Ошибка при загрузке иконки" id="msg_icon_error"/>
+    <string src="Ошибка при загрузке описания" id="msg_desc_error"/>
+    <string src="Ошибка при загрузке" id="msg_download_error"/>
+    <string src="Невозможно подключиться к серверу&#xA;Попробуйте позже" id="msg_error_index"/>
+    <string src="Ошибка при обработке списка" id="msg_error_parse"/>
+    <string src="Произошла ошибка, попробуйте позже" id="msg_wait_fix" />
+    <string src="Для этой иконки нет подходящего источника" id="msg_icon_no_source" />
+    
+    <string src="Опции" id="msg_options"/>
+    <string src="Источник" id="msg_settings_source"/>
+    <string src="Версия" id="msg_settings_verinfo"/>
+    
+    <string src="CBPS DB" id="db_name_0"/>    
+    <string src="Vita DB" id="db_name_1"/>
+    <string src="VHBD" id="db_name_2"/>
+
+    <string src="Всегда" id="msg_settings_downloadInterval_always"/>
+    <string src="Скачать через (В часах)" id="msg_settings_downloadInterval"/>
+    
+    <string src="Проверка обновлений..." id="msg_check_update" />
+    <string src="Подождите..." id="msg_wait"/>
+    <string src="Загрузка иконки..." id="msg_downloading_icon"/>
+
+    <string src="Нет описания" id="msg_no_desc"/>
+    <string src="Скачивание добавлено в очередь в LiveArea™" id="msg_download_queued"/>
+    <string src="Нет подходящего источника для скачивания" id="msg_src_err"/>
+    <string src="%s Иконок" id="icons_dl_name"/>
+    <string src="%s (Даных)" id="data_dl_name"/>
+    <string src="  %d записей" id="msg_list_header"/>
+    <string src="Сортировка" id="msg_sort_header"/>
+    <string src="Хотите загрузить эту иконку снова?" id="msg_icon_redownload"/>
+    <string src="Невозможно рассчитать занимаемое место." id="msg_download_nosize"/>
+    <string src="Это сжатый файл (tar.gz)&#xA;поэтому расчитать занимаемое данными место - невозможно. Пожалуйста, убедитесь, что у вас достаточно свободного места. Нехватка места может привести к неожиданным последствиям." id="msg_download_tgz"/>
+
+    <string src="По алфавиту (A-Z)" id="msg_sort_alpha"/>
+    <string src="По алфавиту (Z-A)" id="msg_sort_alpharev"/>
+    <string src="Сначала свежие" id="msg_sort_mostrecent"/>
+    <string src="Сначала старые" id="msg_sort_oldfirst"/>
+    <string src="Наиболее скачиваемые" id="msg_sort_mostdownloaded"/>
+    <string src="Наименее скачиваемые" id="msg_sort_leastdownloaded"/>
+
+    <string src="@GrapheneCt&#xA;  ScePaf reversing&#xA;  NetStream (reference)&#xA;  SceDownload + SceIPMI reversing&#xA;  Help, and CXML compiler&#xA;&#xA;@CreepNT&#xA;  SceDownload reversingr&#xA;&#xA;@CBPS&#xA;  Origianl SceDownload PoC&#xA;&#xA;@Princess-of-sleeping&#xA;  Help with debugging and development&#xA;  SceLsdb notification reversing&#xA;&#xA;@SKGleba &amp; TheFl0w&#xA;  bgvpk and Download Enabler&#xA;&#xA;Beta Testers&#xA;  @SomeonPC&#xA;  @ShadowKnight1620&#xA;  @Koutsie&#xA;  @SparklingPheonix&#xA;  @gl33ntwine&#xA;&#xA;Translators&#xA;  @isage - RU&#xA;  @S1ngyy - DE&#xA;  @CreepNT - FR&#xA;  @Princess-of-sleeping - JA" id="msg_credinfo"/>
+
+    <string src="Пожертвовать" id="msg_donations"/>
+    <string src="(PayPal link)&#xA;Спасибо" id="msg_donate"/>
+
+</stringset>

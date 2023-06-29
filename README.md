@@ -1,27 +1,93 @@
+
 # Better Homebrew Browser
-A good homebrew browser. Massive thanks to [GrapheneCt](https://github.com/GrapheneCt) for his work on ScePaf.
 
-## Features
-1. It is the second ever app to use Sony's PlayStation Application Framework (PAF)
-1. It is blazing fast
-1. It is multithreaded so that you won’t get stopped by a single screenshot
-1. It has background downloading
-1. It can download from both CBPS-DB and VitaDB
-1. It looks, sounds, and feels almost exactly like the official PlayStation Store App
-1. It can be opened alongside other apps
-1. It has tunes (Yes, I've run out of things now)
+  
 
-## Adding new language:
+A homebrew browser that supports multiple DB's with background downloading support
+
+  
+
+# Features  
+
+#### It can download from various sources, meaning a larger content library to chose from
+<div>
+<center>
+	<img src="https://raw.githubusercontent.com/Ibrahim778/BetterHomebrewBrowser/InDev/imgs/vitadb_icon.png" height="100" />
+	<img  src="https://raw.githubusercontent.com/Ibrahim778/BetterHomebrewBrowser/InDev/imgs/cbpsdb_icon.png" height="100"/>
+</center>
+</div>
+<h4> It is designed to be sleek and easy to use with a nice UI </h4>
+<div>
+	<img src="https://raw.githubusercontent.com/Ibrahim778/BetterHomebrewBrowser/InDev/imgs/ui1.png" width="350" />
+	<img src="https://raw.githubusercontent.com/Ibrahim778/BetterHomebrewBrowser/InDev/imgs/ui2.png" width="350" />
+</div>
+
+ #### It can download files in the background just like the official store and will install with a native-looking UI along with proper notifications to complete the look
+<div>
+<img src="https://raw.githubusercontent.com/Ibrahim778/BetterHomebrewBrowser/InDev/imgs/download1.png" width="300" />
+<img src="https://raw.githubusercontent.com/Ibrahim778/BetterHomebrewBrowser/InDev/imgs/download2.png" width="300" />
+<img src="https://raw.githubusercontent.com/Ibrahim778/BetterHomebrewBrowser/InDev/imgs/download3.png" width="300" />
+<img src="https://raw.githubusercontent.com/Ibrahim778/BetterHomebrewBrowser/InDev/imgs/download4.png" width="300" />
+</div>
+<h4>It also supports several languages</h4>
+
+## Adding a new language
+
+  
+
 (Instructions by [GrapheneCt](https://github.com/GrapheneCt))
 
-- Use [English locale](https://github.com/Ibrahim778/BetterHomebrewBrowser/blob/InDev/resource/rco/src/locale/en.xml) as base. Name your translation XX.xml, where XX is language code.
-Supported language codes can be seen [here](https://github.com/Ibrahim778/BetterHomebrewBrowser/blob/InDev/resource/rco/src/bhbb_plugin.xml#L281) (id attribute).
+  
+
+- Use [English locale](https://github.com/Ibrahim778/BetterHomebrewBrowser/blob/InDev/resource/locale/en.xml) as base. Name your translation XX.xml, where XX is language code.
+
+Supported language codes can be seen [here](https://github.com/Ibrahim778/BetterHomebrewBrowser/blob/InDev/resource/bhbb_plugin.xml#L352) (id attribute).
+
 - Submit your translation as pull request, it will be added in the next release.
 
-## Credits
-1. Thanks to [GrapheneCt](https://github.com/GrapheneCt) for ScePaf reversing, help, and EMPVA (Reference) and his CXML Compiler (Not Released)
-1. Thanks to SomeonPC (RIP) for Livearea™ assets and beta testing
-1. Thanks to SparklingPheonix for beta testing
+  
+
+# Credits
+
+  
+
+### @GrapheneCt
+ -  ScePaf reversing
+ -  EMPVA (Reference)
+ -  NetStream (Reference) 
+ -  CXML Compiler (Not Released)
+ -  SceIPMI & SceDownload reversing
+
+### @CreepNT
+- SceDownload reversing
+
+### @Princess-of-sleeping
+- Help with debugging and development
+- Reversing SceLsdb notifications (SceShell notice PoC)
+
+### @SKGleba & TheFlow
+- bgvpk & Download Enabler (basis for bhbb_dl)
+
+### CBPS
+- Original SceDownload PoC
+
+### Beta Testers
+- @SomeOnPC
+- @ShadowKnight1620
+- @Koutsie
+- @SparklingPheonix
+- @gl33ntwine
+
+### Translators
+- @isage - RU
+- @S1ngyy - DE
+- @CreepNT - FR
+- @Princess-of-sleeping - JA
+
+Livearea assets by SomeonPC  
 
 ## Donations
+
+  
+
 If you like my work, you can support me via [PayPal](https://www.paypal.com/paypalme/GloveTekLtd)

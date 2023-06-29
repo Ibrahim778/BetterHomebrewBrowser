@@ -1,15 +1,3 @@
-#include <stddef.h>
-#include <psp2/paf.h>
-
-extern int sce_paf_feof(void *stream);
-extern int sce_paf_ferror(void * stream);
-extern void * sce_paf_fopen(const char * filename, const char * mode);
-extern int sce_paf_fclose(void * stream);
-extern size_t sce_paf_fread(void * ptr, size_t size, size_t count, void * stream);
-extern size_t sce_paf_fwrite(const void * ptr, size_t size, size_t count, void * stream);
-extern int sce_paf_fseek(void * stream, long int offset, int origin);
-extern long int sce_paf_ftell(void * stream);
-
 void *malloc(int size) {
     return sce_paf_malloc(size);
 }
@@ -26,7 +14,7 @@ int fclose(void *fp) {
     return sce_paf_fclose(fp);
 }
 
-int fread(void* buf, int size, int count, void* fp) {
+unsigned int fread(void* buf, int size, int count, void* fp) {
     return sce_paf_fread(buf, size, count, fp);
 }
 
@@ -42,7 +30,7 @@ long ftell(void* fp) {
     return sce_paf_ftell(fp);
 }
 
-void* memset(void* b, int c, SceSize sz) {
+void* memset(void* b, int c, int sz) {
     return sce_paf_memset(b, c, sz);
 }
 

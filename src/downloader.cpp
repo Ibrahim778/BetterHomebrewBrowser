@@ -1,3 +1,5 @@
+// Based off of downloader by @GrapheneCt, RE by: @GrapheneCt @CreeptNT and @dots_tb
+
 #include <kernel.h>
 #include <libsysmodule.h>
 #include <paf.h>
@@ -5,168 +7,134 @@
 #include <download_service.h>
 
 #include "downloader.h"
-#include "utils.h"
-#include "common.h"
+#include "event.h"
 #include "print.h"
 
 using namespace paf;
 
+Downloader *Downloader::s_currentInstance = nullptr;
+
 Downloader::Downloader()
 {
-    IPMI::Client::Config conf;
-    IPMI::Client *client;
-    SceUInt32 clientMemSize;
-    SceInt32 ret;
+	IPMI::Client::Config conf;
+	IPMI::Client *client;
+	uint32_t clMemSize;
+	int32_t ret;
 
-    sce_paf_memset(&dw, 0, sizeof(sce::Download));
-    sce_paf_memset(&conf, 0, sizeof(IPMI::Client::Config));
+	sce_paf_memset(&dw, 0, sizeof(sce::Download));
+	sce_paf_memset(&conf, 0, sizeof(IPMI::Client::Config));
 
-	sce_paf_strncpy((char *)conf.name, "SceDownload", sizeof(conf.name));
-	conf.msgPipeBudgetType = 0;
-	conf.numREObjects = 1;
+	sce_paf_strncpy((char *)conf.serviceName, "SceDownload", sizeof(conf.serviceName));
+	conf.pipeBudgetType = IPMI::BudgetType_Default;
+	conf.numResponses = 1;
 	conf.requestQueueSize = 0x1E00;
 	conf.receptionQueueSize = 0x1E00;
-	conf.numARObjects = 1;
-	conf.requestPipeAddsize1 = 0xF00;
-	conf.requestPipeAddsize2 = 0xF00;
+	conf.numAsyncResponses = 1;
+	conf.requestQueueAddsize1 = 0xF00;
+	conf.requestQueueAddsize2 = 0xF00;
 	conf.numEventFlags = 1;
-	conf.numMessages = 0;
-	conf.pipeSmth = SCE_UID_INVALID_UID;
+	conf.msgQueueSize = 0;
+	conf.serverPID = SCE_UID_INVALID_UID;
 
-    clientMemSize = conf.estimateClientMemorySize();
-	dw.clientMem = sce_paf_malloc(clientMemSize);
+	clMemSize = conf.estimateClientMemorySize();
+	dw.clientMem = sce_paf_malloc(clMemSize);
 	dw.bufMem = sce_paf_malloc(SCE_KERNEL_4KiB);
 
 	IPMI::Client::create(&client, &conf, &dw, dw.clientMem);
 
-    dw.client = client;
+	dw.client = client;
 
-    sce::Download::ConnectionOpt connOpt;
-    sce_paf_memset(&connOpt, 0, sizeof(sce::Download::ConnectionOpt));
-    connOpt.budgetType = conf.msgPipeBudgetType;
+	sce::Download::ConnectionOpt connOpt;
+	sce_paf_memset(&connOpt, 0, sizeof(sce::Download::ConnectionOpt));
+	connOpt.budgetType = conf.pipeBudgetType;
 
-    client->connect(&connOpt, sizeof(sce::Download::ConnectionOpt), &ret);
+	client->connect(&connOpt, sizeof(sce::Download::ConnectionOpt), &ret);
 
-    dw.unk_00 = SCE_UID_INVALID_UID;
+	dw.unk_00 = SCE_UID_INVALID_UID;
 	dw.unk_04 = SCE_UID_INVALID_UID;
 	dw.unk_08 = SCE_UID_INVALID_UID;
+
+    s_currentInstance = this;
 }
 
 Downloader::~Downloader()
 {
-    dw.client->disconnect();
-    dw.client->destroy();
-    sce_paf_free(dw.clientMem);
-    sce_paf_free(dw.bufMem);    
+	dw.client->disconnect();
+	dw.client->destroy();
+	sce_paf_free(dw.clientMem);
+	sce_paf_free(dw.bufMem);
 }
 
-SceInt32 Downloader::Enqueue(const char *url, const char *name, BGDLParam *param)
+void WriteParam(BGDLParam *param, int32_t dwRes)
 {
-	IPMI::DataInfo dtInfo;
-	IPMI::BufferInfo bfInfo;
-	SceInt32 ret = SCE_OK;
-	SceInt32 ret2 = SCE_OK;
-	SceInt32 dwRes = 0;
+    int ret = SCE_PAF_OK;
+    auto param_file = LocalFile::Open(common::FormatString("ux0:/bgdl/t/%08x/bhbb.param", dwRes).c_str(), SCE_O_WRONLY | SCE_O_CREAT | SCE_O_TRUNC, 0666, &ret);
+    if(ret < 0)
+        return;
 
-	sce::Download::HttpParam hparam;
-	sce::Download::AuthParam aparam;
-	sce::Download::DownloadParam dparam;
-	sce::Download::MetadataInfo minfo;
-	sce_paf_memset(&hparam, 0, sizeof(sce::Download::HttpParam));
-	sce_paf_memset(&aparam, 0, sizeof(sce::Download::AuthParam));
-	sce_paf_memset(&dparam, 0, sizeof(sce::Download::DownloadParam));
-	sce_paf_memset(&minfo, 0, sizeof(sce::Download::MetadataInfo));
+    param_file.get()->Write(param, sizeof(BGDLParam));
+}
 
-	hparam.paramType1 = paf::HttpFile::OpenArg::Opt::Opt_ResolveTimeOut;
-	hparam.paramVal1 = 4000000;
-	hparam.paramType2 = paf::HttpFile::OpenArg::Opt::Opt_ConnectTimeOut;
-	hparam.paramVal2 = 30000000;
-	hparam.paramType2 = 0;
-	hparam.paramVal2 = 30000000;
-	sce_paf_strcpy((char *)hparam.url, url);
+int32_t Downloader::Enqueue(Plugin *workPlugin, const char *url, const char *name, const char *icon_path, BGDLParam *param)
+{
+	IPMI::DataInfo dtInfo[1];
+	IPMI::BufferInfo bfInfo[2];
 
-	dtInfo.data1 = &hparam;
-	dtInfo.data1Size = sizeof(sce::Download::HttpParam);
-	dtInfo.data2 = &aparam;
-	dtInfo.data2Size = sizeof(sce::Download::AuthParam);
+    char output0[0x2E0];
+    sce_paf_memset(output0, 0, sizeof(output0));
 
-	bfInfo.data1 = &minfo;
-	bfInfo.data1Size = sizeof(sce::Download::MetadataInfo);
+	int32_t ret = SCE_OK;
+	int32_t ret2 = SCE_OK;
+	int32_t dwRes = SCE_OK;
 
-	ret = dw.client->invokeSyncMethod(0x1234000D, &dtInfo, 2, &ret2, &bfInfo, 1);
-	if (ret != SCE_OK)
-		return ret;
-	else if (ret2 != SCE_OK)
-		return ret2;
+    sce::Download::RegistTaskParam rparam;
+    sce_paf_memset(&rparam, 0, sizeof(rparam));
 
-	sce_paf_memset(&minfo.name, 0, sizeof(minfo.name));
-	sce_paf_strcpy((char *)minfo.name, name);
+    sce_paf_strcpy((char *)&rparam.downloadName, name);
+    sce_paf_strcpy((char *)&rparam.url, url);
+    if(icon_path != nullptr)
+        sce_paf_strcpy((char *)&rparam.icon, icon_path);
 
-    print("name: %s\nsize: 0x%X\nmimeType: 0x%X\ncreationDateString: 0x%X\nunk_00: 0x%X\nunk_141: 0x%X\nunk_3C: 0x%X\n", minfo.name, minfo.size, minfo.mimeType, minfo.creationDateString, minfo.unk_00, minfo.unk_141, minfo.unk_3C);
+    rparam.contentType = sce::Download::ContentType_Multimedia;
 
-	dparam.unk_00 = 1;
-	sce_paf_strcpy((char *)dparam.url, url);
+    dtInfo[0].data = &rparam;
+    dtInfo[0].dataSize = sizeof(rparam);
 
-	dtInfo.data1 = &dparam;
-	dtInfo.data1Size = sizeof(sce::Download::DownloadParam);
-	dtInfo.data2 = &aparam;
-	dtInfo.data2Size = sizeof(sce::Download::AuthParam);
-	dtInfo.data3 = &minfo;
-	dtInfo.data3Size = sizeof(sce::Download::MetadataInfo);
+    bfInfo[0].data = output0;
+    bfInfo[0].dataSize = sizeof(output0);
 
-	bfInfo.data1 = &dwRes;
-	bfInfo.data1Size = sizeof(SceInt32);
+    bfInfo[1].data = &dwRes;
+    bfInfo[1].dataSize = sizeof(dwRes);
 
-	ret2 = SCE_OK;
-	ret = dw.client->invokeSyncMethod(0x12340011, &dtInfo, 3, &ret2, &bfInfo, 1);
-	if (ret2 != SCE_OK) 
+    ret = dw.client->invokeSyncMethod(sce::Download::Method_DownloadExt, dtInfo, 1, &ret2, bfInfo, 2);
+    print("ret = 0x%X ret2 = 0x%X dwRes = 0x%X\n", ret, ret2, dwRes);
+    if(ret2 != 0)
     {
-		//invalid filename?
-		sce_paf_memset(&minfo.name, 0, sizeof(minfo.name));
-		char *ext = sce_paf_strrchr(name, '.');
-		sce_paf_snprintf((char *)minfo.name, sizeof(minfo.name), "DefaultFilename%s", ext);
-
-		ret2 = SCE_OK;
-		ret = dw.client->invokeSyncMethod(0x12340011, &dtInfo, 3, &ret2, &bfInfo, 1);
-		if (ret2 != SCE_OK)
-			return ret2;
-	}
-    
-    if(param != NULL && param->magic == (BHBB_DL_CFG_VER | BHBB_DL_MAGIC))
-    {
-        print("Writing param....\n");
-        string paramPath = ccc::Sprintf("ux0:bgdl/t/%08x/install_param.ini", dwRes);
-
-        SceInt32 result = SCE_OK;
-        SharedPtr<LocalFile> openResult = LocalFile::Open(paramPath.data(), SCE_O_WRONLY | SCE_O_CREAT | SCE_O_TRUNC, 0666, &result);
-        if(result < 0)
-        {
-            print("open %s -> 0x%X\n", paramPath.data(), result);
-            return result;
-        }
-        print("Writing param.path: %s\n", param->path);
-        openResult.get()->Write(param, sizeof(BGDLParam));
+        ret = ret2;
+        goto end;
     }
-#ifdef _DEBUG
-    if(ret < 0 || ret2 < 0)
-    {
-        print("Downloader::Enqueue FAILED: 0x%X 0x%X\n", ret, ret2);
-    }
-#endif
+
+    if(param)
+        WriteParam(param, dwRes);
+end:
+	event::BroadcastGlobalEvent(workPlugin, DownloaderEvent, ret);
 	return ret;
 }
 
-SceInt32 Downloader::EnqueueAsync(const char *url, const char *name, BGDLParam *param)
+int32_t Downloader::EnqueueAsync(Plugin *workPlugin, const char *url, const char *name)
 {
-	AsyncEnqueue *dwJob = new AsyncEnqueue("BHBB::AsyncEnqueue");
+	AsyncEnqueue *dwJob = new AsyncEnqueue("Downloader::AsyncEnqueue");
 	dwJob->downloader = this;
 	dwJob->url8 = url;
 	dwJob->name8 = name;
+	dwJob->plugin = workPlugin;
 
-    if(param)
-        dwJob->param = *param;
-    else
-        dwJob->param.magic = 0;
+	common::SharedPtr<job::JobItem> itemParam(dwJob);
 
-	return g_mainQueue->Enqueue(&SharedPtr<job::JobItem>(dwJob));
+	return job::JobQueue::default_queue->Enqueue(itemParam);
+}
+
+Downloader *Downloader::GetCurrentInstance()
+{
+    return s_currentInstance;
 }

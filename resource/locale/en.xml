@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="utf-8"?>
+<stringset>
+    <string src="Download" id="download_button_text"/>
+    <string src="Data Files" id="data_button_text"/>
+
+    <string src="All" id="db_category_all" />
+    <string src="Utilities" id="db_category_util" />
+    <string src="Emulators" id="db_category_emu" />
+    <string src="Ports" id="db_category_port" />
+    <string src="Games" id="db_category_game" />
+    <string src="Apps" id="db_category_app" />
+    <string src="Utility" id="db_category_single_util" />
+    <string src="Emulator" id="db_category_single_emu" />
+    <string src="Port" id="db_category_single_port" />
+    <string src="Game" id="db_category_single_game" />
+    <string src="App" id="db_category_single_app" />
+    <string src="Unknown" id="db_category_unk" />
+    
+    <string src="SSL Error Occurred&#xA;&#xA;Please ensure iTLS-Enso is installed." id="msg_error_ssl"/>
+    <string src="A connection error occurred." id="msg_error_net"/>
+    <string src="iTLS-Enso is not running.&#xA;Ensure that iTLS-Enso is installed properly before running this application." id="msg_no_itls"/>
+    <string src="A network error occurred.&#xA;Ensure your device is connected to the internet and try again." id="msg_net_fix" />
+    
+    <string src="Error loading entry." id="msg_entry_error" />
+    <string src="Error loading screenshot." id="msg_screenshot_error"/>
+    <string src="Error loading icon." id="msg_icon_error"/>
+    <string src="Error loading description." id="msg_desc_error"/>
+    <string src="Error starting download." id="msg_download_error"/>
+    <string src="Could not connect to the server.&#xA;Please try again later." id="msg_error_index"/>
+    <string src="Error parsing index." id="msg_error_parse"/>
+    <string src="An error occurred. Please try again later." id="msg_wait_fix" />
+    <string src="No valid sources available for this icon." id="msg_icon_no_source" />
+    
+    <string src="Options" id="msg_options"/>
+    <string src="Source" id="msg_settings_source"/>
+    <string src="Build Info" id="msg_settings_verinfo"/>
+    
+    <string src="CBPS DB" id="db_name_0"/>    
+    <string src="Vita DB" id="db_name_1"/>
+    <string src="VHBD" id="db_name_2"/>
+
+    <string src="Always" id="msg_settings_downloadInterval_always"/>
+    <string src="Download After (Hours)" id="msg_settings_downloadInterval"/>
+    
+    <string src="Checking for updates..." id="msg_check_update" />
+    <string src="Please wait..." id="msg_wait"/>
+    <string src="Downloading icon..." id="msg_downloading_icon"/>
+
+    <string src="No description available" id="msg_no_desc"/>
+    <string src="The download has been added to the Home Screen queue." id="msg_download_queued"/>
+    <string src="Could not find a valid source for download." id="msg_src_err"/>
+    <string src="%s Icons" id="icons_dl_name"/>
+    <string src="%s (Data)" id="data_dl_name"/>
+    <string src="  %d Items" id="msg_list_header"/>
+    <string src="Sort by" id="msg_sort_header"/>
+    <string src="Do you want to redownload this icon?" id="msg_icon_redownload"/>
+    <string src="App size is unknown" id="msg_download_nosize"/>
+    
+    <string src="Alphabetical" id="msg_sort_alpha"/>
+    <string src="Alphabetical (Reversed)" id="msg_sort_alpharev"/>
+    <string src="Newest First" id="msg_sort_mostrecent"/>
+    <string src="Oldest First" id="msg_sort_oldfirst"/>
+    <string src="Most Downloaded" id="msg_sort_mostdownloaded"/>
+    <string src="Least Downloaded" id="msg_sort_leastdownloaded"/>
+
+    <string src="Credits" id="msg_settings_credits"/>
+    <string src="@GrapheneCt&#xA;  ScePaf reversing&#xA;  NetStream (reference)&#xA;  SceDownload + SceIPMI reversing&#xA;  Help, and CXML compiler&#xA;&#xA;@CreepNT&#xA;  SceDownload reversingr&#xA;&#xA;@CBPS&#xA;  Origianl SceDownload PoC&#xA;&#xA;@Princess-of-sleeping&#xA;  Help with debugging and development&#xA;  SceLsdb notification reversing&#xA;&#xA;@SKGleba &amp; TheFl0w&#xA;  bgvpk and Download Enabler&#xA;&#xA;Beta Testers&#xA;  @SomeonPC&#xA;  @ShadowKnight1620&#xA;  @Koutsie&#xA;  @SparklingPheonix&#xA;  @gl33ntwine&#xA;&#xA;Translators&#xA;  @isage - RU&#xA;  @S1ngyy - DE&#xA;  @CreepNT - FR&#xA;  @Princess-of-sleeping - JA" id="msg_credinfo"/>
+    
+    <string src="Donate" id="msg_donations"/>
+    <string src="(PayPal link)&#xA;Thank you" id="msg_donate"/>
+
+</stringset>

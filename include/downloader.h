@@ -1,53 +1,61 @@
-#ifndef DOWNLOADER_H
-#define DOWNLOADER_H
+#ifndef _ELEVENMPV_DOWNLOADER_H_
+#define _ELEVENMPV_DOWNLOADER_H_
 
+#include <kernel.h>
 #include <paf.h>
 #include <ipmi.h>
 #include <download_service.h>
 
 #include "bhbb_dl.h"
 
+using namespace paf;
+
 class Downloader
 {
 public:
-    Downloader();
-    ~Downloader();
 
-    SceInt32 Enqueue(const char *url, const char *name, BGDLParam* param = SCE_NULL);
-    SceInt32 EnqueueAsync(const char *url, const char *name, BGDLParam* param = SCE_NULL);
+	enum
+	{
+		DownloaderEvent = (ui::Handler::CB_STATE + 0x60000),
+	};
 
-	class AsyncEnqueue : public paf::job::JobItem
+	Downloader();
+
+	~Downloader();
+
+	int32_t Enqueue(Plugin *workPlugin, const char *url, const char *name, const char *icon_path = nullptr, BGDLParam *param = nullptr);
+
+	int32_t EnqueueAsync(Plugin *workPlugin, const char *url, const char *name);
+
+    static Downloader *GetCurrentInstance();
+
+private:
+
+	class AsyncEnqueue : public job::JobItem
 	{
 	public:
 
-		using paf::job::JobItem::JobItem;
+		using job::JobItem::JobItem;
 
 		~AsyncEnqueue() {}
 
-		SceVoid Run()
+		void Run()
 		{
 			Downloader *pdownloader = (Downloader *)downloader;
-			pdownloader->Enqueue(url8.data(), name8.data(), &param);
+			pdownloader->Enqueue(plugin, url8.c_str(), name8.c_str());
 		}
 
-		SceVoid Finish() {}
-
-		static SceVoid JobKiller(paf::job::JobItem *job)
-		{
-			if (job)
-				delete job;
-		}
+		void Finish() {}
 
 		paf::string url8;
 		paf::string name8;
-		ScePVoid downloader;
-        BGDLParam param;
+		void *downloader;
+		paf::Plugin *plugin;
 	};
 
-    ScePVoid downloader;
+	sce::Download dw;
 
-private:
-    sce::Download dw;
+    static Downloader *s_currentInstance;
 };
 
 #endif

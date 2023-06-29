@@ -3,41 +3,27 @@
 
 #include <paf.h>
 
-namespace generic
+namespace page
 {
-    class Page
+    class Base
     {
     public:
-        typedef void(*ButtonEventCallback)(SceInt32 eventID, paf::ui::Widget *self, SceInt32 unk, ScePVoid pUserData);
+        Base(uint32_t hash, paf::Plugin::PageOpenParam openParam, paf::Plugin::PageCloseParam closeParam);
+		virtual ~Base();
 
-    	paf::ui::Plane *root;
+        uint32_t GetHash();
 
-        static void Setup();
-		static void DeleteCurrentPage();
-        static void ResetBackButton();
+        paf::ui::Scene *root;
 
-        static void SetForwardButtonEvent(ButtonEventCallback callback, void *data);
-        static void SetBackButtonEvent(ButtonEventCallback callback, void *data);
-
-        Page(const char *pageName);
-		virtual ~Page();
-
-        virtual void OnRedisplay();
-        virtual void OnDelete();
-
-    private:
-        static void BackButtonEventHandler(SceInt32, paf::ui::Widget *, SceInt32, ScePVoid);
-        static void ForwardButtonEventHandler(SceInt32, paf::ui::Widget *, SceInt32, ScePVoid);
-        
-        static paf::ui::Plane *templateRoot;
-        static generic::Page *currPage;
-        generic::Page *prev;
+        static void DeleteCurrentPage();
+        static page::Base *GetCurrentPage();
+        static void DefaultBackButtonCB(uint32_t eventID, paf::ui::Handler *self, paf::ui::Event *event, ScePVoid pUserData);
     
-        static ButtonEventCallback backCallback;
-        static ButtonEventCallback forwardCallback;
-        static void *backData;
-        static void *forwardData;
+    protected:
+        paf::ui::CornerButton *backButton;
+        paf::Plugin::PageCloseParam closeParam;
     };
+    
 }
 
 #endif
