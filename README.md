@@ -54,19 +54,22 @@ Supported language codes can be seen [here](https://github.com/Ibrahim778/Better
 ### @GrapheneCt
  -  ScePaf reversing
  -  EMPVA (Reference)
- - NetStream (Reference) 
+ -  NetStream (Reference) 
  -  CXML Compiler (Not Released)
- - SceIPMI & SceDownload reversing
+ -  SceIPMI & SceDownload reversing
 
 ### @CreepNT
 - SceDownload reversing
 
 ### @Princess-of-sleeping
 - Help with debugging and development
-- Reversing SceLsdb notifications (SceShell notice POC)
+- Reversing SceLsdb notifications (SceShell notice PoC)
 
 ### @SKGleba & TheFlow
 - bgvpk & Download Enabler (basis for bhbb_dl)
+
+### CBPS
+- Original SceDownload PoC
 
 ### Beta Testers
 - @SomeOnPC

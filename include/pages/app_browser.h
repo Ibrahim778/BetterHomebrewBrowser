@@ -77,16 +77,23 @@ public:
 
             void Run()
             {
+                thread::RMutex::main_thread_mutex.Lock();
+
                 auto child = workList->FindChild(targetHash);
+
+                thread::RMutex::main_thread_mutex.Unlock();
+                
                 if(child == nullptr)
                     return;
 
                 bool result = workObj->Add(workEntry);
+                thread::RMutex::main_thread_mutex.Lock();
 
                 if(workObj && workObj->cbPlugin && workList->FindChild(targetHash) != nullptr)
                 {
                     AppBrowser::EntryFactory::TextureCB(result, workList->FindChild(targetHash), workEntry, workObj);
                 }
+                thread::RMutex::main_thread_mutex.Unlock();
             }   
 
             void Finish()

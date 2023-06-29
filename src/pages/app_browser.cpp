@@ -487,6 +487,8 @@ ui::ListItem *AppBrowser::EntryFactory::Create(ui::listview::ItemFactory::Create
     button->AddEventCallback(ui::Button::CB_BTN_DECIDE, AppBrowser::EntryCB, workPage);
     button->AddEventCallback(ui::Handler::CB_STATE_READY_CACHEIMAGE, TexPoolAddCbFun, workPage->texPool);
 
+    thread::RMutex::main_thread_mutex.Lock();
+
     if(workPage->texPool->Exist(workItem->hash))
     {
         iconPlane->SetColor(1,1,1,1);
@@ -496,6 +498,8 @@ ui::ListItem *AppBrowser::EntryFactory::Create(ui::listview::ItemFactory::Create
     else
         workPage->texPool->AddAsync(workItem, param.list_view, button->GetName().GetIDHash());
     
+    thread::RMutex::main_thread_mutex.Unlock();
+
     return item;
 }
 
