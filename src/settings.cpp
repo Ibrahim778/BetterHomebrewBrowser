@@ -15,6 +15,9 @@
 #define WIDE2(x) L##x
 #define WIDE(x) WIDE2(x)
 
+#define VERSION         "1.2"
+#define BGDL_VERSION    "3.1"
+
 using namespace paf;
 using namespace sce;
 
@@ -87,7 +90,7 @@ Settings::Settings()
 	*verinfo = L"RELEASE ";
 #endif
 	*verinfo += WIDE(__DATE__);
-	*verinfo += L"\nVersion 1.1\nBGDL Version 3.0";
+	*verinfo += L"\nVersion " VERSION "\nBGDL Version " BGDL_VERSION;
 	s_verinfo = (wchar_t *)verinfo->c_str();
 
     print("%ls\n", s_verinfo);

@@ -52,6 +52,7 @@
 #define page_root 0x5E5BC488
 #define page_text 0x62A7C933
 #define donation_qr 0x13FF9183
+#define back_button 0xA20371F2
 #define text_page 0xD23B357F
 #define page_root 0x5E5BC488
 #define page_text 0x62A7C933

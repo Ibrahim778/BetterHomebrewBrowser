@@ -11,7 +11,7 @@ add_subdirectory(bhbb_dl)
 
 if(${CMAKE_BUILD_TYPE} STREQUAL Debug)
     add_compile_options(
-        -D_SCE_TARGET_OS_PSP2=1 -Xdiag=0 -Xquit=2 -O3 -g -noex -D_DEBUG=1 #-DSCE_PAF_TOOL_PRX=1
+        -D_SCE_TARGET_OS_PSP2=1 -Xdiag=0 -Xquit=2 -O3 -g -noex -D_DEBUG=1 -DSCE_PAF_TOOL_PRX=1
     )
 else()
     add_compile_options(
