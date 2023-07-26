@@ -655,7 +655,10 @@ void AppBrowser::LoadJob::Run()
 void AppBrowser::LoadJob::Finish()
 {
     if(IsCanceled())
+    {
+        pPage->loading = false;
         return;
+    }
 
     auto pThread = new AppBrowser::ParseThread(pPage);
     pThread->Start();

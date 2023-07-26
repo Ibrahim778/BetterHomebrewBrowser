@@ -22,15 +22,7 @@ void Utils::HttpsToHttp(const char *src, paf::string& outURL)
         return;
     }
     
-    int strLen = sce_paf_strlen(src);
-    char* buff = new char[strLen]; //We don't add +1 bcs we will remove the 's' character anyways
-    sce_paf_memset(buff, 0, strLen);
-
-    sce_paf_snprintf(buff, strLen, "http%s", &src[5]);
-
-    outURL = buff;
-    
-    delete[] buff;
+    outURL = common::FormatString("http%s", &src[5]);
 }
 
 bool Utils::IsValidURLSCE(const char *url)
@@ -45,7 +37,7 @@ bool Utils::IsValidURLSCE(const char *url)
 
     ret = file.Open(&openArg);
     
-    if(ret == 0x80431075) ret = SCE_OK; // Temporary fix till I figure out wot is going on with this SSL stuff (SceDownload should report proper error anyways)
+    if(ret == SCE_HTTP_ERROR_SSL) ret = SCE_OK; // Temporary fix till I figure out wot is going on with this SSL stuff (SceDownload should report proper error anyways)
 
     if(ret == SCE_OK)
     {
