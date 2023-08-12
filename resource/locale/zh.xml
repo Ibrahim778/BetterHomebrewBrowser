@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="utf-8"?>
+<stringset>
+    <string src="下载APK" id="download_button_text"/>
+    <string src="下载数据包" id="data_button_text"/>
+
+    <string src="全部" id="db_category_all" />
+    <string src="应用" id="db_category_util" />
+    <string src="模拟器" id="db_category_emu" />
+    <string src="移植游戏" id="db_category_port" />
+    <string src="自制游戏" id="db_category_game" />
+    <string src="应用程序" id="db_category_app" />
+    <string src="工具类" id="db_category_single_util" />
+    <string src="模拟器" id="db_category_single_emu" />
+    <string src="移植游戏" id="db_category_single_port" />
+    <string src="游戏" id="db_category_single_game" />
+    <string src="应用程序" id="db_category_single_app" />
+    <string src="未知分类" id="db_category_unk" />
+    
+    <string src="SSL 请求报错,请确认 iTLS-Enso 是否安装." id="msg_error_ssl"/>
+    <string src="网络连接错误." id="msg_error_net"/>
+    <string src="iTLS-Enso 未运行.&#xA;请安装 iTLS-Enso 插件后在运行本程序." id="msg_no_itls"/>
+    <string src="网络连接错误.&#xA;请确认PSV是否已连接到互联网后再重试." id="msg_net_fix" />
+    
+    <string src="加载条目时出错." id="msg_entry_error" />
+    <string src="加载界面截图时出错." id="msg_screenshot_error"/>
+    <string src="加载图标时出错." id="msg_icon_error"/>
+    <string src="加载说明时出错." id="msg_desc_error"/>
+    <string src="下载时报错." id="msg_download_error"/>
+    <string src="未能连接到服务器.&#xA;请重试." id="msg_error_index"/>
+    <string src="解析索引时出错." id="msg_error_parse"/>
+    <string src="发生错误。请稍后再试." id="msg_wait_fix" />
+    <string src="该图标没有可用的有效来源." id="msg_icon_no_source" />
+    
+    <string src="选项" id="msg_options"/>
+    <string src="数据源" id="msg_settings_source"/>
+    <string src="版本信息" id="msg_settings_verinfo"/>
+    
+    <string src="CBPS DB" id="db_name_0"/>    
+    <string src="Vita DB" id="db_name_1"/>
+    <string src="VHBD" id="db_name_2"/>
+
+    <string src="总是" id="msg_settings_downloadInterval_always"/>
+    <string src="下载后 (小时)" id="msg_settings_downloadInterval"/>
+    
+    <string src="正在检测更新..." id="msg_check_update" />
+    <string src="请等待..." id="msg_wait"/>
+    <string src="正在下载图标..." id="msg_downloading_icon"/>
+
+    <string src="没有说明信息可用" id="msg_no_desc"/>
+    <string src="下载任务已添加到队列中." id="msg_download_queued"/>
+    <string src="找不到有效的下载源." id="msg_src_err"/>
+    <string src="%s 图标" id="icons_dl_name"/>
+    <string src="%s (数据)" id="data_dl_name"/>
+    <string src="  %d 项目" id="msg_list_header"/>
+    <string src="排序" id="msg_sort_header"/>
+    <string src="您想重新下载该图标吗?" id="msg_icon_redownload"/>
+    <string src="应用程序大小未知" id="msg_download_nosize"/>
+    
+    <string src="按字母顺序（正）" id="msg_sort_alpha"/>
+    <string src="按字母顺序（逆）" id="msg_sort_alpharev"/>
+    <string src="发布时间（新）" id="msg_sort_mostrecent"/>
+    <string src="发布时间（旧）" id="msg_sort_oldfirst"/>
+    <string src="下载次数（多）" id="msg_sort_mostdownloaded"/>
+    <string src="下载次数（少）" id="msg_sort_leastdownloaded"/>
+
+    <string src="执着人员" id="msg_settings_credits"/>
+    
+    <string src="捐助" id="msg_donations"/>
+    <string src="(PayPal link)&#xA;Thank you" id="msg_donate"/>
+
+</stringset>

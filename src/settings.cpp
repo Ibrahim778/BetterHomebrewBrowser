@@ -26,6 +26,34 @@ sce::AppSettings *Settings::appSettings = SCE_NULL;
 
 static wchar_t *s_verinfo = NULL;
 
+static wchar_t *s_credits = L"@GrapheneCt\n"
+                            "  ScePaf reversing\n"
+                            "  NetStream (reference)\n"
+                            "  SceDownload + SceIPMI reversing\n"
+                            "  Help, and CXML compiler\n\n"
+                            "@CreepNT\n"
+                            "  SceDownload reversing\n\n"
+                            "@CBPS\n"
+                            "  Origianl SceDownload PoC\n\n"
+                            "@Princess-of-sleeping\n"
+                            "  Help with debugging and development\n"
+                            "  SceLsdb notification reversing\n\n"
+                            "@SKGleba & TheFl0w\n"
+                            "  bgvpk and Download Enabler\n\n"
+                            "Beta Testers\n"
+                            "  @SomeonPC\n"
+                            "  @ShadowKnight1620\n"
+                            "  @Koutsie\n"
+                            "  @SparklingPheonix\n"
+                            "  @gl33ntwine\n\n"
+                            "Translators\n"
+                            "  @isage - RU\n"
+                            "  @S1ngyy - DE\n"
+                            "  @CreepNT - FR\n"
+                            "  @Princess-of-sleeping - JA\n"
+                            "  @maniek6666 - PL\n"
+                            "  @michael-moon-lee - ZH";
+
 Settings::Settings()
 {
 	if (currentSettingsInstance != SCE_NULL)
@@ -223,6 +251,10 @@ wchar_t *Settings::CBOnGetString(const char *elementId)
 		{
 			return s_verinfo;
 		}
+        if(!sce_paf_strcmp(elementId, "msg_credinfo"))
+        {
+            return s_credits;
+        }
 	}
 
 	return res;

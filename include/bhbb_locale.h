@@ -57,7 +57,6 @@
 #define msg_sort_mostdownloaded 0xD184DC6F
 #define msg_sort_leastdownloaded 0xE1653439
 #define msg_settings_credits 0x0CCD2374
-#define msg_credinfo 0x69FD8EE2
 #define msg_donations 0x5F28786D
 #define msg_donate 0x9A8A10C9
 

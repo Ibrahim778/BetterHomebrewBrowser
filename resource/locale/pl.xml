@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="utf-8"?>
+<stringset>
+    <string src="Pobieranie" id="download_button_text"/>
+    <string src="Pliki danych" id="data_button_text"/>
+
+    <string src="Wszystko" id="db_category_all" />
+    <string src="Narzędzia" id="db_category_util" />
+    <string src="Emulatory" id="db_category_emu" />
+    <string src="Porty" id="db_category_port" />
+    <string src="Gry" id="db_category_game" />
+    <string src="Aplikacje" id="db_category_app" />
+    <string src="Nrzędzie" id="db_category_single_util" />
+    <string src="Emulator" id="db_category_single_emu" />
+    <string src="Port" id="db_category_single_port" />
+    <string src="Gra" id="db_category_single_game" />
+    <string src="Aplikacja" id="db_category_single_app" />
+    <string src="Nieznany" id="db_category_unk" />
+    
+    <string src="Wystąpił błąd SSL &#xA;&#xA;Upewnij się, że jest zainstalowany iTLS-Enso." id="msg_error_ssl"/>
+    <string src="Wystąpił błąd połączenia." id="msg_error_net"/>
+    <string src="iTLS-Enso nie jest uruchomiony.&#xA;Przed uruchomieniem tej aplikacji upewnij się, że iTLS-Enso jest poprawnie zainstalowany." id="msg_no_itls"/>
+    <string src="Wystąpił błąd sieci. Upewnij się, że Twoje urządzenie jest połączone z internetem i spróbuj ponownie." id="msg_net_fix" />
+    
+    <string src="Błąd ładowania wpisu." id="msg_entry_error" />
+    <string src="Błąd ładowania zrzutu ekranu." id="msg_screenshot_error"/>
+    <string src="Błąd ładowania ikony." id="msg_icon_error"/>
+    <string src="Błąd ładowania opisu." id="msg_desc_error"/>
+    <string src="Błąd podczas rozpoczęcia pobierania." id="msg_download_error"/>
+    <string src="Nie można połączyć się z serwerem.&#xA;Spróbuj ponownie później." id="msg_error_index"/>
+    <string src="Błąd analizy indeksu." id="msg_error_parse"/>
+    <string src="Wystąpił błąd. Spróbuj ponownie później." id="msg_wait_fix" />
+    <string src="Brak dostępnych wiarygodnych źródeł dla tej ikony." id="msg_icon_no_source" />
+    
+    <string src="Opcje" id="msg_options"/>
+    <string src="Źródło" id="msg_settings_source"/>
+    <string src="Informacje o kompilacji" id="msg_settings_verinfo"/>
+    
+    <string src="CBPS DB" id="db_name_0"/>    
+    <string src="Vita DB" id="db_name_1"/>
+    <string src="VHBD" id="db_name_2"/>
+
+    <string src="Zawsze" id="msg_settings_downloadInterval_always"/>
+    <string src="Pobierz po (godzinach)" id="msg_settings_downloadInterval"/>
+    
+    <string src="Sprawdzanie aktualizacji..." id="msg_check_update" />
+    <string src="Proszę czekać..." id="msg_wait"/>
+    <string src="Pobieranie ikon..." id="msg_downloading_icon"/>
+
+    <string src="Brak dostępnego opisu" id="msg_no_desc"/>
+    <string src="Pobieranie zostało dodane do kolejki ekranu głównego." id="msg_download_queued"/>
+    <string src="Nie można znaleźć prawidłowego źródła do pobrania." id="msg_src_err"/>
+    <string src="%s Ikony" id="icons_dl_name"/>
+    <string src="%s (Dane)" id="data_dl_name"/>
+    <string src="  %d Elemęty" id="msg_list_header"/>
+    <string src="Sortuj według" id="msg_sort_header"/>
+    <string src="Czy chcesz ponownie pobrać tę ikonę?" id="msg_icon_redownload"/>
+    <string src="Rozmiar aplikacji jest nieznany" id="msg_download_nosize"/>
+    
+    <string src="Alfabetyczny" id="msg_sort_alpha"/>
+    <string src="Alfabetyczny (Odwrotnie)" id="msg_sort_alpharev"/>
+    <string src="Najnowszy pierwszy" id="msg_sort_mostrecent"/>
+    <string src="Najstarszy pierwszy" id="msg_sort_oldfirst"/>
+    <string src="Najczęściej pobierany" id="msg_sort_mostdownloaded"/>
+    <string src="Najrzadziej pobierane" id="msg_sort_leastdownloaded"/>
+
+    <string src="Podziękowania" id="msg_settings_credits"/>
+        
+    <string src="Wsparcie" id="msg_donations"/>
+    <string src="(Link PayPal)&#xA;Dziękuję" id="msg_donate"/>
+
+</stringset>
