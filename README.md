@@ -83,11 +83,11 @@ Supported language codes can be seen [here](https://github.com/Ibrahim778/Better
 - @S1ngyy - DE
 - @CreepNT - FR
 - @Princess-of-sleeping - JA
+- @maniek6666 - PL
+- @michael-moon-lee - ZH 
 
 Livearea assets by SomeonPC  
 
 ## Donations
-
-  
 
 If you like my work, you can support me via [PayPal](https://www.paypal.com/paypalme/GloveTekLtd)
