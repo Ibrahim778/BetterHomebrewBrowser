@@ -15,8 +15,8 @@
 #define WIDE2(x) L##x
 #define WIDE(x) WIDE2(x)
 
-#define VERSION         "1.3"
-#define BGDL_VERSION    "3.1"
+#define VERSION         "1.31"
+#define BGDL_VERSION    "3.2"
 
 using namespace paf;
 using namespace sce;

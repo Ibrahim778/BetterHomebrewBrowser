@@ -4,12 +4,12 @@
     <string src="下载数据包" id="data_button_text"/>
 
     <string src="全部" id="db_category_all" />
-    <string src="应用" id="db_category_util" />
+    <string src="应用程序" id="db_category_util" />
     <string src="模拟器" id="db_category_emu" />
     <string src="移植游戏" id="db_category_port" />
     <string src="自制游戏" id="db_category_game" />
     <string src="应用程序" id="db_category_app" />
-    <string src="工具类" id="db_category_single_util" />
+    <string src="应用程序" id="db_category_single_util" />
     <string src="模拟器" id="db_category_single_emu" />
     <string src="移植游戏" id="db_category_single_port" />
     <string src="游戏" id="db_category_single_game" />
@@ -63,8 +63,8 @@
     <string src="下载次数（多）" id="msg_sort_mostdownloaded"/>
     <string src="下载次数（少）" id="msg_sort_leastdownloaded"/>
 
-    <string src="执着人员" id="msg_settings_credits"/>
-    
+    <string src="制作人员" id="msg_settings_credits"/>
+
     <string src="捐助" id="msg_donations"/>
     <string src="(PayPal link)&#xA;Thank you" id="msg_donate"/>
 

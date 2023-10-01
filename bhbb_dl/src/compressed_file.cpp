@@ -25,7 +25,7 @@ paf::common::SharedPtr<CompressedFile> CompressedFile::Create(const char *path)
 
     if(sce_paf_strcasecmp(&path[len - 7], ".tar.gz") == 0)
         return common::SharedPtr<CompressedFile>(new TgzFile(path));
-    else if(sce_paf_strcasecmp(&path[len - 4], ".vpk") == 0)
+    else if(sce_paf_strcasecmp(&path[len - 4], ".vpk") == 0 || sce_paf_strcasecmp(&path[len - 4], ".zip") == 0)
         return common::SharedPtr<CompressedFile>(new Zipfile(path));
     
     return common::SharedPtr<CompressedFile>(nullptr);
