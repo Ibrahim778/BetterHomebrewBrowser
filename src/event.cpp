@@ -1,3 +1,5 @@
+// From NetStream (https://github.com/GrapheneCt/NetStream) by @GrapheneCt
+
 #include <kernel.h>
 #include <paf.h>
 

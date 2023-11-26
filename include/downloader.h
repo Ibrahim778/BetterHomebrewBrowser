@@ -1,3 +1,24 @@
+/* 
+    BetterHomebrewBrowser, A homebrew browser for the PlayStation Vita with background downloading support
+    Copyright (C) 2023 Muhammad Ibrahim
+    Copyright (C) 2023 GrapheneCt
+
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program.  If not, see <https://www.gnu.org/licenses/>.    
+*/
+
+// This file is an extended version of @GrapheneCt's downloader.h used in EMPV-A
+
 #ifndef _ELEVENMPV_DOWNLOADER_H_
 #define _ELEVENMPV_DOWNLOADER_H_
 

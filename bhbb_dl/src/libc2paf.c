@@ -1,3 +1,6 @@
+// From bgvpk by @SKGleba. Under MIT 
+// (https://github.com/SKGleba/VitaTools/tree/main/bgvpk/source)
+
 void *malloc(int size) {
     return sce_paf_malloc(size);
 }
