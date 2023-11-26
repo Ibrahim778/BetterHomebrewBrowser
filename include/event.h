@@ -1,3 +1,5 @@
+// From NetStream (https://github.com/GrapheneCt/NetStream) by @GrapheneCt
+
 #ifndef _EVENT_UTIL_H_
 #define _EVENT_UTIL_H_
 
