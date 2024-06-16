@@ -39,6 +39,7 @@ add_executable(${PROJECT_NAME}
     src/db/vitadb.cpp
     src/db/vhbd.cpp
     src/db/cbpsdb.cpp
+    src/db/psphbb.cpp
 
     common/bhbb_dl.h
     common/dialog.h
@@ -65,6 +66,7 @@ add_executable(${PROJECT_NAME}
     include/db/vitadb.h
     include/db/vhbd.h
     include/db/cbpsdb.h
+    include/db/psphbb.h
 )
 
 target_link_directories(${PROJECT_NAME} PRIVATE
@@ -84,14 +86,18 @@ target_link_libraries(${PROJECT_NAME}
     SceThreadmgr_stub
 	SceDbg_stub
     SceAppMgrUser_stub
+    SceSysmodule_stub
+    SceAppUtil_stub
+    SceShellSvc_stub
+
+    # Net stubs
     SceHttp_stub
     SceNet_stub
     SceNetCtl_stub
     SceSsl_stub
-    SceSysmodule_stub
-    SceAppUtil_stub
-    SceShellSvc_stub
-	ScePafStdc_stub
+    
+	# PAF UI libs
+    ScePafStdc_stub
     ScePafThread_stub
     ScePafTopLevel_stub
     ScePafWidget_stub
@@ -99,16 +105,15 @@ target_link_libraries(${PROJECT_NAME}
     ScePafGraphics_stub
     ScePafResource_stub
     ScePafMisc_stub
+
     ShellAudio
     SceRtcUser_stub
     SceIpmi_stub
     SceShellUtil_stub
-    SceDeflt
     SceAppSettings_stub
     SceCommonGuiDialog_stub
-    SceModulemgr_stub
+    
     SceVshBridge_stub
-    taihen_stub
     taihenUnsafe_stub
     ScePerf_stub
     SceFiber_stub
@@ -137,7 +142,8 @@ endforeach()
 add_custom_command(
     OUTPUT ${CMAKE_BINARY_DIR}/bhbb_plugin.rco
     DEPENDS ${CMAKE_SOURCE_DIR}/resource/bhbb_plugin.xml ${CMAKE_SOURCE_DIR}/resource/file/bhbb_settings.xml ${rcsFiles}
-    COMMAND python $ENV{SCE_PSP2_SDK_DIR}/host_tools/build/cxml/appinfo/appinfo_compiler.py -o ${CMAKE_BINARY_DIR}/bhbb_plugin.rco ${CMAKE_SOURCE_DIR}/resource/bhbb_plugin.xml
+    COMMAND $ENV{SCE_PSP2_SDK_DIR}/host_tools/build/cxml/acdc.exe -c -i ${CMAKE_SOURCE_DIR}/resource/bhbb_plugin.xml -s $ENV{SCE_PSP2_SDK_DIR}/host_tools/build/cxml/rco.cxmldef -r ${CMAKE_BINARY_DIR}/bhbb_plugin.rcd -o ${CMAKE_BINARY_DIR}/bhbb_plugin.rco
+    #COMMAND python $ENV{SCE_PSP2_SDK_DIR}/host_tools/build/cxml/appinfo/appinfo_compiler.py -o ${CMAKE_BINARY_DIR}/bhbb_plugin.rco ${CMAKE_SOURCE_DIR}/resource/bhbb_plugin.xml # -x ${CMAKE_SOURCE_DIR}/include/bhbb_plugin.h
 )
 
 # Generate the headers for the PAF plugin
