@@ -1,6 +1,6 @@
 /* 
     BetterHomebrewBrowser, A homebrew browser for the PlayStation Vita with background downloading support
-    Copyright (C) 2023 Muhammad Ibrahim
+    Copyright (C) 2024 Muhammad Ibrahim
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -37,58 +37,58 @@ VitaDB::VitaDB()
     iconsURL = "https://vitadb.rinnegatamante.it/icons_zip.php";
     screenshotsSupported = true;
     categories = {
-        Source::Category(
+        {
             CategoryAll,
             db_category_all,
             db_category_all
-        ),
-        Source::Category(
-            1,
+        },
+        {
+            GAME,
             db_category_single_game,
             db_category_game
-        ),
-        Source::Category(
-            2,
+        },
+        {
+            PORT,
             db_category_single_port,
             db_category_port
-        ),
-        Source::Category(
-            5,
+        },
+        {
+            EMU,
             db_category_single_emu,
             db_category_emu
-        ),
-        Source::Category(
-            4,
+        },
+        {
+            UTIL,
             db_category_single_util,
             db_category_util
-        )
+        }
     };
 
     sortModes = {
-        Source::SortMode(
+        {
             msg_sort_mostrecent,
             List::Sort_MostRecent
-        ),
-        Source::SortMode(
+        },
+        {
             msg_sort_oldfirst,
             List::Sort_OldestFirst
-        ),
-        Source::SortMode(
+        },
+        {
             msg_sort_alpha,
             List::Sort_Alphabetical       
-        ),
-        Source::SortMode(
+        },
+        {
             msg_sort_alpharev,
             List::Sort_AlphabeticalRev
-        ),
-        Source::SortMode(
+        },
+        {
             msg_sort_mostdownloaded,
             List::Sort_MostDownloaded
-        ),
-        Source::SortMode(
+        },
+        {
             msg_sort_leastdownloaded,
             List::Sort_LeastDownloaded
-        )
+        }
     };
 
     paf::Dir::CreateRecursive(iconFolderPath.c_str());

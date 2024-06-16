@@ -1,6 +1,6 @@
 /* 
     BetterHomebrewBrowser, A homebrew browser for the PlayStation Vita with background downloading support
-    Copyright (C) 2023 Muhammad Ibrahim
+    Copyright (C) 2024 Muhammad Ibrahim
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -22,6 +22,8 @@
 #include <paf.h>
 #include <vector>
 
+#include "bhbb_dl.h"
+
 class Source
 {
 public:
@@ -32,11 +34,12 @@ public:
         CBPS_DB = 0,
         VITA_DB,
         VHB_DB,
+        PSPHBB,
     };
 
-    struct Category 
+    struct CategoryInfo 
     {
-        Category(int _id, uint32_t sHash, uint32_t nHash):id(_id),singleHash(sHash),nameHash(nHash)
+        CategoryInfo(int _id, uint32_t sHash, uint32_t nHash):id(_id),singleHash(sHash),nameHash(nHash)
         {
 
         }
@@ -145,29 +148,41 @@ public:
         List::SortFunc func;
     };
 
-    Source(){}
+    enum IconAspectRatio 
+    {
+        r1x1,
+        r67x37 // PSPHBB uses this for icons (wtf?)
+    };
+
+    Source();
 
     static paf::common::SharedPtr<Source> Create(ID id);
 
-    virtual ~Source(){}
+    virtual ~Source(){};
 
-    virtual int Parse(){};
-    virtual int DownloadIndex(bool forceRefresh = false){};
-    virtual int GetDescription(Entry &entry, paf::wstring& out){};
-    virtual int GetDownloadURL(Entry &entry, paf::string& out){};
-    virtual int GetDataURL(Entry &entry, paf::string& out){};
+    virtual int Parse() = 0;
+    virtual int DownloadIndex(bool forceRefresh = false) = 0;
+    virtual int GetDescription(Entry &entry, paf::wstring& out) = 0;
+    virtual int GetDownloadURL(Entry &entry, paf::string& out) = 0;
+    virtual int GetDataURL(Entry &entry, paf::string& out) = 0;
+    virtual wchar_t *GetName() = 0;
+    
+    // These functions HAVE defaults and sources are not expected to override them unless they have special download logic
+    virtual int CreateDownloadParam(Entry& entry, BGDLParam& param);
+    virtual int CreateDataDownloadParam(Entry& entry, BGDLParam& param);
 
-    const Category& GetCategoryByID(int id);
-    const Source::Category& GetCategoryByHash(uint32_t hash);
+    const CategoryInfo& GetCategoryByID(int id);
+    const Source::CategoryInfo& GetCategoryByHash(uint32_t hash);
     List::SortFunc GetSortFunction(uint32_t hash);
 
     // List to parse to
     List *pList;
 
     // Info
+    IconAspectRatio iconRatio;
     paf::string iconFolderPath;
     paf::string iconsURL;
-    std::vector<Category> categories;
+    std::vector<CategoryInfo> categories;
     std::vector<SortMode> sortModes; // first sort mode will be default!
     bool screenshotsSupported;
     uint8_t id;

@@ -1,6 +1,6 @@
 /* 
     BetterHomebrewBrowser, A homebrew browser for the PlayStation Vita with background downloading support
-    Copyright (C) 2023 Muhammad Ibrahim
+    Copyright (C) 2024 Muhammad Ibrahim
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -184,9 +184,9 @@ int TitleSizeAdjustCB(paf::int32_t evtID, ui::Handler *handler, ui::Event *evt, 
 
     auto size = text->GetDrawObj(ui::Text::OBJ_TEXT)->GetSize();
 
-    text->SetSize(math::v4(size.extract_x(), size.extract_y()));
+    text->SetSize({ size.extract_x(), size.extract_y() });
 
-    icon->SetPos(math::v4(-(size.extract_x() / 2) - (icon->GetSize(0)->extract_x() / 2) - 10, 150));
+    icon->SetPos({ -(size.extract_x() / 2) - (icon->GetSize(0)->extract_x() / 2) - 10, 150 });
 
     text->DeleteEventCallback(ui::Text::CB_STATE_READY, (ui::HandlerCB)TitleSizeAdjustCB, pUserData);
 }
@@ -266,14 +266,14 @@ int ProcessExport(::uint32_t id, const char *name, const char *path, const char 
     auto decideDiagPlane = sce::CommonGuiDialog::Dialog::GetWidget(dialog::Current(), sce::CommonGuiDialog::REGISTER_ID_PLANE_BODY);
     thread::Sleep(100);
     auto decideDiagIcon = indicator_plugin->CreateWidget(decideDiagPlane, "plane", "plane_diag_icon", "style_position");
-    decideDiagIcon->SetSize(math::v4(65,65));
+    decideDiagIcon->SetSize({ 65, 65 });
     if(iconTex.get() != nullptr)
         decideDiagIcon->SetTexture(iconTex);
 
     auto decideDiagTitle = indicator_plugin->CreateWidget(decideDiagPlane, "text", "text_diag_title", "_common_style_text_dialog_title");//0x93e7966b);
     decideDiagTitle->SetAdjust(ui::Text::ADJUST_CONTENT, ui::Text::ADJUST_CONTENT, ui::Text::ADJUST_NONE);
     decideDiagTitle->AddEventCallback(ui::Handler::CB_STATE_READY, (ui::HandlerCB)TitleSizeAdjustCB, decideDiagIcon); 
-    decideDiagTitle->SetPos(math::v4(0, 150));
+    decideDiagTitle->SetPos({ 0, 150 });
     decideDiagTitle->SetString(wtitle);
 
     decideDiagIcon->Show(common::transition::Type_Fadein1);

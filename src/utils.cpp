@@ -1,6 +1,6 @@
 /* 
     BetterHomebrewBrowser, A homebrew browser for the PlayStation Vita with background downloading support
-    Copyright (C) 2023 Muhammad Ibrahim
+    Copyright (C) 2024 Muhammad Ibrahim
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -120,6 +120,10 @@ int Utils::DownloadFile(const char *url, const char *dest)
     curl_easy_setopt(handle, CURLOPT_USERAGENT, "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.36");
     curl_easy_setopt(handle, CURLOPT_SSLVERSION, CURL_SSLVERSION_TLSv1_2);
     curl_easy_setopt(handle, CURLOPT_USE_SSL, CURLUSESSL_ALL);
+
+#ifdef _DEBUG
+    curl_easy_setopt(handle, CURLOPT_VERBOSE, 1L);
+#endif
 
     curl_easy_setopt(handle, CURLOPT_URL, url);
 

@@ -1,21 +1,3 @@
-/* 
-    BetterHomebrewBrowser, A homebrew browser for the PlayStation Vita with background downloading support
-    Copyright (C) 2023 Muhammad Ibrahim
-
-    This program is free software: you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 3 of the License, or
-    (at your option) any later version.
-
-    This program is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
-
-    You should have received a copy of the GNU General Public License
-    along with this program.  If not, see <https://www.gnu.org/licenses/>.    
-*/
-
 #ifndef _bhbb_plugin_H_
 #define _bhbb_plugin_H_
 
@@ -66,11 +48,6 @@
 #define picture 0x0E66B49D
 #define busy 0xE18A89F9
 #define back_button 0xA20371F2
-#define page_donations 0x1AED2003
-#define page_root 0x5E5BC488
-#define page_text 0x62A7C933
-#define donation_qr 0x13FF9183
-#define back_button 0xA20371F2
 #define text_page 0xD23B357F
 #define page_root 0x5E5BC488
 #define page_text 0x62A7C933
@@ -87,7 +64,15 @@
 #define button_header_sort 0x6A39A260
 #define list_plane 0xD1A3FF38
 #define app_list_view 0x4BB109A1
-#define app_button_list_item_template 0x4BC48D01
+#define app_button_list_item_1x1_template 0x24ADA687
+#define app_button_list_item 0xE08D4E4C
+#define app_button 0x0FF6B41A
+#define text_list_item_title 0xCE986358
+#define text_list_item_author 0x62BBEC4D
+#define text_list_item_version 0xDCC83E92
+#define text_list_item_category 0x526345B8
+#define plane_list_item_icon 0xA7E671AA
+#define app_button_list_item_67x37_template 0xA50AF0BE
 #define app_button_list_item 0xE08D4E4C
 #define app_button 0x0FF6B41A
 #define text_list_item_title 0xCE986358
@@ -191,7 +176,6 @@
 #define tex_info_icon 0x96045C6A
 #define tex_info_icon_glow 0xFD675E9A
 #define tex_screensdhot_icon 0xBDABD172
-#define tex_donations 0x4EA0A6EB
 #define file_bhbb_settings 0x678061B9
 #define _common_snd01 0x48D64CF1
 

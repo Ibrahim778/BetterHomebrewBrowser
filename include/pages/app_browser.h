@@ -1,6 +1,6 @@
 /* 
     BetterHomebrewBrowser, A homebrew browser for the PlayStation Vita with background downloading support
-    Copyright (C) 2023 Muhammad Ibrahim
+    Copyright (C) 2024 Muhammad Ibrahim
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -93,26 +93,7 @@ public:
 
             }
 
-            void Run()
-            {
-                thread::RMutex::main_thread_mutex.Lock();
-
-                auto child = workList->FindChild(targetHash);
-
-                thread::RMutex::main_thread_mutex.Unlock();
-                
-                if(child == nullptr)
-                    return;
-
-                bool result = workObj->Add(workEntry);
-                thread::RMutex::main_thread_mutex.Lock();
-
-                if(workObj && workObj->cbPlugin && workList->FindChild(targetHash) != nullptr)
-                {
-                    AppBrowser::EntryFactory::TextureCB(result, workList->FindChild(targetHash), workEntry, workObj);
-                }
-                thread::RMutex::main_thread_mutex.Unlock();
-            }   
+            void Run();
 
             void Finish()
             {

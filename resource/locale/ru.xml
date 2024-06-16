@@ -34,10 +34,6 @@
     <string src="Опции" id="msg_options"/>
     <string src="Источник" id="msg_settings_source"/>
     <string src="Версия" id="msg_settings_verinfo"/>
-    
-    <string src="CBPS DB" id="db_name_0"/>    
-    <string src="Vita DB" id="db_name_1"/>
-    <string src="VHBD" id="db_name_2"/>
 
     <string src="Всегда" id="msg_settings_downloadInterval_always"/>
     <string src="Скачать через (В часах)" id="msg_settings_downloadInterval"/>

@@ -34,10 +34,6 @@
     <string src="选项" id="msg_options"/>
     <string src="数据源" id="msg_settings_source"/>
     <string src="版本信息" id="msg_settings_verinfo"/>
-    
-    <string src="CBPS DB" id="db_name_0"/>    
-    <string src="Vita DB" id="db_name_1"/>
-    <string src="VHBD" id="db_name_2"/>
 
     <string src="总是" id="msg_settings_downloadInterval_always"/>
     <string src="下载后 (小时)" id="msg_settings_downloadInterval"/>

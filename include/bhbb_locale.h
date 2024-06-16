@@ -1,21 +1,3 @@
-/* 
-    BetterHomebrewBrowser, A homebrew browser for the PlayStation Vita with background downloading support
-    Copyright (C) 2023 Muhammad Ibrahim
-
-    This program is free software: you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 3 of the License, or
-    (at your option) any later version.
-
-    This program is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
-
-    You should have received a copy of the GNU General Public License
-    along with this program.  If not, see <https://www.gnu.org/licenses/>.    
-*/
-
 #ifndef _bhbb_locale_H_
 #define _bhbb_locale_H_
 
@@ -51,9 +33,6 @@
 #define msg_options 0x28B9E30E
 #define msg_settings_source 0xB5FCDD42
 #define msg_settings_verinfo 0x32A4C75A
-#define db_name_0 0xFE2C0CEA
-#define db_name_1 0xE7F22CF1
-#define db_name_2 0x8D38EFC4
 #define msg_settings_downloadInterval_always 0xDF222133
 #define msg_settings_downloadInterval 0x59CD4E83
 #define msg_check_update 0x6CEA58D9

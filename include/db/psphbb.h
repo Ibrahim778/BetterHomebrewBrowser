@@ -16,37 +16,39 @@
     along with this program.  If not, see <https://www.gnu.org/licenses/>.    
 */
 
-#ifndef _VHBDB_H_
-#define _VHBDB_H_
+#ifndef _PSPHBB_H_
+#define _PSPHBB_H_
 
 #include <paf.h>
 
 #include "source.h"
+#include "bhbb_dl.h"
 
-class VHBD : public Source
+class PSPHBDB : public Source 
 {
 public:
-    VHBD();
-    virtual ~VHBD();
+    PSPHBDB();
+    virtual ~PSPHBDB();
 
     int Parse();
     int DownloadIndex(bool forceRefresh);
     int GetDescription(Entry &entry, paf::wstring& out);
     int GetDownloadURL(Entry &entry, paf::string& out);
     int GetDataURL(Entry &entry, paf::string& out);
-    wchar_t *GetName() 
+    wchar_t *GetName()
     {
-        return L"Vita Homebrew DB";
+        return L"PSP Homebrew Browser";
     }
 
-protected:
-    static int GetSCECompatibleURL(std::vector<paf::string> &list, paf::string &out);
+    int CreateDownloadParam(Entry &entry, BGDLParam &param) override;
 
+protected:
     enum Category 
     {
-        APP = 0,
-        GAME,
-        EMU
+        GAME = 1,
+        UTIL,
+        EMU,
+        PORT
     };
 };
 

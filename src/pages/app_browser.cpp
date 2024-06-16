@@ -1,6 +1,6 @@
 /* 
     BetterHomebrewBrowser, A homebrew browser for the PlayStation Vita with background downloading support
-    Copyright (C) 2023 Muhammad Ibrahim
+    Copyright (C) 2024 Muhammad Ibrahim
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -17,7 +17,6 @@
 */
 
 #include <paf.h>
-#include <psp2_compat/curl/curl.h>
 #include <shellsvc.h>
 
 #include "pages/app_browser.h"
@@ -85,7 +84,7 @@ AppBrowser::AppBrowser(paf::common::SharedPtr<Source> _source):
     // Setup list view
     listView->SetSegmentLayoutType(0, ui::ListView::LAYOUT_TYPE_LIST);
     listView->InsertSegment(0, 1);
-    listView->SetCellSizeDefault(0, v4(960, 100));
+    listView->SetCellSizeDefault(0, { 960, 100 });
     
     listView->SetSegmentHeader(0, listHeader, false, false);
     listView->SetItemFactory(new EntryFactory(this));
@@ -144,11 +143,6 @@ void AppBrowser::SettingsCB(int id, paf::ui::Handler *handler, paf::ui::Event *e
         param.type = BGDLTarget_App;
 
         Downloader::GetCurrentInstance()->Enqueue(g_appPlugin, "http://github.com/Ibrahim778/SelfLauncher/releases/download/V1.1/SelfLauncher.vpk", "Self Launcher", "ux0:app/VITASHELL/sce_sys/icon0.png", &param);
-        break;
-
-    case button_donations:
-        Settings::GetInstance()->Close();
-        new page::Base(page_donations, Plugin::PageOpenParam(true), Plugin::PageCloseParam(true));
         break;
     default:
         break;
@@ -368,15 +362,16 @@ void AppBrowser::SetSource(paf::common::SharedPtr<Source> tSource)
 
     // Delete old widgets
     ui::Plane *categoriesPlane = (ui::Plane *)root->FindChild(plane_category_buttons);
+    
     for(unsigned short i = 0; i < categoriesPlane->GetChildrenNum(); i++)
         transition::DoReverse(0, categoriesPlane->GetChild(i), transition::Type_Reset, true, true);
 
     // Create new ones
     Plugin::TemplateOpenParam tOpen;
-    float buttonSize = 844.0f / source->categories.size();
+    float buttonSize = categoriesPlane->GetSize(0)->extract_x() / source->categories.size();
 
     int i = 0;
-    for (const Source::Category& category : source->categories)
+    for (const Source::CategoryInfo& category : source->categories)
     {
         g_appPlugin->TemplateOpen(categoriesPlane, category_button_template, tOpen);
         ui::Widget *button = categoriesPlane->GetChild(categoriesPlane->GetChildrenNum() - 1);
@@ -385,7 +380,7 @@ void AppBrowser::SetSource(paf::common::SharedPtr<Source> tSource)
         button->SetAnchor(ui::Widget::ANCHOR_LEFT, ui::Widget::ANCHOR_NONE, ui::Widget::ANCHOR_NONE, SCE_NULL);
         button->SetAlign(ui::Widget::ALIGN_LEFT, ui::Widget::ALIGN_NONE, ui::Widget::ALIGN_NONE, SCE_NULL);
         button->SetString(g_appPlugin->GetString(category.nameHash));
-        button->SetColor(v4(1,1,1, this->category == category.id ? 1 : 0.4f));
+        button->SetColor({ 1, 1, 1, this->category == category.id ? 1 : 0.4f });
         button->Show(transition::Type_Fadein1);
         button->SetName(category.nameHash);
         button->AddEventCallback(ui::Button::CB_BTN_DECIDE, AppBrowser::CategoryCB, this);
@@ -476,7 +471,7 @@ ui::ListItem *AppBrowser::EntryFactory::Create(ui::listview::ItemFactory::Create
     ui::Widget *targetRoot = param.parent;
     int category = workPage->GetCategory();
 
-    g_appPlugin->TemplateOpen(targetRoot, app_button_list_item_template, tOpen);
+    g_appPlugin->TemplateOpen(targetRoot, workPage->source->iconRatio == Source::r1x1 ? app_button_list_item_1x1_template : app_button_list_item_67x37_template, tOpen);
 
     item = (ui::ListItem *)targetRoot->GetChild(targetRoot->GetChildrenNum() - 1);
     button = (ui::ImageButton *)item->FindChild(app_button);
@@ -531,20 +526,20 @@ void AppBrowser::SortSizeAdjustCB(int id, ui::Handler *self, ui::Event *event, v
     auto button = (ui::Button *)self;
 
     auto width = button->GetDrawObj(ui::Button::OBJ_LABEL)->GetSize().extract_x() + 40.0f;
-    button->SetSize(v4(width, button->GetSize(0)->extract_y(), 0, 0));
+    button->SetSize({ width, button->GetSize(0)->extract_y(), 0, 0 });
 
     auto sortPlane = button->GetParent();
     auto sortText = sortPlane->FindChild(text_label_sort);
 
     auto planeWidth = sortText->GetSize(0)->extract_x() + width + 25.0f;
-    sortPlane->SetSize(v4(planeWidth, sortPlane->GetSize(0)->extract_y()));
+    sortPlane->SetSize({ planeWidth, sortPlane->GetSize(0)->extract_y() });
 
     self->DeleteEventCallback(ui::Handler::CB_STATE_READY, SortSizeAdjustCB, pUserData);
 }
 
 void AppBrowser::Sort(uint32_t hash)
 {
-    int workHash = hash == -1 ? sortMode : hash;
+    int workHash = hash == -1 ? sortMode : hash; // hash is by default -1, so re-sort with the prev sort mode if the function was called without arguments
 
     auto button = listHeader->FindChild(button_header_sort);
     button->SetString(g_appPlugin->GetString(workHash));
@@ -595,14 +590,25 @@ void AppBrowser::ParseThread::EntryFunction()
     }
 
     workPage->targetList = &workPage->appList;
+    print("[AppBrowser::ParseThread] Assigned list\n");
 
-    workPage->Sort(workPage->source->sortModes.begin()->hash); // Sort with the first sort mode in list (it is the default)
-    workPage->targetList->Categorise(workPage->source.get());
+    if(workPage->source->sortModes.size() > 0)
+    {
+        workPage->Sort(workPage->source->sortModes.begin()->hash); // Sort with the first sort mode in list (it is the default)
+        print("[AppBrowser::ParseThread] Sorted entries\n");
+    }
+    
+    if(workPage->source->categories.size() > 1)
+    {
+        workPage->targetList->Categorise(workPage->source.get());
+        print("[AppBrowser::ParseThread] Categorised entries\n");
+    }
 
     RMutex::main_thread_mutex.Lock();
 
     // Add items to list view
     workPage->CreateList();
+    print("[AppBrowser::ParseThread] Created list\n");
 
     workPage->refreshButton->Enable(0);
     workPage->optionsButton->Show(transition::Type_Reset);
@@ -637,7 +643,6 @@ void AppBrowser::LoadJob::Run()
     pPage->refreshButton->Disable(0);
     pPage->optionsButton->Hide(transition::Type_Reset);
 
-    pPage->ClearList();
     pPage->appList.Clear();
     pPage->searchList.Clear();
 
@@ -711,6 +716,27 @@ bool AppBrowser::TexPool::Add(Source::Entry *workItem, bool allowReplace, int *r
     }
 
     return AddLocal(workItem->hash, workItem->iconPath.c_str());
+}
+
+void AppBrowser::TexPool::ListIconJob::Run()
+{
+    thread::RMutex::main_thread_mutex.Lock();
+
+    auto child = workList->FindChild(targetHash);
+
+    thread::RMutex::main_thread_mutex.Unlock();
+    
+    if(child == nullptr)
+        return;
+
+    bool result = workObj->Add(workEntry);
+    thread::RMutex::main_thread_mutex.Lock();
+
+    if(workObj && workObj->cbPlugin && workList->FindChild(targetHash) != nullptr)
+    {
+        AppBrowser::EntryFactory::TextureCB(result, workList->FindChild(targetHash), workEntry, workObj);
+    }
+    thread::RMutex::main_thread_mutex.Unlock();
 }
 
 bool AppBrowser::TexPool::AddAsync(Source::Entry *workItem, ui::Widget *workList, uint32_t targetHash, bool allowReplace)

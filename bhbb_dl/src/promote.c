@@ -1,6 +1,6 @@
 /* 
     BetterHomebrewBrowser, A homebrew browser for the PlayStation Vita with background downloading support
-    Copyright (C) 2023 Muhammad Ibrahim
+    Copyright (C) 2024 Muhammad Ibrahim
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -20,10 +20,12 @@
 
 #include <kernel.h>
 #include <libsysmodule.h>
-#include <paf/std/stdio.h>
+#include <paf/std/string.h>
+#include <paf/std/stdlib.h>
 #include <appmgr.h>
+#include <paf/hash/sha1.h>
 
-#include "sha1.h"
+// #include "sha1.h"
 #include "head_bin.h"
 
 #define BSWAP32(x) (((x & 0xFF) << 24) | ((x & 0xFF00) << 8) | ((x & 0xFF0000) >> 8) | ((x & 0xFF000000) >> 24))
@@ -77,13 +79,20 @@ int getSfoString(char* buffer, char* name, char* string, int length) {
 }
 
 static void fpkg_hmac(const uint8_t* data, unsigned int len, uint8_t hmac[16]) {
-    SHA1_CTX ctx;
+    // SHA1_CTX ctx;
+    SHA1Context ctx;
     uint8_t sha1[20];
     uint8_t buf[64];
 
-    sha1_init(&ctx);
-    sha1_update(&ctx, data, len);
-    sha1_final(&ctx, sha1);
+    sce_paf_memset(sha1, 0, sizeof(sha1));
+
+    SHA1Reset(&ctx);
+    SHA1Input(&ctx, data, len);
+    SHA1Result(&ctx, sha1);
+
+    // sha1_init(&ctx);
+    // sha1_update(&ctx, data, len);
+    // sha1_final(&ctx, sha1);
 
     sce_paf_memset(buf, 0, 64);
     sce_paf_memcpy(&buf[0], &sha1[4], 8);
@@ -95,9 +104,13 @@ static void fpkg_hmac(const uint8_t* data, unsigned int len, uint8_t hmac[16]) {
     buf[23] = sha1[3];
     sce_paf_memcpy(&buf[24], &buf[16], 8);
 
-    sha1_init(&ctx);
-    sha1_update(&ctx, buf, 64);
-    sha1_final(&ctx, sha1);
+    SHA1Reset(&ctx);
+    SHA1Input(&ctx, buf, sizeof(buf));
+    SHA1Result(&ctx, sha1);
+
+    // sha1_init(&ctx);
+    // sha1_update(&ctx, buf, 64);
+    // sha1_final(&ctx, sha1);
 
     sce_paf_memcpy(hmac, sha1, 16);
 }

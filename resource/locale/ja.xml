@@ -34,10 +34,6 @@
     <string src="オプション" id="msg_options"/>
     <string src="ソース" id="msg_settings_source"/>
     <string src="ビルド情報" id="msg_settings_verinfo"/>
-    
-    <string src="CBPS DB" id="db_name_0"/>    
-    <string src="Vita DB" id="db_name_1"/>
-    <string src="VHBD" id="db_name_2"/>
 
     <string src="常に" id="msg_settings_downloadInterval_always"/>
     <string src="ダウンロード後 (時)" id="msg_settings_downloadInterval"/>

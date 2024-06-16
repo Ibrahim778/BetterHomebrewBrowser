@@ -1,6 +1,6 @@
 /* 
     BetterHomebrewBrowser, A homebrew browser for the PlayStation Vita with background downloading support
-    Copyright (C) 2023 Muhammad Ibrahim
+    Copyright (C) 2024 Muhammad Ibrahim
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -38,45 +38,45 @@ VHBD::VHBD()
     iconFolderPath = "ux0:/data/betterHomebrewBrowser/icons/vhbd/";
     screenshotsSupported = false;
     categories = {
-        Source::Category(
+        {
             CategoryAll,
             db_category_all,
             db_category_all
-        ),
-        Source::Category(
-            0,
+        },
+        {
+            APP,
             db_category_single_app,
             db_category_app
-        ),
-        Source::Category(
-            1,
+        },
+        {
+            GAME,
             db_category_single_game,
             db_category_game
-        ),
-        Source::Category(
-            2,
+        },
+        {
+            EMU,
             db_category_single_emu,
             db_category_emu
-        ),
+        },
     };
 
     sortModes = {
-        Source::SortMode(
+        {
             msg_sort_mostrecent,
             List::Sort_MostRecent
-        ),
-        Source::SortMode(
+        },
+        {
             msg_sort_oldfirst,
             List::Sort_OldestFirst
-        ),
-        Source::SortMode(
+        },
+        {
             msg_sort_alpha,
             List::Sort_Alphabetical       
-        ),
-        Source::SortMode(
+        },
+        {
             msg_sort_alpharev,
             List::Sort_AlphabeticalRev
-        )
+        }
     };
     
     Dir::CreateRecursive(iconFolderPath.c_str());
@@ -125,7 +125,7 @@ int VHBD::DownloadIndex(bool forceRefresh)
         return ret;
 
     paf::string resp;
-    size_t bytesRead;
+    int bytesRead;
     char buff[4096 + 1]; //Leave 1 char for '\0'
     do
     {
@@ -290,15 +290,15 @@ int VHBD::Parse()
         const char *type = homebrew[i]["type"].as<const char *>();
         if(sce_paf_strncmp(type, "app", 3) == 0)
         {
-            entry.category = 0;
+            entry.category = APP;
         } 
         else if(sce_paf_strncmp(type, "game", 4) == 0)
         {
-            entry.category = 1;
+            entry.category = GAME;
         }
         else if(sce_paf_strncmp(type, "emulator", 8) == 0)
         {
-            entry.category = 2;
+            entry.category = EMU;
         }
 
         entry.dataSize = 0;

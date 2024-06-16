@@ -1,6 +1,6 @@
 /* 
     BetterHomebrewBrowser, A homebrew browser for the PlayStation Vita with background downloading support
-    Copyright (C) 2023 Muhammad Ibrahim
+    Copyright (C) 2024 Muhammad Ibrahim
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -48,30 +48,30 @@ CBPSDB::CBPSDB()
     iconsURL = "https://github.com/Ibrahim778/CBPS-DB-Icon-Downloader/raw/main/icons.zip?raw=true";
     screenshotsSupported = true;
     categories = {
-        Source::Category(
+        {
             CategoryAll,
             db_category_all,
             db_category_all
-        )
+        }
     };
 
     sortModes = {
-        Source::SortMode(
+        {
             msg_sort_mostrecent,
             List::Sort_MostRecent
-        ),
-        Source::SortMode(
+        },
+        {
             msg_sort_oldfirst,
             List::Sort_OldestFirst
-        ),
-        Source::SortMode(
+        },
+        {
             msg_sort_alpha,
             List::Sort_Alphabetical       
-        ),
-        Source::SortMode(
+        },
+        {
             msg_sort_alpharev,
             List::Sort_AlphabeticalRev
-        )
+        }
     };
 
     paf::Dir::CreateRecursive(iconFolderPath.c_str());

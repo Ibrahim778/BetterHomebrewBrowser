@@ -1,6 +1,6 @@
 /* 
     BetterHomebrewBrowser, A homebrew browser for the PlayStation Vita with background downloading support
-    Copyright (C) 2023 Muhammad Ibrahim
+    Copyright (C) 2024 Muhammad Ibrahim
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -43,6 +43,12 @@ AppViewer::AppViewer(Source::Entry& entry, AppBrowser::TexPool *pTexPool):
         Plugin::PageCloseParam(true)
     ),app(entry),pool(pTexPool)
 {
+    auto titleText = (ui::Text *)root->FindChild(info_title_text);
+    auto authorText = (ui::Text *)root->FindChild(info_author_text);
+    auto iconButton = (ui::Button *)root->FindChild(icon_button);
+    auto dataButton = (ui::Button *)root->FindChild(data_download_button);
+    auto infoButton = (ui::Button *)root->FindChild(info_button);
+
     auto isMainThread = thread::ThreadIDCache::Check(thread::ThreadIDCache::Type_Main);
     if(!isMainThread)
         RMutex::main_thread_mutex.Lock();
@@ -50,8 +56,8 @@ AppViewer::AppViewer(Source::Entry& entry, AppBrowser::TexPool *pTexPool):
     busyIndicator = (ui::BusyIndicator *)root->FindChild(description_busy);
     descText = (ui::Text *)root->FindChild(info_description_text);
 
-    root->FindChild(info_title_text)->SetString(app.title);
-    root->FindChild(info_author_text)->SetString(app.author);
+    titleText->SetString(app.title);
+    authorText->SetString(app.author);
 
     String timeVer;
 
@@ -82,21 +88,26 @@ AppViewer::AppViewer(Source::Entry& entry, AppBrowser::TexPool *pTexPool):
     }
     
     // Manage the icon button (For manual icon redownloads)
-    auto iconButton = root->FindChild(icon_button);
     iconButton->SetTexture(pTexPool->Get(app.hash), 0, 0);
     iconButton->AddEventCallback(ui::Button::CB_BTN_DECIDE, IconButtonCB, this);
+
+    if(app.pSource->iconRatio == Source::r67x37) // There will be a better way to do this if I need to add more aspect ratios
+    {
+        iconButton->SetSize({144.86f, 100.0f}); 
+        iconButton->SetPos({10,0});
+        titleText->SetPos({164.8f, -10.0f});
+        authorText->SetPos({164.8f, 0.0f});
+    }
 
     // Take care of our download buttons
     root->FindChild(download_button)->AddEventCallback(ui::Button::CB_BTN_DECIDE, DownloadButtonCB, this);
     
-    auto dataButton = (ui::Button *)root->FindChild(data_download_button);
     if(app.dataURL.size() == 0) // Hide button
         dataButton->Hide(transition::Type_Reset);
     else // Assign callback
         dataButton->AddEventCallback(ui::Button::CB_BTN_DECIDE, DownloadButtonCB, this);
     
     // Setup our information button
-    auto infoButton = (ui::Button *)root->FindChild(info_button);
     infoButton->AddEventCallback(ui::Button::CB_BTN_DECIDE, InfoButtonCB, this);
 
     if(!isMainThread)
@@ -250,16 +261,13 @@ void AppViewer::DownloadJob::Run()
     {
     case DownloadType_App:
         ret = workPage->app.pSource->GetDownloadURL(workPage->app, url);
-        dlParam.type = BGDLTarget_App;
-        sce_paf_strncpy(dlParam.data_icon, workPage->app.iconPath.c_str(), sizeof(dlParam.data_icon));
+        workPage->app.pSource->CreateDownloadParam(workPage->app, dlParam);
         appName = workPage->app.title;
         break;
 
     case DownloadType_Data:
         ret = workPage->app.pSource->GetDataURL(workPage->app, url);
-        dlParam.type = BGDLTarget_CompressedFile;
-        sce_paf_strncpy(dlParam.path, workPage->app.dataPath.c_str(), sizeof(dlParam.path));
-        sce_paf_strncpy(dlParam.data_icon, workPage->app.iconPath.c_str(), sizeof(dlParam.data_icon));
+        workPage->app.pSource->CreateDataDownloadParam(workPage->app, dlParam);
         appName.SetFormattedString(g_appPlugin->GetString(data_dl_name), workPage->app.title.c_str());
         break; 
     }
