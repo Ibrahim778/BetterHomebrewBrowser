@@ -176,7 +176,6 @@
 #define tex_info_icon 0x96045C6A
 #define tex_info_icon_glow 0xFD675E9A
 #define tex_screensdhot_icon 0xBDABD172
-#define tex_donations 0x4EA0A6EB
 #define file_bhbb_settings 0x678061B9
 #define _common_snd01 0x48D64CF1
 
