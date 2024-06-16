@@ -1,6 +1,6 @@
 /* 
     BetterHomebrewBrowser, A homebrew browser for the PlayStation Vita with background downloading support
-    Copyright (C) 2023 Muhammad Ibrahim
+    Copyright (C) 2024 Muhammad Ibrahim
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -33,7 +33,7 @@
 #define WIDE2(x) L##x
 #define WIDE(x) WIDE2(x)
 
-#define VERSION         "1.31"
+#define VERSION         "1.4"
 #define BGDL_VERSION    "3.2"
 
 using namespace paf;
