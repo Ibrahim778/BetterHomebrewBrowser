@@ -37,7 +37,7 @@
                 </button>
 
                 <plane style="_common_style_plane_transparent" id="plane_category_buttons">
-                    <layout_hint size="844, 60" pos="0,0" anchor="1,0" align="1,0" />
+                    <layout_hint size="844, 60" pos="0,0" anchor="1,0" align="1,0" /> <!--786-->
                     <image_button style="category_button" sound="_common_sound_button_enter" label="msg_init" >
                         <layout_hint size="844, 58" pos="0,1" />
                     </image_button>
@@ -220,7 +220,7 @@
             </plane>
         </template>
 
-        <template fast_open="1" id="app_button_list_item_template">
+        <template fast_open="1" id="app_button_list_item_1x1_template">
             <list_item style="style_list_view_item_generic" id="app_button_list_item">
                 <layout_hint size="960, 100" />
                 <image_button sound="_common_sound_image_button" style="list_button_style" enable_long_press_text_auto_scroll="1" id="app_button">
@@ -240,6 +240,31 @@
                     </text>
                     <plane style="_common_style_plane_transparent" id="plane_list_item_icon">
                         <layout_hint align="1,0" anchor="1,0" size="100,100" pos="0,0" />
+                    </plane>
+                </image_button>            
+            </list_item>
+        </template>
+
+        <template fast_open="1" id="app_button_list_item_67x37_template">
+            <list_item style="style_list_view_item_generic" id="app_button_list_item">
+                <layout_hint size="960, 100" />
+                <image_button sound="_common_sound_image_button" style="list_button_style" enable_long_press_text_auto_scroll="1" id="app_button">
+                    <layout_hint size="960, 100" />
+                    <focus_hint focus_shape="3"/>
+                    <text style="style_text_list_button_title" id="text_list_item_title">
+                        <layout_hint align="1,2" anchor="1,2" adjust="2,2" pos="191.01, -25" />
+                    </text>
+                    <text style="style_text_list_button_author" id="text_list_item_author">
+                        <layout_hint align="1, 1" anchor="1, 1" adjust="2, 2" pos="191.01, 5" />
+                    </text>
+                    <text style="style_text_list_button_version" id="text_list_item_version">
+                        <layout_hint align="2, 2" anchor="2, 2" adjust="2, 2" pos="-20, -10" />
+                    </text>
+                    <text style="style_text_list_button_version" id="text_list_item_category">
+                        <layout_hint align="2, 1" anchor="2, 1" adjust="2, 2" pos="-20, 10" />
+                    </text>
+                    <plane style="_common_style_plane_transparent" id="plane_list_item_icon">
+                        <layout_hint align="1,0" anchor="1,0" size="181.01,100" pos="0,0" />
                     </plane>
                 </image_button>            
             </list_item>

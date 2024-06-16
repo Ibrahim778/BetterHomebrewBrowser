@@ -21,10 +21,17 @@
 
 #include "db/source.h"
 #include "print.h"
+#include "bhbb_dl.h"
 
 #include "db/vitadb.h"
 #include "db/vhbd.h"
 #include "db/cbpsdb.h"
+#include "db/psphbb.h"
+
+Source::Source()
+{
+    iconRatio = IconAspectRatio::r1x1;
+}
 
 Source::List::List()
 {
@@ -46,26 +53,28 @@ paf::common::SharedPtr<Source> Source::Create(Source::ID id)
         return paf::common::SharedPtr<Source>(new VHBD());
     case CBPS_DB:
         return paf::common::SharedPtr<Source>(new CBPSDB());
+    case PSPHBB:
+        return paf::common::SharedPtr<Source>(new PSPHBDB());
     }
 }
 
-const Source::Category& Source::GetCategoryByID(int id)
+const Source::CategoryInfo& Source::GetCategoryByID(int id)
 {
-    for(const Source::Category& cat : categories)
+    for(const Source::CategoryInfo& cat : categories)
         if(cat.id == id)
             return cat;
         
-    const Source::Category notFound(0xDEADBEEF, 0xDEADBEEF, 0xDEADBEEF);
+    const Source::CategoryInfo notFound(0xDEADBEEF, 0xDEADBEEF, 0xDEADBEEF);
     return notFound;
 }
 
-const Source::Category& Source::GetCategoryByHash(uint32_t hash)
+const Source::CategoryInfo& Source::GetCategoryByHash(uint32_t hash)
 {
-    for(const Source::Category& cat : categories)
+    for(const Source::CategoryInfo& cat : categories)
         if(cat.nameHash == hash)
             return cat;
         
-    const Source::Category notFound(0xDEADBEEF, 0xDEADBEEF, 0xDEADBEEF);
+    const Source::CategoryInfo notFound(0xDEADBEEF, 0xDEADBEEF, 0xDEADBEEF);
     return notFound;
 }
 
@@ -125,7 +134,7 @@ void Source::List::Categorise(Source *source)
     if(!categoriedEntries.empty())
         categoriedEntries.clear();
 
-    for (Source::Category &category : source->categories)
+    for (Source::CategoryInfo &category : source->categories)
     {
         if(category.id == Source::CategoryAll)
             continue;
@@ -173,4 +182,21 @@ bool Source::List::Sort_AlphabeticalRev(Source::Entry &a, Source::Entry &b)
 void Source::List::Sort(SortFunc func)
 {
     std::sort(entries.begin(), entries.end(), func);
+}
+
+int Source::CreateDownloadParam(Entry& entry, BGDLParam& dlParam)
+{
+    dlParam.type = BGDLTarget_App;
+    sce_paf_strncpy(dlParam.data_icon, entry.iconPath.c_str(), sizeof(dlParam.data_icon));
+
+    return 0;
+}
+
+int Source::CreateDataDownloadParam(Entry& entry, BGDLParam& dlParam)
+{
+    dlParam.type = BGDLTarget_CompressedFile;
+    sce_paf_strncpy(dlParam.path, entry.dataPath.c_str(), sizeof(dlParam.path));
+    sce_paf_strncpy(dlParam.data_icon, entry.iconPath.c_str(), sizeof(dlParam.data_icon));
+    
+    return 0;
 }

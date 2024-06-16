@@ -6,6 +6,7 @@
             <list_item id="list_source_00" title="db_name_0" value="0" />
             <list_item id="list_source_01" title="db_name_1" value="1" />
             <!-- <list_item id="list_source_02" title="db_name_2" value="2" /> -->
+            <list_item id="list_source_03" title="db_name_3" value="3" />
         </list>
 		<setting_list id="verinfo_setting" title="msg_settings_verinfo" icon="tex_spanner" style="edit">
 		    <label id="label_verinfo" title="msg_verinfo" style="heading" />

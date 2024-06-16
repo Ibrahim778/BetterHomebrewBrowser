@@ -121,6 +121,10 @@ int Utils::DownloadFile(const char *url, const char *dest)
     curl_easy_setopt(handle, CURLOPT_SSLVERSION, CURL_SSLVERSION_TLSv1_2);
     curl_easy_setopt(handle, CURLOPT_USE_SSL, CURLUSESSL_ALL);
 
+#ifdef _DEBUG
+    curl_easy_setopt(handle, CURLOPT_VERBOSE, 1L);
+#endif
+
     curl_easy_setopt(handle, CURLOPT_URL, url);
 
     curl_easy_setopt(handle, CURLOPT_WRITEDATA, &file);
