@@ -14,7 +14,6 @@
         <setting_list id="credits_setting" title="msg_settings_credits" icon="tex_spanner" style="edit">
 		    <label id="label_credinfo" title="msg_credinfo" style="heading" />
 	    </setting_list>
-        <button id="button_donations" title="msg_donations" icon="tex_spanner" />
         <!-- <button id="button_dl_dev" title="★ Download Test" icon="tex_spanner" /> -->
 	</setting_list>
 </application_settings>
