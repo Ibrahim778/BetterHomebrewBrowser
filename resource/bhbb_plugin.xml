@@ -153,19 +153,6 @@
             </plane>
         </page>
 
-        <page id="page_donations">
-            <plane style="_common_default_style_plane" texture="tex_main_bg" id="page_root">
-                <layout_hint size="960, 544" pos="0,0"/>
-                <text style="text_info_style" id="page_text" label="msg_donate" >
-                    <layout_hint size="960, 100" anchor="0, 2" align="0,2" pos="0, 0"/>
-                </text>    
-                <plane style="_common_default_style_plane" texture="tex_donations" id="donation_qr">
-                    <layout_hint size="400, 400" pos="0,-30"/>    
-                </plane>
-                <corner_button style="_common_style_corner_bottom_left" id="back_button" />
-            </plane>
-        </page>
-
         <page id="text_page">
             <plane style="_common_default_style_plane" texture="tex_main_bg" id="page_root">
                 <layout_hint size="960, 544"/>
@@ -422,7 +409,6 @@
         <texture src="texture/tex_info_icon.png" type="texture/png" id="tex_info_icon" />
         <texture src="texture/tex_info_icon_glow.png" type="texture/png" id="tex_info_icon_glow" />
         <texture src="texture/screenshot_icon.png" type="texture/png" id="tex_screensdhot_icon" /> 
-        <texture src="texture/donations.png" type="texture/png" id="tex_donations" /> 
     </texturetable>
 
     <filetable>

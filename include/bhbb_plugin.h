@@ -48,11 +48,6 @@
 #define picture 0x0E66B49D
 #define busy 0xE18A89F9
 #define back_button 0xA20371F2
-#define page_donations 0x1AED2003
-#define page_root 0x5E5BC488
-#define page_text 0x62A7C933
-#define donation_qr 0x13FF9183
-#define back_button 0xA20371F2
 #define text_page 0xD23B357F
 #define page_root 0x5E5BC488
 #define page_text 0x62A7C933

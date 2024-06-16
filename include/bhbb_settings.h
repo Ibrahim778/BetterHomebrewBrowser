@@ -13,7 +13,6 @@
 #define label_verinfo 0x804FF666
 #define credits_setting 0x65B3A7E9
 #define label_credinfo 0x85D107C3
-#define button_donations 0x0202E2BB
 #define button_dl_dev 0x05E1FC07
 
 #endif
