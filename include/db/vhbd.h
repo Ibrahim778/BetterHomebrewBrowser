@@ -34,10 +34,20 @@ public:
     int GetDescription(Entry &entry, paf::wstring& out);
     int GetDownloadURL(Entry &entry, paf::string& out);
     int GetDataURL(Entry &entry, paf::string& out);
+    wchar_t *GetName() 
+    {
+        return L"Vita Homebrew DB";
+    }
 
-private:
+protected:
     static int GetSCECompatibleURL(std::vector<paf::string> &list, paf::string &out);
 
+    enum Category 
+    {
+        APP = 0,
+        GAME,
+        EMU
+    };
 };
 
 #endif

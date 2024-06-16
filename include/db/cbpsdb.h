@@ -34,6 +34,11 @@ public:
     int GetDescription(Entry &entry, paf::wstring& out);
     int GetDownloadURL(Entry &entry, paf::string& out);
     int GetDataURL(Entry &entry, paf::string& out);
+    wchar_t *GetName() 
+    {
+        return L"CBPS DB";
+    }
+
 protected:
     static int GetSCECompatibleURL(std::vector<paf::string> &list, paf::string &out);
     

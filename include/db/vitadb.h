@@ -34,6 +34,10 @@ public:
     int GetDescription(Entry &entry, paf::wstring& out);
     int GetDownloadURL(Entry &entry, paf::string& out);
     int GetDataURL(Entry &entry, paf::string& out);
+    wchar_t *GetName()
+    {
+        return L"Vita DB";
+    }
 
 protected:
     static int GetSCECompatibleURL(std::vector<paf::string> &urlList, paf::string &out);
@@ -41,6 +45,15 @@ protected:
 
     size_t buffSize;
     char *buff;
+
+    enum Category 
+    {
+        GAME = 1,
+        UTIL = 4,
+        EMU = 5,
+        PORT = 2,
+
+    };
 };
 
 #endif

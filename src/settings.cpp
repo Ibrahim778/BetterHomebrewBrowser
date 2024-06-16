@@ -52,7 +52,7 @@ static wchar_t *s_credits = L"@GrapheneCt\n"
                             "@CreepNT\n"
                             "  SceDownload reversing\n\n"
                             "@CBPS\n"
-                            "  Origianl SceDownload PoC\n\n"
+                            "  Original SceDownload PoC\n\n"
                             "@Princess-of-sleeping\n"
                             "  Help with debugging and development\n"
                             "  SceLsdb notification reversing\n\n"
@@ -272,6 +272,11 @@ wchar_t *Settings::CBOnGetString(const char *elementId)
         if(!sce_paf_strcmp(elementId, "msg_credinfo"))
         {
             return s_credits;
+        }
+        if(!sce_paf_strncmp(elementId, "db_name", 7))
+        {
+            auto id = (Source::ID)sce_paf_strtoul(sce_paf_strrchr(elementId, '_') + 1, nullptr, 10);
+            return Source::Create(id)->GetName();
         }
 	}
 

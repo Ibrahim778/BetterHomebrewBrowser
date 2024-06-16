@@ -34,10 +34,6 @@
     <string src="Options" id="msg_options"/>
     <string src="Source" id="msg_settings_source"/>
     <string src="Build Info" id="msg_settings_verinfo"/>
-    
-    <string src="CBPS DB" id="db_name_0"/>    
-    <string src="Vita DB" id="db_name_1"/>
-    <string src="VHBD" id="db_name_2"/>
 
     <string src="Always" id="msg_settings_downloadInterval_always"/>
     <string src="Download After (Hours)" id="msg_settings_downloadInterval"/>
