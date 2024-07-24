@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="utf-8"?>
+<stringset>
+    <string src="Descargas" id="download_button_text"/>
+    <string src="Archivos" id="data_button_text"/>
+
+    <string src="Todo" id="db_category_all" />
+    <string src="Utilidades" id="db_category_util" />
+    <string src="Emuladores" id="db_category_emu" />
+    <string src="Ports" id="db_category_port" />
+    <string src="Juegos" id="db_category_game" />
+    <string src="Apps" id="db_category_app" />
+    <string src="Utilidades" id="db_category_single_util" />
+    <string src="Emulador" id="db_category_single_emu" />
+    <string src="Port" id="db_category_single_port" />
+    <string src="Juego" id="db_category_single_game" />
+    <string src="App" id="db_category_single_app" />
+    <string src="Desconocido" id="db_category_unk" />
+    
+    <string src="Ocurrió un error de SSL&#xA;&#xA; Por favor asegurese que tiene instalado iTLS-Enso." id="msg_error_ssl"/>
+    <string src="Hubo un problema de conexión." id="msg_error_net"/>
+    <string src="iTLS-Enso no se está ejecutando.&#xA;Asegurese de que iTLS-Enso está instalado correctamente antes de ejecutar esta aplicación." id="msg_no_itls"/>
+    <string src="Hubo un problema de red.&#xA;Asegurese que su dispositivo está conectado a internet e intente otra vez." id="msg_net_fix" />
+    
+    <string src="Error cargando entrada." id="msg_entry_error" />
+    <string src="Error cargando captura de pantalla." id="msg_screenshot_error"/>
+    <string src="Error cargando icono." id="msg_icon_error"/>
+    <string src="Error cargando descripción." id="msg_desc_error"/>
+    <string src="Error al iniciar la descarga." id="msg_download_error"/>
+    <string src="No se pudo realizar la conexión con el servidor.&#xA;Por favor inténtelo de nuevo más tarde." id="msg_error_index"/>
+    <string src="Error de parseo." id="msg_error_parse"/>
+    <string src="Hubo un error. Por favor inténtelo de nuevo más tarde." id="msg_wait_fix" />
+    <string src="No hay fuentes válidas disponibles para este icono." id="msg_icon_no_source" />
+    
+    <string src="Opciones" id="msg_options"/>
+    <string src="Fuente" id="msg_settings_source"/>
+    <string src="Información de compilación" id="msg_settings_verinfo"/>
+
+    <string src="Siempre" id="msg_settings_downloadInterval_always"/>
+    <string src="Descargar después (Hours)" id="msg_settings_downloadInterval"/>
+    
+    <string src="Comprobando actualizaciones..." id="msg_check_update" />
+    <string src="Por favor espere..." id="msg_wait"/>
+    <string src="Descargando icono..." id="msg_downloading_icon"/>
+
+    <string src="No hay descripción disponible" id="msg_no_desc"/>
+    <string src="La descarga ha sido añadida a la cola de tu pantalla de inicio." id="msg_download_queued"/>
+    <string src="No se pudo encontrar una fuente válida para descargar." id="msg_src_err"/>
+    <string src="%s Iconos" id="icons_dl_name"/>
+    <string src="%s (Archivos)" id="data_dl_name"/>
+    <string src="  %d Items" id="msg_list_header"/>
+    <string src="Ordenar por" id="msg_sort_header"/>
+    <string src="¿Quieres volver a descargar este icono?" id="msg_icon_redownload"/>
+    <string src="El tamaño de la aplicación se desconoce" id="msg_download_nosize"/>
+    
+    <string src="Alfabético" id="msg_sort_alpha"/>
+    <string src="Alfabético (invertido)" id="msg_sort_alpharev"/>
+    <string src="Más reciente" id="msg_sort_mostrecent"/>
+    <string src="Más antiguo" id="msg_sort_oldfirst"/>
+    <string src="Más descargado" id="msg_sort_mostdownloaded"/>
+    <string src="Menos descargado" id="msg_sort_leastdownloaded"/>
+
+    <string src="Créditos" id="msg_settings_credits"/>
+    
+    <string src="Donaciones" id="msg_donations"/>
+    <string src="(PayPal link)&#xA;Gracias" id="msg_donate"/>
+
+</stringset>
