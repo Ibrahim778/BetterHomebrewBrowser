@@ -377,9 +377,9 @@
     <stringtable>
 	    <locale src="locale/en.rcs" id="en-gb" />
 	    <locale src="locale/en.rcs" id="en" />
-        <locale src="locale/ja.rcs" id="ja" />
+	    <locale src="locale/ja.rcs" id="ja" />
 	    <locale src="locale/fr.rcs" id="fr" />
-	    <locale src="locale/en.rcs" id="es" />        
+	    <locale src="locale/es.rcs" id="es" />        
 	    <locale src="locale/de.rcs" id="de" />
 	    <locale src="locale/en.rcs" id="it" />
 	    <locale src="locale/en.rcs" id="nl" />
