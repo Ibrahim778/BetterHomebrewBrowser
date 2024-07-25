@@ -38,9 +38,9 @@
 #include "settings.h"
 #include "downloader.h"
 
-#define NET_HEAP_SIZE  (2 * 1024 * 1024)
-#define HTTP_HEAP_SIZE (2 * 1024 * 1024)
-#define SSL_HEAP_SIZE  (2 * 1024 * 1024)
+#define NET_HEAP_SIZE  SCE_KERNEL_256KiB
+#define HTTP_HEAP_SIZE SCE_KERNEL_256KiB
+#define SSL_HEAP_SIZE  SCE_KERNEL_256KiB
 
 extern "C" {
     const char			sceUserMainThreadName[] = "BHBB_MAIN";
@@ -69,7 +69,7 @@ SceVoid PluginStart(Plugin *plugin)
     SceKernelFwInfo fw;
     fw.size = sizeof(fw);
     _vshSblGetSystemSwVersion(&fw);
-
+    
     int subVersion = sce_paf_atoi(&fw.versionString[2]); // Too lazy to figure out how fw.version works (lol)
 
     if(subVersion < 68) // Version 3.68 introduced TLS 1.2 and doesn't need iTLS-Enso
@@ -84,7 +84,7 @@ SceVoid PluginStart(Plugin *plugin)
             return;
         }
     }
-
+    
     sceShellUtilInitEvents(0);
     
     job::JobQueue::Option opt;
