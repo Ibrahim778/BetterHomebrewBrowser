@@ -1,6 +1,6 @@
-<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.1" encoding="utf-8"?>
 <stringset>
-    <string src="Pobieranie" id="download_button_text"/>
+    <string src="Pobierz" id="download_button_text"/>
     <string src="Pliki danych" id="data_button_text"/>
 
     <string src="Wszystko" id="db_category_all" />
@@ -36,14 +36,14 @@
     <string src="Informacje o kompilacji" id="msg_settings_verinfo"/>
 
     <string src="Zawsze" id="msg_settings_downloadInterval_always"/>
-    <string src="Pobierz po (godzinach)" id="msg_settings_downloadInterval"/>
+    <string src="Pobierz później (godziny)" id="msg_settings_downloadInterval"/>
     
     <string src="Sprawdzanie aktualizacji..." id="msg_check_update" />
     <string src="Proszę czekać..." id="msg_wait"/>
     <string src="Pobieranie ikon..." id="msg_downloading_icon"/>
 
     <string src="Brak dostępnego opisu" id="msg_no_desc"/>
-    <string src="Pobieranie zostało dodane do kolejki ekranu głównego." id="msg_download_queued"/>
+    <string src="Pobieranie zostało dodane do kolejki na ekranie głównym." id="msg_download_queued"/>
     <string src="Nie można znaleźć prawidłowego źródła do pobrania." id="msg_src_err"/>
     <string src="%s Ikony" id="icons_dl_name"/>
     <string src="%s (Dane)" id="data_dl_name"/>
@@ -52,11 +52,11 @@
     <string src="Czy chcesz ponownie pobrać tę ikonę?" id="msg_icon_redownload"/>
     <string src="Rozmiar aplikacji jest nieznany" id="msg_download_nosize"/>
     
-    <string src="Alfabetyczny" id="msg_sort_alpha"/>
-    <string src="Alfabetyczny (Odwrotnie)" id="msg_sort_alpharev"/>
+    <string src="Alfabetycznie" id="msg_sort_alpha"/>
+    <string src="Alfabetycznie (odwrócony)" id="msg_sort_alpharev"/>
     <string src="Najnowszy pierwszy" id="msg_sort_mostrecent"/>
     <string src="Najstarszy pierwszy" id="msg_sort_oldfirst"/>
-    <string src="Najczęściej pobierany" id="msg_sort_mostdownloaded"/>
+    <string src="Najczęściej pobierane" id="msg_sort_mostdownloaded"/>
     <string src="Najrzadziej pobierane" id="msg_sort_leastdownloaded"/>
 
     <string src="Podziękowania" id="msg_settings_credits"/>
