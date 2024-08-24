@@ -86,7 +86,7 @@ void preloadPaf()
 	ScePafInit initParam;
     SceSysmoduleOpt opt;
 
-    initParam.global_heap_size = 16 * 1024 * 1024;
+    initParam.global_heap_size = 10 * 1024 * 1024;
     
     initParam.a2 = 0x0000EA60;
     initParam.a3 = 0x00040000;
