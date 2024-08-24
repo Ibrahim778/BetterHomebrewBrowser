@@ -33,7 +33,7 @@
 #define WIDE2(x) L##x
 #define WIDE(x) WIDE2(x)
 
-#define VERSION         "1.41"
+#define VERSION         "1.42"
 #define BGDL_VERSION    "3.2"
 
 using namespace paf;
@@ -71,7 +71,8 @@ static wchar_t *s_credits = L"@GrapheneCt\n"
                             "  @Princess-of-sleeping - JA\n"
                             "  @maniek6666 - PL\n"
                             "  @michael-moon-lee - ZH\n"
-                            "  @Sfresneda - ES";
+                            "  @Sfresneda - ES\n"
+                            "  @gilgilgan - KO";
 
 Settings::Settings()
 {
