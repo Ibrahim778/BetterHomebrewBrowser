@@ -93,7 +93,7 @@ size_t Source::List::GetSize(int category)
         if(cat.category == category)
             return cat.entries.size();
     
-    return -1;
+    return 0;
 }
 
 Source::Entry& Source::List::Get(uint32_t hash)

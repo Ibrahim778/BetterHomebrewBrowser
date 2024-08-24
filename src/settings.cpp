@@ -70,7 +70,8 @@ static wchar_t *s_credits = L"@GrapheneCt\n"
                             "  @CreepNT - FR\n"
                             "  @Princess-of-sleeping - JA\n"
                             "  @maniek6666 - PL\n"
-                            "  @michael-moon-lee - ZH";
+                            "  @michael-moon-lee - ZH\n"
+                            "  @Sfresneda - ES";
 
 Settings::Settings()
 {

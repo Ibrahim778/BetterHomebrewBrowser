@@ -103,7 +103,7 @@ AppBrowser::~AppBrowser()
 
 bool AppBrowser::SetCategory(int id)
 {
-    if(category == id) return false;
+    if(category == id || listView->GetCellNum(0) == 0) return false;
 
     category = id;
 
@@ -489,9 +489,6 @@ ui::ListItem *AppBrowser::EntryFactory::Create(ui::listview::ItemFactory::Create
         workItem = workList->GetCategory(category).entries[param.cell_index];
 
     button->SetName(workItem->hash);
-
-    titleText->SetString(workItem->title);
-    authorText->SetString(workItem->author);
 
     titleText->SetString(workItem->title);
     authorText->SetString(workItem->author);
