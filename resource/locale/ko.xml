@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="utf-8"?>
+<stringset>
+    <string src="다운로드" id="download_button_text"/>
+    <string src="데이터 파일" id="data_button_text"/>
+
+    <string src="전체" id="db_category_all" />
+    <string src="유틸리티" id="db_category_util" />
+    <string src="에뮬레이터" id="db_category_emu" />
+    <string src="포트" id="db_category_port" />
+    <string src="게임" id="db_category_game" />
+    <string src="앱" id="db_category_app" />
+    <string src="유틸리티" id="db_category_single_util" />
+    <string src="에뮬레이터" id="db_category_single_emu" />
+    <string src="포트" id="db_category_single_port" />
+    <string src="게임" id="db_category_single_game" />
+    <string src="앱" id="db_category_single_app" />
+    <string src="미분류" id="db_category_unk" />
+    
+    <string src="SSL 오류가 발생했습니다.&#xA;&#xA;iTLS-Enso가 설치되어 있는지 확인하십시오." id="msg_error_ssl"/>
+    <string src="연결 오류가 발생했습니다." id="msg_error_net"/>
+    <string src="iTLS-Enso가 실행되고 있지 않습니다.&#xA;이 어플리케이션을 실행하기 전에 iTLS-Enso가 올바르게 설치되어 있는지 확인하십시오." id="msg_no_itls"/>
+    <string src="네트워크 오류가 발생했습니다.&#xA;기기가 네트워크에 연결되어 있는지 확인하고 다시 시도하십시오." id="msg_net_fix" />
+    
+    <string src="목록 로딩 중 오류가 발생하였습니다." id="msg_entry_error" />
+    <string src="스크린샷 로딩 중 오류가 발생하였습니다." id="msg_screenshot_error"/>
+    <string src="아이콘 로딩 중 오류가 발생하였습니다." id="msg_icon_error"/>
+    <string src="설명 로딩 중 오류가 발생하였습니다." id="msg_desc_error"/>
+    <string src="다운로드 시작 중 오류가 발생하였습니다." id="msg_download_error"/>
+    <string src="서버에 연결할 수 없습니다.&#xA;나중에 다시 시도하십시오." id="msg_error_index"/>
+    <string src="인덱스 구문 분석 중 오류가 발생하였습니다." id="msg_error_parse"/>
+    <string src="오류가 발생하였습니다. 나중에 다시 시도하십시오." id="msg_wait_fix" />
+    <string src="이 아이콘에는 유효한 소스가 없습니다." id="msg_icon_no_source" />
+    
+    <string src="옵션" id="msg_options"/>
+    <string src="소스" id="msg_settings_source"/>
+    <string src="빌드 정보" id="msg_settings_verinfo"/>
+
+    <string src="항상" id="msg_settings_downloadInterval_always"/>
+    <string src="다운로드 후(시)" id="msg_settings_downloadInterval"/>
+    
+    <string src="업데이트를 확인 중입니다..." id="msg_check_update" />
+    <string src="잠시 기다려 주십시오..." id="msg_wait"/>
+    <string src="아이콘을 다운로드하고 있습니다..." id="msg_downloading_icon"/>
+
+    <string src="설명이 없습니다." id="msg_no_desc"/>
+    <string src="다운로드가 홈 화면 대기열에 추가되었습니다." id="msg_download_queued"/>
+    <string src="다운로드 가능한 리소스를 찾을 수 없습니다." id="msg_src_err"/>
+    <string src="%s 아이콘" id="icons_dl_name"/>
+    <string src="%s (데이터)" id="data_dl_name"/>
+    <string src="  %d 아이콘" id="msg_list_header"/>
+    <string src="정렬 순서" id="msg_sort_header"/>
+    <string src="이 아이콘을 다시 다운로드 하시겠습니까?" id="msg_icon_redownload"/>
+    <string src="다운로드 크기를 알 수 없습니다." id="msg_download_nosize"/>
+
+    <string src="알파벳" id="msg_sort_alpha"/>
+    <string src="알파벳(역순)" id="msg_sort_alpharev"/>
+    <string src="최신" id="msg_sort_mostrecent"/>
+    <string src="오래됨" id="msg_sort_oldfirst"/>
+    <string src="다운로드수 높음" id="msg_sort_mostdownloaded"/>
+    <string src="다운로드수 낮음" id="msg_sort_leastdownloaded"/>
+
+    <string src="후원" id="msg_donations"/>
+    <string src="(페이팔 링크)&#xA;감사합니다." id="msg_donate"/>
+
+</stringset>

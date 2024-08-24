@@ -362,7 +362,7 @@
 	    <locale src="locale/en.rcs" id="pt" />
         <locale src="locale/en.rcs" id="pt-br" />
 	    <locale src="locale/ru.rcs" id="ru" />
-	    <locale src="locale/en.rcs" id="ko" />
+	    <locale src="locale/ko.rcs" id="ko" />
 	    <locale src="locale/zh.rcs" id="zh-t" />
 	    <locale src="locale/zh.rcs" id="zh-s" />
 	    <locale src="locale/en.rcs" id="fi" />
