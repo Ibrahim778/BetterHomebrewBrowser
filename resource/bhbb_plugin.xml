@@ -1,23 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resource version="0.1" type="normal" id="bhbb_plugin">
 	<pagetable>
-
-		<page id="page_main">
-            <plane style="_common_default_style_plane" texture="tex_main_bg" id="root_plane">
-                <layout_hint size="960, 544" pos="0,0"/>
-                <plane style="_common_style_plane_transparent" id="template_plane">
-                    <layout_hint size="960, 544" pos="0,0"/>
-                </plane>
-                
-                <busyindicator style="main_style_busyindicator" texture="_common_texture_busy" id="main_busy" >
-                    <layout_hint pos="0, 0" size="60, 60" />
-				</busyindicator>
-
-                <corner_button style="_common_style_corner_bottom_left" id="back_button" />
-                <corner_button style="style_button_forward" id="forward_button" />
-            </plane>
-		</page>
-
         <page id="app_page">
             <plane style="_common_default_style_plane" texture="tex_main_bg" id="apps_page_bg">
                 <layout_hint size="960,544"/>
@@ -356,13 +339,6 @@
 			<planeobj texture0="_common_texture_list_glow_70px" blend="2" id="button_glow" />
 		</style_image_button>
 
-        <style_corner_button sound="_common_sound_corner_button_menu" key_focus="1" highlight_obj="plane_obj3" glow_obj="plane_obj4" color="1, 1, 1, 1" corner_obj="plane_obj2" focus_in_group="0" direct_key="2" bg_obj="plane_obj1" layout_type="3" id="style_button_forward">
-            <planeobj color="0.159999996423721, 0.150000005960464, 0.219999998807907, 0.800000011920929" texture0="_common_texture_corner_button_base" id="plane_obj1" />
-            <planeobj size="64, 64, 0" texture0="tex_forward_arrow" id="plane_obj2" pos="13, -11, 0" />
-            <planeobj texture0="_common_texture_corner_button_highlight" id="plane_obj3" />
-            <planeobj texture0="_common_texture_corner_button_glow" blend="2" id="plane_obj4" />
-        </style_corner_button>
-
         <style_text_box bottom_margin="8" color="1,1,1,1" glowobj="glowobj1" sound="_common_sound_text_box"  right_margin="8" top_margin="8" left_margin="8" textobj="text_obj1" planeobj="plane_obj1" id="style_search_box">
             <textobj font_size="24" align_y="1" align_x="0" text_align="1" line_pitch="40" ellipsis="1" id="text_obj1" />
             <planeobj texture0="_common_texture_text_box" id="plane_obj1" />
@@ -377,16 +353,16 @@
     <stringtable>
 	    <locale src="locale/en.rcs" id="en-gb" />
 	    <locale src="locale/en.rcs" id="en" />
-        <locale src="locale/ja.rcs" id="ja" />
+	    <locale src="locale/ja.rcs" id="ja" />
 	    <locale src="locale/fr.rcs" id="fr" />
-	    <locale src="locale/en.rcs" id="es" />        
+	    <locale src="locale/es.rcs" id="es" />        
 	    <locale src="locale/de.rcs" id="de" />
 	    <locale src="locale/en.rcs" id="it" />
 	    <locale src="locale/en.rcs" id="nl" />
 	    <locale src="locale/en.rcs" id="pt" />
         <locale src="locale/en.rcs" id="pt-br" />
 	    <locale src="locale/ru.rcs" id="ru" />
-	    <locale src="locale/en.rcs" id="ko" />
+	    <locale src="locale/ko.rcs" id="ko" />
 	    <locale src="locale/zh.rcs" id="zh-t" />
 	    <locale src="locale/zh.rcs" id="zh-s" />
 	    <locale src="locale/en.rcs" id="fi" />

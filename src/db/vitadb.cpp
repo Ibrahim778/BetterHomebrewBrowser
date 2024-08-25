@@ -26,7 +26,7 @@
 #include "print.h"
 #include "json.h"
 
-#define VITADB_INDEX_URL "https://rinnegatamante.it/vitadb/list_hbs_json.php"
+#define VITADB_INDEX_URL "https://www.rinnegatamante.eu/vitadb/list_hbs_json.php"
 
 using namespace paf;
 using namespace paf::common;
@@ -151,6 +151,8 @@ int VitaDB::DownloadIndex(bool forceRefresh)
     curl_easy_setopt(handle, CURLOPT_WRITEDATA, this);
     curl_easy_setopt(handle, CURLOPT_WRITEFUNCTION, SaveCore);
 
+    curl_easy_setopt(handle, CURLOPT_BUFFERSIZE, 524288);
+
     ret = curl_easy_perform(handle);
     
     print("[VitaDB::DownloadIndex] Download %s -> (0x%X) %s\n", VITADB_INDEX_URL, ret, curl_easy_strerror((CURLcode)ret));
@@ -249,7 +251,7 @@ int VitaDB::Parse()
         if(jdoc[i]["icon"] != nullptr)
         {
             entry.iconPath = common::FormatString("%s%s", iconFolderPath.c_str(), jdoc[i]["icon"].as<const char *>());
-            entry.iconURL.push_back(common::FormatString("https://rinnegatamante.it/vitadb/icons/%s", jdoc[i]["icon"].as<const char *>()));
+            entry.iconURL.push_back(common::FormatString("https://www.rinnegatamante.eu/vitadb/icons/%s", jdoc[i]["icon"].as<const char *>()));
         }
 
         // Would love to use common::string_util::tokenize, but paf::list is wonky (crashes :()
@@ -257,7 +259,7 @@ int VitaDB::Parse()
         
         while(token != nullptr) 
         {
-            paf::string url = "https://rinnegatamante.it/vitadb/";
+            paf::string url = "https://www.rinnegatamante.eu/vitadb/";
             url += token;
             entry.screenshotURL.push_back(url);
             token = sce_paf_strtok(nullptr, ";");

@@ -1,6 +1,6 @@
 /* 
     BetterHomebrewBrowser, A homebrew browser for the PlayStation Vita with background downloading support
-    Copyright (C) 2023 Muhammad Ibrahim
+    Copyright (C) 2024 Muhammad Ibrahim
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -136,8 +136,8 @@ int main()
     Framework::SampleInit(&fwParam);
     fwParam.mode = Framework::Mode_Application;
     
-    fwParam.surface_pool_size = 16 * 1024 * 1024;
-    fwParam.text_surface_pool_size = 2621440; //2.5MB
+    fwParam.surface_pool_size = SCE_KERNEL_8MiB;
+    fwParam.text_surface_pool_size = SCE_KERNEL_4MiB; 
 
     Framework *fw = new Framework(fwParam);
 

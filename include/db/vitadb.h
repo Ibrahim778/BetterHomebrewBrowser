@@ -49,10 +49,9 @@ protected:
     enum Category 
     {
         GAME = 1,
+        PORT = 2,
         UTIL = 4,
         EMU = 5,
-        PORT = 2,
-
     };
 };
 

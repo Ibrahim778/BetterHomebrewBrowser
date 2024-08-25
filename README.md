@@ -85,6 +85,8 @@ Supported language codes can be seen [here](https://github.com/Ibrahim778/Better
 - @Princess-of-sleeping - JA
 - @maniek6666 - PL
 - @michael-moon-lee - ZH 
+- @Sfresneda - ES 
+- @gilgilgan - KO 
 
 Livearea assets by SomeonPC  
 
