@@ -220,16 +220,13 @@ void AppBrowser::SearchCB(int id, paf::ui::Handler *widget, paf::ui::Event *even
     case search_enter_button:
     case search_box:
     {
-        paf::wstring text16;
-        paf::string key;
+        paf::wstring key;
 
         auto textBox = workPage->root->FindChild(search_box);
-        textBox->GetString(text16);
+        textBox->GetString(key);
 
-        if(text16.empty())
+        if(key.empty())
             break;
-
-        common::Utf16ToUtf8(text16, &key);
         
         Utils::Decapitalise(key.c_str());
         
@@ -244,24 +241,19 @@ void AppBrowser::SearchCB(int id, paf::ui::Handler *widget, paf::ui::Event *even
 
         // CLear the list we will store search results in
         workPage->searchList.Clear();
-
+        
         // Search and store results
         for(const Source::Entry &entry : workPage->appList.entries)
         {
-            paf::string titleID;
-            common::Utf16ToUtf8(entry.titleID, &titleID);
-
-            paf::string title;
-            common::Utf16ToUtf8(entry.title, &title);
-
-            paf::string author;
-            common::Utf16ToUtf8(entry.author, &author);
+            paf::wstring titleID = entry.title;
+            paf::wstring title = entry.titleID;
+            paf::wstring author = entry.author;
 
             Utils::Decapitalise(title.c_str());
             Utils::Decapitalise(titleID.c_str());
             Utils::Decapitalise(author.c_str());
             
-            if(sce_paf_strstr(title.c_str(), key.c_str()) || sce_paf_strstr(titleID.c_str(), key.c_str()) || sce_paf_strstr(author.c_str(), key.c_str()))
+            if(sce_paf_wcsstr(title.c_str(), key.c_str()) || sce_paf_wcsstr(titleID.c_str(), key.c_str()) || sce_paf_wcsstr(author.c_str(), key.c_str()))
                 workPage->searchList.Add(entry);
         }
 
