@@ -59,6 +59,8 @@
     <string src="Älteste zu erst" id="msg_sort_oldfirst"/>
     <string src="Am meisten heruntergeladen" id="msg_sort_mostdownloaded"/>
     <string src="Am wenigsten heruntergeladen" id="msg_sort_leastdownloaded"/>
+
+    <string src="Anerkennungen" id="msg_settings_credits"/>
     
     <string src="Spenden" id="msg_donations"/>
     <string src="(PayPal link)&#xA;Danke" id="msg_donate"/>

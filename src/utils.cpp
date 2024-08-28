@@ -144,11 +144,11 @@ int Utils::DownloadFile(const char *url, const char *dest)
     return ret;
 }
 
-void Utils::Decapitalise(char *string)
+void Utils::Decapitalise(wchar_t *wcstring)
 {
     //Convert to lowerCase
-    for(int i = 0; string[i] != '\0'; i++)
-        if(string[i] > 64 && string[i] < 91) string[i] += 0x20;
+    for(int i = 0; wcstring[i] != '\0'; i++)
+        wcstring[i] = sce_paf_towlower(wcstring[i]);
 }
 
 void Utils::StartBGDL()

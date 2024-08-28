@@ -30,6 +30,6 @@ namespace Utils
     bool IsValidURLSCE(const char *url); //Can this URL be used with SceHttp?
 
     int DownloadFile(const char *url, const char *path);
-    void Decapitalise(char *string);
+    void Decapitalise(wchar_t *wcstring);
 };
 #endif

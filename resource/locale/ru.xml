@@ -60,6 +60,8 @@
     <string src="Наиболее скачиваемые" id="msg_sort_mostdownloaded"/>
     <string src="Наименее скачиваемые" id="msg_sort_leastdownloaded"/>
 
+    <string src="Кредиты" id="msg_settings_credits"/>
+
     <string src="Пожертвовать" id="msg_donations"/>
     <string src="(PayPal link)&#xA;Спасибо" id="msg_donate"/>
 
