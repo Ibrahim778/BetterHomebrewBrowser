@@ -59,6 +59,8 @@
     <string src="最もダウンロードされた順" id="msg_sort_mostdownloaded"/>
     <string src="最もダウンロードされていない順" id="msg_sort_leastdownloaded"/>
 
+    <string src="クレジット" id="msg_settings_credits"/>
+
     <string src="寄付" id="msg_donations"/>
     <string src="(PayPal link)&#xA;ありがとう" id="msg_donate"/>
 

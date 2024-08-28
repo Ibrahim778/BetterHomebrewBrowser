@@ -59,6 +59,8 @@
     <string src="다운로드수 높음" id="msg_sort_mostdownloaded"/>
     <string src="다운로드수 낮음" id="msg_sort_leastdownloaded"/>
 
+    <string src="크레딧" id="msg_settings_credits"/>
+
     <string src="후원" id="msg_donations"/>
     <string src="(페이팔 링크)&#xA;감사합니다." id="msg_donate"/>
 

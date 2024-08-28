@@ -60,6 +60,8 @@
     <string src="Plus téléchargés d'abord" id="msg_sort_mostdownloaded"/>
     <string src="Moins téléchargés d'abord" id="msg_sort_leastdownloaded"/>
 
+    <string src="Crédits" id="msg_settings_credits"/>
+
     <string src="Donner" id="msg_donations"/>
     <string src="(PayPal link)&#xA;Merci" id="msg_donate"/>
 
