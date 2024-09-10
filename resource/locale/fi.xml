@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="utf-8"?>
+<stringset>
+    <string src="Lataa" id="download_button_text"/>
+    <string src="Lisätiedostot" id="data_button_text"/>
+
+    <string src="Kaikki" id="db_category_all" />
+    <string src="Työkalut" id="db_category_util" />
+    <string src="Emulaattorit" id="db_category_emu" />
+    <string src="Portit" id="db_category_port" />
+    <string src="Pelit" id="db_category_game" />
+    <string src="Sovellukset" id="db_category_app" />
+    <string src="Apuohjelmat" id="db_category_single_util" />
+    <string src="Emulaattori" id="db_category_single_emu" />
+    <string src="Portti" id="db_category_single_port" />
+    <string src="Peli" id="db_category_single_game" />
+    <string src="Sovellus" id="db_category_single_app" />
+    <string src="Tuntematotn" id="db_category_unk" />
+
+    <string src="SSL Virhe &#xA;&#xA;Muista tarkistaa että iTLS-Enso on asenettu." id="msg_error_ssl"/>
+    <string src="Yhteysvirhe (aikakatkaisu) on tapahtunut." id="msg_error_net"/>
+    <string src="iTLS-Enso ei ole päällä .&#xA;Varmista että iTLS-Enso on asenettu kunnolla ennen kuin käytät tätä sovellusta." id="msg_no_itls"/>
+    <string src="Yhteysvirhe tapahtui. &#xA;Varmista että olet yhdistanyt internettiin ja yritä uudelleen" id="msg_net_fix" />
+
+    <string src="Virhe latauksessa." id="msg_entry_error" />
+    <string src="Virhe latauksessa kuvakaappauksen kohdalla." id="msg_screenshot_error"/>
+    <string src="Virhe latauksessa kuvakkeen kohdalla." id="msg_icon_error"/>
+    <string src="Virhe latauksessa kuvauksen kohdalla." id="msg_desc_error"/>
+    <string src="Virhe latauksen aloittamisessa." id="msg_download_error"/>
+    <string src="Ei yhteyttä palvelimeen.&#xA;Yritä uudelleen myöhemmin." id="msg_error_index"/>
+    <string src="Virhe luettelon käsittelyssä." id="msg_error_parse"/>
+    <string src="Tapahtui virhe. Yritä myöhemmin uudelleen." id="msg_wait_fix" />
+    <string src="Ei saatavilla olevia lähteitä tälle kuvakkeelle." id="msg_icon_no_source" />
+
+    <string src="Asetukset" id="msg_options"/>
+    <string src="Lähde" id="msg_settings_source"/>
+    <string src="Kokoonpanotiedot" id="msg_settings_verinfo"/>
+
+    <string src="Aina" id="msg_settings_downloadInterval_always"/>
+    <string src="Lataa jälkikäteen (Tunnit)" id="msg_settings_downloadInterval"/>
+
+    <string src="Tarkistetaan päivityksiä..." id="msg_check_update" />
+    <string src="Odota hetki..." id="msg_wait"/>
+    <string src="Ladataan kuvaketta..." id="msg_downloading_icon"/>
+
+    <string src="Kuvaus ei ole saatavilla" id="msg_no_desc"/>
+    <string src="Lataus on lisätty Koti-näytön jonoon." id="msg_download_queued"/>
+    <string src="Lataukseen ei löytynyt kelvollista lähdettä." id="msg_src_err"/>
+    <string src="%s Kuvakkeet" id="icons_dl_name"/>
+    <string src="%s (Tiedot)" id="data_dl_name"/>
+    <string src="  %d Kohdetta" id="msg_list_header"/>
+    <string src="Järjestä" id="msg_sort_header"/>
+    <string src="Haluatko ladata tämän kuvakkeen uudelleen?" id="msg_icon_redownload"/>
+    <string src="Sovelluksen koko on tuntematon" id="msg_download_nosize"/>
+
+    <string src="Aakkosjärjestys" id="msg_sort_alpha"/>
+    <string src="Aakkosjärjestys (käänteinen)" id="msg_sort_alpharev"/>
+    <string src="Uusin ensin" id="msg_sort_mostrecent"/>
+    <string src="Vanhin ensin" id="msg_sort_oldfirst"/>
+    <string src="Eniten ladatut" id="msg_sort_mostdownloaded"/>
+    <string src="Vähiten ladatut" id="msg_sort_leastdownloaded"/>
+
+    <string src="Kunnianosoitukset" id="msg_settings_credits"/>
+
+    <string src="Lahjoita" id="msg_donations"/>
+    <string src="(PayPal-linkki)&#xA;Kiitos" id="msg_donate"/>
+
+</stringset>
