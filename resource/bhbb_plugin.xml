@@ -365,7 +365,7 @@
 	    <locale src="locale/ko.rcs" id="ko" />
 	    <locale src="locale/zh.rcs" id="zh-t" />
 	    <locale src="locale/zh.rcs" id="zh-s" />
-	    <locale src="locale/en.rcs" id="fi" />
+	    <locale src="locale/fi.rcs" id="fi" />
 	    <locale src="locale/en.rcs" id="sv" />
 	    <locale src="locale/en.rcs" id="da" />
 	    <locale src="locale/en.rcs" id="no" />
