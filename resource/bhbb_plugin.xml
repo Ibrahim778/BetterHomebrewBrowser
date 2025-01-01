@@ -360,7 +360,7 @@
 	    <locale src="locale/en.rcs" id="it" />
 	    <locale src="locale/en.rcs" id="nl" />
 	    <locale src="locale/en.rcs" id="pt" />
-        <locale src="locale/en.rcs" id="pt-br" />
+        <locale src="locale/ptbr.rcs" id="pt-br" />
 	    <locale src="locale/ru.rcs" id="ru" />
 	    <locale src="locale/ko.rcs" id="ko" />
 	    <locale src="locale/zh.rcs" id="zh-t" />
