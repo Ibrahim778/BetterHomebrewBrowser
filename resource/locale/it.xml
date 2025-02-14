@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="utf-8"?>
+<stringset>
+    <string src="Download" id="download_button_text"/>
+    <string src="Dati" id="data_button_text"/>
+
+    <string src="Tutto" id="db_category_all" />
+    <string src="Utilità" id="db_category_util" />
+    <string src="Emulatori" id="db_category_emu" />
+    <string src="Port" id="db_category_port" />
+    <string src="Giochi" id="db_category_game" />
+    <string src="Applicazioni" id="db_category_app" />
+    <string src="Utilità" id="db_category_single_util" />
+    <string src="Emulatore" id="db_category_single_emu" />
+    <string src="Port" id="db_category_single_port" />
+    <string src="Gioco" id="db_category_single_game" />
+    <string src="Applicazione" id="db_category_single_app" />
+    <string src="Sconosciuto" id="db_category_unk" />
+    
+    <string src="Errore SSL &#xA;&#xA;Per favore assicurati che iTLS-Enso sia installato." id="msg_error_ssl"/>
+    <string src="Errore di connessione." id="msg_error_net"/>
+    <string src="iTLS-Enso non è in esecuzione.&#xA;Assicurati che iTLS-Enso sia installato correttamente prima di avviare l'applicazione." id="msg_no_itls"/>
+    <string src="Errore di connessione.&#xA;Assicurati che il tuo dispositivo sia connesso a internet e riprova." id="msg_net_fix" />
+    
+    <string src="Si è verificato un errore durante il caricamento della voce." id="msg_entry_error" />
+    <string src="Si è verificato un errore durante il caricamento dello screenshot." id="msg_screenshot_error"/>
+    <string src="Si è verificato un errore durante il caricamento dell'icona." id="msg_icon_error"/>
+    <string src="Si è verificato un errore durante il caricamento della descrizione." id="msg_desc_error"/>
+    <string src="Si è verificato un errore durante l'avvio del download." id="msg_download_error"/>
+    <string src="Impossibile connettersi al server.&#xA;Per favore riprova più tardi." id="msg_error_index"/>
+    <string src="Si è verificato un errore durante l'analisi dell'indice." id="msg_error_parse"/>
+    <string src="Si è verificato un errore. Per favore riprova più tardi." id="msg_wait_fix" />
+    <string src="Non è disponibile nessuna sorgente valida per questa icona." id="msg_icon_no_source" />
+    
+    <string src="Opzioni" id="msg_options"/>
+    <string src="Sorgente" id="msg_settings_source"/>
+    <string src="Informazioni sulla build" id="msg_settings_verinfo"/>
+
+    <string src="Sempre" id="msg_settings_downloadInterval_always"/>
+    <string src="Scarica dopo (Ore)" id="msg_settings_downloadInterval"/>
+    
+    <string src="Controllando gli aggiornamenti..." id="msg_check_update" />
+    <string src="Per favore attendi..." id="msg_wait"/>
+    <string src="Scaricamento icone..." id="msg_downloading_icon"/>
+
+    <string src="Nessuna descrizione disponibile" id="msg_no_desc"/>
+    <string src="Il download è stato aggiunto alla coda della Home Screen." id="msg_download_queued"/>
+    <string src="Impossibile trovare una sorgente valida per lo scaricamento." id="msg_src_err"/>
+    <string src="%s Icone" id="icons_dl_name"/>
+    <string src="%s (Dati)" id="data_dl_name"/>
+    <string src="  %d Oggetti" id="msg_list_header"/>
+    <string src="Ordina per" id="msg_sort_header"/>
+    <string src="Vuoi riscaricare questa icona?" id="msg_icon_redownload"/>
+    <string src="Impossibile determinare la dimensione dell'applicazione" id="msg_download_nosize"/>
+    
+    <string src="Alfabetico" id="msg_sort_alpha"/>
+    <string src="Alfabetico (Decrescente)" id="msg_sort_alpharev"/>
+    <string src="Prima i più nuovi" id="msg_sort_mostrecent"/>
+    <string src="Prima i più vecchi" id="msg_sort_oldfirst"/>
+    <string src="I più scaricati" id="msg_sort_mostdownloaded"/>
+    <string src="I meno scaricati" id="msg_sort_leastdownloaded"/>
+
+    <string src="Crediti" id="msg_settings_credits"/>
+    
+    <string src="Dona" id="msg_donations"/>
+    <string src="(Link PayPal)&#xA;Grazie mille" id="msg_donate"/>
+
+</stringset>
