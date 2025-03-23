@@ -177,7 +177,7 @@ int SaveFile(const char *path) // This should NEVER fail NEVER EVER! (if it does
     return 0;
 }
 
-int TitleSizeAdjustCB(paf::int32_t evtID, ui::Handler *handler, ui::Event *evt, void *pUserData)
+int TitleSizeAdjustCB(::int32_t evtID, ui::Handler *handler, ui::Event *evt, void *pUserData)
 {
     auto text = (ui::Text *)handler;
     auto icon = (ui::Plane *)pUserData;
@@ -465,3 +465,5 @@ END:
 
     return ret;
 }  
+
+

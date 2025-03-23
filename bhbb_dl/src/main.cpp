@@ -1,6 +1,6 @@
 /* 
     BetterHomebrewBrowser, A homebrew browser for the PlayStation Vita with background downloading support
-    Copyright (C) 2023 Muhammad Ibrahim
+    Copyright (C) 2024 Muhammad Ibrahim
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -52,7 +52,7 @@ int ExportFilePatched(unsigned int *data)
 
     if(res == 0x80101A09) // Unsupported file
     {
-        char buff[0x400];
+        char buff[SCE_IO_MAX_PATH_BUFFER_SIZE];
         ::uint32_t bgdlID = *(::uint32_t *)data[0];
         pdb_flags_t flags;
         BGDLParam param;

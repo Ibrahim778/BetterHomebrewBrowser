@@ -1,6 +1,6 @@
 /* 
     BetterHomebrewBrowser, A homebrew browser for the PlayStation Vita with background downloading support
-    Copyright (C) 2024 Muhammad Ibrahim
+    Copyright (C) 2025 Muhammad Ibrahim
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -45,6 +45,8 @@ void Utils::HttpsToHttp(const char *src, paf::string& outURL)
 
 bool Utils::IsValidURLSCE(const char *url)
 {
+    print("[Utils::IsValidURLSCE] START\n");
+
     paf::HttpFile file;
     paf::HttpFile::OpenArg openArg;
     SceInt32 ret = SCE_OK;
@@ -55,15 +57,18 @@ bool Utils::IsValidURLSCE(const char *url)
 
     ret = file.Open(&openArg);
     
-    if(ret == SCE_HTTP_ERROR_SSL) ret = SCE_OK; // Temporary fix till I figure out wot is going on with this SSL stuff (SceDownload should report proper error anyways)
+    // if(ret == SCE_HTTP_ERROR_SSL) ret = SCE_OK; // Temporary fix till I figure out wot is going on with this SSL stuff (SceDownload should report proper error anyways)
 
     if(ret == SCE_OK)
     {
         file.Close();
-        return SCE_TRUE;
+        return true;
     }
     print("Open %s FAIL 0x%X\n", url, ret);
-    return SCE_FALSE;
+
+    print("[Utils::IsValidURLSCE] END\n");
+
+    return false;
 }
 
 void Utils::InitMusic()
