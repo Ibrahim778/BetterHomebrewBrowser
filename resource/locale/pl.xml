@@ -9,7 +9,7 @@
     <string src="Porty" id="db_category_port" />
     <string src="Gry" id="db_category_game" />
     <string src="Aplikacje" id="db_category_app" />
-    <string src="Nrzędzie" id="db_category_single_util" />
+    <string src="Narzędzie" id="db_category_single_util" />
     <string src="Emulator" id="db_category_single_emu" />
     <string src="Port" id="db_category_single_port" />
     <string src="Gra" id="db_category_single_game" />
@@ -36,7 +36,7 @@
     <string src="Informacje o kompilacji" id="msg_settings_verinfo"/>
 
     <string src="Zawsze" id="msg_settings_downloadInterval_always"/>
-    <string src="Pobierz później (godziny)" id="msg_settings_downloadInterval"/>
+    <string src="Pobierz później (za godzinę)" id="msg_settings_downloadInterval"/>
     
     <string src="Sprawdzanie aktualizacji..." id="msg_check_update" />
     <string src="Proszę czekać..." id="msg_wait"/>
@@ -47,13 +47,13 @@
     <string src="Nie można znaleźć prawidłowego źródła do pobrania." id="msg_src_err"/>
     <string src="%s Ikony" id="icons_dl_name"/>
     <string src="%s (Dane)" id="data_dl_name"/>
-    <string src="  %d Elemęty" id="msg_list_header"/>
+    <string src="  %d Elementy" id="msg_list_header"/>
     <string src="Sortuj według" id="msg_sort_header"/>
     <string src="Czy chcesz ponownie pobrać tę ikonę?" id="msg_icon_redownload"/>
     <string src="Rozmiar aplikacji jest nieznany" id="msg_download_nosize"/>
     
     <string src="Alfabetycznie" id="msg_sort_alpha"/>
-    <string src="Alfabetycznie (odwrócony)" id="msg_sort_alpharev"/>
+    <string src="Alfabetycznie (odwrotność)" id="msg_sort_alpharev"/>
     <string src="Najnowszy pierwszy" id="msg_sort_mostrecent"/>
     <string src="Najstarszy pierwszy" id="msg_sort_oldfirst"/>
     <string src="Najczęściej pobierane" id="msg_sort_mostdownloaded"/>
@@ -61,7 +61,7 @@
 
     <string src="Podziękowania" id="msg_settings_credits"/>
         
-    <string src="Uznanie" id="msg_settings_credits"/>
+    <string src="Twórcy" id="msg_settings_credits"/>
 
     <string src="Wsparcie" id="msg_donations"/>
     <string src="(Link PayPal)&#xA;Dziękuję" id="msg_donate"/>
