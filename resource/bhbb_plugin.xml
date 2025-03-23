@@ -357,7 +357,7 @@
 	    <locale src="locale/fr.rcs" id="fr" />
 	    <locale src="locale/es.rcs" id="es" />        
 	    <locale src="locale/de.rcs" id="de" />
-	    <locale src="locale/en.rcs" id="it" />
+	    <locale src="locale/it.rcs" id="it" />
 	    <locale src="locale/en.rcs" id="nl" />
 	    <locale src="locale/en.rcs" id="pt" />
         <locale src="locale/en.rcs" id="pt-br" />
