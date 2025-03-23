@@ -74,8 +74,8 @@ static wchar_t *s_credits = L"@GrapheneCt\n"
                             "  @Sfresneda - ES\n"
                             "  @gilgilgan - KO\n" 
                             "  @Koutsie - FI\n";
-                            "  @ganona - IT\n"
-                            "  @iveurne - PT-BR"
+                            "  @ganona - IT\n";
+                            "  @iveurne - PT-BR";
 
 Settings::Settings()
 {
