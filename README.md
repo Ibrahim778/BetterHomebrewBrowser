@@ -88,6 +88,8 @@ Supported language codes can be seen [here](https://github.com/Ibrahim778/Better
 - @Sfresneda - ES 
 - @gilgilgan - KO 
 - @Koutsie - FI 
+- @ganona - IT 
+- @iveurne - PT-BR
 
 Livearea assets by SomeonPC  
 
