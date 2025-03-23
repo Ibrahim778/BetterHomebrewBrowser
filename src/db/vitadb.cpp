@@ -1,6 +1,6 @@
 /* 
     BetterHomebrewBrowser, A homebrew browser for the PlayStation Vita with background downloading support
-    Copyright (C) 2024 Muhammad Ibrahim
+    Copyright (C) 2025 Muhammad Ibrahim
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -200,7 +200,7 @@ int VitaDB::GetSCECompatibleURL(std::vector<paf::string> &urlList, paf::string &
         }
     }
 
-    return ret;
+    return -1;
 }
 
 int VitaDB::GetDownloadURL(Source::Entry& entry, paf::string& out)

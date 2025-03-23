@@ -158,7 +158,7 @@ public:
 
     static paf::common::SharedPtr<Source> Create(ID id);
 
-    virtual ~Source(){};
+    virtual ~Source(){}; 
 
     virtual int Parse() = 0;
     virtual int DownloadIndex(bool forceRefresh = false) = 0;

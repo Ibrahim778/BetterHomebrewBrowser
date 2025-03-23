@@ -136,7 +136,7 @@ foreach(i RANGE 0 ${lastLocaleIdx})
     
     get_filename_component(localeName ${_xml} NAME_WE)
     set(rcsOutPath ${CMAKE_SOURCE_DIR}/resource/locale/${localeName}.rcs)
-    message("Locale added - ${localeName}.rcs")
+    message("Locale added - ${localeName}")
     
     set(rcsOutputs ${rcsOutPath})
 
