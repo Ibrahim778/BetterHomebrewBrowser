@@ -78,7 +78,7 @@ SceVoid PluginStart(Plugin *plugin)
         SceUID itlsID = _vshKernelSearchModuleByName("itlsKernel", &buff);
         
         print("iTLS-Enso: 0x%X\n", itlsID);
-        if(itlsID < 0)
+        if(itlsID < 0 && _vshKernelSearchModuleByName("tls_fixer_kernel", &buff) < 0)
         {
             new page::TextPage(msg_no_itls);
             return;
